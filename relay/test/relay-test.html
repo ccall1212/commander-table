@@ -1,0 +1,94 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Relay test</title>
+<body style="font-family:monospace">
+<p>Relay base URL (wss://... or ws://...): <input id="u" size="60" value="wss://commander-table-relay.example.workers.dev">
+<button id="go">Run</button></p>
+<pre id="out"></pre>
+<script>
+const out = document.getElementById('out');
+let fails = 0;
+const log = (ok, name) => { if (!ok) fails++; out.textContent += (ok ? 'PASS ' : 'FAIL ') + name + '\n'; };
+
+function sock(url) {
+  const ws = new WebSocket(url), q = [], waiters = [];
+  ws.onmessage = (e) => { const m = JSON.parse(e.data); const w = waiters.shift(); w ? w(m) : q.push(m); };
+  const s = {
+    ws, closed: null,
+    open: new Promise((r, j) => { ws.onopen = r; ws.onerror = () => j(new Error('ws error')); }),
+    next: (ms = 3000) => new Promise((res, rej) => {
+      if (q.length) return res(q.shift());
+      const t = setTimeout(() => rej(new Error('timeout')), ms);
+      waiters.push((m) => { clearTimeout(t); res(m); });
+    }),
+    send: (o) => ws.send(typeof o === 'string' ? o : JSON.stringify(o)),
+  };
+  s.closedP = new Promise((r) => { ws.onclose = (e) => { s.closed = e.code; r(e.code); }; });
+  return s;
+}
+
+async function run() {
+  out.textContent = ''; fails = 0;
+  const base = document.getElementById('u').value.replace(/\/+$/, '');
+  const room = Array.from({ length: 5 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.random() * 32 | 0]).join('');
+  const url = base + '/room/' + room;
+  try {
+    const A = sock(url), B = sock(url), C = sock(url);
+    await Promise.all([A.open, B.open, C.open]);
+    let m = await A.next(); log(m.op === 'hello' && m.server === 'cf-relay' && m.maxMsg === 1000000, 'hello');
+    await B.next(); await C.next();
+
+    A.send({ op: 'ping' }); m = await A.next(); log(m.op === 'pong', 'ping/pong');
+    A.send('{"op":"ping"}'); m = await A.next(); log(m.op === 'pong', 'ping/pong (auto-response)');
+
+    A.send({ op: 'reg', id: 'host1', key: 'k1' }); m = await A.next(); log(m.op === 'open' && m.id === 'host1', 'reg A');
+    A.send({ op: 'reg', id: 'x' }); m = await A.next(); log(m.type === 'invalid-message', 'second reg rejected');
+    B.send({ op: 'reg', id: 'host1', key: 'other' }); m = await B.next(); log(m.type === 'unavailable-id', 'id taken, wrong key');
+    B.send({ op: 'reg', id: null }); m = await B.next(); log(m.op === 'open' && m.id.length > 8, 'reg B random id');
+    const bid = m.id;
+
+    B.send({ op: 'conn', cid: 'c1', to: 'nobody', meta: 1 }); m = await B.next();
+    log(m.op === 'cfail' && m.cid === 'c1' && m.type === 'peer-unavailable', 'cfail for missing peer');
+
+    B.send({ op: 'conn', cid: 'c2', to: 'host1', meta: { hi: 1 } });
+    const inc = await A.next(), copen = await B.next();
+    log(inc.op === 'inc' && inc.from === bid && inc.meta.hi === 1 && inc.lid === copen.lid && copen.op === 'copen' && copen.cid === 'c2', 'conn -> inc + copen');
+    const lid = copen.lid;
+
+    B.send({ op: 'msg', lid, d: { x: [1, 2, 3] } }); m = await A.next();
+    log(m.op === 'msg' && m.lid === lid && m.d.x[2] === 3, 'msg B->A');
+    A.send({ op: 'msg', lid, d: 'back' }); m = await B.next(); log(m.d === 'back', 'msg A->B');
+    C.send({ op: 'reg', id: 'c' }); await C.next();
+    C.send({ op: 'msg', lid, d: 'intruder' });
+    A.send({ op: 'ping' }); m = await A.next(); log(m.op === 'pong', 'non-end sender ignored');
+
+    const A2 = sock(url); await A2.open; await A2.next();
+    A2.send({ op: 'reg', id: 'host1', key: 'k1' });
+    m = await A.next(); log(m.type === 'replaced', 'takeover: old gets replaced');
+    m = await B.next(); log(m.op === 'cclose' && m.lid === lid, 'takeover: B gets cclose');
+    m = await A2.next(); log(m.op === 'open' && m.id === 'host1', 'takeover: new gets open');
+    await A.closedP; log(true, 'takeover: old socket closed (' + A.closed + ')');
+
+    B.send({ op: 'conn', cid: 'c3', to: 'host1' }); await A2.next(); const co = await B.next();
+    B.send({ op: 'cclose', lid: co.lid }); m = await A2.next(); log(m.op === 'cclose' && m.lid === co.lid, 'cclose forwarded');
+
+    B.send({ op: 'conn', cid: 'c4', to: 'host1' }); const inc2 = await A2.next(); await B.next();
+    B.ws.close(); m = await A2.next(); log(m.op === 'cclose' && m.lid === inc2.lid, 'socket close -> cclose');
+
+    const big = 'x'.repeat(1000001);
+    C.send(big); const code = await C.closedP; log(code === 1009, 'oversize frame closes 1009 (got ' + code + ')');
+
+    // room-full
+    const socks = [];
+    for (let i = 0; i < 12; i++) { const s = sock(url); await s.open; await s.next(); s.send({ op: 'reg', id: 'p' + i }); m = await s.next(); socks.push([s, m]); }
+    log(socks.slice(0, 10).every(([, r]) => r.op === 'open'), 'first peers open');
+    log(socks.some(([, r]) => r.type === 'room-full'), 'room-full after 12');
+    socks.forEach(([s]) => s.ws.close()); A2.ws.close();
+
+    // origin check from a browser can't be forged here; check 400 on bad room via HTTP upgrade failing
+    const bad = sock(base + '/room/BAD'); await bad.open.then(() => log(false, 'bad room code rejected'), () => log(true, 'bad room code rejected'));
+  } catch (e) { log(false, 'exception: ' + e.message); }
+  out.textContent += fails ? '\n' + fails + ' FAILED\n' : '\nALL PASSED\n';
+}
+document.getElementById('go').onclick = run;
+</script>

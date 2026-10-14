@@ -286,6 +286,17 @@ function hostRecv(msg, from) {
       else if (S.role === 'host') Net.sendTo(msg.to, { t: 'req', from, req: msg.req });
       break;
     }
+    case 'tsync': {
+      // A player reconnected with a copy of the table. If it's newer than ours (the host
+      // reloaded before its last change was saved), adopt it; otherwise ignore it.
+      const t = cleanTable(msg.table);
+      if (!t || t.room !== S.table.room || t.rev <= (S.table.rev || 0) || !t.seats.includes(S.pid)) return;
+      S.table = t;
+      sysLog(`Restored the latest table state (turn ${t.turn}) from ${pname(from)}.`);
+      afterTable();
+      pushTable();
+      break;
+    }
   }
 }
 function seat(pid) {
@@ -294,7 +305,26 @@ function seat(pid) {
   T.seats.push(pid);
   if (T.started && !T.order.includes(pid)) T.order.push(pid);
   sysLog(`${pname(pid)} joined the table.`);
-  broadcast({ t: 'table', table: T });
+  pushTable();
+}
+// Host: send the table to everyone. `rev` goes up on every change, and the host saves at
+// once, so after a host reload the newest table always wins (see 'tsync').
+function pushTable() {
+  S.table.rev = (S.table.rev || 0) + 1;
+  broadcast({ t: 'table', table: S.table });
+  saveNow();
+}
+function cleanTable(t) {
+  if (!isObj(t)) return null;
+  const ids = a => (Array.isArray(a) ? a.filter(x => typeof x === 'string').slice(0, 8).map(x => x.slice(0, 40)) : []);
+  const str = x => (typeof x === 'string' ? x.slice(0, 40) : null);
+  return {
+    room: String(t.room || '').slice(0, 8), seats: ids(t.seats), order: ids(t.order), active: str(t.active),
+    turn: Math.max(0, num(t.turn)), phase: clamp(num(t.phase, 3), 0, PHASES.length - 1), started: !!t.started,
+    monarch: str(t.monarch), initiative: str(t.initiative),
+    out: isObj(t.out) ? Object.fromEntries(Object.keys(t.out).slice(0, 8).map(k => [k.slice(0, 40), !!t.out[k]])) : {},
+    rev: Math.max(0, num(t.rev))
+  };
 }
 function sysLog(text) { broadcast({ t: 'log', e: { ts: Date.now(), pid: null, name: '', text, cards: [] } }); }
 function tableOp(op, from) {
@@ -311,6 +341,9 @@ function tableOp(op, from) {
     }
     case 'pass': {
       if (!T.started) return;
+      // Ignore a pass meant for a turn that's already over (double click by two players,
+      // or a pass that arrives late after a reconnect) so a turn is never skipped.
+      if (op.turn != null && num(op.turn) !== T.turn) return;
       const live = T.order.filter(p => !T.out[p]);
       if (!live.length) return;
       const i = live.indexOf(T.active);
@@ -340,14 +373,14 @@ function tableOp(op, from) {
     case 'newgame': {
       if (!isHost) return;
       Object.assign(T, { order: [], active: null, turn: 0, phase: 3, started: false, monarch: null, initiative: null, out: {} });
-      broadcast({ t: 'table', table: T });
+      pushTable();
       broadcast({ t: 'newgame' });
       sysLog('New game — everyone reshuffled and drew 7.');
       return;
     }
     default: return;
   }
-  broadcast({ t: 'table', table: T });
+  pushTable();
 }
 
 // Validate anything another browser sent us before it touches our state or DOM.
@@ -1261,6 +1294,10 @@ function mainMenu(x, y) {
   if (S.role !== 'client') items.push({ label: 'Start a new game (everyone)', onClick: async () => {
     if (await UI.confirm('Start a new game? Everyone reshuffles their deck and draws 7.', { okLabel: 'New game' })) toHost({ t: 'op', op: { k: 'newgame' } });
   } });
+  if (S.role !== 'solo') {
+    items.push({ label: 'Copy invite link', onClick: copyRoom });
+    items.push({ label: 'Connection details…', onClick: showConnInfo });
+  }
   items.push({ label: 'Leave game', danger: true, onClick: leaveGame });
   UI.menu(x, y, items);
 }
@@ -2048,12 +2085,39 @@ function onButton(a, btn, e) {
 async function passTurn() {
   const T = S.table; if (!T || !T.started) return;
   if (T.active !== S.pid && !(await UI.confirm(`It's ${pname(T.active)}'s turn. Pass it for them?`, { okLabel: 'Pass their turn' }))) return;
-  toHost({ t: 'op', op: { k: 'pass' } });
+  toHost({ t: 'op', op: { k: 'pass', turn: T.turn } });
+}
+// Invite link = this page's address (works on GitHub Pages' /commander-table/ path, the
+// LAN server and file://) + ?join=CODE. The bare room code still works as a fallback.
+function inviteLink(room) {
+  const u = new URL(location.href);
+  u.search = ''; u.hash = '';
+  u.searchParams.set('join', room);
+  const net = new URLSearchParams(location.search).get('net');
+  if (net) u.searchParams.set('net', net);
+  return u.href;
 }
 function copyRoom() {
   if (!S.room || S.role === 'solo') return;
-  const done = () => UI.toast(`Room code ${S.room} copied — send it to your friends.`);
-  try { navigator.clipboard.writeText(S.room).then(done, () => UI.toast(`Room code: ${S.room}`)); } catch (e) { UI.toast(`Room code: ${S.room}`); }
+  const link = inviteLink(S.room);
+  const done = () => UI.toast(`Invite link copied — friends open it to join room ${S.room}.`, { ms: 6000 });
+  const fail = () => UI.prompt({ title: 'Invite link', label: `Send this to your friends (room code ${S.room}):`, value: link, okLabel: 'Done' });
+  try { navigator.clipboard.writeText(link).then(done, fail); } catch (e) { fail(); }
+}
+function showConnInfo() {
+  const d = Object.assign({ page: location.href.split('?')[0], app: APP_VERSION }, Net.diag());
+  const pre = document.createElement('pre');
+  pre.className = 'conn-diag';
+  pre.textContent = JSON.stringify(d, null, 2);
+  const wrap = document.createElement('div');
+  const p = document.createElement('p');
+  p.className = 'muted small';
+  p.textContent = 'If you have connection trouble, copy this and send it along with what you see.';
+  const b = document.createElement('button');
+  b.textContent = 'Copy';
+  b.onclick = () => { try { navigator.clipboard.writeText(pre.textContent).then(() => UI.toast('Copied.')); } catch (e) { /* ignore */ } };
+  wrap.append(p, pre, b);
+  UI.modal({ title: 'Connection details', el: wrap });
 }
 function onKey(e) {
   if (!S.me || $('#game').classList.contains('hidden')) return;
@@ -2097,20 +2161,39 @@ function onKey(e) {
 //  Networking glue
 // =====================================================================
 const lostTimers = {};
+// A random secret per player session. The relay lets a reloaded host take its room back
+// with it (instead of waiting for the old connection to time out), and nobody else can.
+function netKey() {
+  const k = 'ct.nk.' + S.pid;
+  let v = LS.get(k, null);
+  if (!v) {
+    try { v = Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join(''); }
+    catch (e) { v = uid() + uid() + uid(); }
+    LS.set(k, v);
+  }
+  return v;
+}
 function startNet() {
   if (S.role === 'solo') return;
   if (typeof Peer === 'undefined') { S.net = { state: 'error', text: 'Connection library failed to load (are you online?)' }; render(); return; }
   Net.start({
-    role: S.role, room: S.room, pid: S.pid,
+    role: S.role, room: S.room, pid: S.pid, key: netKey(),
     onMessage: (msg, from) => {
       if (S.role === 'host') hostRecv(msg, from);
       else clientRecv(msg);
     },
-    onStatus: (state, text) => {
+    onStatus: (state, text, code, transport) => {
       const was = S.net.state;
-      S.net = { state, text: text || '' };
-      if (state === 'online' && was !== 'online' && S.role === 'client') publish(true);
+      S.net = { state, text: text || '', code: code || '', transport: transport || '' };
+      if (state === 'online' && was !== 'online' && S.role === 'client') {
+        publish(true);
+        if (S.table && S.table.room === S.room) Net.send({ t: 'tsync', table: S.table });
+      }
       render();
+    },
+    onDropped: msgs => {
+      const n = msgs.filter(m => m.t !== 'log').length;
+      if (n) UI.toast(`${n === 1 ? 'An action' : n + ' actions'} you made while disconnected didn't reach the table, so ${n === 1 ? 'it was' : 'they were'} not applied late. Redo ${n === 1 ? 'it' : 'them'} if still needed.`, { kind: 'warn', ms: 9000 });
     },
     onJoin: pid => {
       clearTimeout(lostTimers[pid]);
@@ -2185,6 +2268,13 @@ function showLobby() {
   selDeck = LS.get('ct.selDeck', null);
   renderDeckList();
   $('#netWarn').classList.toggle('hidden', typeof Peer !== 'undefined');
+  const inv = (new URLSearchParams(location.search).get('join') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const ib = $('#inviteBox');
+  if (inv.length === 5) {
+    $('#joinIn').value = inv;
+    ib.innerHTML = `<b>You're invited to room ${esc(inv)}.</b><span class="muted">Enter your name and pick a deck, then press <b>Join</b>.</span>`;
+    ib.classList.remove('hidden');
+  } else ib.classList.add('hidden');
   const lan = window.CT_LAN, li = $('#lanInfo');
   if (lan && lan.urls && lan.urls.length) {
     li.innerHTML = `<b>LAN game</b> — players on your network open ${lan.urls.map(u => `<code>${esc(u)}</code>`).join(' or ')}, then join with the room code.`;
@@ -2313,6 +2403,10 @@ function begin(role) {
   }
   if (role !== 'solo' && typeof Peer === 'undefined') { UI.toast('Online play needs an internet connection — try Practice solo.', { kind: 'error' }); return; }
   if (role === 'host') room = Net.makeRoomCode();
+  try { // the invite has done its job; keep any ?net= override
+    const u = new URL(location.href);
+    if (u.searchParams.has('join')) { u.searchParams.delete('join'); history.replaceState(null, '', u.href); }
+  } catch (e) { /* ignore */ }
   S.role = role; S.room = room; S.deckId = deck.id;
   S.players = {}; S.log = []; S.online = {}; S.undo = [];
   S.me = newPlayer(deck, name);
@@ -2322,7 +2416,7 @@ function begin(role) {
   startNet();
   publish(true);
   saveNow();
-  if (role === 'host') UI.toast(`You're hosting room ${room}. Click the code at the top-left to copy it for your friends.`, { ms: 8000 });
+  if (role === 'host') UI.toast(`You're hosting room ${room}. Click the code at the top-left to copy an invite link for your friends.`, { ms: 8000 });
   if (role === 'solo') sysLog('Practice game started. Use “Start game” to begin turn tracking.');
 }
 
@@ -2339,6 +2433,7 @@ function boot() {
   if (sess) resume(sess); else showLobby();
 }
 // Expose a little for debugging from the console.
-window.CT = { S, act, render, dragState: () => drag };
-boot();
+window.CT = { S, act, render, dragState: () => drag, hostRecv, cleanTable };
+// tests/net-harness.html loads the page with ?nettest to drive Net directly, without the app.
+if (!new URLSearchParams(location.search).has('nettest')) boot();
 })();

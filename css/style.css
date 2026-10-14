@@ -485,3 +485,6 @@ body.view-side #sideBtn, body.view-grid #sideBtn { display: inline-block; }
 /* LAN mode: address players open, shown in the lobby's Play box */
 .lan-info { margin: 10px 0 0; padding: 8px 10px; border: 1px solid var(--accent); border-radius: 8px; font-size: 13px; line-height: 1.5; }
 .lan-info code { background: #0b0e13; padding: 1px 6px; border-radius: 4px; user-select: all; }
+
+/* Connection details dialog */
+.conn-diag { max-height: 50vh; overflow: auto; background: #0b0e13; padding: 10px; border-radius: 6px; font-size: 12px; white-space: pre-wrap; word-break: break-all; }

@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Net Harness</title>
+<style>
+  :root { --bg: #0b0e13; --fg: #e6e9ef; --muted: #8b93a3; --ok: #3fb950; --bad: #f85149; --warn: #d29922; }
+  body { background: var(--bg); color: var(--fg); font: 14px/1.45 system-ui, sans-serif; margin: 0; padding: 16px; }
+  h1 { font-size: 18px; margin: 0 0 8px; }
+  .muted { color: var(--muted); }
+  #out div { padding: 2px 0; border-bottom: 1px solid #1c2230; font-family: ui-monospace, monospace; font-size: 12.5px; }
+  .PASS { color: var(--ok); } .FAIL { color: var(--bad); } .SKIP { color: var(--warn); } .INFO { color: var(--muted); }
+  #frames { display: none; }
+  input { width: min(560px, 100%); background: #151a23; color: var(--fg); border: 1px solid #2a3242; border-radius: 6px; padding: 6px; }
+  button { background: #1f6feb; color: #fff; border: 0; border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+</style>
+</head>
+<body>
+<h1>Commander Table — network test harness</h1>
+<p class="muted">Each simulated player is a hidden iframe running the real <code>js/net.js</code> stack (with <code>?nettest</code> so the app itself doesn't boot).
+Query options: <code>?relay=&lt;http(s) url of a relay&gt;</code> (only honoured on localhost pages), <code>&amp;net=relay|p2p|auto</code>, <code>&amp;only=t1,t2</code>, <code>&amp;auto=1</code> to run on load.</p>
+<p><input id="relay" placeholder="relay URL, e.g. http://127.0.0.1:8790 or https://….workers.dev"> <button id="run">Run</button></p>
+<div id="summary"></div>
+<div id="out"></div>
+<div id="frames"></div>
+<script>
+(function () {
+  'use strict';
+  const qs = new URLSearchParams(location.search);
+  const $ = s => document.querySelector(s);
+  $('#relay').value = qs.get('relay') || '';
+  const out = $('#out');
+  const results = [];
+  function line(kind, text) {
+    const d = document.createElement('div'); d.className = kind; d.textContent = kind.padEnd(5) + ' ' + text; out.appendChild(d);
+    console.log('[harness]', kind, text);
+  }
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  async function waitFor(fn, ms, what) {
+    const t0 = Date.now();
+    while (Date.now() - t0 < ms) { try { const v = fn(); if (v) return v; } catch (e) { /* keep waiting */ } await sleep(100); }
+    throw new Error('timed out after ' + ms + 'ms waiting for ' + what);
+  }
+  const ROOM_ALPHA = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const code = () => Array.from({ length: 5 }, () => ROOM_ALPHA[Math.floor(Math.random() * 32)]).join('');
+
+  let RELAY = '', NET = 'relay';
+  function pageUrl(extra) {
+    const u = new URL('../index.html', location.href);
+    u.searchParams.set('nettest', '1');
+    if (RELAY) u.searchParams.set('relay', RELAY);
+    u.searchParams.set('net', NET);
+    for (const k in (extra || {})) u.searchParams.set(k, extra[k]);
+    return u.href;
+  }
+  // A simulated player: an iframe with its own window.Net.
+  async function player(name, extra) {
+    const f = document.createElement('iframe');
+    f.src = pageUrl(extra);
+    $('#frames').appendChild(f);
+    await waitFor(() => f.contentWindow && f.contentWindow.Net && f.contentWindow.document.readyState === 'complete', 15000, name + ' to load');
+    const P = { name, f, w: f.contentWindow, st: [], msgs: [], joins: [], leaves: [], dropped: [] };
+    P.start = (role, room, opts) => {
+      P.st = []; P.role = role; P.room = room;
+      P.w.Net.start(Object.assign({
+        role, room, pid: (opts && opts.pid) || name, key: (opts && opts.key) || ('k-' + name),
+        onMessage: (m, from) => P.msgs.push({ m, from, at: Date.now() }),
+        onStatus: (s, text, c, tr) => P.st.push({ s, text, c, tr, at: Date.now() }),
+        onJoin: pid => P.joins.push(pid), onLeave: pid => P.leaves.push(pid),
+        onDropped: list => P.dropped.push(...list)
+      }, opts || {}));
+    };
+    P.state = () => P.w.Net.state();
+    P.last = () => P.st[P.st.length - 1] || {};
+    P.online = () => P.state() === 'online';
+    P.got = t => P.msgs.filter(x => x.m.t === t);
+    P.kill = () => { try { P.w.Net.stop(); } catch (e) { /* gone */ } f.remove(); };
+    return P;
+  }
+  // Simulated "reload": stop, throw the frame away, load a fresh one, start again.
+  async function reload(P, role, room, opts) {
+    const name = P.name; P.kill();
+    const Q = await player(name);
+    Q.start(role, room, opts);
+    return Q;
+  }
+  // Network-cut simulation: make this player's WebSockets fail until restored.
+  function cutNetwork(P) {
+    const W = P.w, Real = W.WebSocket;
+    P._realWS = Real; P._socks = P._socks || [];
+    W.WebSocket = function (url, proto) { return new Real('ws://127.0.0.1:9/blocked', proto); };
+    W.WebSocket.prototype = Real.prototype;
+    ['CONNECTING', 'OPEN', 'CLOSING', 'CLOSED'].forEach(k => { W.WebSocket[k] = Real[k]; });
+    P._cut = true;
+  }
+  function restoreNetwork(P) { if (P._realWS) P.w.WebSocket = P._realWS; P._cut = false; }
+  // Track live sockets so a test can drop them.
+  function trackSockets(P) {
+    const W = P.w, Real = W.WebSocket, socks = P._socks = [];
+    function Tracked(url, proto) { const s = new Real(url, proto); socks.push(s); return s; }
+    Tracked.prototype = Real.prototype;
+    ['CONNECTING', 'OPEN', 'CLOSING', 'CLOSED'].forEach(k => { Tracked[k] = Real[k]; });
+    W.WebSocket = Tracked;
+  }
+
+  const frames = [];
+  async function cleanup() { frames.splice(0).forEach(P => P.kill()); await sleep(300); }
+  async function mk(name, extra) { const P = await player(name, extra); frames.push(P); return P; }
+
+  const TESTS = {
+    async t1_two_players() {
+      const room = code(), H = await mk('H'), A = await mk('A');
+      H.start('host', room); await waitFor(H.online, 10000, 'host online');
+      A.start('client', room); await waitFor(A.online, 15000, 'client online');
+      A.w.Net.send({ t: 'hello', n: 1 }); H.w.Net.send({ t: 'hi', n: 2 });
+      await waitFor(() => H.got('hello').length && A.got('hi').length, 5000, 'messages both ways');
+      const tr = A.last().tr;
+      return 'joined in ' + (A.last().at - A.st[0].at) + 'ms via ' + tr + '; messages both ways';
+    },
+    async t2_four_players() {
+      const room = code(), H = await mk('H'); H.start('host', room); await waitFor(H.online, 10000, 'host');
+      const C = []; for (const n of ['A', 'B', 'C']) { const P = await mk(n); P.start('client', room); C.push(P); }
+      await waitFor(() => C.every(P => P.online()), 20000, 'all 3 clients online');
+      await waitFor(() => H.w.Net.peers().length === 3, 5000, 'host sees 3 peers');
+      H.w.Net.send({ t: 'bcast' });
+      C.forEach(P => P.w.Net.send({ t: 'up', who: P.name }));
+      await waitFor(() => C.every(P => P.got('bcast').length === 1) && H.got('up').length === 3, 5000, 'broadcast + 3 uploads');
+      return 'host + 3 clients; broadcast reached all, host got all 3';
+    },
+    async t3_wrong_room() {
+      const A = await mk('A'); A.start('client', code());
+      await waitFor(() => A.st.some(x => x.c === 'waiting-host'), 10000, 'waiting-host status');
+      if (A.online()) throw new Error('went online with no host');
+      return 'status: "' + A.st.find(x => x.c === 'waiting-host').text + '"';
+    },
+    async t4_host_after_guest() {
+      const room = code(), A = await mk('A'); A.start('client', room);
+      await waitFor(() => A.st.some(x => x.c === 'waiting-host'), 10000, 'client waiting');
+      const H = await mk('H'); H.start('host', room);
+      await waitFor(A.online, 20000, 'client online after host appears');
+      return 'client connected ' + (A.last().at - H.st[0].at) + 'ms after the host started';
+    },
+    async t5_guest_refresh() {
+      const room = code(), H = await mk('H'); H.start('host', room); await waitFor(H.online, 10000, 'host');
+      let A = await mk('A'); A.start('client', room); await waitFor(A.online, 15000, 'client');
+      const i = frames.indexOf(A); A = await reload(A, 'client', room); frames[i] = A;
+      await waitFor(A.online, 15000, 'client back online after reload');
+      await waitFor(() => H.w.Net.peers().length === 1, 5000, 'host has exactly 1 peer');
+      return 'reloaded guest back in ' + (A.last().at - A.st[0].at) + 'ms; host peer count stayed 1';
+    },
+    async t6_host_refresh() {
+      const room = code();
+      let H = await mk('H'); H.start('host', room); await waitFor(H.online, 10000, 'host');
+      const A = await mk('A'), B = await mk('B'); A.start('client', room); B.start('client', room);
+      await waitFor(() => A.online() && B.online(), 15000, 'clients');
+      const t0 = Date.now();
+      const i = frames.indexOf(H); H = await reload(H, 'host', room); frames[i] = H;
+      await waitFor(H.online, 15000, 'host back online (same key → takes the room back)');
+      await waitFor(() => H.w.Net.peers().length === 2, 25000, 'both clients reconnected');
+      return 'host reload → both guests back in ' + (Date.now() - t0) + 'ms';
+    },
+    async t7_stale_and_stolen_room() {
+      const room = code();
+      const H = await mk('H'); H.start('host', room, { key: 'right' }); await waitFor(H.online, 10000, 'host');
+      const X = await mk('X'); X.start('host', room, { pid: 'X', key: 'wrong' });
+      await waitFor(() => X.st.some(x => x.c === 'id-taken'), 10000, 'impostor told the room is taken');
+      if (X.online()) throw new Error('impostor took the room');
+      // Same key in another "tab" takes over and the old one stands down.
+      const H2 = await mk('H2'); H2.start('host', room, { pid: 'H', key: 'right' });
+      await waitFor(H2.online, 10000, 'same-key host takes over');
+      await waitFor(() => H.state() === 'error' && H.last().c === 'replaced', 10000, 'old tab told it was replaced');
+      X.w.Net.stop();
+      // Repeated connect/disconnect churn must not leave ghosts.
+      const A = await mk('A');
+      for (let k = 0; k < 6; k++) { A.start('client', room); await sleep(250 + k * 100); A.w.Net.stop(); }
+      A.start('client', room); await waitFor(A.online, 15000, 'client after churn');
+      await waitFor(() => H2.w.Net.peers().length === 1, 15000, 'exactly 1 peer after churn');
+      return 'wrong key refused; same key took over (old tab stood down); 6x churn → 1 clean peer';
+    },
+    async t8_large_snapshots() {
+      const room = code(), H = await mk('H'); H.start('host', room); await waitFor(H.online, 10000, 'host');
+      const A = await mk('A'); A.start('client', room); await waitFor(A.online, 15000, 'client');
+      const big = 'x'.repeat(2000000), mid = 'é'.repeat(300000);
+      H.w.Net.sendTo('A', { t: 'snapbig', d: big });
+      A.w.Net.send({ t: 'pubmid', d: mid });
+      await waitFor(() => A.got('snapbig').length && H.got('pubmid').length, 30000, 'big messages');
+      if (A.got('snapbig')[0].m.d !== big || H.got('pubmid')[0].m.d !== mid) throw new Error('payload corrupted');
+      return '2 MB host→guest and 300k multi-byte chars guest→host arrived intact (maxMsg ' + A.w.Net.diag().maxMsg + ')';
+    },
+    async t9_duplicates_dropped() {
+      const room = code(), H = await mk('H'); H.start('host', room); await waitFor(H.online, 10000, 'host');
+      const A = await mk('A');
+      // Make A's transport send every frame twice.
+      const RP = A.w.RelayPeer;
+      if (!RP) return 'SKIP: relay transport not in use';
+      const origConnect = RP.prototype.connect;
+      RP.prototype.connect = function () {
+        const c = origConnect.apply(this, arguments), s = c.send.bind(c);
+        c.send = d => { s(d); if (d && d.t && d.t.charAt(0) !== '_') s(d); };
+        return c;
+      };
+      A.start('client', room); await waitFor(A.online, 15000, 'client');
+      for (let k = 0; k < 5; k++) A.w.Net.send({ t: 'act', k });
+      await sleep(1500);
+      const n = H.got('act').length;
+      if (n !== 5) throw new Error('host applied ' + n + ' actions (expected 5)');
+      return '10 frames sent (each twice) → host applied exactly 5';
+    },
+    async t10_offline_queue() {
+      const room = code(), H = await mk('H'); H.start('host', room); await waitFor(H.online, 10000, 'host');
+      const A = await mk('A'); trackSockets(A);
+      A.start('client', room); await waitFor(A.online, 15000, 'client');
+      cutNetwork(A); A._socks.forEach(s => { try { s.close(); } catch (e) { /* ignore */ } });
+      await waitFor(() => !A.online(), 50000, 'client notices it is offline');
+      A.w.Net.send({ t: 'op', op: { k: 'pass', turn: 3 } });   // dangerous if replayed late
+      A.w.Net.send({ t: 'pub', p: { v: 1 } });
+      A.w.Net.send({ t: 'pub', p: { v: 2 } });                  // only the latest snapshot matters
+      await sleep(21000);
+      A.w.Net.send({ t: 'log', text: 'fresh' });                // recent: must arrive
+      restoreNetwork(A);
+      await waitFor(A.online, 30000, 'client back online');
+      await waitFor(() => H.got('pub').length >= 1 && H.got('log').length >= 1, 5000, 'fresh messages');
+      if (H.got('op').length) throw new Error('stale action was replayed');
+      if (H.got('pub').some(x => x.m.p.v === 1)) throw new Error('stale snapshot sent');
+      if (!A.dropped.some(m => m.t === 'op')) throw new Error('app was not told about the dropped action');
+      return 'offline 21s: stale "pass" dropped + reported, latest snapshot + fresh log delivered';
+    },
+    async t11_conflicting_pass_and_tsync() {
+      const P = await mk('APP'); const CT = P.w.CT;
+      CT.S.role = 'host'; CT.S.pid = 'H'; CT.S.room = 'TEST1'; CT.S.players = {}; CT.S.log = []; CT.S.online = {};
+      CT.S.table = { room: 'TEST1', seats: ['H', 'A', 'B'], order: ['H', 'A', 'B'], active: 'H', turn: 4, phase: 3, started: true, monarch: null, initiative: null, out: {}, rev: 10 };
+      CT.hostRecv({ t: 'op', op: { k: 'pass', turn: 4 } }, 'A');
+      CT.hostRecv({ t: 'op', op: { k: 'pass', turn: 4 } }, 'B');   // same moment, now stale
+      const T = CT.S.table;
+      if (T.turn !== 5 || T.active !== 'A') throw new Error('two passes skipped a turn: turn ' + T.turn + ' active ' + T.active);
+      const rev = T.rev;
+      CT.hostRecv({ t: 'tsync', table: Object.assign({}, T, { turn: 2, rev: rev - 3 }) }, 'B');  // older: ignore
+      if (CT.S.table.turn !== 5) throw new Error('older table copy overwrote newer state');
+      CT.hostRecv({ t: 'tsync', table: Object.assign({}, T, { turn: 7, active: 'B', rev: rev + 5 }) }, 'B');  // newer: adopt
+      if (CT.S.table.turn !== 7) throw new Error('newer table copy was not adopted');
+      CT.hostRecv({ t: 'tsync', table: Object.assign({}, CT.S.table, { seats: ['A', 'B'], rev: 999 }) }, 'B');  // host missing: reject
+      if (!CT.S.table.seats.includes('H')) throw new Error('accepted a table without the host');
+      return 'simultaneous passes → 1 turn; older copy ignored, newer adopted, bogus rejected';
+    },
+    async t12_p2p_diagnostics() {
+      // Direct WebRTC only. On networks that block it this must end in a clear 'ice' diagnosis, not a hang.
+      const save = NET; NET = 'p2p';
+      try {
+        const room = code(), H = await mk('H'); H.start('host', room);
+        await waitFor(() => H.online() || H.state() === 'error', 15000, 'p2p host registers with PeerJS');
+        if (!H.online()) return 'SKIP: PeerJS signalling unreachable (' + H.last().text + ')';
+        const A = await mk('A'); A.start('client', room);
+        await waitFor(() => A.online() || A.st.some(x => x.c === 'ice' || x.c === 'timeout'), 45000, 'p2p connect or a clear ICE diagnosis');
+        return A.online() ? 'direct WebRTC works on this network' : 'direct WebRTC blocked here → diagnosed as "' + A.st.find(x => x.c === 'ice' || x.c === 'timeout').text + '"';
+      } finally { NET = save; }
+    },
+    async t13_auto_fallback() {
+      // Relay down → auto mode falls back to direct for the host.
+      const saveR = RELAY, saveN = NET; RELAY = 'http://127.0.0.1:9'; NET = 'auto';
+      try {
+        const H = await mk('H'); H.start('host', code());
+        await waitFor(() => H.st.some(x => x.tr === 'p2p'), 20000, 'host switched to direct');
+        await waitFor(() => H.online() || H.state() === 'error', 15000, 'host registered');
+        return 'relay unreachable → host fell back to ' + H.last().tr + ' (' + H.state() + ')';
+      } finally { RELAY = saveR; NET = saveN; }
+    }
+  };
+
+  async function runAll() {
+    RELAY = $('#relay').value.trim(); NET = qs.get('net') || 'relay';
+    out.textContent = ''; results.length = 0;
+    const only = (qs.get('only') || '').split(',').filter(Boolean);
+    line('INFO', 'relay=' + (RELAY || '(none)') + ' net=' + NET + ' page=' + location.href.split('?')[0]);
+    for (const [name, fn] of Object.entries(TESTS)) {
+      if (only.length && !only.some(o => name.startsWith(o))) continue;
+      const t0 = Date.now();
+      try {
+        const msg = await fn();
+        const skip = typeof msg === 'string' && msg.startsWith('SKIP');
+        results.push({ name, ok: !skip, skip, msg, ms: Date.now() - t0 });
+        line(skip ? 'SKIP' : 'PASS', name + ' — ' + msg + ' (' + (Date.now() - t0) + 'ms)');
+      } catch (e) {
+        results.push({ name, ok: false, msg: String(e && e.message || e), ms: Date.now() - t0 });
+        line('FAIL', name + ' — ' + (e && e.message || e));
+      }
+      await cleanup();
+    }
+    const pass = results.filter(r => r.ok).length, fail = results.filter(r => !r.ok && !r.skip).length;
+    $('#summary').textContent = pass + ' passed, ' + fail + ' failed, ' + results.filter(r => r.skip).length + ' skipped';
+    window.__results = results;
+    window.__done = true;
+  }
+  $('#run').onclick = runAll;
+  window.__runAll = runAll;
+  if (qs.get('auto')) runAll();
+})();
+</script>
+</body>
+</html>

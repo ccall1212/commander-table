@@ -40,6 +40,7 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 WS_GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
 MAX_MESSAGE = 8 * 1024 * 1024
 PING_EVERY = 15
+HELLO_MAX_MSG = 8000000   # advertised to clients in the v2 'hello' (docs/relay-protocol.md)
 IDLE_TIMEOUT = 45
 
 GITHUB_REPO = 'ccall1212/commander-table'
@@ -600,6 +601,7 @@ class Client(object):
         self.addr = addr
         self.send_lock = threading.Lock()
         self.id = None
+        self.key = None
         self.links = set()
         self.dead = False
 
@@ -650,8 +652,15 @@ all_clients = set()
 
 def handle_message(c, msg):
     op = msg.get('op')
-    if op == 'reg':
+    if op == 'ping':
+        c.send_json({'op': 'pong'})
+    elif op == 'reg':
         want = msg.get('id')
+        key = msg.get('key')
+        if not isinstance(key, str) or key == '':
+            key = None
+        old = None
+        notify = []
         with broker_lock:
             if c.id is not None:
                 reply = {'op': 'err', 'type': 'invalid-message', 'message': 'Already registered'}
@@ -660,12 +669,27 @@ def handle_message(c, msg):
                     want = str(uuid.uuid4())
                 if not isinstance(want, str):
                     reply = {'op': 'err', 'type': 'invalid-message', 'message': 'Bad id'}
-                elif want in peers:
-                    reply = {'op': 'err', 'type': 'unavailable-id', 'message': 'ID is taken'}
                 else:
-                    peers[want] = c
-                    c.id = want
-                    reply = {'op': 'open', 'id': want}
+                    holder = peers.get(want)
+                    if holder is not None and holder is not c and key is not None and holder.key == key:
+                        # TAKEOVER: same key re-registering the id (e.g. a second tab)
+                        old = holder
+                        notify = teardown_locked(old)
+                        holder = None
+                    if holder is not None:
+                        reply = {'op': 'err', 'type': 'unavailable-id', 'message': 'ID is taken'}
+                    else:
+                        peers[want] = c
+                        c.id = want
+                        c.key = key
+                        reply = {'op': 'open', 'id': want}
+        if old is not None:
+            old.send_json({'op': 'err', 'type': 'replaced', 'message': 'Opened somewhere else'})
+            for other, lid in notify:
+                other.send_json({'op': 'cclose', 'lid': lid})
+            old.send_raw(0x8, struct.pack('>H', 1000))
+            old.kill()
+            stamp('~ peer %s replaced (%s)' % (want, old.addr[0]))
         c.send_json(reply)
         if reply['op'] == 'open':
             stamp('+ peer %s (%s)' % (c.id, c.addr[0]))
@@ -714,22 +738,29 @@ def handle_message(c, msg):
             other.send_json({'op': 'cclose', 'lid': lid})
 
 
+def teardown_locked(c):
+    """Unregister c and drop its links (caller holds broker_lock).
+    Returns [(other client, lid)] that must be told 'cclose'."""
+    notify = []
+    all_clients.discard(c)
+    if c.id is not None and peers.get(c.id) is c:
+        del peers[c.id]
+    for lid in list(c.links):
+        link = links.pop(lid, None)
+        if link is None:
+            continue
+        other = link[1] if link[0] is c else link[0]
+        other.links.discard(lid)
+        notify.append((other, lid))
+    c.links.clear()
+    return notify
+
+
 def cleanup(c):
     c.dead = True
-    notify = []
     with broker_lock:
-        all_clients.discard(c)
-        had_id = c.id
-        if c.id is not None and peers.get(c.id) is c:
-            del peers[c.id]
-        for lid in list(c.links):
-            link = links.pop(lid, None)
-            if link is None:
-                continue
-            other = link[1] if link[0] is c else link[0]
-            other.links.discard(lid)
-            notify.append((other, lid))
-        c.links.clear()
+        had_id = c.id if (c.id is not None and peers.get(c.id) is c) else None
+        notify = teardown_locked(c)
     for other, lid in notify:
         other.send_json({'op': 'cclose', 'lid': lid})
     if had_id is not None:
@@ -908,7 +939,7 @@ class Handler(BaseHTTPRequestHandler):
         except Exception:
             return self.not_found(head_only)
 
-        if path == '/ws' and 'websocket' in self.headers.get('Upgrade', '').lower():
+        if (path == '/ws' or path.startswith('/room/')) and 'websocket' in self.headers.get('Upgrade', '').lower():
             return self.handle_ws()
         if path == '/js/lan-mode.js':
             info = version_info()
@@ -979,6 +1010,7 @@ class Handler(BaseHTTPRequestHandler):
         with broker_lock:
             all_clients.add(c)
         try:
+            c.send_json({'op': 'hello', 'v': 2, 'server': 'lan', 'maxMsg': HELLO_MAX_MSG})
             serve_websocket(c, self.rfile)
         except Exception:
             pass

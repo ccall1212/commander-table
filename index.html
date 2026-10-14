@@ -20,6 +20,7 @@
     </header>
 
     <div id="resumeBox" class="box resume hidden"></div>
+    <div id="inviteBox" class="box resume hidden"></div>
 
     <section class="box">
       <h2><span class="step">1</span> Your name</h2>
@@ -68,7 +69,7 @@
   <header id="topbar">
     <div class="tb-left">
       <span class="brand">Commander Table</span>
-      <button id="roomBtn" data-a="copyroom" class="room" title="Click to copy the room code"></button>
+      <button id="roomBtn" data-a="copyroom" class="room" title="Click to copy an invite link"></button>
       <span id="netPill" class="pill"></span>
     </div>
     <div id="turnBox"></div>
@@ -117,10 +118,12 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
 <script src="js/lan-mode.js"></script>
+<script src="js/relay-peer.js"></script>
 <script src="js/lan.js"></script>
 <script src="js/widgets.js"></script>
 <script src="js/deck.js"></script>
 <script src="js/turn-config.js"></script>
+<script src="js/net-config.js"></script>
 <script src="js/net.js"></script>
 <script src="js/app.js"></script>
 <script src="js/updates.js"></script>
