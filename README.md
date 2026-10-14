@@ -42,16 +42,29 @@ Use this when the online link sits on "Connecting", for example on a work networ
 
 **Hosting (one person):**
 
-- You need Python 3. Get it from the Microsoft Store (search for "Python").
-- Double-click `Start LAN game.bat` in the game folder. A window opens (keep it open while you play) and the game opens in your browser.
+- You need Python 3. On Windows, get it from the Microsoft Store (search for "Python").
+- Start the server:
+  - **Windows:** double-click `Start LAN game.bat`.
+  - **macOS:** double-click `start-lan-game.command`. The first time, if macOS warns, right-click it and choose Open.
+  - **Linux:** run `./start-lan-game.sh`.
+  - **Any terminal:** run `python lan-server.py` (or `python3`) from the game folder.
+- A small menu appears in the window. Press Enter to choose **[1] Start the game (opens your browser)**. The other options are **[2] Status** (address, connected players, version), **[3] Check for updates**, and **[Q] Quit**. Once it's running, the menu offers Open in browser, Status, Check for updates, and Stop. Keep the window open while you play.
 - The first time, Windows asks whether Python may use the network. Tick both boxes (Private **and** Public, since office networks are often "Public") and click **Allow**.
 - The lobby shows a line like `http://YOUR-PC-NAME:8790/`. Send that to the other players. They open it in Chrome or Edge and join with the room code as usual.
+- The version is shown at the bottom of the lobby, like `v0.3.0 (abc1234)`. The part in brackets is the GitHub commit it's running, so it's always exact.
+
+**Updates:**
+
+- The host's browser checks GitHub automatically and shows "Update available". Click **Updates** (in the lobby footer, or the top bar during a game), then **Update & restart**.
+- It downloads the latest version, keeps a backup of the replaced files in a `.backup` folder, restarts the server, and the page reloads by itself. Other players reconnect automatically and see a "reload to get the new version" notice.
+- Only the host's computer can install updates. A git checkout updates with a fast-forward (like `git pull`) and refuses if it has uncommitted changes. A copy with changes that aren't on GitHub won't auto-update.
+
+**Options:** `--port 8791` (if 8790 is busy), `--no-browser`, and `--start` (skip the menu).
 
 **Good to know:**
 
 - Decks are saved per address, so decks imported on the online link need to be pasted once more at the LAN address. It stays the same afterwards.
 - Card images still come from Scryfall, so everyone needs normal internet access.
-- If port 8790 is busy, run `python lan-server.py --port 8791` from the game folder.
 - If players can't reach the address, the host's firewall or the network may be blocking it. Try again with another person hosting.
 
 ## If something goes wrong
