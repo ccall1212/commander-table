@@ -18,7 +18,9 @@ migration in `wrangler.jsonc`.
    - **Root directory / path:** `relay`
    - **Build command:** leave empty.
    - **Deploy command:** `npx wrangler deploy` (the default).
-3. Click **Save and Deploy**. Wait for the build to go green.
+3. Click **Save and Deploy**. The create form has no branch picker, so this first build runs on `main`
+   and fails with "root directory not found" until the relay is merged. Open the worker -> **Settings** ->
+   **Build** -> production branch -> `feature/relay-netcode`, save, and build again. Wait for green.
 4. Copy the worker URL, e.g. `https://commander-table-relay.<your-subdomain>.workers.dev`. It is
    public, not a secret. Give it to Claude; it goes in `js/net-config.js`.
 5. Sanity check: open `<url>/health` in a browser. You should see `{"ok":true,"v":2}`.
