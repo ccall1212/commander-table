@@ -2185,6 +2185,11 @@ function showLobby() {
   selDeck = LS.get('ct.selDeck', null);
   renderDeckList();
   $('#netWarn').classList.toggle('hidden', typeof Peer !== 'undefined');
+  const lan = window.CT_LAN, li = $('#lanInfo');
+  if (lan && lan.urls && lan.urls.length) {
+    li.innerHTML = `<b>LAN game</b> — players on your network open ${lan.urls.map(u => `<code>${esc(u)}</code>`).join(' or ')}, then join with the room code.`;
+    li.classList.remove('hidden');
+  } else li.classList.add('hidden');
   const last = LS.get('ct.last', null);
   const sess = last && last !== S.pid ? loadSession(last) : null;
   const rb = $('#resumeBox');

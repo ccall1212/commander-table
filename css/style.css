@@ -481,3 +481,7 @@ body.view-side #sideBtn, body.view-grid #sideBtn { display: inline-block; }
 #myZones { position: relative; z-index: 70; }
 .ztools { position: relative; z-index: 71; background: #0b0e13; border-radius: 8px; padding: 4px; box-shadow: -8px 0 12px #0b0e13; }
 #handWrap { padding-right: 22px; }
+
+/* LAN mode: address players open, shown in the lobby's Play box */
+.lan-info { margin: 10px 0 0; padding: 8px 10px; border: 1px solid var(--accent); border-radius: 8px; font-size: 13px; line-height: 1.5; }
+.lan-info code { background: #0b0e13; padding: 1px 6px; border-radius: 4px; user-select: all; }

@@ -36,6 +36,24 @@ Decks are saved in your browser.
 - Supports 2 to 6 players. It's designed for 1v1 up to 4-player Commander.
 - Want to practice alone? Click **Practice solo**.
 
+## Playing on a LAN (office / same network)
+
+Use this when the online link sits on "Connecting", for example on a work network that blocks browser peer-to-peer connections. It works like Forge's LAN play: one person's computer hosts, and everyone else just uses a browser. No accounts, and no install for the other players.
+
+**Hosting (one person):**
+
+- You need Python 3. Get it from the Microsoft Store (search for "Python").
+- Double-click `Start LAN game.bat` in the game folder. A window opens (keep it open while you play) and the game opens in your browser.
+- The first time, Windows asks whether Python may use the network. Tick both boxes (Private **and** Public, since office networks are often "Public") and click **Allow**.
+- The lobby shows a line like `http://YOUR-PC-NAME:8790/`. Send that to the other players. They open it in Chrome or Edge and join with the room code as usual.
+
+**Good to know:**
+
+- Decks are saved per address, so decks imported on the online link need to be pasted once more at the LAN address. It stays the same afterwards.
+- Card images still come from Scryfall, so everyone needs normal internet access.
+- If port 8790 is busy, run `python lan-server.py --port 8791` from the game folder.
+- If players can't reach the address, the host's firewall or the network may be blocking it. Try again with another person hosting.
+
 ## If something goes wrong
 
 Dropped connections and crashed tabs happen, and recovering from them is the main reason this app exists.
