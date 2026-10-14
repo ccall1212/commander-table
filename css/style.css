@@ -87,8 +87,8 @@ body.side-open #side { display: grid; }
 .opp.active, #mine.active { box-shadow: 0 0 0 2px var(--accent) inset; }
 .opp.offline { opacity: .6; }
 .opp.out { opacity: .35; }
-.ohead, #myBar { position: relative; display: flex; align-items: center; gap: 8px; padding: 4px 8px; flex-wrap: wrap; font-size: 13px;
-  border-bottom: 1px solid var(--border); background: var(--panel2); }
+.ohead, #myBar { position: relative; display: flex; align-items: center; gap: 8px; padding: 4px 8px; flex-wrap: wrap; font-size: 13px; }
+.ohead { border-bottom: 1px solid var(--border); background: var(--panel2); }
 .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--pc, #888); flex: none; }
 .pname { font-weight: 700; cursor: context-menu; }
 .tag { font-size: 10px; font-weight: 700; padding: 0 5px; border-radius: 4px; background: var(--accent); color: #1a1405; }
@@ -107,15 +107,14 @@ body.side-open #side { display: grid; }
 .obf { position: relative; overflow: hidden; padding: 4px; min-height: 0; }
 .opp.mini { flex: 0 0 170px; }
 .opp.mini .obody { display: none; }
-.focusbtn { margin-left: auto; padding: 0 7px; line-height: 18px; }
 
 /* ---------- Me ---------- */
-#mine { display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto; min-height: 0; border-top: 2px solid var(--border); overflow: hidden; }
-#handSplit { height: 10px; cursor: row-resize; background: var(--panel2); border-top: 1px solid var(--border); position: relative; touch-action: none; }
-#handSplit::after { content: ''; position: absolute; left: 50%; top: 3px; width: 46px; height: 4px; margin-left: -23px; border-radius: 2px; background: var(--muted); opacity: .6; }
-#handSplit:hover, #handSplit.dragging { background: rgba(212,167,44,.18); }
-#handSplit:hover::after, #handSplit.dragging::after { background: var(--accent); opacity: 1; }
-#myBar .mb-actions { margin-left: auto; display: flex; gap: 6px; }
+/* The battlefield (#myBf) fills all of #mine; the name/life bar, hand and piles float over it. */
+#mine { position: relative; min-height: 0; border-top: 2px solid var(--border); overflow: hidden; }
+#handSplit { display: none; } /* hand size is a setting now */
+#myBar { position: absolute; top: 8px; right: 8px; z-index: 60; gap: 6px; padding: 4px 8px; max-width: calc(100% - 16px);
+  background: rgba(11,14,19,.88); border: 1px solid var(--border); border-radius: 10px; }
+#myBar .mb-actions { display: inline-flex; gap: 6px; }
 .cdmg { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
 .cdchip { display: inline-flex; align-items: center; gap: 3px; border: 1px solid var(--border); border-radius: 12px;
   padding: 1px 3px 1px 8px; font-size: 12px; background: var(--panel); }
@@ -127,9 +126,14 @@ body.side-open #side { display: grid; }
 /* keep the splitter in the grid (just invisible) — display:none would shift #mine into the 0px row */
 #table.noopps #split { visibility: hidden; pointer-events: none; }
 #table.noopps #opps:empty::after { font-size: 13px; }
-#myBf { overflow: hidden; padding: 6px 8px; min-height: 0; }
-#myRow { --cw: 82px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; background: #0b0e13;
-  height: calc(var(--cw) * 1.397 * 0.66 + 34px); align-items: start; position: relative; z-index: 5; overflow: visible; padding: 4px 8px 0; }
+#myBf { position: absolute; inset: 0; overflow: hidden; padding: 6px 8px; min-height: 0; }
+/* Hand + piles overlay the bottom of the battlefield; empty areas let clicks through to the board. */
+#myRow { --cw: 82px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; background: transparent;
+  height: calc(var(--cw) * 1.397 * 0.66 + 34px); align-items: start; position: absolute; left: 0; right: 0; bottom: 0; z-index: 65;
+  overflow: visible; padding: 4px 8px 0; }
+#myRow, #handWrap, #myZones { pointer-events: none; }
+#myHand, #myHand .card, #mullBar, .handlabel, .ztools, #myZones .zbox, #myZones [data-pile], #myZones .card,
+#myZones button, #myZones input, #myZones label { pointer-events: auto; }
 
 /* ---------- Free-form boards (logical 1400x430, scaled to fit) ---------- */
 .boardwrap { position: relative; width: 100%; height: 100%; overflow: hidden; }
@@ -310,6 +314,7 @@ body.lens-on #pv { display: none; }
 .lifeN { font-size: 22px; font-weight: 700; min-width: 42px; text-align: center; }
 .ohead .lifeN { font-size: 18px; }
 .ctrpanel { position: absolute; z-index: 60; top: 100%; left: 8px; margin-top: 4px; min-width: 240px; background: var(--panel);
+#myBar .ctrpanel { left: auto; right: 0; } /* the floating life box sits at the right edge */
   border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; box-shadow: 0 10px 30px rgba(0,0,0,.5); }
 .ctrrow { display: grid; grid-template-columns: 20px 1fr 34px auto auto; align-items: center; gap: 6px; padding: 4px 0; }
 .ctrrow .ci { text-align: center; }
@@ -369,27 +374,37 @@ body.lens-on #pv { display: none; }
 
 
 /* ---- A. Sidebar view: my board big on the left, opponents stacked in a right column ---- */
-#table.view-side { grid-template-columns: minmax(0, 1fr) 340px; grid-template-rows: none; grid-auto-rows: minmax(0, 1fr); padding-bottom: 4px; }
+/* JS sets --rows = number of tiles in the right-hand column (the YOU tile counts; the focused opponent doesn't). */
+#table.view-side { grid-template-columns: minmax(0, 1fr) 340px; grid-template-rows: repeat(var(--rows, 1), minmax(0, 1fr)); padding-bottom: 4px; }
 #table.view-side.view-focus { grid-template-columns: minmax(0, 1fr) clamp(280px, 21vw, 420px); }
 #table.view-side #split { display: none; }
 #table.view-side #opps { display: contents; }
-#table.view-side #mine { grid-column: 1; grid-row: 1 / span 1; }
-#table.view-side[data-n="1"] #mine { grid-row: 1 / span 1; }
-#table.view-side[data-n="2"] #mine { grid-row: 1 / span 2; }
-#table.view-side[data-n="3"] #mine { grid-row: 1 / span 3; }
-#table.view-side[data-n="4"] #mine { grid-row: 1 / span 4; }
-#table.view-side[data-n="5"] #mine { grid-row: 1 / span 5; }
+#table.view-side #mine { grid-column: 1; grid-row: 1 / -1; }
 #table.view-side .opp { grid-column: 2; min-height: 0; margin: 4px 4px 0 0; }
 #table.view-side .opp.mini .obody { display: grid; }
 #table.view-side .ohead { font-size: 12px; flex-wrap: wrap; }
-/* Focus: one opponent takes the big left slot, "mine" is hidden, the rest stay in the right column.
-   With #mine hidden the right column holds n-1 panels, so the focused panel spans n-1 rows (min 1). */
-#table.view-side.has-focus #mine { display: none; }
-#table.view-side.has-focus .opp.focus { grid-column: 1; margin: 4px 0 0 4px; grid-row: 1 / span 1; }
-#table.view-side.has-focus[data-n="2"] .opp.focus { grid-row: 1 / span 1; }
-#table.view-side.has-focus[data-n="3"] .opp.focus { grid-row: 1 / span 2; }
-#table.view-side.has-focus[data-n="4"] .opp.focus { grid-row: 1 / span 3; }
-#table.view-side.has-focus[data-n="5"] .opp.focus { grid-row: 1 / span 4; }
+/* Viewing someone else: their board takes the big left cell and #mine stays on top of it, transparent, so only my
+   floating hand / piles / buttons remain (clickable) over their board. Margins match .opp.focus so the overlay lines up. */
+#table.view-side.has-focus .opp.focus { grid-column: 1; grid-row: 1 / -1; margin: 4px 0 0 4px; }
+#table.view-side.has-focus #mine { z-index: 5; margin: 4px 0 0 4px; background: transparent; border-top: none; box-shadow: none; pointer-events: none; }
+#table.view-side.has-focus #myBf { visibility: hidden; }
+#table.view-side.has-focus #myBar { display: none; }
+
+/* YOU tile: first in the right column while viewing someone else (or any sidebar/focus layout) */
+.opp.youtile.viewing { opacity: .75; }
+.tag.you { background: rgba(212,167,44,.16); color: var(--accent); border: 1px solid rgba(212,167,44,.4); font-size: 9px; letter-spacing: .5px; }
+.life-ro { font-size: 12px; color: var(--muted); }
+.life-ro b { color: var(--text); font-weight: 700; }
+.youtile .viewing-note { height: 100%; display: grid; place-items: center; text-align: center; color: var(--muted); font-size: 13px; }
+/* Read-only miniature: clicks fall through to the tile */
+.boardwrap.thumb { pointer-events: none; }
+/* Click-to-view hint on any tile that isn't the one currently shown big */
+#table.view-side .opp:not(.focus):not(.viewing) .obody { position: relative; cursor: pointer; }
+#table.view-side .opp:not(.focus):not(.viewing) .obody::after { content: '\1F441\00a0 Click to view'; position: absolute; inset: 0; z-index: 3;
+  display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.45); color: #fff; font-size: 14px;
+  border-radius: 0 0 calc(var(--radius) - 1px) calc(var(--radius) - 1px); pointer-events: none; opacity: 0; transition: opacity .15s ease; }
+#table.view-side .opp:not(.focus):not(.viewing):hover .obody::after { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { #table.view-side .opp .obody::after { transition: none; } }
 
 /* ---- B. Grid view: equal quadrants, me bottom-left ---- */
 #table.view-grid { grid-template-columns: 1fr 1fr; grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); gap: 6px; padding: 6px; }
@@ -485,9 +500,10 @@ body.lens-on #pv { display: none; }
 .tgl input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .tgl span, .tgl span::after { transition: none; } }
 
-/* Keep the Draw / Untap all buttons and piles above a lifted hand card, and give the hand some room on the right */
+/* Keep the Draw / Untap all buttons and piles above a lifted hand card, and give the hand some room on the right.
+   (#myRow, #handWrap and #myZones ignore the pointer except for their interactive bits — see "Me".) */
 #myZones { position: relative; z-index: 70; }
-.ztools { position: relative; z-index: 71; background: #0b0e13; border-radius: 8px; padding: 4px; box-shadow: -8px 0 12px #0b0e13; }
+.ztools { position: relative; z-index: 71; background: rgba(11,14,19,.88); border-radius: 8px; padding: 4px; }
 #handWrap { padding-right: 22px; }
 
 /* LAN mode: address players open, shown in the lobby's Play box */

@@ -45,6 +45,7 @@ Decks are saved in your browser.
 Open ☰ → **Display settings…** to adjust how things look on your screen:
 
 - **Magnifier size:** how big the magnifier circle is (see **Magnifier** under **Cards on the table** below).
+- **Hand size:** a slider for how big your hand cards are, with a **Reset** button.
 - **Focus auto-follow:** a checkbox that controls whether the Focus view follows the turn (see **Table layout** below).
 - On very wide monitors (2500px and up), opponent names get a bit larger.
 
@@ -115,17 +116,18 @@ Dropped connections and crashed tabs happen, and recovering from them is the mai
 **Your battlefield**
 
 - Your battlefield has three zones: **Creatures / Planeswalkers**, **Lands**, **Artifacts / Enchantments**. New cards drop into the right zone automatically, and basic lands / identical tokens pile up neatly.
-- Your **LIB · GY · EXILE · CMD** piles sit at the bottom-right next to your hand (with **Draw**, **Untap all** and **Pass turn** buttons). Drag a card onto one to put it there (Shift-drop on LIB = bottom); click LIB to draw; click GY/EXILE to search; drag a pile to pull its top card. Opponents' LIB / GY / EX / HAND counts and their commander are in their header.
+- Your **LIB · GY · EXILE · CMD** piles, your hand, and the **Draw**, **Untap all** and **Pass turn** buttons float over the bottom of your battlefield, so the battlefield uses the full height. Drag a card onto one to put it there (Shift-drop on LIB = bottom); click LIB to draw; click GY/EXILE to search; drag a pile to pull its top card. Opponents' LIB / GY / EX / HAND counts and their commander are in their header.
 - Drag any card anywhere you like — it stays exactly where you put it.
-- Click **▦ Arrange zones** to move a zone (drag its name — its cards come with it) or resize it (drag the bottom-right corner). Your layout is remembered for future games. **Tidy cards** puts everything back into its zone; **Reset zones** restores the default layout.
+- Open ☰ → **Arrange zones** to move a zone (drag its name — its cards come with it) or resize it (drag the bottom-right corner). While you're arranging, **Tidy cards**, **Reset zones** and **Done** appear in the small box at the top-right of your battlefield. **Tidy cards** puts everything back into its zone; **Reset zones** restores the default layout. Your layout is remembered for future games. If you haven't arranged your zones yourself, the default zones stretch to fill the battlefield in every layout (cards keep their size). Zones you've arranged stay exactly where you put them.
 - What you see is what everyone sees: opponents see your board exactly as you arranged it, and you see theirs the way they arranged it.
 - Every board always fits the screen, so there's no scrolling.
-- Drag the bar between the opponents' area and yours to give your board more or less room. Click ⤢ on an opponent (or double-click their board) to show it large.
+- Battlefield cards are about 40% bigger (about 12 across instead of 17), so busy boards start overlapping cards sooner.
+- Drag the bar between the opponents' area and yours to give your board more or less room. In the Top and Grid layouts, right-click a player's name → **Show this board large** (or double-click their board) to show it large.
 - **Table layout** — switch with the buttons in the top bar (remembered):
   - ▤ **Top**: opponents across the top.
-  - ▥ **Sidebar**: your board big on the left, opponents stacked on the right. Click ⤢ on one to swap their board into the big area.
+  - ▥ **Sidebar**: your board big on the left. The right-hand column lists every player, with your own tile (marked YOU) first. Hover a tile to see an eye, and click it to view that player's board big. Your hand and buttons stay at the bottom while you look. Click your YOU tile to go back to your own board.
   - ▦ **Grid**: every player gets an equal quadrant, with you bottom-left. Opponents' boards are biggest here.
-  - ◎ **Focus**: the active player's battlefield gets the big spot, and it follows the turn automatically. Turn that off in Display settings, or click an opponent's ⤢ button yourself.
+  - ◎ **Focus**: the active player's battlefield gets the big spot, and it follows the turn automatically. Turn that off in Display settings, or use the eye on a player's tile in the right-hand column to pick a board yourself.
 - The **📜 Log** button in the top bar slides the game log (and the shortcut help) out from the right edge. Click it again to close.
 - Cards overlap more as your hand grows, and the card under your mouse lifts up so you can read it.
 - Every opponent's hand shows in their header, right next to their commander: a small fan of card backs with the number of cards. If they turn on **Reveal my hand to everyone**, the fan shows their real cards face-up (marked REVEALED) — hover one to read it in the card preview.
@@ -139,13 +141,13 @@ Dropped connections and crashed tabs happen, and recovering from them is the mai
 
 **Life, counters & commander damage**
 
-- Your life box is at the top-left of your area: − **40** +. Click **▾** to open Poison, Energy, Experience, Rad and Tickets. Opponents have the same box (click ▾ to see their counters; − / + on their life asks their game to change it).
+- Your life box is in the small floating box at the top-right of your battlefield, with your name, counters and commander damage: − **40** +. Click **▾** to open Poison, Energy, Experience, Rad and Tickets. Opponents have the same box (click ▾ to see their counters; − / + on their life asks their game to change it).
 - Commander damage shows as colored tags — one per opposing commander, in that player's color. **Left-click +1, right-click −1** (it also adjusts your life). A tag turns red and pulses at 21.
 - On an opponent's header, the tag in **your** color is the damage your commander has dealt them — click it to deal more (right-click to undo).
 - Commander tax: the 🪙 chip above **CMD** — **left-click +2, right-click −2**. It never goes up by itself.
 - Counters stack down the top-right corner of a card; the P/T badge stays in the bottom-right corner. On both, **left-click goes up, right-click goes down**.
 - Cards in your hand show their mana cost along the top edge; your hand count shows above your hand and every opponent's hand count is in their header.
-- The hand bar (the thin bar above your hand) drags up/down to resize your hand cards; double-click it to reset.
+- Your hand size is set in ☰ → **Display settings…** (see **Display settings** above).
 
 **Counters, power/toughness & card info**
 
@@ -196,7 +198,7 @@ Other shortcuts:
 
 - When you import a deck, the tokens related to your cards are linked automatically.
 - When you play a card that makes tokens, a pop-up offers a one-click **+ Token** button.
-- The Tokens menu lists your deck's tokens.
+- The Tokens menu (☰ → **Tokens**) lists your deck's tokens.
 - **Search all tokens** finds any token on Scryfall.
 
 ## Turn helpers
@@ -213,6 +215,7 @@ Other shortcuts:
 - This is a sandbox, like Tabletop Simulator. It doesn't enforce the rules, so players keep each other honest.
 - This is an unofficial fan project and is not affiliated with Wizards of the Coast. Card data and images come from Scryfall.
 - Please don't charge money for it.
+- After an update, everyone should reload the page with **Ctrl+F5**. Players on older versions are handled automatically, but a reload makes sure you have the new layout.
 
 ## Troubleshooting
 

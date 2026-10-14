@@ -6,6 +6,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-10-14
+
+### Changed
+- Battlefield cards are about 40% bigger: the board is laid out about 12 cards across instead of 17. Older boards and saved layouts are converted automatically, and boards from players still on an older version are rescaled.
+- Your hand, piles and Draw / Untap all / Pass turn float over the bottom of the battlefield instead of taking their own row, so the battlefield uses the full height. Hand size moved to ☰ → Display settings.
+- Your name, life and commander damage sit in a small floating box at the top-right of your battlefield. Arrange zones and Tokens are in the ☰ menu.
+- Untouched default zones stretch to fill the battlefield in every layout, and the cards in them keep their size.
+
+### Added
+- Sidebar and Focus layouts list every player, with your own board (YOU) first. Hover a board and click the eye to view it big, and click YOU to come back. This replaces the ⤢ / ⤡ buttons.
+
 ## [0.6.0] - 2026-10-14
 
 ### Added
@@ -66,7 +77,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - First playable build: paste-import decks from Moxfield or Archidekt (via Scryfall), 2–4 player rooms over PeerJS with self-healing reconnects, a searchable zone viewer, commander damage tracking and automatic tokens.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/ccall1212/commander-table/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/ccall1212/commander-table/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/ccall1212/commander-table/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/ccall1212/commander-table/compare/v0.3.0...v0.4.0

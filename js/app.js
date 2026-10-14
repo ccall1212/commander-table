@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.6.0';
+const APP_VERSION = '0.7.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -49,19 +49,21 @@ const IMG_OK = u => typeof u === 'string' && u.startsWith('https://cards.scryfal
 // ---------- board geometry (logical units; scaled to fit on screen) ----------
 // BW is fixed; each player's board HEIGHT (me.bh) grows to fit their own screen (min BH, max BH_MAX),
 // is published with their board, and opponents scale that whole board to fit their panel.
-const BW = 1400, BH = 430, BH_MAX = 1400, CW = 80, CH = 112;
+// v0.7: BW 1400 -> 1000 so cards draw ~40% bigger. Boards from older versions are rescaled (see cleanPub / normalizeMe).
+const BW = 1000, BH = 430, BH_MAX = 1400, CW = 80, CH = 112;
+const OLD_BW = 1400; // board width of clients before v0.7 (they don't send `bw`)
 const myBH = () => (S.me && S.me.bh) || BH;
 const DEFAULT_LAYOUT = [
   // library / graveyard / exile / command zone live in the bottom row, not on the board
-  { k: 'creatures', label: 'Creatures / Planeswalkers', x: 0, y: 0, w: 1400, h: 250 },
-  { k: 'lands', label: 'Lands', x: 0, y: 260, w: 760, h: 170 },
-  { k: 'permanents', label: 'Artifacts / Enchantments', x: 770, y: 260, w: 630, h: 170 }
+  { k: 'creatures', label: 'Creatures / Planeswalkers', x: 0, y: 0, w: 1000, h: 250 },
+  { k: 'lands', label: 'Lands', x: 0, y: 260, w: 540, h: 170 },
+  { k: 'permanents', label: 'Artifacts / Enchantments', x: 550, y: 260, w: 450, h: 170 }
 ];
 const PLAYER_CTR_ICONS = { Poison: '☠', Energy: '⚡', Experience: '✦', Rad: '☢', Tickets: '🎟' };
 const PILE_ZONES = ['library', 'graveyard', 'exile'];
 const LAYOUT_KEYS = DEFAULT_LAYOUT.map(r => r.k).sort().join();
 // A saved layout from an older version (different set of zones) is replaced by the default.
-const layoutOk = l => Array.isArray(l) && l.map(r => r.k).sort().join() === LAYOUT_KEYS;
+const layoutOk = l => Array.isArray(l) && l.map(r => r.k).sort().join() === LAYOUT_KEYS && l.every(r => isObj(r) && +r.x + +r.w <= BW);
 const regionOf = (layout, k) => (layout || []).find(r => r.k === k) || DEFAULT_LAYOUT.find(r => r.k === k);
 const cloneLayout = l => l.map(r => Object.assign({}, r));
 function cleanLayout(l) {
@@ -73,12 +75,24 @@ function cleanLayout(l) {
   });
 }
 function defaultLayout() {
-  const saved = cleanLayout(LS.get('ct.layout', null));
+  const saved = cleanLayout(LS.get('ct.layout2', null)); // 'ct.layout' held pre-v0.7 (1400-wide) layouts
   if (layoutOk(saved)) {
     saved.forEach(r => { const d = DEFAULT_LAYOUT.find(x => x.k === r.k); if (d) r.label = d.label; });
     return saved;
   }
-  return cloneLayout(DEFAULT_LAYOUT);
+  return fittedLayout();
+}
+// The default zones stretched to the height my board will have on this screen (so they fill the battlefield).
+function fittedLayout() {
+  const wrap = $('#myBf');
+  let W = wrap && wrap.clientWidth, H = wrap && wrap.clientHeight;
+  if (!W || !H) { // not laid out yet (e.g. resuming): estimate from the window and the chosen layout
+    const v = LS.get('ct.view', 'top');
+    W = innerWidth * (v === 'side' || v === 'focus' ? 0.8 : 1);
+    H = v === 'top' ? innerHeight * 0.55 : innerHeight - 50;
+  }
+  const fit = clamp(Math.round(Math.min(BW * H / W, 800)), BH, BH_MAX), f = fit / BH;
+  return cloneLayout(DEFAULT_LAYOUT).map(r => Object.assign(r, { y: Math.round(r.y * f), h: Math.round(r.h * f) }));
 }
 const isAttachable = d => !!d && /\b(Aura|Equipment|Fortification)\b/.test((d.type || '') + ' ' + (d.backType || ''));
 
@@ -125,6 +139,8 @@ function newPlayer(deck, name, prev) {
     revealHand: false, revealTop: false, seq: 0, lastTurn: 0,
     autoUntap: false, autoDraw: false, // always start a game with these off
     layout: prev && prev.layout ? cloneLayout(prev.layout) : defaultLayout(),
+    // auto = untouched default zones: they (and the cards in them) stretch to fit whichever view is used
+    layoutAuto: prev && prev.layout ? !!prev.layoutAuto : !LS.get('ct.layout2', null),
     defs: {}, tokens: [], cmdrs: [],
     zones: { library: [], hand: [], battlefield: [], graveyard: [], exile: [], command: [] }
   };
@@ -145,6 +161,7 @@ function normalizeMe(m) {
   if (!layoutOk(m.layout)) {
     // zones changed in this version: switch to the new layout and re-sort cards into it
     m.layout = defaultLayout();
+    m.layoutAuto = !LS.get('ct.layout2', null);
     m.zones.battlefield.forEach(c => { if (!c.att) { delete c.x; delete c.y; } });
     m.bh = 0; // recompute the board height for the new layout
   }
@@ -239,13 +256,14 @@ function pubCard(c) {
 }
 function publicView() {
   const m = S.me, z = m.zones, defs = {};
+  // (bw tells other players which board width our positions/layout use)
   const take = list => list.map(c => {
     const p = pubCard(c);
     if (p.id && m.defs[p.id]) defs[p.id] = Deck.slimDef(m.defs[p.id]);
     return p;
   });
   return {
-    pid: m.pid, name: m.name, life: m.life, poison: m.poison, ctr: m.ctr, cmdDmg: m.cmdDmg, cmdrs: m.cmdrs,
+    pid: m.pid, bw: BW, name: m.name, life: m.life, poison: m.poison, ctr: m.ctr, cmdDmg: m.cmdDmg, cmdrs: m.cmdrs,
     casts: m.casts, hand: z.hand.length, lib: z.library.length, kept: m.kept, layout: m.layout, bh: myBH(),
     zones: { battlefield: take(z.battlefield), graveyard: take(z.graveyard), exile: take(z.exile), command: take(z.command) },
     revHand: m.revealHand ? take(z.hand) : null,
@@ -401,6 +419,13 @@ const numMap = o => (isObj(o) ? Object.fromEntries(Object.entries(o).slice(0, 40
 function cleanPub(p, from) {
   if (!isObj(p)) return null;
   const z = isObj(p.zones) ? p.zones : {};
+  // A board from a client with a different board width: scale x and widths so it still lines up.
+  const k = BW / clamp(num(p.bw, OLD_BW), 400, 4000);
+  if (k !== 1) {
+    const sx = list => (Array.isArray(list) ? list.map(c => (isObj(c) && Number.isFinite(+c.x) && c.x !== null ? Object.assign({}, c, { x: +c.x * k }) : c)) : list);
+    z.battlefield = sx(z.battlefield);
+    if (Array.isArray(p.layout)) p.layout = p.layout.map(r => (isObj(r) ? Object.assign({}, r, { x: num(r.x) * k, w: num(r.w) * k }) : r));
+  }
   return {
     pid: from, name: String(p.name || 'Player').slice(0, 24), life: num(p.life, 40), poison: num(p.poison),
     ctr: numMap(p.ctr), cmdDmg: numMap(p.cmdDmg), casts: numMap(p.casts),
@@ -1328,9 +1353,18 @@ function displaySettings() {
         <input class="display-scale" id="ctLensSize" type="range" min="40" max="260" step="10" value="${r0}" aria-label="Magnifier size">
         <div class="display-scale-ends"><span>Small</span><span>Large</span></div>
       </div>
+      <div>
+        <div class="display-setting-head"><label for="ctHandSize"><b>Hand size</b></label><strong id="ctHandValue">${S.handCw || 82}px</strong></div>
+        <input class="display-scale" id="ctHandSize" type="range" min="60" max="160" step="2" value="${S.handCw || 82}" aria-label="Hand card size">
+        <div class="display-scale-ends"><span>Small</span><button type="button" id="ctHandReset">Reset</button><span>Large</span></div>
+      </div>
       <label class="display-check"><input id="ctAutoFocus" type="checkbox" ${S.autoFocus ? 'checked' : ''}><span>Auto-focus the active player in Focus view</span></label>
       <p class="display-note">Saved in this browser only; doesn't change what other players see.</p>
     </div>` });
+  const hs = m.el.querySelector('#ctHandSize'), hv = m.el.querySelector('#ctHandValue');
+  const setHand = v => { setHandSize(clamp(num(v, 82), 60, 160)); LS.set('ct.handCw', S.handCw); hs.value = S.handCw; hv.textContent = S.handCw + 'px'; };
+  hs.addEventListener('input', () => setHand(hs.value));
+  m.el.querySelector('#ctHandReset').addEventListener('click', () => setHand(82));
   const lens = m.el.querySelector('#ctLensSize'), lv = m.el.querySelector('#ctLensValue');
   lens.addEventListener('input', () => { const r = window.Lens ? Lens.setRadius(+lens.value) : +lens.value; lv.textContent = r + 'px'; });
   m.el.querySelector('#ctAutoFocus').addEventListener('change', e => {
@@ -1450,12 +1484,25 @@ function boardHTML(pid, idx) {
   const bh = mine ? myBH() : ((p && p.bh) || BH);
   return `<div class="board${editing ? ' arrange' : ''}" data-pid="${esc(pid)}" style="height:${bh}px">${html}</div>`;
 }
+// Untouched default zones follow the board's shape in the current view: zones and the cards in them
+// spread vertically (cards keep their size), so switching Top / Sidebar / Grid never shrinks the cards.
+function stretchAutoLayout(W, H) {
+  const m = S.me, bottom = Math.max(...m.layout.map(r => r.y + r.h));
+  const target = clamp(Math.round(Math.min(BW * H / W, 800)), BH, BH_MAX);
+  if (!bottom || Math.abs(target - bottom) <= 4) return;
+  const f = target / bottom;
+  m.layout.forEach(r => { r.y = Math.round(r.y * f); r.h = Math.round(r.h * f); });
+  m.zones.battlefield.forEach(c => { if (c.y != null && !c.att) c.y = clamp(Math.round(c.y * f), 0, target - CH); });
+  m.bh = 0;
+  saveSoon(); publish(); setTimeout(render, 0);
+}
 function fitBoards() {
   document.querySelectorAll('.boardwrap').forEach(w => {
     const b = w.firstElementChild; if (!b) return;
     const W = w.clientWidth, H = w.clientHeight; if (!W || !H) return;
-    const pid = w.dataset.board;
-    const bh = pid === S.pid && S.me ? myBoardHeight(W, H) : ((S.players[pid] && S.players[pid].bh) || BH);
+    const thumb = w.classList.contains('thumb'), pid = thumb ? w.dataset.board.slice(6) : w.dataset.board;
+    if (pid === S.pid && !thumb && S.me && S.me.layoutAuto && !S.arrange && !S.dragging) stretchAutoLayout(W, H);
+    const bh = pid === S.pid && S.me ? (thumb ? myBH() : myBoardHeight(W, H)) : ((S.players[pid] && S.players[pid].bh) || BH);
     b.style.height = bh + 'px';
     // Boards always fit their area (never scroll); hold V to magnify cards instead.
     const s = Math.min(W / BW, H / bh);
@@ -1665,6 +1712,27 @@ function renderOpps(idx) {
     renderOpp(el, pid, idx);
   });
   have.forEach(el => el.remove());
+  // Sidebar / Focus layouts: a "YOU" tile heads the list, so you can always get back to your own board.
+  const sideLike = view === 'side' || view === 'focus';
+  let you = box.querySelector('.youtile');
+  if (sideLike && pids.length) {
+    if (!you) { you = document.createElement('div'); you.className = 'opp youtile'; you.innerHTML = '<div class="ohead"></div><div class="obody"><div class="obf"></div></div>'; }
+    if (box.firstElementChild !== you) box.insertBefore(you, box.firstElementChild);
+    renderYouTile(you, idx);
+  } else if (you) you.remove();
+  // rows in the right-hand column: everyone not shown in the big area (+ the YOU tile)
+  tbl.style.setProperty('--rows', Math.max(1, (sideLike && pids.length ? 1 : 0) + pids.length - (S.focus && view !== 'top' ? 1 : 0)));
+}
+// The YOU tile: a read-only miniature of my board while I'm looking at someone else's; just a label otherwise.
+function renderYouTile(el, idx) {
+  const viewingMe = !S.focus, T = S.table || {};
+  el.classList.toggle('viewing', viewingMe);
+  el.classList.toggle('active', T.active === S.pid);
+  el.querySelector('.ohead').innerHTML = `<span class="dot" style="--pc:${colorOf(S.pid)}"></span><span class="pname">${esc(S.me.name)}</span><span class="tag you">YOU</span>
+    ${T.active === S.pid ? '<span class="tag">TURN</span>' : ''}<span class="life-ro">♥ <b>${S.me.life}</b></span>`;
+  // strip ids so the miniature never answers clicks/drags meant for my real board
+  el.querySelector('.obf').innerHTML = viewingMe ? '<div class="viewing-note">👁 Viewing your board</div>'
+    : `<div class="boardwrap thumb" data-board="thumb:${esc(S.pid)}">${boardHTML(S.pid, idx).replace(/ data-(iid|pid|zone|region|c)="[^"]*"/g, '')}</div>`;
 }
 function renderOpp(el, pid, idx) {
   const p = S.players[pid], T = S.table || {}, defs = p.defs || {};
@@ -1697,8 +1765,7 @@ function renderOpp(el, pid, idx) {
     <span class="ozones">${oz('library', 'LIB')}${oz('graveyard', 'GY', pi.graveyard.n ? pi.graveyard.tc.perm + 'P' : '')}${oz('exile', 'EX')}</span>
     ${handHTML}
     ${cmdCards ? `<span class="ocmd" title="Command zone">${cmdCards}</span>` : ''}
-    ${!p.kept ? '<span class="muted small">mulliganing…</span>' : ''}
-    <button class="focusbtn" data-a="focus" data-pid="${esc(pid)}" title="${S.focus === pid ? 'Show all opponents' : 'Show this board large'}">${S.focus === pid ? '⤡' : '⤢'}</button>`;
+    ${!p.kept ? '<span class="muted small">mulliganing…</span>' : ''}`;
   el.querySelector('.obf').innerHTML = `<div class="boardwrap" data-board="${esc(pid)}">${boardHTML(pid, idx)}</div>`;
 }
 
@@ -1711,10 +1778,8 @@ function renderMine(idx) {
     ${T.monarch === S.pid ? '<span title="Monarch">👑</span>' : ''}${T.initiative === S.pid ? '<span title="Initiative">🏰</span>' : ''}
     ${lifeBoxHTML(S.pid)}
     ${cmdTagsHTML(S.pid)}
-    <span class="mb-actions">
-      ${S.arrange ? '<button data-a="tidy" title="Put every card back into its zone">Tidy cards</button><button data-a="resetzones">Reset zones</button>' : ''}
-      <button data-a="arrange" class="${S.arrange ? 'primary' : ''}" title="Move and resize your zones">${S.arrange ? '✓ Done arranging' : '▦ Arrange zones'}</button>
-      <button data-a="tokens">Tokens ▾</button></span>`;
+    ${S.arrange ? `<span class="mb-actions"><button data-a="tidy" title="Put every card back into its zone">Tidy cards</button><button data-a="resetzones">Reset zones</button>
+      <button data-a="arrange" class="primary" title="Finish moving and resizing your zones">✓ Done arranging</button></span>` : ''}`;
   // --- battlefield, hand, bottom-right zones
   $('#myBf').innerHTML = `<div class="boardwrap" data-board="${esc(S.pid)}">${boardHTML(S.pid, idx)}</div>`;
   // fan the hand: each card tilts a little away from the middle and dips on a gentle arc (CSS uses --rot / --arc)
@@ -1819,6 +1884,15 @@ function bindGame() {
     const btn = t.closest('[data-a]');
     if (btn) { onButton(btn.dataset.a, btn, e); return; }
     if (S.ctrOpen && !t.closest('.ctrpanel')) { S.ctrOpen = null; render(); }
+    // Sidebar / Focus layouts: click a player's tile to view their board big (YOU tile = back to mine)
+    const tile = ['side', 'focus'].includes(curView()) && t.closest('#opps .opp:not(.focus)');
+    if (tile && !t.closest('button, .life, .lifebox, .oz, [data-pile], .ohhand, .ctrpanel, .cdchip, .ocmd')) {
+      const pid = tile.classList.contains('youtile') ? null : tile.dataset.opp;
+      if (tile.classList.contains('youtile') && !S.focus) return;
+      if (curView() === 'focus' && S.autoFocus) { S.autoFocus = false; LS.set('ct.autoFocus', false); }
+      S.focus = pid; render();
+      return;
+    }
     const ctr = t.closest('.ctr');
     const card = t.closest('.card');
     if (ctr && card && card.dataset.pid === S.pid) { addCounter(card.dataset.iid, ctr.dataset.ctr, 1); return; }
@@ -2105,7 +2179,8 @@ function regionMove(e) {
 }
 function regionEnd() {
   S.regionDrag = null;
-  LS.set('ct.layout', S.me.layout); // remember my layout for future games
+  S.me.layoutAuto = false; // arranged by hand: keep it exactly as placed
+  LS.set('ct.layout2', S.me.layout); // remember my layout for future games
   commit();
 }
 
@@ -2143,12 +2218,9 @@ function onButton(a, btn, e) {
     case 'tidy': act(() => { tidyBoard(); return ['tidied up their battlefield']; }); break;
     case 'resetzones': act(() => {
       // stretch the default layout to fit MY SCREEN (not the current board, which may be oversized)
-      const wrap = $('#myBf');
-      const fit = wrap && wrap.clientWidth ? clamp(Math.round(BW * wrap.clientHeight / wrap.clientWidth), BH, BH_MAX) : BH;
-      const f = fit / BH;
-      S.me.bh = fit;
-      S.me.layout = cloneLayout(DEFAULT_LAYOUT).map(r => Object.assign(r, { y: Math.round(r.y * f), h: Math.round(r.h * f) }));
-      LS.del('ct.layout'); tidyBoard(); return ['reset their zone layout'];
+      S.me.layout = fittedLayout(); S.me.layoutAuto = true;
+      S.me.bh = 0; // recomputed from the new layout
+      LS.del('ct.layout2'); tidyBoard(); return ['reset their zone layout'];
     }); break;
     case 'focus':
       if (curView() === 'focus' && S.autoFocus) { S.autoFocus = false; LS.set('ct.autoFocus', false); }
