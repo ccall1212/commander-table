@@ -50,8 +50,8 @@ kbd { background: var(--panel2); border: 1px solid var(--border); border-radius:
 #impResult input, #impResult select { width: 100%; max-width: 420px; }
 
 /* ---------- Game grid ---------- */
-#game { height: 100vh; display: grid; grid-template-columns: minmax(0, 1fr) 300px; grid-template-rows: 46px minmax(0, 1fr);
-  grid-template-areas: "top top" "table side"; }
+#game { height: 100vh; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: 46px minmax(0, 1fr);
+  grid-template-areas: "top" "table"; }
 #topbar { grid-area: top; display: flex; align-items: center; gap: 12px; padding: 0 10px; background: var(--panel);
   border-bottom: 1px solid var(--border); }
 .tb-left, .tb-right { display: flex; align-items: center; gap: 8px; }
@@ -72,8 +72,11 @@ kbd { background: var(--panel2); border: 1px solid var(--border); border-radius:
 #table { grid-area: table; display: grid; grid-template-rows: minmax(0, var(--top, 42fr)) 6px minmax(0, var(--bot, 58fr)); min-height: 0; }
 #split { cursor: row-resize; background: var(--border); }
 #split:hover { background: var(--accent); }
-#side { grid-area: side; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; background: var(--panel);
-  border-left: 1px solid var(--border); min-height: 0; }
+/* Game log + help: a slide-out panel at every width and in every view; hidden unless body.side-open */
+#side { display: none; position: fixed; right: 0; top: 46px; bottom: 0; width: min(340px, 90vw); z-index: 700;
+  grid-template-rows: minmax(0, 1fr) auto; background: var(--panel); border-left: 1px solid var(--border);
+  box-shadow: -8px 0 24px rgba(0,0,0,.5); min-height: 0; }
+body.side-open #side { display: grid; }
 
 /* ---------- Opponents ---------- */
 #opps { display: flex; gap: 6px; padding: 6px; min-height: 0; }
@@ -202,7 +205,10 @@ body.attaching .board .card:hover { outline: 3px solid #7c4dff; }
   background: var(--oc, #888); color: #000; max-width: 80%; overflow: hidden; white-space: nowrap; }
 .badges { position: absolute; left: 2px; right: 2px; bottom: 2px; display: flex; flex-wrap: wrap-reverse; gap: 2px;
   justify-content: flex-end; pointer-events: none; }
-.badges > span { font-size: 11px; font-weight: 700; border-radius: 9px; padding: 0 5px; line-height: 16px; }
+/* Counters sit top-right (.ctrs); the P/T box sits bottom-right (.badges). Both containers ignore the pointer; spans opt in. */
+.ctrs { position: absolute; top: 2px; right: 2px; display: flex; flex-direction: column; align-items: flex-end; gap: 2px;
+  pointer-events: none; z-index: 3; }
+.badges > span, .ctrs > span { font-size: 11px; font-weight: 700; border-radius: 9px; padding: 0 5px; line-height: 16px; }
 .ctr { pointer-events: auto; background: rgba(0,0,0,.85); border: 1px solid var(--accent); color: #fff; cursor: pointer; }
 .pt { background: #f1f1f1; color: #111; }
 .tax { background: var(--accent); color: #1a1405; }
@@ -220,14 +226,17 @@ body.attaching .board .card:hover { outline: 3px solid #7c4dff; }
 .oside .pile .plabel { font-size: 10px; }
 
 /* ---------- Side panel ---------- */
-#pv { padding: 8px; border-bottom: 1px solid var(--border); min-height: 120px; }
-#pv .pv-imgs { display: flex; gap: 6px; }
-#pv .pv-imgs img { width: 100%; border-radius: 12px; display: block; min-width: 0; }
-#pv .pv-imgs.two img { width: 50%; border-radius: 8px; }
-#pv .pv-imgs .w-cardback { width: 100%; aspect-ratio: 63 / 88; border-radius: 12px; }
-#pv .pv-txt { font-size: 12px; margin-top: 6px; max-height: 140px; overflow: auto; white-space: pre-wrap; }
-#pv .pv-txt b { font-size: 13px; }
-.pv-empty { display: grid; place-items: center; height: 120px; }
+/* Floating card preview: #pv.floatpv is a direct child of body; JS sets transform: translate(x,y) and toggles .hidden */
+#pv.floatpv { position: fixed; left: 0; top: 0; z-index: 3000; pointer-events: none; width: 300px; padding: 6px;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.6); }
+#pv.hidden { display: none; }
+body.lens-on #pv { display: none; }
+#pv.floatpv .pv-imgs img { width: 100%; display: block; min-width: 0; border-radius: 4.5% / 3.2%; }
+#pv.floatpv .pv-imgs .w-cardback { width: 100%; aspect-ratio: 63 / 88; border-radius: 4.5% / 3.2%; }
+#pv.floatpv:has(.pv-imgs.two) { width: 560px; }
+#pv.floatpv .pv-imgs.two { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+#pv.floatpv .pv-tag { margin-top: 6px; text-align: center; font-size: 12px; }
+#pv.floatpv .pv-txt { font-size: 13px; margin-top: 6px; max-height: 240px; overflow: hidden; white-space: pre-wrap; }
 #logBox { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; }
 .side-h { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); padding: 6px 10px 2px; }
 #log { overflow-y: auto; padding: 2px 10px 8px; font-size: 12.5px; }
@@ -238,24 +247,17 @@ body.attaching .board .card:hover { outline: 3px solid #7c4dff; }
 #help { padding: 8px 10px; border-top: 1px solid var(--border); line-height: 1.7; }
 
 /* Clickable badges (PT / counters) on cards */
-.badges .pt, .badges .ctr { pointer-events: auto; cursor: pointer; }
-.badges .pt:hover, .badges .ctr:hover { filter: brightness(1.2); }
+.badges .pt, .ctrs .ctr { pointer-events: auto; cursor: pointer; }
+.badges .pt:hover, .ctrs .ctr:hover { filter: brightness(1.2); }
 
 @media (max-width: 1150px) {
-  #game { grid-template-columns: minmax(0, 1fr) 240px; }
   #myRow { --cw: 80px; }
   .brand { display: none; }
 }
 
-/* Narrow windows: the side panel (card preview + log) becomes a toggleable overlay. */
-#sideBtn { display: none; }
+/* Narrow windows: the topbar never scrolls, and the phase buttons go. */
 @media (max-width: 900px) {
-  #game { grid-template-columns: minmax(0, 1fr); grid-template-areas: "top" "table"; }
-  #side { display: none; }
-  body.side-open #side { display: grid; position: fixed; right: 0; top: 46px; bottom: 0; width: min(320px, 90vw); z-index: 700;
-    box-shadow: -8px 0 24px rgba(0,0,0,.5); }
-  #sideBtn { display: inline-block; }
-  #topbar { overflow-x: auto; }
+  #topbar { overflow: hidden; }
   .phases { display: none; }
 }
 
@@ -275,7 +277,8 @@ body.attaching .board .card:hover { outline: 3px solid #7c4dff; }
 
 /* ---- My zones (right side of bottom row) ---- */
 #myZones { display: flex; flex-direction: row; gap: 8px; align-items: flex-start; height: 100%; }
-.ztools { display: flex; flex-direction: column; gap: 6px; align-self: flex-start; margin-top: 18px; }
+.ztools { display: grid; grid-template-columns: auto auto; gap: 6px; align-self: flex-start; margin-top: 18px; }
+.ztools .ztool:has([data-a=pass]) { grid-column: 1 / -1; }
 .ztools button { width: 100%; padding: 4px 10px; }
 .zbox { display: flex; flex-direction: column; align-items: center; cursor: pointer; position: relative; }
 .zlabel { background: rgba(0,0,0,.55); border: 1px solid var(--border); border-radius: 10px; padding: 1px 9px; font-size: 11px;
@@ -364,13 +367,6 @@ body.attaching .board .card:hover { outline: 3px solid #7c4dff; }
 .display-check input { accent-color: var(--accent); width: 16px; height: 16px; }
 .display-note { color: var(--muted); font-size: 12px; line-height: 1.45; margin: 0; }
 
-
-/* ---- C. Side panel in sidebar/grid views: same toggleable overlay as narrow screens ---- */
-body.view-side #game, body.view-grid #game { grid-template-columns: minmax(0, 1fr); grid-template-areas: "top" "table"; }
-body.view-side #side, body.view-grid #side { display: none; }
-body.view-side.side-open #side, body.view-grid.side-open #side { display: grid; position: fixed; right: 0; top: 46px; bottom: 0;
-  width: min(320px, 90vw); z-index: 700; box-shadow: -8px 0 24px rgba(0,0,0,.5); }
-body.view-side #sideBtn, body.view-grid #sideBtn { display: inline-block; }
 
 /* ---- A. Sidebar view: my board big on the left, opponents stacked in a right column ---- */
 #table.view-side { grid-template-columns: minmax(0, 1fr) 340px; grid-template-rows: none; grid-auto-rows: minmax(0, 1fr); padding-bottom: 4px; }
@@ -468,7 +464,7 @@ body.view-side #sideBtn, body.view-grid #sideBtn { display: inline-block; }
 .ohhand .card + .card { margin-left: -15px; }
 .ohhand .card:hover { transform: translateY(-4px) scale(1.8); z-index: 30 !important; }
 .ohhand .card .w-cardback { position: absolute; inset: 0; border-radius: inherit; }
-.ohhand .card .badges, .ohhand .card .pips { display: none; }
+.ohhand .card .badges, .ohhand .card .ctrs, .ohhand .card .pips { display: none; }
 .ohhand .ohn { margin-left: 7px; font-weight: 800; font-size: 13px; color: var(--text); }
 .ohhand.revealed { border-color: var(--accent); }
 .ohhand.revealed .ohn::after { content: ' revealed'; font-size: 10px; font-weight: 600; color: var(--accent); text-transform: uppercase; }
@@ -502,13 +498,9 @@ body.view-side #sideBtn, body.view-grid #sideBtn { display: inline-block; }
 .conn-diag { max-height: 50vh; overflow: auto; background: #0b0e13; padding: 10px; border-radius: 6px; font-size: 12px; white-space: pre-wrap; word-break: break-all; }
 
 
-/* On large and ultrawide monitors, spend some of the extra width on the inspector/log. */
+/* On large and ultrawide monitors, give the top bar, log and opponent headers a bit more room. */
 @media (min-width: 2500px) {
-  #game { grid-template-columns: minmax(0, 1fr) clamp(320px, 14vw, 480px); }
   #topbar { gap: 14px; padding-left: 16px; padding-right: 16px; }
   #log { font-size: 13.5px; }
   .ohead, #myBar { font-size: 14px; padding: 6px 10px; }
 }
-
-/* Card size above 100%: let an enlarged battlefield scroll instead of cutting off its edges. */
-.boardwrap.zoomed { overflow: auto; }

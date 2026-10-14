@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.5.0';
+const APP_VERSION = '0.6.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -100,7 +100,6 @@ const S = {
   dragEndAt: 0,
   arrange: false,   // editing my zone layout
   focus: null,      // opponent pid shown large
-  cardScale: clamp(num(LS.get('ct.cardScale', 100), 100), 80, 150) / 100, // local viewing scale; never published
   autoFocus: LS.get('ct.autoFocus', true) !== false, // follow the active player in Focus view
   attachFrom: null, // iid waiting for an attach target
   attachToast: null,
@@ -124,7 +123,7 @@ function newPlayer(deck, name, prev) {
   const m = {
     pid: S.pid, name, life: 40, poison: 0, ctr: {}, cmdDmg: {}, casts: {}, mull: 0, kept: false,
     revealHand: false, revealTop: false, seq: 0, lastTurn: 0,
-    autoUntap: prev ? prev.autoUntap : true, autoDraw: prev ? prev.autoDraw : true,
+    autoUntap: false, autoDraw: false, // always start a game with these off
     layout: prev && prev.layout ? cloneLayout(prev.layout) : defaultLayout(),
     defs: {}, tokens: [], cmdrs: [],
     zones: { library: [], hand: [], battlefield: [], graveyard: [], exile: [], command: [] }
@@ -460,7 +459,7 @@ function onReq(req, from) {
       if (findCard(c.iid)) return null; // already have it (duplicate message)
       const card = { iid: c.iid, id: d.id, own: c.own || from, t: zone === 'battlefield' ? !!c.t : false, fl: false, fd: false, c: zone === 'battlefield' ? c.c : {}, tok: !!c.tok, cmd: !!c.cmd, cp: !!c.cp };
       if (req.k === 'return' && card.tok) return null;
-      insertCard(card, zone, { pos: req.pos });
+      insertCard(card, zone, zone === 'battlefield' && Number.isFinite(+req.x) && Number.isFinite(+req.y) ? { x: +req.x, y: +req.y } : { pos: req.pos });
       return req.k === 'give'
         ? [`gained control of {0} from ${pname(from)}`, [d]]
         : [`got {0} back from ${pname(from)} (to ${ZL[zone]})`, [d]];
@@ -824,16 +823,20 @@ function applyPrinting(iid, oldDef, nd, scope) {
     }
   } catch (e) { console.warn('could not save printing to deck', e); }
 }
-function giveControl(iid, to) {
+// Works from any zone (menu or drag-and-drop). `at` = where on their board it lands.
+function giveControl(iid, to, at) {
   const f = findCard(iid); if (!f) return;
   const d = defOf(f.card);
   act(() => {
-    S.me.zones.battlefield.splice(f.idx, 1);
-    const orphans = detachFrom(S.pid, iid);
+    S.me.zones[f.zone].splice(f.idx, 1);
+    const orphans = f.zone === 'battlefield' ? detachFrom(S.pid, iid) : [];
     if (orphans.length) setTimeout(() => orphanToast(orphans), 0);
     const card = Object.assign({}, f.card); delete card.x; delete card.y; card.att = null;
-    sendReq(to, { k: 'give', card, def: Deck.slimDef(d) });
-    return [`gave control of {0} to ${pname(to)}`, [d]];
+    if (f.zone !== 'battlefield') { card.t = false; card.fd = false; card.fl = false; card.c = {}; }
+    const req = { k: 'give', card, def: Deck.slimDef(d) };
+    if (at) { req.x = at.x; req.y = at.y; }
+    sendReq(to, req);
+    return [`gave control of {0} to ${pname(to)}${f.zone !== 'battlefield' ? ` (from ${ZL[f.zone]})` : ''}`, [d]];
   });
 }
 function returnControl(iid) {
@@ -1309,30 +1312,27 @@ function toggleArrange() {
   if (S.arrange) UI.toast('Drag a zone by its name to move it (its cards come along). Drag the corner to resize. Everyone sees your layout.', { ms: 7000 });
   render();
 }
+// Pass turn sits next to Draw / Untap all (highlighted on your turn; greyed until the game starts).
+function passBtn() {
+  const T = S.table, started = !!(T && T.started), mine = started && T.active === S.pid;
+  return `<div class="ztool"><button data-a="pass" class="${mine ? 'primary' : ''}"${started ? '' : ' disabled'} title="Pass the turn to the next player">Pass turn ▶</button></div>`;
+}
 function toggleFocus(pid) { S.focus = S.focus === pid ? null : pid; render(); }
 function displaySettings() {
+  const r0 = window.Lens ? Lens.getRadius() : 90;
   const m = UI.modal({ title: 'Display settings', html: `
     <div class="display-settings">
       <div>
-        <div class="display-setting-head"><label for="ctDisplayScale"><b>Card size</b></label><strong id="ctDisplayScaleValue">${Math.round(S.cardScale * 100)}%</strong></div>
-        <small>Scales battlefield boards in this browser only. Higher values zoom in; use Focus view when you need more room to read one player's board.</small>
-        <input class="display-scale" id="ctDisplayScale" type="range" min="80" max="150" step="5" value="${Math.round(S.cardScale * 100)}" aria-label="Card size">
-        <div class="display-scale-ends"><span>80%</span><button type="button" id="ctDisplayReset">Reset to 100%</button><span>150%</span></div>
+        <div class="display-setting-head"><label for="ctLensSize"><b>Magnifier size</b></label><strong id="ctLensValue">${r0}px</strong></div>
+        <small>Hold <kbd>V</kbd> over the table: every card inside the circle is shown large. A bigger circle catches more cards at once.</small>
+        <input class="display-scale" id="ctLensSize" type="range" min="40" max="260" step="10" value="${r0}" aria-label="Magnifier size">
+        <div class="display-scale-ends"><span>Small</span><span>Large</span></div>
       </div>
       <label class="display-check"><input id="ctAutoFocus" type="checkbox" ${S.autoFocus ? 'checked' : ''}><span>Auto-focus the active player in Focus view</span></label>
-      <p class="display-note">Preferences are saved locally and do not change the game state or other players' layouts. At larger card sizes, the edges of a battlefield may extend beyond the visible area.</p>
+      <p class="display-note">Saved in this browser only; doesn't change what other players see.</p>
     </div>` });
-  const scale = m.el.querySelector('#ctDisplayScale');
-  const value = m.el.querySelector('#ctDisplayScaleValue');
-  const setScale = v => {
-    S.cardScale = clamp(num(v, 100), 80, 150) / 100;
-    LS.set('ct.cardScale', Math.round(S.cardScale * 100));
-    scale.value = String(Math.round(S.cardScale * 100));
-    value.textContent = scale.value + '%';
-    fitBoards();
-  };
-  scale.addEventListener('input', () => setScale(scale.value));
-  m.el.querySelector('#ctDisplayReset').addEventListener('click', () => setScale(100));
+  const lens = m.el.querySelector('#ctLensSize'), lv = m.el.querySelector('#ctLensValue');
+  lens.addEventListener('input', () => { const r = window.Lens ? Lens.setRadius(+lens.value) : +lens.value; lv.textContent = r + 'px'; });
   m.el.querySelector('#ctAutoFocus').addEventListener('change', e => {
     S.autoFocus = e.target.checked;
     LS.set('ct.autoFocus', S.autoFocus);
@@ -1382,11 +1382,11 @@ function cardHTML(c, def, o) {
       ? `<img src="${esc(u)}"${rot} alt="${esc(def.name)}" loading="lazy" draggable="false">`
       : `<div class="ph">${esc(def ? (c.fl && def.backName ? def.backName : dname(def)) : '?')}${def && def.pt ? `<br>${esc(def.pt)}` : ''}</div>`;
   }
-  let badges = '';
+  let badges = '', ctrs = '';
   for (const [k, v] of Object.entries(c.c || {})) {
     if (!v && k !== 'Loyalty') continue;
     const lbl = k === '+1/+1' ? `+${v}/+${v}` : k === '-1/-1' ? `−${v}/−${v}` : k === 'Loyalty' ? `◆${v}` : `${v} ${k}`;
-    badges += `<span class="ctr" data-ctr="${esc(k)}" title="${esc(k)} counters — left-click +1, right-click −1">${esc(lbl)}</span>`;
+    ctrs += `<span class="ctr" data-ctr="${esc(k)}" title="${esc(k)} counters — left-click +1, right-click −1">${esc(lbl)}</span>`;
   }
   if (o.zone === 'battlefield' && !c.fd) {
     const pt = effPT(c, def);
@@ -1407,7 +1407,7 @@ function cardHTML(c, def, o) {
   }
   const extra = (c.cp ? '<span class="tk cp" title="A copy — it disappears when it leaves the battlefield">COPY</span>' : c.tok ? '<span class="tk">TOKEN</span>' : '') +
     (c.own && c.own !== o.pid ? `<span class="own" style="--oc:${colorOf(c.own)}" title="Owned by ${esc(pname(c.own))}">${esc(pname(c.own))}</span>` : '');
-  return `<div class="${cls.join(' ')}" data-iid="${esc(c.iid)}" data-pid="${esc(ctrl)}" data-zone="${o.zone}"${o.style ? ` style="${o.style}"` : ''}>${inner}${extra}${pips}<div class="badges">${badges}</div></div>`;
+  return `<div class="${cls.join(' ')}" data-iid="${esc(c.iid)}" data-pid="${esc(ctrl)}" data-zone="${o.zone}"${o.style ? ` style="${o.style}"` : ''}>${inner}${extra}${pips}${ctrs ? `<div class="ctrs">${ctrs}</div>` : ''}<div class="badges">${badges}</div></div>`;
 }
 
 // Every battlefield card on the table, plus which ones are attached to which host.
@@ -1450,12 +1450,6 @@ function boardHTML(pid, idx) {
   const bh = mine ? myBH() : ((p && p.bh) || BH);
   return `<div class="board${editing ? ' arrange' : ''}" data-pid="${esc(pid)}" style="height:${bh}px">${html}</div>`;
 }
-// Scroll position of each enlarged board (card size > 100%), kept across re-renders.
-const boardScroll = {};
-document.addEventListener('scroll', e => {
-  const w = e.target;
-  if (w && w.classList && w.classList.contains('boardwrap')) boardScroll[w.dataset.board] = { x: w.scrollLeft, y: w.scrollTop };
-}, true);
 function fitBoards() {
   document.querySelectorAll('.boardwrap').forEach(w => {
     const b = w.firstElementChild; if (!b) return;
@@ -1463,18 +1457,12 @@ function fitBoards() {
     const pid = w.dataset.board;
     const bh = pid === S.pid && S.me ? myBoardHeight(W, H) : ((S.players[pid] && S.players[pid].bh) || BH);
     b.style.height = bh + 'px';
-    const fit = Math.min(W / BW, H / bh);
-    const s = fit * clamp(S.cardScale || 1, 0.8, 1.5);
-    // Same placement as before at 100% (centred across, top-aligned). A board enlarged past its
-    // area stays anchored top-left and the area scrolls, so no part of it becomes unreachable.
+    // Boards always fit their area (never scroll); hold V to magnify cards instead.
+    const s = Math.min(W / BW, H / bh);
     const ox = Math.max(0, (W - BW * s) / 2);
-    const oy = 0;
-    const zoomed = BW * s > W + 1 || bh * s > H + 1;
-    w.classList.toggle('zoomed', zoomed);
-    b.style.transform = `translate(${ox}px,${oy}px) scale(${s})`;
-    if (zoomed && boardScroll[pid]) { w.scrollLeft = boardScroll[pid].x; w.scrollTop = boardScroll[pid].y; } // boards are rebuilt on every render
-    b.dataset.s = s; b.dataset.ox = ox; b.dataset.oy = oy;
-    b.style.setProperty('--inv', (1 / Math.min(s, fit)).toFixed(3)); // labels: same size as before at <=100%, grow with the card-size slider above it
+    b.style.transform = `translate(${ox}px,0) scale(${s})`;
+    b.dataset.s = s; b.dataset.ox = ox; b.dataset.oy = 0;
+    b.style.setProperty('--inv', (1 / s).toFixed(3)); // lets labels stay a readable size at any zoom
   });
   fitOppArea();
 }
@@ -1489,7 +1477,7 @@ function fitOppArea() {
     const wrap = el.querySelector('.boardwrap'); if (!wrap || !wrap.clientWidth) return;
     const p = S.players[wrap.dataset.board];
     const head = el.querySelector('.ohead'), hand = el.querySelector('.ohand');
-    need = Math.max(need, (head ? head.offsetHeight : 34) + (hand ? hand.offsetHeight : 0) + wrap.clientWidth / BW * ((p && p.bh) || BH) * clamp(S.cardScale || 1, 0.8, 1.5) + 12);
+    need = Math.max(need, (head ? head.offsetHeight : 34) + (hand ? hand.offsetHeight : 0) + wrap.clientWidth / BW * ((p && p.bh) || BH) + 12);
   });
   if (!need) return;
   const frac = clamp(Math.min(S.split, (need + 14) / th), 0.12, 0.8);
@@ -1549,7 +1537,8 @@ function myZonesHTML() {
   const auto = (key, on, what) => `<label class="tgl" title="Auto: ${what} at the start of your turn (${on ? 'on' : 'off'})"><input type="checkbox" data-a="${key}"${on ? ' checked' : ''}><span></span></label>`;
   return `<div class="ztools">
       <div class="ztool"><button data-a="draw" title="Draw (D)">Draw</button>${auto('autodraw', me.autoDraw, 'Draw a card')}</div>
-      <div class="ztool"><button data-a="untapall" title="Untap all (U)">Untap all</button>${auto('autountap', me.autoUntap, 'Untap everything')}</div></div>` +
+      <div class="ztool"><button data-a="untapall" title="Untap all (U)">Untap all</button>${auto('autountap', me.autoUntap, 'Untap everything')}</div>
+      ${passBtn()}</div>` +
     box('library', 'LIB') + box('graveyard', 'GY', pi.graveyard.n ? `${pi.graveyard.tc.perm}P` : '') + box('exile', 'EXILE') +
     `<div class="zbox cmdbox" data-drop="command">
       ${taxIid ? `<div class="taxchip" data-a="tax" data-iid="${esc(taxIid)}" title="Commander tax — left-click +2, right-click −2">🪙 <b>${tax}</b></div>` : ''}
@@ -1620,8 +1609,7 @@ function renderTop() {
       (S.role !== 'client' ? ' <button class="primary" data-a="start" title="Randomizes turn order">Start game</button>' : ' <span class="muted">— waiting for the host to start</span>');
   } else {
     const mine = T.active === S.pid;
-    html = `<span>Turn <b>${T.turn}</b> · <b style="color:${colorOf(T.active)}">${esc(mine ? 'Your' : pname(T.active) + "'s")}</b> turn</span>
-      <button data-a="pass" class="${mine ? 'primary' : ''}" title="Pass the turn to the next player">Pass turn ▶</button>`;
+    html = `<span>Turn <b>${T.turn}</b> · <b style="color:${colorOf(T.active)}">${esc(mine ? 'Your' : pname(T.active) + "'s")}</b> turn</span>`;
   }
   $('#turnBox').innerHTML = html;
   const banner = $('#banner');
@@ -1770,13 +1758,30 @@ function renderLog() {
 }
 
 // --- preview panel
+// Floating preview: follows the cursor while you hover a card; hidden while dragging / magnifying.
+let pvMouse = { x: 0, y: 0 };
+function placePv() {
+  const pv = $('#pv'); if (!pv || pv.classList.contains('hidden')) return;
+  const w = pv.offsetWidth, h = pv.offsetHeight, gap = 18, m = 8;
+  let x = pvMouse.x + gap;
+  if (x + w > innerWidth - m) x = pvMouse.x - gap - w;            // flip to the left of the cursor
+  x = clamp(x, m, Math.max(m, innerWidth - w - m));
+  const y = clamp(pvMouse.y - h / 2, m, Math.max(m, innerHeight - h - m));
+  pv.style.transform = `translate(${Math.round(x)}px,${Math.round(y)}px)`;
+}
+function hidePreview() { const pv = $('#pv'); if (pv) pv.classList.add('hidden'); }
 function preview(def, hidden, tag) {
   const pv = $('#pv');
-  if (!def) return;
-  if (hidden) { pv.innerHTML = `<div class="pv-imgs">${UI.cardBackHTML()}</div><div class="pv-txt"><b>Face-down card</b></div>`; return; }
+  if (!def || !pv) return;
+  pv.classList.remove('hidden');
+  setTimeout(placePv, 0);
+  if (hidden) { pv.innerHTML = `<div class="pv-imgs">${UI.cardBackHTML()}</div><div class="pv-tag">Face-down card</div>`; return; }
   const imgs = [def.img, def.imgBack].filter(IMG_OK);
-  pv.innerHTML = `<div class="pv-imgs ${imgs.length > 1 ? 'two' : ''}">${imgs.map(u => `<img src="${esc(u)}" alt="">`).join('')}</div>
-    <div class="pv-txt">${tag ? `<span class="tag ${tag === 'Copy' ? 'cp' : ''}">${esc(tag.toUpperCase())}</span> ` : ''}<b>${esc(def.name || '')}</b>${def.mana ? ' ' + esc(def.mana) : ''}${def.type ? `<br><span class="muted">${esc(def.type)}</span>` : ''}${def.oracle ? `<br>${esc(def.oracle)}` : ''}${def.pt ? `<br><b>${esc(def.pt)}</b>` : ''}</div>`;
+  // The card image carries its own text; only show text when there's no image (or a COPY / attached tag).
+  pv.innerHTML = (imgs.length
+    ? `<div class="pv-imgs ${imgs.length > 1 ? 'two' : ''}">${imgs.map(u => `<img src="${esc(u)}" alt="">`).join('')}</div>`
+    : `<div class="pv-txt"><b>${esc(def.name || '')}</b>${def.mana ? ' ' + esc(def.mana) : ''}${def.type ? `<br><span class="muted">${esc(def.type)}</span>` : ''}${def.oracle ? `<br>${esc(def.oracle)}` : ''}${def.pt ? `<br><b>${esc(def.pt)}</b>` : ''}</div>`) +
+    (tag ? `<div class="pv-tag"><span class="tag ${tag === 'Copy' ? 'cp' : ''}">${esc(tag.toUpperCase())}</span></div>` : '');
 }
 const tagOf = c => (c.cp ? 'Copy' : c.tok ? 'Token' : '');
 function previewFromEl(cardEl) {
@@ -1849,7 +1854,7 @@ function bindGame() {
     const tag = e.target.closest('.cdtag[data-a="cdmg"]');
     if (tag) { cmdDmgClick(tag, -1); return; }
     const rcard = e.target.closest('.card');
-    const rctr = e.target.closest('.badges .ctr');
+    const rctr = e.target.closest('.ctrs .ctr');
     if (rctr && rcard && rcard.dataset.pid === S.pid) { addCounter(rcard.dataset.iid, rctr.dataset.ctr, -1); return; }
     const rpt = e.target.closest('.badges .pt');
     if (rpt && rcard && rcard.dataset.pid === S.pid) { changePT(rcard.dataset.iid, -1, -1); return; }
@@ -1875,7 +1880,17 @@ function bindGame() {
       if (d) preview(d);
     }
   });
-  g.addEventListener('mouseout', e => { if (e.target.closest('.card') && !(e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('.card'))) S.hover = null; });
+  g.addEventListener('mouseout', e => {
+    const from = e.target.closest && e.target.closest('.card, .cref, [data-pvid]');
+    const to = e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('.card, .cref, [data-pvid]');
+    if (from && !to) { if (e.target.closest('.card')) S.hover = null; hidePreview(); }
+  });
+  document.addEventListener('pointermove', e => {
+    pvMouse = { x: e.clientX, y: e.clientY };
+    // anything that isn't a card (board, hand, log reference, zone viewer tile) hides the preview
+    if (!(e.target.closest && e.target.closest('.card, .cref, [data-pvid], [data-iid]'))) hidePreview(); else placePv();
+  }, { passive: true });
+  document.addEventListener('pointerdown', hidePreview, true);
 
   // ---- pointer-driven dragging: cards (anywhere) and zones (arrange mode)
   g.addEventListener('pointerdown', e => {
@@ -2000,14 +2015,14 @@ function clearHighlights() { document.querySelectorAll('.dropok,.dropattach').fo
 // Convert a screen point to logical board coordinates for one board wrapper.
 function boardPoint(wrap, clientX, clientY) {
   const b = wrap.firstElementChild, s = +b.dataset.s || 1, ox = +b.dataset.ox || 0, oy = +b.dataset.oy || 0, rect = wrap.getBoundingClientRect();
-  return { x: (clientX - rect.left + wrap.scrollLeft - ox) / s, y: (clientY - rect.top + wrap.scrollTop - oy) / s };
+  return { x: (clientX - rect.left - ox) / s, y: (clientY - rect.top - oy) / s };
 }
 function dragHighlight(e) {
   const el = document.elementFromPoint(e.clientX, e.clientY);
   let tgt = null, cls = 'dropok';
   if (el) {
     const tcard = el.closest('.board .card');
-    const wrap = el.closest(`.boardwrap[data-board="${S.pid}"]`);
+    const wrap = el.closest('.boardwrap');
     if (drag.attachable && tcard && tcard.dataset.iid !== drag.iid && tcard.dataset.zone === 'battlefield') { tgt = tcard; cls = 'dropattach'; }
     else tgt = el.closest('[data-drop]') || wrap;
   }
@@ -2028,6 +2043,13 @@ function dropCard(d, e) {
   if (wrap && wrap.dataset.board === S.pid) {
     const pt = boardPoint(wrap, e.clientX - d.offC.dx, e.clientY - d.offC.dy);
     doMove(d.iid, 'battlefield', { x: pt.x - CW / 2, y: pt.y - CH / 2 });
+    return;
+  }
+  if (wrap && wrap.dataset.board && wrap.dataset.board !== S.pid && S.players[wrap.dataset.board]) {
+    // Dropped on a friend's board: they get control of it, centred where it was dropped. (The grab
+    // offset is measured at our own board's zoom, so it doesn't apply to a differently scaled board.)
+    const pt = boardPoint(wrap, e.clientX, e.clientY);
+    giveControl(d.iid, wrap.dataset.board, { x: pt.x - CW / 2, y: pt.y - CH / 2 });
     return;
   }
   const tgt = el.closest('[data-drop]');

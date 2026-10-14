@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="app-version" content="0.5.0">
+<meta name="app-version" content="0.6.0">
 <title>Commander Table</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='14' y='6' width='36' height='52' rx='5' fill='%23d4a72c'/%3E%3Crect x='19' y='11' width='26' height='42' rx='3' fill='%2312161e'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="css/style.css">
@@ -104,17 +104,19 @@
   </main>
 
   <aside id="side">
-    <div id="pv"><div class="pv-empty muted">Hover a card to see it here</div></div>
     <div id="logBox">
       <div class="side-h">Game log</div>
       <div id="log"></div>
     </div>
     <div id="help" class="muted small">
       <b>Click</b> tap · <b>Double-click</b> play/cast · <b>Right-click</b> options · <b>Drag</b> cards anywhere · drop an Aura/Equipment <b>onto a creature</b> to attach<br>
-      Hover + <kbd>T</kbd> tap <kbd>F</kbd> flip <kbd>A</kbd> attach <kbd>G</kbd> graveyard <kbd>X</kbd> exile <kbd>H</kbd> hand · <kbd>D</kbd> draw <kbd>U</kbd> untap all <kbd>Ctrl+Z</kbd> undo
+      Hold <kbd>V</kbd> to magnify cards under the cursor · Hover + <kbd>T</kbd> tap <kbd>F</kbd> flip <kbd>A</kbd> attach <kbd>G</kbd> graveyard <kbd>X</kbd> exile <kbd>H</kbd> hand · <kbd>D</kbd> draw <kbd>U</kbd> untap all <kbd>Ctrl+Z</kbd> undo
     </div>
   </aside>
 </div>
+
+<!-- floating card preview (follows the cursor) -->
+<div id="pv" class="floatpv hidden"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
 <script src="js/lan-mode.js"></script>
@@ -127,5 +129,6 @@
 <script src="js/net.js"></script>
 <script src="js/app.js"></script>
 <script src="js/updates.js"></script>
+<script src="js/lens.js"></script>
 </body>
 </html>

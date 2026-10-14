@@ -6,7 +6,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-10-14
+
+### Added
+- Drag any card from your battlefield, hand, graveyard, exile or another zone onto another player's battlefield to give them control of it. It lands where you drop it and still shows its owner.
+- Magnifier: hold **V** and every card under a circle around the cursor is shown large, tiled as big as fits, on the other half of the screen. Set the circle size in ☰ → Display settings.
+- Floating card preview next to the mouse pointer while hovering a card.
+
 ### Changed
+- The right-hand preview and log column is gone, so the table uses the full width. The 📜 Log button slides the game log out from the right.
+- Counters stack down the top-right corner of a card; power/toughness stays fixed in the bottom-right.
+- Pass turn moved next to Draw and Untap all. Auto-draw and auto-untap now start off every game.
+- Boards always fit the screen. The card-size slider from 0.5.0 is removed (the magnifier replaces it), so nothing scrolls.
 - README rewritten for playing from the website; added this changelog and an MIT licence.
 
 ## [0.5.0] - 2026-10-14
@@ -55,7 +66,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - First playable build: paste-import decks from Moxfield or Archidekt (via Scryfall), 2–4 player rooms over PeerJS with self-healing reconnects, a searchable zone viewer, commander damage tracking and automatic tokens.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/ccall1212/commander-table/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/ccall1212/commander-table/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/ccall1212/commander-table/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/ccall1212/commander-table/releases/tag/v0.3.0

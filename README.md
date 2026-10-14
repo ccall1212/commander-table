@@ -44,10 +44,9 @@ Decks are saved in your browser.
 
 Open ☰ → **Display settings…** to adjust how things look on your screen:
 
-- **Card size:** a slider from 80% to 150% (**Reset** brings it back to 100%). Above 100%, your battlefield scrolls so every card stays reachable.
+- **Magnifier size:** how big the magnifier circle is (see **Magnifier** under **Cards on the table** below).
 - **Focus auto-follow:** a checkbox that controls whether the Focus view follows the turn (see **Table layout** below).
-- Card size is saved only in your browser. It doesn't change what other players see.
-- On very wide monitors (2500px and up), the log sidebar and opponent names get a bit larger.
+- On very wide monitors (2500px and up), opponent names get a bit larger.
 
 ## Playing on a LAN (optional)
 
@@ -109,23 +108,27 @@ Dropped connections and crashed tabs happen, and recovering from them is the mai
 - Right-click any of your cards for options: counters, transform, face down, **Copy this card**, give control, and move to any zone.
 - Right-click an opponent's card (or use the graveyard/exile viewer) to **Copy this card** onto your battlefield — handy for Clone effects. Copies show a purple **COPY** label and vanish if they leave the battlefield.
 - Drag cards between hand, battlefield, graveyard, exile, library, and command zone. Shift-drop onto the library to put a card on the bottom. Drag cards within your hand to reorder it.
+- **Give control by dragging:** drag any card (from your battlefield, hand, graveyard, exile, and so on) onto another player's battlefield to give them control of it. It lands where you drop it and still shows you as the owner, the same as **Give control to** in the right-click menu. They can give it back the same way or with **Return to owner**.
+- **Card preview:** hover a card to see a big preview floating next to your mouse.
+- **Magnifier:** hold **V** over the table and a circle follows your cursor. Every card inside it is shown large in a panel on the other half of the screen. The more cards in the circle, the smaller each tile, but each is as big as fits. Release **V** to close it. (**Z** is still "turn face-down.")
 
 **Your battlefield**
 
 - Your battlefield has three zones: **Creatures / Planeswalkers**, **Lands**, **Artifacts / Enchantments**. New cards drop into the right zone automatically, and basic lands / identical tokens pile up neatly.
-- Your **LIB · GY · EXILE · CMD** piles sit at the bottom-right next to your hand (with **Draw** and **Untap all** buttons). Drag a card onto one to put it there (Shift-drop on LIB = bottom); click LIB to draw; click GY/EXILE to search; drag a pile to pull its top card. Opponents' LIB / GY / EX / HAND counts and their commander are in their header.
+- Your **LIB · GY · EXILE · CMD** piles sit at the bottom-right next to your hand (with **Draw**, **Untap all** and **Pass turn** buttons). Drag a card onto one to put it there (Shift-drop on LIB = bottom); click LIB to draw; click GY/EXILE to search; drag a pile to pull its top card. Opponents' LIB / GY / EX / HAND counts and their commander are in their header.
 - Drag any card anywhere you like — it stays exactly where you put it.
 - Click **▦ Arrange zones** to move a zone (drag its name — its cards come with it) or resize it (drag the bottom-right corner). Your layout is remembered for future games. **Tidy cards** puts everything back into its zone; **Reset zones** restores the default layout.
 - What you see is what everyone sees: opponents see your board exactly as you arranged it, and you see theirs the way they arranged it.
+- Every board always fits the screen, so there's no scrolling.
 - Drag the bar between the opponents' area and yours to give your board more or less room. Click ⤢ on an opponent (or double-click their board) to show it large.
 - **Table layout** — switch with the buttons in the top bar (remembered):
   - ▤ **Top**: opponents across the top.
   - ▥ **Sidebar**: your board big on the left, opponents stacked on the right. Click ⤢ on one to swap their board into the big area.
   - ▦ **Grid**: every player gets an equal quadrant, with you bottom-left. Opponents' boards are biggest here.
   - ◎ **Focus**: the active player's battlefield gets the big spot, and it follows the turn automatically. Turn that off in Display settings, or click an opponent's ⤢ button yourself.
-  - In Sidebar and Grid, the card preview & game log open from the **📜 Log** button.
+- The **📜 Log** button in the top bar slides the game log (and the shortcut help) out from the right edge. Click it again to close.
 - Cards overlap more as your hand grows, and the card under your mouse lifts up so you can read it.
-- Every opponent's hand shows in their header, right next to their commander: a small fan of card backs with the number of cards. If they turn on **Reveal my hand to everyone**, the fan shows their real cards face-up (marked REVEALED) — hover one to read it in the preview panel.
+- Every opponent's hand shows in their header, right next to their commander: a small fan of card backs with the number of cards. If they turn on **Reveal my hand to everyone**, the fan shows their real cards face-up (marked REVEALED) — hover one to read it in the card preview.
 
 **Auras & Equipment**
 
@@ -140,7 +143,7 @@ Dropped connections and crashed tabs happen, and recovering from them is the mai
 - Commander damage shows as colored tags — one per opposing commander, in that player's color. **Left-click +1, right-click −1** (it also adjusts your life). A tag turns red and pulses at 21.
 - On an opponent's header, the tag in **your** color is the damage your commander has dealt them — click it to deal more (right-click to undo).
 - Commander tax: the 🪙 chip above **CMD** — **left-click +2, right-click −2**. It never goes up by itself.
-- Counter badges and the P/T badge on a card: **left-click goes up, right-click goes down**.
+- Counters stack down the top-right corner of a card; the P/T badge stays in the bottom-right corner. On both, **left-click goes up, right-click goes down**.
 - Cards in your hand show their mana cost along the top edge; your hand count shows above your hand and every opponent's hand count is in their header.
 - The hand bar (the thin bar above your hand) drags up/down to resize your hand cards; double-click it to reset.
 
@@ -179,6 +182,7 @@ Hover over a card and press:
 Other shortcuts:
 
 - **D** draw, **U** untap all, **S** search library, **Ctrl+Z** undo
+- **Hold V** over the table to open the magnifier (see **Cards on the table**). Release to close.
 
 ## Life, damage, and counters
 
@@ -197,8 +201,8 @@ Other shortcuts:
 
 ## Turn helpers
 
-- **Auto-untap and auto-draw** at the start of your turn are toggled with the small **on/off switch next to Draw and Untap all** at the bottom-right (green = on); they're also still in the ☰ menu. In 1v1, the first player skips the first draw.
-- A **Pass turn** button. It's safe to click: if two players press it at the same moment, only one pass counts.
+- **Auto-untap and auto-draw** at the start of your turn are toggled with the small **on/off switch next to Draw and Untap all** at the bottom-right (green = on); they're also still in the ☰ menu. Both start off in every game. In 1v1, the first player skips the first draw.
+- A **Pass turn** button at the bottom-right, next to **Draw** and **Untap all**. It's safe to click: if two players press it at the same moment, only one pass counts.
 - Dice, a coin, and a random player picker.
 - London mulligan, with the first mulligan free.
 - A game log where card names show the card when you hover over them.
