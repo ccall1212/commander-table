@@ -2,20 +2,24 @@
 
 A free, browser-based Magic: The Gathering Commander table for playing with friends online. It's a lot like the Tabletop Simulator setup many of us used to play on, but it runs right in your web browser.
 
-Version 0.1.0
+[![Latest release](https://img.shields.io/github/v/tag/ccall1212/commander-table?label=version&sort=semver)](CHANGELOG.md) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+**Play now:** https://ccall1212.github.io/commander-table/ — nothing to install. See [CHANGELOG.md](CHANGELOG.md) for what changed in each version.
 
 ## What you need
 
-- Chrome or Edge
-- An internet connection. Card images come from Scryfall, and online play uses PeerJS, a free peer-to-peer connection service.
+- Chrome, Edge or Firefox
+- An internet connection. Card images and data come from Scryfall, and games connect through a small relay server.
 - Nothing to install
 
 ## Getting started
 
-1. Open the `commander-table` folder and double-click `index.html`. It opens in your browser.
-2. That's it.
+1. Open https://ccall1212.github.io/commander-table/ in your browser.
+2. Enter your name, pick or import a deck, and click **Host a game**.
+3. Click the room code in the top-left. This copies an **invite link** (it looks like `…/commander-table/?join=CODE`). Send it to your friends.
+4. Your friends open the link, enter a name, pick a deck, and press **Join**. The room code is already filled in. Typing the 5-letter code by hand works too.
 
-To share it with friends, zip the whole `commander-table` folder and send them the zip. They unzip it and double-click `index.html` too.
+Want to play without the website? There's also a downloadable copy of the game for local-network play. See **Playing on a LAN** below.
 
 ## Importing your deck
 
@@ -30,15 +34,24 @@ Decks are saved in your browser.
 
 ## Playing a game
 
-- One person clicks **Host a game** and gets a 5-letter room code. Click the code in the top-left to copy it.
-- Everyone else enters the code and clicks **Join**.
+- One person clicks **Host a game** and gets a 5-letter room code. Click the code in the top-left to copy an invite link, and send it to your friends. (☰ → **Copy invite link** does the same thing.)
+- Everyone else opens the link (or enters the code) and clicks **Join**.
 - The host clicks **Start game** to randomize turn order.
-- Supports 2 to 6 players. It's designed for 1v1 up to 4-player Commander.
+- Supports 2 to 4 players comfortably, and the table seats up to 6. It's designed for 1v1 up to 4-player Commander.
 - Want to practice alone? Click **Practice solo**.
 
-## Playing on a LAN (office / same network)
+## Display settings
 
-Use this when the online link sits on "Connecting", for example on a work network that blocks browser peer-to-peer connections. It works like Forge's LAN play: one person's computer hosts, and everyone else just uses a browser. No accounts, and no install for the other players.
+Open ☰ → **Display settings…** to adjust how things look on your screen:
+
+- **Card size:** a slider from 80% to 150% (**Reset** brings it back to 100%). Above 100%, your battlefield scrolls so every card stays reachable.
+- **Focus auto-follow:** a checkbox that controls whether the Focus view follows the turn (see **Table layout** below).
+- Card size is saved only in your browser. It doesn't change what other players see.
+- On very wide monitors (2500px and up), the log sidebar and opponent names get a bit larger.
+
+## Playing on a LAN (optional)
+
+This is for playing without the website, for example when one computer hosts on your local network. It works like Forge's LAN play: one person's computer hosts, and everyone else just uses a browser. No accounts, and no install for the other players.
 
 **Hosting (one person):**
 
@@ -51,7 +64,7 @@ Use this when the online link sits on "Connecting", for example on a work networ
 - A small menu appears in the window. Press Enter to choose **[1] Start the game (opens your browser)**. The other options are **[2] Status** (address, connected players, version), **[3] Check for updates**, and **[Q] Quit**. Once it's running, the menu offers Open in browser, Status, Check for updates, and Stop. Keep the window open while you play.
 - The first time, Windows asks whether Python may use the network. Tick both boxes (Private **and** Public, since office networks are often "Public") and click **Allow**.
 - The lobby shows a line like `http://YOUR-PC-NAME:8790/`. Send that to the other players. They open it in Chrome or Edge and join with the room code as usual.
-- The version is shown at the bottom of the lobby, like `v0.3.0 (abc1234)`. The part in brackets is the GitHub commit it's running, so it's always exact.
+- The version is shown at the bottom of the lobby, like `v0.5.0 (abc1234)`. The part in brackets is the GitHub commit it's running, so it's always exact.
 
 **Updates:**
 
@@ -71,11 +84,20 @@ Use this when the online link sits on "Connecting", for example on a work networ
 
 Dropped connections and crashed tabs happen, and recovering from them is the main reason this app exists.
 
-- Everyone's cards live in their own browser, and the game is saved continuously.
-- If someone's connection drops, it reconnects automatically.
-- If a tab crashes or gets closed, reopen `index.html`. It puts you straight back into the game.
-- If the host crashes, the other players' games pause and reconnect by themselves when the host reopens.
-- Use the same browser you played in.
+**How connections work:**
+
+- Games connect through a small relay server (on Cloudflare), so they work on office and school networks too. If the relay can't be reached, the game automatically tries a direct browser-to-browser connection.
+- The top bar tells you what's happening, for example "Waiting for the host to open room ABCDE" or "Lost the connection to the host — reconnecting".
+- Reloading the page or a short drop is fine. Everyone reconnects automatically and the game state is kept.
+- Actions made while you're disconnected for more than about 20 seconds aren't applied late. You'll get a notice instead.
+- If the same game is opened in a second tab, the first tab steps aside.
+- For trouble, open ☰ → **Connection details…**. It shows a report you can copy and send.
+
+**Other tips:**
+
+- If a tab crashes or gets closed, open the game again. Your game state comes back with you.
+- If the host's connection drops, the other players' games pause and reconnect by themselves once the host is back.
+- Your decks are saved in your browser, so use the same browser you played in.
 
 ## Controls
 
@@ -96,7 +118,12 @@ Dropped connections and crashed tabs happen, and recovering from them is the mai
 - Click **▦ Arrange zones** to move a zone (drag its name — its cards come with it) or resize it (drag the bottom-right corner). Your layout is remembered for future games. **Tidy cards** puts everything back into its zone; **Reset zones** restores the default layout.
 - What you see is what everyone sees: opponents see your board exactly as you arranged it, and you see theirs the way they arranged it.
 - Drag the bar between the opponents' area and yours to give your board more or less room. Click ⤢ on an opponent (or double-click their board) to show it large.
-- **Table layout** — switch with the ▤ ▥ ▦ buttons at the top right (remembered): **Top** (opponents across the top), **Sidebar** (your board big on the left, opponents stacked on the right — click ⤢ on one to swap their board into the big area), **Grid** (every player gets an equal quadrant, you bottom-left; opponents' boards are biggest here). In Sidebar and Grid the card preview & game log open from the **📜 Log** button.
+- **Table layout** — switch with the buttons in the top bar (remembered):
+  - ▤ **Top**: opponents across the top.
+  - ▥ **Sidebar**: your board big on the left, opponents stacked on the right. Click ⤢ on one to swap their board into the big area.
+  - ▦ **Grid**: every player gets an equal quadrant, with you bottom-left. Opponents' boards are biggest here.
+  - ◎ **Focus**: the active player's battlefield gets the big spot, and it follows the turn automatically. Turn that off in Display settings, or click an opponent's ⤢ button yourself.
+  - In Sidebar and Grid, the card preview & game log open from the **📜 Log** button.
 - Cards overlap more as your hand grows, and the card under your mouse lifts up so you can read it.
 - Every opponent's hand shows in their header, right next to their commander: a small fan of card backs with the number of cards. If they turn on **Reveal my hand to everyone**, the fan shows their real cards face-up (marked REVEALED) — hover one to read it in the preview panel.
 
@@ -171,7 +198,7 @@ Other shortcuts:
 ## Turn helpers
 
 - **Auto-untap and auto-draw** at the start of your turn are toggled with the small **on/off switch next to Draw and Untap all** at the bottom-right (green = on); they're also still in the ☰ menu. In 1v1, the first player skips the first draw.
-- A **Pass turn** button.
+- A **Pass turn** button. It's safe to click: if two players press it at the same moment, only one pass counts.
 - Dice, a coin, and a random player picker.
 - London mulligan, with the first mulligan free.
 - A game log where card names show the card when you hover over them.
@@ -185,5 +212,13 @@ Other shortcuts:
 
 ## Troubleshooting
 
-- **Join says it can't reach the host:** check the room code, and make sure the host still has the game open.
-- Some strict work and school networks block peer-to-peer connections. If Join keeps failing on one, try a different network.
+- **Join says it can't reach the host:** check the room code (or use the invite link), and make sure the host still has the game open. ☰ → **Connection details…** shows a report you can copy and send if you need help.
+- Very strict work and school networks can still block the connection. If Join keeps failing, try a different network, or use the optional LAN option above.
+
+## For developers
+
+- Commander Table is plain HTML, CSS and JavaScript with no build step.
+- `docs/NETWORKING.md` explains how online play works. `docs/relay-protocol.md` describes the relay protocol, and `relay/SETUP.md` covers setting up the Cloudflare relay.
+- Tests: `tests/net-harness.html` and `tests/test_relay_protocol.py`.
+- Releases follow [semantic versioning](https://semver.org/). Each release is tagged `vX.Y.Z` and listed in [CHANGELOG.md](CHANGELOG.md).
+- Licensed under MIT (see [LICENSE](LICENSE)). Card data and images are © their owners, via Scryfall. This is an unofficial fan project, not affiliated with Wizards of the Coast.
