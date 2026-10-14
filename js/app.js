@@ -1532,7 +1532,7 @@ function renderTop() {
   pill.textContent = S.role === 'solo' ? 'Practice' : ({ online: 'Connected', connecting: 'Connecting…', reconnecting: 'Reconnecting…', offline: 'Offline', error: 'Error' }[st] || st);
   pill.title = S.net.text || '';
   let html;
-  if (!T) html = '<span class="muted">Connecting to the host…</span>';
+  if (!T) html = `<span class="muted">${esc(S.net.text || 'Connecting to the host…')}</span>`;
   else if (!T.started) {
     html = `<span class="muted">Not started · ${plural(T.seats.length, 'player')} seated</span>` +
       (S.role !== 'client' ? ' <button class="primary" data-a="start" title="Randomizes turn order">Start game</button>' : ' <span class="muted">— waiting for the host to start</span>');

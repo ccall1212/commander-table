@@ -20,7 +20,7 @@
   var HB_TIMEOUT = 9000;         // no data for 9s => connection dead
   var HIDDEN_TIMEOUT = 120000;   // ...but allow 2 min when the other side's tab is in the background
   var WATCHDOG_INTERVAL = 1000;  // how often we check for heartbeat timeouts
-  var CONNECT_TIMEOUT = 8000;    // abandon a connect attempt that has not opened by then
+  var CONNECT_TIMEOUT = 20000;   // abandon a connect attempt that has not opened by then (relayed links can be slow)
   var HOST_RETRY = 3000;         // host: retry creating Peer / reconnecting signalling
   var SIG_RETRY = 3000;          // retry peer.reconnect() while signalling is down
   var MAX_QUEUE = 200;           // client offline send queue cap
@@ -34,6 +34,20 @@
       a.unshift('[net]');
       console.debug.apply(console, a);
     } catch (_) { /* ignore */ }
+  }
+
+  // ICE servers: public STUN plus any relay (TURN) servers from js/turn-config.js.
+  // PeerJS's built-in TURN servers are replaced on purpose: they are unreachable and
+  // only slow the connection down.
+  function relayServers() {
+    var list = Array.isArray(window.CT_TURN) ? window.CT_TURN : [];
+    return list.filter(function (s) {
+      return s && s.urls && s.username && s.credential && !/PASTE_/.test(s.username + s.credential);
+    });
+  }
+  function peerOptions() {
+    var ice = [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun.cloudflare.com:3478' }];
+    return { config: { iceServers: ice.concat(relayServers()) } };
   }
 
   function closeConn(conn) {
@@ -212,7 +226,7 @@
 
       var p;
       try {
-        p = new Peer(hostId);
+        p = new Peer(hostId, peerOptions());
       } catch (e) {
         log('new Peer threw', e);
         hostPeerGone('Could not start host — retrying…', HOST_RETRY);
@@ -342,7 +356,7 @@
       destroyPeer();
       var p;
       try {
-        p = new Peer();
+        p = new Peer(peerOptions());
       } catch (e) {
         log('new Peer threw', e);
         clientFail('Could not start network', false);
@@ -450,6 +464,7 @@
       var a = { conn: conn, last: Date.now(), lost: false, opened: false, timer: null };
       inflight = a;
       log('connecting to host, attempt', tries);
+      if (!everOnline && fails === 0) setStatus('connecting', 'Linking up with the host…');
 
       a.timer = setTimeout(function () {
         if (inflight === a) { log('connect attempt timed out'); clientConnLost(a, 'connect timeout'); }
@@ -493,7 +508,11 @@
       } else if (inflight === a) {
         inflight = null;
         log('connect attempt failed:', why);
-        clientFail('Host unreachable', false);
+        var reason;
+        if (why === 'peer-unavailable') reason = 'Room ' + room.toUpperCase() + ' not found — check the code and that the host has the game open';
+        else if (relayServers().length) reason = 'Found the host but could not link up';
+        else reason = 'Found the host, but your networks block a direct link (no relay server set up)';
+        clientFail(reason, false);
       }
     }
 
