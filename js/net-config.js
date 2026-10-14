@@ -8,6 +8,6 @@
  * Add ?net=relay or ?net=p2p to the page address to override the mode for testing.
  */
 window.CT_NET = {
-  relayUrl: '',
+  relayUrl: 'https://commander-table-relay.chris-call1212.workers.dev',
   mode: 'auto'
 };

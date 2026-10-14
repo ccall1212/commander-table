@@ -11,12 +11,16 @@ Measured from Chris's laptop on the office network (2026-10-14):
 | PeerJS matchmaking server `0.peerjs.com` | reachable — rooms *are* found |
 | PeerJS's built-in TURN relays (`*.turn.peerjs.com`) | **don't exist** (no DNS) |
 | Other free public TURN (`openrelay.metered.ca`) | not answering |
-| Direct WebRTC between two tabs on the **same** laptop | **fails** (works at home) |
+| Direct WebRTC between two tabs on the **same** laptop | failed in the morning, worked in the afternoon (same network) — inconclusive |
 | Outbound HTTPS/WSS (443) to Cloudflare, MQTT/Nostr brokers | works |
 
 So the host showed **Connected** (it had registered with the matchmaking server) while guests sat on
-**Connecting/Reconnecting**: the matchmaker introduced them, then the actual browser-to-browser
-WebRTC link was blocked by the network, and there was no relay to fall back on. The old 8-second
+**Connecting/Reconnecting**: the matchmaker introduced them, then the browser-to-browser WebRTC link
+between *different* computers didn't form, and there was no relay to fall back on. What is certain:
+the built-in fallback relays are gone. What is likely but unproven: the office network (firewall /
+client isolation between machines) blocks direct links — only a test between two real office
+machines can confirm it. The Cloudflare relay avoids the question entirely, because it uses the
+same HTTPS connection as any website. The old 8-second
 connect timeout made it retry from scratch forever without saying why.
 
 Smaller issues found while reviewing the code:
