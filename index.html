@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="app-version" content="0.3.0">
+<title>Commander Table</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='14' y='6' width='36' height='52' rx='5' fill='%23d4a72c'/%3E%3Crect x='19' y='11' width='26' height='42' rx='3' fill='%2312161e'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/widgets.css">
+</head>
+<body>
+
+<!-- ============ LOBBY ============ -->
+<div id="lobby" class="screen">
+  <div class="lob-wrap">
+    <header class="lob-head">
+      <h1>Commander Table</h1>
+      <p class="muted">A Commander tabletop for 2–4 players. Paste a deck, host a room, send your friends the code.</p>
+    </header>
+
+    <div id="resumeBox" class="box resume hidden"></div>
+
+    <section class="box">
+      <h2><span class="step">1</span> Your name</h2>
+      <input id="nameIn" maxlength="24" placeholder="Name shown to other players" autocomplete="off">
+    </section>
+
+    <section class="box">
+      <h2><span class="step">2</span> Your deck</h2>
+      <div id="deckList"></div>
+      <button id="importBtn">+ Import a deck</button>
+      <div id="importBox" class="hidden">
+        <p class="muted small">
+          <b>Moxfield:</b> open the deck → <i>More</i> → <i>Export</i> → <i>Copy Plain Text</i> (or <i>Copy for MTGA</i>).<br>
+          <b>Archidekt:</b> open the deck → <i>Export</i> → <i>Copy to clipboard</i>.<br>
+          Then paste it below. Commander is detected automatically when the export marks it — otherwise you'll pick it.
+        </p>
+        <textarea id="deckText" rows="12" placeholder="1 Atraxa, Praetors' Voice&#10;1 Sol Ring&#10;1 Arcane Signet&#10;…"></textarea>
+        <div class="row">
+          <button id="loadDeck" class="primary">Load cards</button>
+          <button id="cancelImport">Cancel</button>
+          <span id="impStatus" class="muted"></span>
+        </div>
+        <div id="impResult"></div>
+      </div>
+    </section>
+
+    <section class="box">
+      <h2><span class="step">3</span> Play</h2>
+      <div class="row wrap">
+        <button id="hostBtn" class="primary">Host a game</button>
+        <span class="or">or join:</span>
+        <input id="joinIn" placeholder="ROOM CODE" maxlength="5" autocomplete="off" class="code">
+        <button id="joinBtn">Join</button>
+        <span class="or">or</span>
+        <button id="soloBtn">Practice solo</button>
+      </div>
+      <p id="netWarn" class="muted small hidden">Online play needs an internet connection (the connection library didn't load). Practice solo still works.</p>
+    </section>
+    <p class="muted small foot">Card data and images from <a href="https://scryfall.com" target="_blank" rel="noopener">Scryfall</a>. Unofficial fan project — not affiliated with Wizards of the Coast. v<span id="ver"></span></p>
+  </div>
+</div>
+
+<!-- ============ GAME ============ -->
+<div id="game" class="screen hidden">
+  <header id="topbar">
+    <div class="tb-left">
+      <span class="brand">Commander Table</span>
+      <button id="roomBtn" data-a="copyroom" class="room" title="Click to copy the room code"></button>
+      <span id="netPill" class="pill"></span>
+    </div>
+    <div id="turnBox"></div>
+    <div class="tb-right">
+      <span class="viewsw" title="Table layout">
+        <button data-a="view" data-v="top" title="Opponents across the top">▤</button><button data-a="view" data-v="side" title="Sidebar — opponents in a column on the right">▥</button><button data-a="view" data-v="grid" title="Grid — every player gets an equal quadrant">▦</button>
+      </span>
+      <button id="sideBtn" data-a="side" title="Show card preview & game log">📜 Log</button>
+      <button data-a="dice" title="Dice, coin, random player">🎲 Dice</button>
+      <button data-a="undo" title="Undo your last action (Ctrl+Z)">↶ Undo</button>
+      <button data-a="menu" title="Menu">☰</button>
+    </div>
+  </header>
+  <div id="banner" class="hidden"></div>
+
+  <main id="table">
+    <section id="opps"></section>
+    <div id="split" title="Drag to resize"></div>
+    <section id="mine">
+      <div id="myBar"></div>
+      <div id="myBf"></div>
+      <div id="handSplit" title="Drag up/down to resize your hand"></div>
+      <div id="myRow">
+        <div id="handWrap">
+          <div class="handlabel" id="handLabel"></div>
+          <div id="mullBar" class="hidden"></div>
+          <div id="myHand" data-drop="hand"></div>
+        </div>
+        <div id="myZones"></div>
+      </div>
+    </section>
+  </main>
+
+  <aside id="side">
+    <div id="pv"><div class="pv-empty muted">Hover a card to see it here</div></div>
+    <div id="logBox">
+      <div class="side-h">Game log</div>
+      <div id="log"></div>
+    </div>
+    <div id="help" class="muted small">
+      <b>Click</b> tap · <b>Double-click</b> play/cast · <b>Right-click</b> options · <b>Drag</b> cards anywhere · drop an Aura/Equipment <b>onto a creature</b> to attach<br>
+      Hover + <kbd>T</kbd> tap <kbd>F</kbd> flip <kbd>A</kbd> attach <kbd>G</kbd> graveyard <kbd>X</kbd> exile <kbd>H</kbd> hand · <kbd>D</kbd> draw <kbd>U</kbd> untap all <kbd>Ctrl+Z</kbd> undo
+    </div>
+  </aside>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
+<script src="js/widgets.js"></script>
+<script src="js/deck.js"></script>
+<script src="js/net.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
