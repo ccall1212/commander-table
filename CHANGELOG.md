@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-10-14
+
+### Fixed
+- Raising Hand size also blew up the Library/Graveyard/Exile/Commander piles and squeezed the hand into a corner. The piles now have their own fixed size.
+- The floating hand and piles have a soft dark backing, so zone outlines no longer show through behind them.
+
 ## [0.7.0] - 2026-10-14
 
 ### Changed
@@ -77,7 +83,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - First playable build: paste-import decks from Moxfield or Archidekt (via Scryfall), 2–4 player rooms over PeerJS with self-healing reconnects, a searchable zone viewer, commander damage tracking and automatic tokens.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.7.1...HEAD
+[0.7.1]: https://github.com/ccall1212/commander-table/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/ccall1212/commander-table/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/ccall1212/commander-table/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/ccall1212/commander-table/compare/v0.4.0...v0.5.0

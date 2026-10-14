@@ -280,7 +280,8 @@ body.lens-on #pv { display: none; }
 .pip { width: 17px; height: 17px; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,.7); background: #111; }
 
 /* ---- My zones (right side of bottom row) ---- */
-#myZones { display: flex; flex-direction: row; gap: 8px; align-items: flex-start; height: 100%; }
+#myZones { display: flex; flex-direction: row; gap: 8px; align-items: flex-start; height: 100%;
+  --cw: clamp(58px, 4.4vw, 92px); } /* piles have their own size: Hand size must not inflate them */
 .ztools { display: grid; grid-template-columns: auto auto; gap: 6px; align-self: flex-start; margin-top: 18px; }
 .ztools .ztool:has([data-a=pass]) { grid-column: 1 / -1; }
 .ztools button { width: 100%; padding: 4px 10px; }
@@ -520,3 +521,6 @@ body.lens-on #pv { display: none; }
   #log { font-size: 13.5px; }
   .ohead, #myBar { font-size: 14px; padding: 6px 10px; }
 }
+/* Bottom tray: a soft dark backing under the floating hand / piles so the zone outlines behind them
+   don't show through (still ignores the pointer except on the interactive bits). */
+#myRow { background: linear-gradient(to top, rgba(11,14,19,.96) 0%, rgba(11,14,19,.9) 62%, rgba(11,14,19,0) 100%); }
