@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.4.0';
+const APP_VERSION = '0.5.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -100,6 +100,8 @@ const S = {
   dragEndAt: 0,
   arrange: false,   // editing my zone layout
   focus: null,      // opponent pid shown large
+  cardScale: clamp(num(LS.get('ct.cardScale', 100), 100), 80, 150) / 100, // local viewing scale; never published
+  autoFocus: LS.get('ct.autoFocus', true) !== false, // follow the active player in Focus view
   attachFrom: null, // iid waiting for an attach target
   attachToast: null,
   regionDrag: null,
@@ -1284,6 +1286,7 @@ function mainMenu(x, y) {
     { sep: true },
     { label: S.arrange ? 'Done arranging zones' : 'Arrange my zones', onClick: toggleArrange },
     { label: 'Tidy up my cards', onClick: () => act(() => { tidyBoard(); return ['tidied up their battlefield']; }) },
+    { label: 'Display settings…', onClick: displaySettings },
     { sep: true },
     { label: 'Auto-untap on my turn', checked: m.autoUntap, onClick: () => act(() => { m.autoUntap = !m.autoUntap; }, { noUndo: true }) },
     { label: 'Auto-draw on my turn', checked: m.autoDraw, onClick: () => act(() => { m.autoDraw = !m.autoDraw; }, { noUndo: true }) },
@@ -1307,10 +1310,39 @@ function toggleArrange() {
   render();
 }
 function toggleFocus(pid) { S.focus = S.focus === pid ? null : pid; render(); }
+function displaySettings() {
+  const m = UI.modal({ title: 'Display settings', html: `
+    <div class="display-settings">
+      <div>
+        <div class="display-setting-head"><label for="ctDisplayScale"><b>Card size</b></label><strong id="ctDisplayScaleValue">${Math.round(S.cardScale * 100)}%</strong></div>
+        <small>Scales battlefield boards in this browser only. Higher values zoom in; use Focus view when you need more room to read one player's board.</small>
+        <input class="display-scale" id="ctDisplayScale" type="range" min="80" max="150" step="5" value="${Math.round(S.cardScale * 100)}" aria-label="Card size">
+        <div class="display-scale-ends"><span>80%</span><button type="button" id="ctDisplayReset">Reset to 100%</button><span>150%</span></div>
+      </div>
+      <label class="display-check"><input id="ctAutoFocus" type="checkbox" ${S.autoFocus ? 'checked' : ''}><span>Auto-focus the active player in Focus view</span></label>
+      <p class="display-note">Preferences are saved locally and do not change the game state or other players' layouts. At larger card sizes, the edges of a battlefield may extend beyond the visible area.</p>
+    </div>` });
+  const scale = m.el.querySelector('#ctDisplayScale');
+  const value = m.el.querySelector('#ctDisplayScaleValue');
+  const setScale = v => {
+    S.cardScale = clamp(num(v, 100), 80, 150) / 100;
+    LS.set('ct.cardScale', Math.round(S.cardScale * 100));
+    scale.value = String(Math.round(S.cardScale * 100));
+    value.textContent = scale.value + '%';
+    fitBoards();
+  };
+  scale.addEventListener('input', () => setScale(scale.value));
+  m.el.querySelector('#ctDisplayReset').addEventListener('click', () => setScale(100));
+  m.el.querySelector('#ctAutoFocus').addEventListener('change', e => {
+    S.autoFocus = e.target.checked;
+    LS.set('ct.autoFocus', S.autoFocus);
+    render();
+  });
+}
 // Current view mode; with no opponents there's only one sensible layout.
 function curView() {
   if (!S.view) S.view = LS.get('ct.view', 'top');
-  return oppPids().length ? (['top', 'side', 'grid'].includes(S.view) ? S.view : 'top') : 'top';
+  return oppPids().length ? (['top', 'side', 'grid', 'focus'].includes(S.view) ? S.view : 'top') : 'top';
 }
 
 // =====================================================================
@@ -1425,11 +1457,13 @@ function fitBoards() {
     const pid = w.dataset.board;
     const bh = pid === S.pid && S.me ? myBoardHeight(W, H) : ((S.players[pid] && S.players[pid].bh) || BH);
     b.style.height = bh + 'px';
-    const s = Math.min(W / BW, H / bh);
-    const ox = Math.max(0, (W - BW * s) / 2);
-    b.style.transform = `translate(${ox}px,0) scale(${s})`;
-    b.dataset.s = s; b.dataset.ox = ox;
-    b.style.setProperty('--inv', (1 / s).toFixed(3)); // lets labels stay a readable size at any zoom
+    const fit = Math.min(W / BW, H / bh);
+    const s = fit * clamp(S.cardScale || 1, 0.8, 1.5);
+    const ox = (W - BW * s) / 2;
+    const oy = (H - bh * s) / 2;
+    b.style.transform = `translate(${ox}px,${oy}px) scale(${s})`;
+    b.dataset.s = s; b.dataset.ox = ox; b.dataset.oy = oy;
+    b.style.setProperty('--inv', Math.min(2.6, Math.max(1, 1 / s)).toFixed(3)); // labels do not shrink below their base size when zoomed in
   });
   fitOppArea();
 }
@@ -1444,7 +1478,7 @@ function fitOppArea() {
     const wrap = el.querySelector('.boardwrap'); if (!wrap || !wrap.clientWidth) return;
     const p = S.players[wrap.dataset.board];
     const head = el.querySelector('.ohead'), hand = el.querySelector('.ohand');
-    need = Math.max(need, (head ? head.offsetHeight : 34) + (hand ? hand.offsetHeight : 0) + wrap.clientWidth / BW * ((p && p.bh) || BH) + 12);
+    need = Math.max(need, (head ? head.offsetHeight : 34) + (hand ? hand.offsetHeight : 0) + wrap.clientWidth / BW * ((p && p.bh) || BH) * clamp(S.cardScale || 1, 0.8, 1.5) + 12);
   });
   if (!need) return;
   const frac = clamp(Math.min(S.split, (need + 14) / th), 0.12, 0.8);
@@ -1600,14 +1634,20 @@ function oppPids() {
 function renderOpps(idx) {
   const box = $('#opps');
   const pids = oppPids();
+  const view = curView();
+  if (view === 'focus' && S.autoFocus) {
+    const active = S.table && S.table.started ? S.table.active : null;
+    S.focus = active && active !== S.pid && pids.includes(active) ? active : null;
+  }
   if (S.focus && !pids.includes(S.focus)) S.focus = null;
   box.className = 'n' + pids.length;
   const tbl = $('#table');
   tbl.classList.toggle('noopps', !pids.length);
-  // view mode: top (opponents across the top), side (opponents in a right column), grid (equal quadrants)
-  const view = curView();
-  ['top', 'side', 'grid'].forEach(v => tbl.classList.toggle('view-' + v, v === view));
-  document.body.classList.toggle('view-side', view === 'side');
+  // Focus reuses sidebar geometry but follows the active player into the large slot.
+  ['top', 'side', 'grid', 'focus'].forEach(v => tbl.classList.toggle('view-' + v, v === view));
+  tbl.classList.toggle('view-side', view === 'side' || view === 'focus');
+  document.body.classList.toggle('view-side', view === 'side' || view === 'focus');
+  document.body.classList.toggle('view-focus', view === 'focus');
   document.body.classList.toggle('view-grid', view === 'grid');
   tbl.dataset.n = pids.length;
   tbl.classList.toggle('has-focus', !!S.focus && view !== 'top');
@@ -1948,8 +1988,8 @@ function beginCardDrag(e) {
 function clearHighlights() { document.querySelectorAll('.dropok,.dropattach').forEach(x => x.classList.remove('dropok', 'dropattach')); }
 // Convert a screen point to logical board coordinates for one board wrapper.
 function boardPoint(wrap, clientX, clientY) {
-  const b = wrap.firstElementChild, s = +b.dataset.s || 1, ox = +b.dataset.ox || 0, rect = wrap.getBoundingClientRect();
-  return { x: (clientX - rect.left - ox) / s, y: (clientY - rect.top) / s };
+  const b = wrap.firstElementChild, s = +b.dataset.s || 1, ox = +b.dataset.ox || 0, oy = +b.dataset.oy || 0, rect = wrap.getBoundingClientRect();
+  return { x: (clientX - rect.left - ox) / s, y: (clientY - rect.top - oy) / s };
 }
 function dragHighlight(e) {
   const el = document.elementFromPoint(e.clientX, e.clientY);
@@ -2077,9 +2117,12 @@ function onButton(a, btn, e) {
       S.me.layout = cloneLayout(DEFAULT_LAYOUT).map(r => Object.assign(r, { y: Math.round(r.y * f), h: Math.round(r.h * f) }));
       LS.del('ct.layout'); tidyBoard(); return ['reset their zone layout'];
     }); break;
-    case 'focus': toggleFocus(btn.dataset.pid); break;
+    case 'focus':
+      if (curView() === 'focus' && S.autoFocus) { S.autoFocus = false; LS.set('ct.autoFocus', false); }
+      toggleFocus(btn.dataset.pid); break;
     case 'side': document.body.classList.toggle('side-open'); break;
     case 'view': S.view = btn.dataset.v; LS.set('ct.view', S.view); S.focus = null; document.body.classList.remove('side-open'); render(); break;
+    case 'displaysettings': displaySettings(); break;
   }
 }
 async function passTurn() {

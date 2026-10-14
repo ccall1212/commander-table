@@ -354,6 +354,17 @@ body.attaching .board .card:hover { outline: 3px solid #7c4dff; }
 .viewsw button:hover:not(:disabled) { position: relative; z-index: 1; }
 .viewsw button.on { background: var(--accent); color: #1a1405; border-color: var(--accent); position: relative; z-index: 2; }
 
+/* Display settings: compact, readable controls that work at normal and ultrawide sizes. */
+.display-settings { display: grid; gap: 18px; min-width: min(540px, 78vw); }
+.display-setting-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.display-settings small { display: block; color: var(--muted); line-height: 1.4; margin-top: 4px; max-width: 46em; }
+.display-scale { width: 100%; accent-color: var(--accent); }
+.display-scale-ends { display: flex; align-items: center; justify-content: space-between; color: var(--muted); font-size: 12px; }
+.display-check { display: flex; align-items: center; gap: 9px; cursor: pointer; }
+.display-check input { accent-color: var(--accent); width: 16px; height: 16px; }
+.display-note { color: var(--muted); font-size: 12px; line-height: 1.45; margin: 0; }
+
+
 /* ---- C. Side panel in sidebar/grid views: same toggleable overlay as narrow screens ---- */
 body.view-side #game, body.view-grid #game { grid-template-columns: minmax(0, 1fr); grid-template-areas: "top" "table"; }
 body.view-side #side, body.view-grid #side { display: none; }
@@ -363,6 +374,7 @@ body.view-side #sideBtn, body.view-grid #sideBtn { display: inline-block; }
 
 /* ---- A. Sidebar view: my board big on the left, opponents stacked in a right column ---- */
 #table.view-side { grid-template-columns: minmax(0, 1fr) 340px; grid-template-rows: none; grid-auto-rows: minmax(0, 1fr); padding-bottom: 4px; }
+#table.view-side.view-focus { grid-template-columns: minmax(0, 1fr) clamp(280px, 21vw, 420px); }
 #table.view-side #split { display: none; }
 #table.view-side #opps { display: contents; }
 #table.view-side #mine { grid-column: 1; grid-row: 1 / span 1; }
@@ -488,3 +500,12 @@ body.view-side #sideBtn, body.view-grid #sideBtn { display: inline-block; }
 
 /* Connection details dialog */
 .conn-diag { max-height: 50vh; overflow: auto; background: #0b0e13; padding: 10px; border-radius: 6px; font-size: 12px; white-space: pre-wrap; word-break: break-all; }
+
+
+/* On large and ultrawide monitors, spend some of the extra width on the inspector/log. */
+@media (min-width: 2500px) {
+  #game { grid-template-columns: minmax(0, 1fr) clamp(320px, 14vw, 480px); }
+  #topbar { gap: 14px; padding-left: 16px; padding-right: 16px; }
+  #log { font-size: 13.5px; }
+  .ohead, #myBar { font-size: 14px; padding: 6px 10px; }
+}
