@@ -113,6 +113,9 @@ Query options: <code>?relay=&lt;http(s) url of a relay&gt;</code> (only honoured
       const room = code(), H = await mk('H'), A = await mk('A');
       H.start('host', room); await waitFor(H.online, 10000, 'host online');
       A.start('client', room); await waitFor(A.online, 15000, 'client online');
+      // The guest's "connected" and the host's "player joined" travel on different sockets:
+      // wait for both before the host broadcasts (the app does the same via onJoin).
+      await waitFor(() => H.w.Net.peers().length === 1, 5000, 'host sees the guest');
       A.w.Net.send({ t: 'hello', n: 1 }); H.w.Net.send({ t: 'hi', n: 2 });
       await waitFor(() => H.got('hello').length && A.got('hi').length, 5000, 'messages both ways');
       const tr = A.last().tr;

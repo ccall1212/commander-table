@@ -1450,6 +1450,12 @@ function boardHTML(pid, idx) {
   const bh = mine ? myBH() : ((p && p.bh) || BH);
   return `<div class="board${editing ? ' arrange' : ''}" data-pid="${esc(pid)}" style="height:${bh}px">${html}</div>`;
 }
+// Scroll position of each enlarged board (card size > 100%), kept across re-renders.
+const boardScroll = {};
+document.addEventListener('scroll', e => {
+  const w = e.target;
+  if (w && w.classList && w.classList.contains('boardwrap')) boardScroll[w.dataset.board] = { x: w.scrollLeft, y: w.scrollTop };
+}, true);
 function fitBoards() {
   document.querySelectorAll('.boardwrap').forEach(w => {
     const b = w.firstElementChild; if (!b) return;
@@ -1459,11 +1465,16 @@ function fitBoards() {
     b.style.height = bh + 'px';
     const fit = Math.min(W / BW, H / bh);
     const s = fit * clamp(S.cardScale || 1, 0.8, 1.5);
-    const ox = (W - BW * s) / 2;
-    const oy = (H - bh * s) / 2;
+    // Same placement as before at 100% (centred across, top-aligned). A board enlarged past its
+    // area stays anchored top-left and the area scrolls, so no part of it becomes unreachable.
+    const ox = Math.max(0, (W - BW * s) / 2);
+    const oy = 0;
+    const zoomed = BW * s > W + 1 || bh * s > H + 1;
+    w.classList.toggle('zoomed', zoomed);
     b.style.transform = `translate(${ox}px,${oy}px) scale(${s})`;
+    if (zoomed && boardScroll[pid]) { w.scrollLeft = boardScroll[pid].x; w.scrollTop = boardScroll[pid].y; } // boards are rebuilt on every render
     b.dataset.s = s; b.dataset.ox = ox; b.dataset.oy = oy;
-    b.style.setProperty('--inv', Math.min(2.6, Math.max(1, 1 / s)).toFixed(3)); // labels do not shrink below their base size when zoomed in
+    b.style.setProperty('--inv', (1 / Math.min(s, fit)).toFixed(3)); // labels: same size as before at <=100%, grow with the card-size slider above it
   });
   fitOppArea();
 }
@@ -1989,7 +2000,7 @@ function clearHighlights() { document.querySelectorAll('.dropok,.dropattach').fo
 // Convert a screen point to logical board coordinates for one board wrapper.
 function boardPoint(wrap, clientX, clientY) {
   const b = wrap.firstElementChild, s = +b.dataset.s || 1, ox = +b.dataset.ox || 0, oy = +b.dataset.oy || 0, rect = wrap.getBoundingClientRect();
-  return { x: (clientX - rect.left - ox) / s, y: (clientY - rect.top - oy) / s };
+  return { x: (clientX - rect.left + wrap.scrollLeft - ox) / s, y: (clientY - rect.top + wrap.scrollTop - oy) / s };
 }
 function dragHighlight(e) {
   const el = document.elementFromPoint(e.clientX, e.clientY);

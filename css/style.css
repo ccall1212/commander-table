@@ -509,3 +509,6 @@ body.view-side #sideBtn, body.view-grid #sideBtn { display: inline-block; }
   #log { font-size: 13.5px; }
   .ohead, #myBar { font-size: 14px; padding: 6px 10px; }
 }
+
+/* Card size above 100%: let an enlarged battlefield scroll instead of cutting off its edges. */
+.boardwrap.zoomed { overflow: auto; }
