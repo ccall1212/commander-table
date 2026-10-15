@@ -36,9 +36,10 @@ Decks are saved in your browser.
 
 - One person clicks **Host a game** and gets a 5-letter room code. Click the code in the top-left to copy an invite link, and send it to your friends. (☰ → **Copy invite link** does the same thing.)
 - Everyone else opens the link (or enters the code) and clicks **Join**.
-- The host clicks **Start game** to randomize turn order.
+- The host clicks **Start game** to begin. If everyone rolled for first player (🎲 Dice, see **Turn helpers**), that order is used. Otherwise the turn order is random.
 - Supports 2 to 4 players comfortably, and the table seats up to 6. It's designed for 1v1 up to 4-player Commander.
 - Want to practice alone? Click **Practice solo**.
+- To concede, ☰ → **Concede game…** marks you out and skips you in turn order. If it was your turn, play passes to the next player.
 
 ## Display settings
 
@@ -131,6 +132,7 @@ Dropped connections and crashed tabs happen, and recovering from them is the mai
 - The **📜 Log** button in the top bar slides the game log (and the shortcut help) out from the right edge. Click it again to close.
 - Cards overlap more as your hand grows, and the card under your mouse lifts up so you can read it.
 - Every opponent's hand shows in their header, right next to their commander: a small fan of card backs with the number of cards. If they turn on **Reveal my hand to everyone**, the fan shows their real cards face-up (marked REVEALED) — hover one to read it in the card preview.
+- In the Sidebar and Focus layouts, when you view another player's board, a bar at the top-right of that board shows their hand (card backs, or the cards if they revealed their hand), Library (with a revealed top card), Graveyard, Exile and Commander. Click a pile to look through it.
 
 **Auras & Equipment**
 
@@ -142,6 +144,7 @@ Dropped connections and crashed tabs happen, and recovering from them is the mai
 **Life, counters & commander damage**
 
 - Your life box is in the small floating box at the top-right of your battlefield, with your name, counters and commander damage: − **40** +. Click **▾** to open Poison, Energy, Experience, Rad and Tickets. Opponents have the same box (click ▾ to see their counters; − / + on their life asks their game to change it).
+- If your life drops from above 0 to 0 or below, you're asked whether to concede. Choose **Cancel** to keep playing at 0 or negative life.
 - Commander damage shows as colored tags — one per opposing commander, in that player's color. **Left-click +1, right-click −1** (it also adjusts your life). A tag turns red and pulses at 21.
 - On an opponent's header, the tag in **your** color is the damage your commander has dealt them — click it to deal more (right-click to undo).
 - Commander tax: the 🪙 chip above **CMD** — **left-click +2, right-click −2**. It never goes up by itself.
@@ -168,7 +171,7 @@ Dropped connections and crashed tabs happen, and recovering from them is the mai
 **Library**
 
 - Click your library to draw.
-- Right-click it for search, scry or look at the top X, mill, reveal, and play with the top card revealed.
+- Right-click it for search, scry or look at the top X, mill, or **Reveal top card**. **Reveal top card** shows that card face up to everyone until it leaves the top of your library (draw, shuffle, etc.). **Play with top card revealed** is a separate, always-on option.
 
 **Graveyard and exile**
 
@@ -205,8 +208,8 @@ Other shortcuts:
 ## Turn helpers
 
 - **Auto-untap and auto-draw** at the start of your turn are toggled with switches (green = on): auto-untap is the switch next to **Untap All** in the top bar, and auto-draw is the small **AD** switch next to the LIB label. They're also still in the ☰ menu. Both start off in every game. In 1v1, the first player skips the first draw.
-- A **Pass turn** button in the top bar, next to the turn indicator. It's safe to click: if two players press it at the same moment, only one pass counts.
-- Dice, a coin, and a random player picker.
+- A **Pass turn** button in the top bar, next to **Round N**. The round goes up only after every player has had a turn. It's safe to click: if two players press it at the same moment, only one pass counts.
+- 🎲 **Dice**, including **Roll for first player (d20)** before the game starts: everyone rolls a d20 (ties re-roll), the highest goes first, and **Start game** uses that order. Also a coin and a random player picker.
 - London mulligan, with the first mulligan free.
 - A game log where card names show the card when you hover over them.
 - **Undo** for your own actions.
