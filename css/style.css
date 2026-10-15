@@ -64,6 +64,8 @@ kbd { background: var(--panel2); border: 1px solid var(--border); border-radius:
 .pill.error, .pill.offline { color: var(--danger); border-color: var(--danger); }
 #turnBox { display: flex; align-items: center; gap: 8px; min-width: 0; }
 #turnActions { display: flex; align-items: center; flex: none; }
+@media (max-width: 1150px) { .turn-actions .ztool > button { padding-inline: 5px; } #turnBox { gap: 4px; } }
+@media (max-width: 760px) { #turnActions .tgl { display: none; } .turn-actions { gap: 4px; } .turn-actions .ztool > button { padding-inline: 4px; } }
 .turn-actions { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
 .turn-actions .ztool { display: flex; align-items: center; gap: 4px; }
 .turn-actions .ztool > button { flex: none; width: auto; padding: 3px 8px; }
@@ -379,15 +381,46 @@ body.lens-on #pv { display: none; }
 .viewsw button.on { background: var(--accent); color: #1a1405; border-color: var(--accent); position: relative; z-index: 2; }
 
 /* Display settings: compact, readable controls that work at normal and ultrawide sizes. */
-.display-settings { display: grid; gap: 18px; min-width: min(540px, 78vw); }
+.display-settings { display: grid; gap: 12px; min-width: 0; }
 .display-setting-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.display-settings small { display: block; color: var(--muted); line-height: 1.4; margin-top: 4px; max-width: 46em; }
+.display-settings small { display: block; color: var(--muted); line-height: 1.35; margin-top: 3px; max-width: 46em; }
 .display-scale { width: 100%; accent-color: var(--accent); }
 .display-scale-ends { display: flex; align-items: center; justify-content: space-between; color: var(--muted); font-size: 12px; }
 .display-check { display: flex; align-items: center; gap: 9px; cursor: pointer; }
 .display-check input { accent-color: var(--accent); width: 16px; height: 16px; }
 .display-note { color: var(--muted); font-size: 12px; line-height: 1.45; margin: 0; }
 
+
+/* Expanded opponent view: readable hand backs and piles while leaving your own hand accessible. */
+.focus-zonebar { position: absolute; top: 8px; right: 8px; z-index: 45; /* top-right: top-left is where their first creatures land */ display: flex; align-items: flex-end; gap: 10px;
+  width: max-content; max-width: calc(100% - 16px); padding: 8px 10px; overflow: visible; background: rgba(11,14,19,.9);
+  border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 5px 18px rgba(0,0,0,.45); pointer-events: none; }
+.focus-zonebar .focus-hand-group, .focus-zonebar .focus-pile { pointer-events: auto; }
+.focus-zonebar .focus-hand-group { display: flex; flex-direction: column; gap: 4px; min-width: 80px; }
+.focus-zone-label { display: flex; align-items: center; justify-content: center; gap: 4px; color: var(--muted); font-size: 10px; letter-spacing: .5px; font-weight: 700; white-space: nowrap; }
+.focus-zone-label b { color: var(--text); }
+.focus-hand-cards { display: flex; align-items: flex-end; height: 76px; padding-left: 16px; overflow: visible; }
+.focus-hand-cards .card { --cw: 44px; width: var(--cw); flex: none; margin-left: -21px; transform: translateY(var(--arc, 0px)) rotate(var(--rot, 0deg)); transform-origin: 50% 110%; }
+.focus-hand-cards .card:first-child { margin-left: 0; }
+.focus-hand-cards .card:hover { transform: translateY(-5px) scale(1.35); z-index: 100 !important; }
+.focus-hand-cards .card .badges, .focus-hand-cards .card .ctrs, .focus-hand-cards .card .pips { display: none; }
+.focus-zonebar .focus-pile { display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; }
+.focus-pile-card { position: relative; width: 54px; height: 76px; overflow: hidden; border: 1px solid var(--border); border-radius: 5px; background: var(--panel2); box-shadow: 0 2px 8px rgba(0,0,0,.4); }
+.focus-pile-card > img, .focus-pile-card > .w-cardback, .focus-pile-card > .ph { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+.focus-pile-card .ph { font-size: 8px; padding: 3px; overflow: hidden; }
+.focus-pile:hover .focus-pile-card { outline: 2px solid var(--accent); }
+.focus-command-cards { display: flex; align-items: flex-end; gap: 4px; min-height: 76px; }
+.focus-command-cards .card { --cw: 54px; width: var(--cw); flex: none; }
+.focus-command-cards .card .badges, .focus-command-cards .card .ctrs, .focus-command-cards .card .pips { display: none; }
+@media (max-width: 900px) {
+  .focus-zonebar { gap: 6px; padding: 6px; max-width: calc(100% - 12px); }
+  .focus-hand-cards .card { --cw: 34px; margin-left: -18px; }
+  .focus-hand-cards { height: 60px; padding-left: 10px; }
+  .focus-pile-card { width: 42px; height: 59px; }
+  .focus-command-cards .card { --cw: 42px; }
+  .focus-command-cards { min-height: 59px; }
+  .focus-zone-label { font-size: 9px; }
+}
 
 /* ---- A. Sidebar view: my board big on the left, opponents stacked in a right column ---- */
 /* JS sets --rows = number of tiles in the right-hand column (the YOU tile counts; the focused opponent doesn't). */

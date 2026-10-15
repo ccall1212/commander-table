@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.7.4';
+const APP_VERSION = '0.7.5';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -136,7 +136,7 @@ function colorOf(pid) {
 function newPlayer(deck, name, prev) {
   const m = {
     pid: S.pid, name, life: 40, poison: 0, ctr: {}, cmdDmg: {}, casts: {}, mull: 0, kept: false,
-    revealHand: false, revealTop: false, seq: 0, lastTurn: 0,
+    revealHand: false, revealTop: false, revealTopOnce: null, seq: 0, lastTurn: 0, lastTurnSeq: 0,
     autoUntap: false, autoDraw: false, // always start a game with these off
     layout: prev && prev.layout ? cloneLayout(prev.layout) : defaultLayout(),
     // auto = untouched default zones: they (and the cards in them) stretch to fit whichever view is used
@@ -254,6 +254,10 @@ function pubCard(c) {
   return Object.assign({ iid: c.iid, id: c.id, t: c.t ? 1 : 0, fl: c.fl ? 1 : 0, c: c.c, own: c.own, tok: c.tok ? 1 : 0, cmd: c.cmd ? 1 : 0, cp: c.cp ? 1 : 0,
     pb: c.pb || undefined, dp: c.dp || 0, dt: c.dt || 0 }, pos);
 }
+function topIsRevealed(m) {
+  const top = m && m.zones && m.zones.library && m.zones.library[0];
+  return !!(m && (m.revealTop || (top && m.revealTopOnce === top.iid)));
+}
 function publicView() {
   const m = S.me, z = m.zones, defs = {};
   // (bw tells other players which board width our positions/layout use)
@@ -267,7 +271,7 @@ function publicView() {
     casts: m.casts, hand: z.hand.length, lib: z.library.length, kept: m.kept, layout: m.layout, bh: myBH(),
     zones: { battlefield: take(z.battlefield), graveyard: take(z.graveyard), exile: take(z.exile), command: take(z.command) },
     revHand: m.revealHand ? take(z.hand) : null,
-    revTop: m.revealTop && z.library.length ? take([z.library[0]]) : null,
+    revTop: topIsRevealed(m) && z.library.length ? take([z.library[0]]) : null,
     defs
   };
 }
@@ -285,7 +289,7 @@ function say(text, cards) {
 
 // ----- host side -----
 function newTable(room) {
-  return { room, seats: [S.pid], order: [], active: null, turn: 0, phase: 3, started: false, monarch: null, initiative: null, out: {} };
+  return { room, seats: [S.pid], order: [], active: null, turn: 0, turnSeq: 0, phase: 3, started: false, monarch: null, initiative: null, out: {} };
 }
 function hostRecv(msg, from) {
   if (!msg || typeof msg.t !== 'string' || !S.table) return;
@@ -339,7 +343,7 @@ function cleanTable(t) {
   const str = x => (typeof x === 'string' ? x.slice(0, 40) : null);
   return {
     room: String(t.room || '').slice(0, 8), seats: ids(t.seats), order: ids(t.order), active: str(t.active),
-    turn: Math.max(0, num(t.turn)), phase: clamp(num(t.phase, 3), 0, PHASES.length - 1), started: !!t.started,
+    turn: Math.max(0, num(t.turn)), turnSeq: Math.max(0, num(t.turnSeq, num(t.turn))), phase: clamp(num(t.phase, 3), 0, PHASES.length - 1), started: !!t.started,
     monarch: str(t.monarch), initiative: str(t.initiative),
     out: isObj(t.out) ? Object.fromEntries(Object.keys(t.out).slice(0, 8).map(k => [k.slice(0, 40), !!t.out[k]])) : {},
     rev: Math.max(0, num(t.rev))
@@ -351,23 +355,47 @@ function tableOp(op, from) {
   if (!isObj(op) || typeof op.k !== 'string') return;
   const isHost = from === S.pid;
   switch (op.k) {
+    case 'rollfirst': {
+      if (T.started) return;
+      const live = T.seats.filter(p => !T.out[p]);
+      if (!live.length) return;
+      const rolls = new Map(live.map(p => [p, rnd(20) + 1]));
+      // Tied high rolls re-roll until each player has a distinct result.
+      for (let attempt = 0; attempt < 100; attempt++) {
+        const groups = new Map();
+        for (const p of live) { const v = rolls.get(p); if (!groups.has(v)) groups.set(v, []); groups.get(v).push(p); }
+        const ties = [...groups.values()].filter(g => g.length > 1);
+        if (!ties.length) break;
+        ties.forEach(group => group.forEach(p => rolls.set(p, rnd(20) + 1)));
+      }
+      T.order = live.slice().sort((a, b) => rolls.get(b) - rolls.get(a));
+      sysLog(`Roll for first player (d20): ${T.order.map(p => `${pname(p)} rolled ${rolls.get(p)}`).join(' · ')}. ${pname(T.order[0])} goes first. Click Start game to begin.`);
+      break;
+    }
     case 'start': {
       if (!isHost) return;
-      T.order = shuffle(T.seats.filter(p => !T.out[p]));
-      T.active = T.order[0]; T.turn = 1; T.phase = 3; T.started = true;
-      sysLog(`Game started! Turn order: ${T.order.map(pname).join(' → ')}. ${pname(T.active)} goes first.`);
+      const live = T.seats.filter(p => !T.out[p]);
+      const validRollOrder = T.order.length === live.length && new Set(T.order).size === live.length && T.order.every(p => live.includes(p));
+      if (!validRollOrder) T.order = shuffle(live);
+      T.active = T.order[0] || null; T.turn = 1; T.turnSeq = 1; T.phase = 3; T.started = true;
+      sysLog(`Game started! Turn order: ${T.order.map(pname).join(' → ')}. ${T.active ? pname(T.active) + ' goes first.' : 'No players are seated.'}`);
       break;
     }
     case 'pass': {
-      if (!T.started) return;
-      // Ignore a pass meant for a turn that's already over (double click by two players,
-      // or a pass that arrives late after a reconnect) so a turn is never skipped.
-      if (op.turn != null && num(op.turn) !== T.turn) return;
+      if (!T.started || !T.active) return;
+      // turnSeq guards duplicate/late pass messages; turn counts full rounds only.
+      const expectedSeq = Math.max(1, num(T.turnSeq, num(T.turn)));
+      const suppliedSeq = op.turnSeq != null ? num(op.turnSeq) : (op.turn != null ? num(op.turn) : expectedSeq);
+      if (suppliedSeq !== expectedSeq) return;
       const live = T.order.filter(p => !T.out[p]);
       if (!live.length) return;
       const i = live.indexOf(T.active);
-      T.active = live[(i + 1) % live.length]; T.turn++; T.phase = 3;
-      sysLog(`Turn ${T.turn}: ${pname(T.active)}${from !== T.active && from !== live[i] ? ` (passed by ${pname(from)})` : ''}`);
+      if (i < 0) return;
+      const next = (i + 1) % live.length;
+      T.active = live[next];
+      if (next === 0) T.turn++;
+      T.turnSeq = expectedSeq + 1; T.phase = 3;
+      sysLog(`Round ${T.turn}: ${pname(T.active)}'s turn${from !== T.active && from !== live[i] ? ` (passed by ${pname(from)})` : ''}`);
       break;
     }
     case 'phase': T.phase = clamp(num(op.v), 0, PHASES.length - 1); break;
@@ -376,9 +404,29 @@ function tableOp(op, from) {
     case 'initiative': T.initiative = T.seats.includes(op.pid) ? op.pid : null;
       sysLog(T.initiative ? `${pname(T.initiative)} has the initiative 🏰` : 'Nobody has the initiative.'); break;
     case 'concede': {
+      if (!T.seats.includes(from) || T.out[from]) return;
+      const liveBefore = T.order.filter(p => !T.out[p]);
+      const activeIndexBefore = liveBefore.indexOf(T.active);
+      const wasActive = T.started && T.active === from;
       T.out[from] = true;
-      sysLog(`${pname(from)} left the game.`);
-      if (T.active === from && T.started) { tableOp({ k: 'pass' }, from); return; }
+      sysLog(`${pname(from)} conceded the game.`);
+      if (wasActive) {
+        const live = T.order.filter(p => !T.out[p]);
+        if (!live.length) {
+          T.active = null;
+        } else {
+          const orderIndex = T.order.indexOf(from);
+          let nextPlayer = null;
+          for (let step = 1; step <= T.order.length; step++) {
+            const candidate = T.order[(orderIndex + step) % T.order.length];
+            if (!T.out[candidate]) { nextPlayer = candidate; break; }
+          }
+          T.active = nextPlayer;
+          if (activeIndexBefore === liveBefore.length - 1) T.turn++;
+          T.turnSeq = Math.max(1, num(T.turnSeq, num(T.turn))) + 1;
+          T.phase = 3;
+        }
+      }
       break;
     }
     case 'kick': {
@@ -391,7 +439,7 @@ function tableOp(op, from) {
     }
     case 'newgame': {
       if (!isHost) return;
-      Object.assign(T, { order: [], active: null, turn: 0, phase: 3, started: false, monarch: null, initiative: null, out: {} });
+      Object.assign(T, { order: [], active: null, turn: 0, turnSeq: 0, phase: 3, started: false, monarch: null, initiative: null, out: {} });
       pushTable();
       broadcast({ t: 'newgame' });
       sysLog('New game — everyone reshuffled and drew 7.');
@@ -510,9 +558,11 @@ function afterTable() {
   const T = S.table, m = S.me;
   if (!T || !m) return;
   if (!T.started) return;
-  if (T.active === S.pid && T.turn > (m.lastTurn || 0)) {
-    m.lastTurn = T.turn;
-    const skipDraw = T.turn === 1 && T.order.length === 2; // 2-player: first player skips first draw
+  const turnSeq = Math.max(1, num(T.turnSeq, num(T.turn)));
+  const lastTurnSeq = num(m.lastTurnSeq, num(m.lastTurn));
+  if (T.active === S.pid && turnSeq > lastTurnSeq) {
+    m.lastTurnSeq = turnSeq; m.lastTurn = turnSeq;
+    const skipDraw = turnSeq === 1 && T.order.length === 2; // 2-player: first player skips first draw
     const bits = [];
     act(() => {
       if (m.autoUntap && m.zones.battlefield.some(c => c.t)) { m.zones.battlefield.forEach(c => { c.t = false; }); bits.push('untapped'); }
@@ -534,7 +584,7 @@ function resetForNewGame() {
 // =====================================================================
 function insertCard(card, to, opts = {}) {
   const z = S.me.zones[to];
-  if (to === 'library') { if (opts.pos === 'bottom') z.push(card); else z.unshift(card); } else z.push(card);
+  if (to === 'library') { S.me.revealTopOnce = null; if (opts.pos === 'bottom') z.push(card); else z.unshift(card); } else z.push(card);
   if (to === 'battlefield') {
     if (opts.x != null) { card.x = clamp(Math.round(opts.x), 0, BW - CW); card.y = clamp(Math.round(opts.y), 0, myBH() - CH); }
     else if (card.x == null) autoPlace(card, to);
@@ -713,11 +763,11 @@ function endAttach() {
 
 function draw(n = 1) {
   const z = S.me.zones; let k = 0;
-  act(() => { while (k < n && z.library.length) { z.hand.push(z.library.shift()); k++; } return k ? [`drew ${plural(k, 'card')}`] : null; });
+  act(() => { while (k < n && z.library.length) { z.hand.push(z.library.shift()); k++; } if (k) S.me.revealTopOnce = null; return k ? [`drew ${plural(k, 'card')}`] : null; });
   if (k < n) UI.toast('Your library is empty!', { kind: 'warn' });
 }
 function untapAll() { act(() => { S.me.zones.battlefield.forEach(c => { c.t = false; }); return ['untapped everything']; }); }
-function shuffleLib() { act(() => { shuffle(S.me.zones.library); return ['shuffled their library']; }); }
+function shuffleLib() { act(() => { S.me.revealTopOnce = null; shuffle(S.me.zones.library); return ['shuffled their library']; }); }
 function toggleTap(iid) { const f = findCard(iid); if (f && f.zone === 'battlefield') act(() => { f.card.t = !f.card.t; }); }
 function flip(iid) {
   const f = findCard(iid); const d = f && defOf(f.card);
@@ -879,16 +929,23 @@ function returnControl(iid) {
 // --- life & counters (life changes are logged once the clicking stops)
 const lifeLog = { from: null, timer: null, by: '' };
 function changeLife(d, by) {
+  const before = S.me.life;
   act(() => {
     if (lifeLog.from == null) lifeLog.from = S.me.life;
     if (by) lifeLog.by = by;
     S.me.life += d;
   }, { noUndo: !!by });
+  const after = S.me.life;
   clearTimeout(lifeLog.timer);
   lifeLog.timer = setTimeout(() => {
     if (lifeLog.from !== S.me.life) say(`life ${lifeLog.from} → ${S.me.life}${lifeLog.by ? ` (by ${lifeLog.by})` : ''}`);
     lifeLog.from = null; lifeLog.by = '';
   }, 1400);
+  if (before > 0 && after <= 0) {
+    UI.confirm(`You are at ${after} life. Would you like to concede? You can choose Cancel and continue playing at negative life.`, {
+      title: 'You reached 0 life', danger: true, okLabel: 'Concede game'
+    }).then(ok => { if (ok) concedeGame(); });
+  }
 }
 const cdLog = {};
 // Commander tax chip: left-click +2, right-click −2 (stored as a cast count).
@@ -927,6 +984,7 @@ function mulligan() {
   act(() => {
     const z = S.me.zones;
     z.library.push(...z.hand.splice(0));
+    S.me.revealTopOnce = null;
     shuffle(z.library);
     z.hand = z.library.splice(0, 7);
     S.me.mull++;
@@ -1038,6 +1096,7 @@ async function millN(to, faceDown) {
     for (let i = 0; i < n && S.me.zones.library.length; i++) {
       const c = S.me.zones.library.shift(); c.fd = !!faceDown; S.me.zones[to].push(c); moved.push(defOf(c));
     }
+    if (moved.length) S.me.revealTopOnce = null;
     if (faceDown) return [`exiled the top ${plural(moved.length, 'card')} face down`];
     const refs = moved.slice(0, 8).map((_, i) => `{${i}}`).join(', ');
     return [`${to === 'graveyard' ? 'milled' : 'exiled from the top'} ${moved.length}: ${refs}${moved.length > 8 ? '…' : ''}`, moved];
@@ -1046,7 +1105,12 @@ async function millN(to, faceDown) {
 function revealTop() {
   const c = S.me.zones.library[0];
   if (!c) return UI.toast('Library is empty');
-  say('revealed the top card of their library: {0}', [defOf(c)]);
+  const d = defOf(c);
+  act(() => {
+    S.me.revealTopOnce = c.iid;
+    return [`revealed the top card of their library: {0}`, [d]];
+  }, { noUndo: true });
+  UI.toast('The top card is visible to everyone until it leaves the top of the Library.');
 }
 function discardRandom() {
   const h = S.me.zones.hand;
@@ -1298,6 +1362,7 @@ function diceMenu(x, y) {
     { label: 'Flip a coin', onClick: () => say(`flipped a coin: ${rnd(2) ? 'heads' : 'tails'}`) },
     { label: 'Roll d6', onClick: () => roll(6) }, { label: 'Roll d20', onClick: () => roll(20) },
     { label: 'Other dice', sub: [4, 8, 10, 12, 100].map(s => ({ label: `d${s}`, onClick: () => roll(s) })) },
+    { label: 'Roll for first player (d20)', disabled: !!(S.table && S.table.started) || !(S.table && S.table.seats.length), onClick: () => toHost({ t: 'op', op: { k: 'rollfirst' } }) },
     { sep: true },
     { label: 'Pick a random player', onClick: () => {
       const seats = ((S.table && S.table.seats) || [S.pid]).filter(p => !(S.table && S.table.out[p]));
@@ -1320,6 +1385,10 @@ function mainMenu(x, y) {
     { label: 'Auto-draw on my turn', checked: m.autoDraw, onClick: () => act(() => { m.autoDraw = !m.autoDraw; }, { noUndo: true }) },
     { label: 'Reveal my hand to everyone', checked: m.revealHand, onClick: () => act(() => { m.revealHand = !m.revealHand; return [m.revealHand ? 'revealed their hand' : 'stopped revealing their hand']; }) },
     { label: 'Discard at random', onClick: discardRandom },
+    { sep: true },
+    { label: 'Concede game…', danger: true, onClick: async () => {
+      if (await UI.confirm('Concede this game? You will be marked as out and skipped in turn order.', { title: 'Concede game', danger: true, okLabel: 'Concede' })) concedeGame();
+    } },
     { sep: true }
   ];
   if (S.role !== 'client') items.push({ label: 'Start a new game (everyone)', onClick: async () => {
@@ -1339,13 +1408,13 @@ function toggleArrange() {
 }
 // Shared Pass Turn button (highlighted on your turn; disabled until the game starts).
 function passBtn() {
-  const T = S.table, started = !!(T && T.started), mine = started && T.active === S.pid;
+  const T = S.table, started = !!(T && T.started && T.active), mine = started && T.active === S.pid;
   return `<div class="ztool"><button data-a="pass" class="${mine ? 'primary' : ''}"${started ? '' : ' disabled'} title="Pass the turn to the next player">Pass turn ▶</button></div>`;
 }
 function toggleFocus(pid) { S.focus = S.focus === pid ? null : pid; render(); }
 function displaySettings() {
   const r0 = window.Lens ? Lens.getRadius() : 90;
-  const m = UI.modal({ title: 'Display settings', html: `
+  const m = UI.modal({ title: 'Display settings', className: 'w-display-dialog', html: `
     <div class="display-settings">
       <div>
         <div class="display-setting-head"><label for="ctLensSize"><b>Magnifier size</b></label><strong id="ctLensValue">${r0}px</strong></div>
@@ -1555,7 +1624,7 @@ function pileInfo(pid) {
   const defs = mine ? S.me.defs : (p.defs || {});
   const gy = z.graveyard || [], ex = z.exile || [];
   const out = {
-    library: { n: mine ? z.library.length : num(p.lib), top: mine ? (S.me.revealTop && z.library[0]) : (p.revTop && p.revTop[0]), label: 'Library' },
+    library: { n: mine ? z.library.length : num(p.lib), top: mine ? (topIsRevealed(S.me) && z.library[0]) : (p.revTop && p.revTop[0]), label: 'Library' },
     graveyard: { n: gy.length, top: gy[gy.length - 1], tc: typeCounts(gy, defs), label: 'Graveyard' },
     exile: { n: ex.length, top: ex[ex.length - 1], tc: typeCounts(ex, defs), label: 'Exile' }
   };
@@ -1649,10 +1718,12 @@ function renderTop() {
   if (!T) html = `<span class="muted">${esc(S.net.text || 'Connecting to the host…')}</span>`;
   else if (!T.started) {
     html = `<span class="muted">Not started · ${plural(T.seats.length, 'player')} seated</span>` +
-      (S.role !== 'client' ? ' <button class="primary" data-a="start" title="Randomizes turn order">Start game</button>' : ' <span class="muted">— waiting for the host to start</span>');
+      (S.role !== 'client' ? ' <button class="primary" data-a="start" title="Uses the rolled order, or randomizes if you have not rolled">Start game</button>' : ' <span class="muted">— waiting for the host to start</span>');
+  } else if (!T.active) {
+    html = `<span class="muted">No active player · everyone has conceded</span>`;
   } else {
     const mine = T.active === S.pid;
-    html = `<span>Turn <b>${T.turn}</b> · <b style="color:${colorOf(T.active)}">${esc(mine ? 'Your' : pname(T.active) + "'s")}</b> turn</span>`;
+    html = `<span>Round <b>${T.turn}</b> · <b style="color:${colorOf(T.active)}">${esc(mine ? 'Your' : pname(T.active) + "'s")}</b> turn</span>`;
   }
   $('#turnBox').innerHTML = html;
   const turnActions = $('#turnActions');
@@ -1735,6 +1806,26 @@ function renderYouTile(el, idx) {
   el.querySelector('.obf').innerHTML = viewingMe ? '<div class="viewing-note">👁 Viewing your board</div>'
     : `<div class="boardwrap thumb" data-board="thumb:${esc(S.pid)}">${boardHTML(S.pid, idx).replace(/ data-(iid|pid|zone|region|c)="[^"]*"/g, '')}</div>`;
 }
+function focusedOppZonesHTML(pid) {
+  const p = S.players[pid];
+  if (!p) return '';
+  const defs = p.defs || {}, pi = pileInfo(pid), handN = num(p.hand);
+  const revealed = !!(p.revHand && p.revHand.length);
+  const shown = revealed ? p.revHand.length : Math.min(handN, 10);
+  const mid = (shown - 1) / 2, step = shown > 1 ? Math.min(8, 48 / shown) : 0;
+  const fan = i => { const off = i - mid; return `--rot:${(off * step).toFixed(1)}deg;--arc:${(mid ? 3 * (off / mid) ** 2 : 0).toFixed(1)}px;z-index:${i + 1}`; };
+  const hands = revealed
+    ? p.revHand.map((card, i) => cardHTML(card, card.id && defs[card.id], { mine: false, pid, ctrl: pid, zone: 'hand', style: fan(i) })).join('')
+    : Array.from({ length: shown }, (_, i) => `<div class="card oback" style="${fan(i)}">${UI.cardBackHTML()}</div>`).join('');
+  const pile = (key, label) => `<div class="focus-pile" data-pile="${key}" data-pid="${esc(pid)}" title="${esc(pi[key].tip)}"><div class="focus-zone-label">${label} <b>${pi[key].n}</b></div><div class="focus-pile-card">${pi[key].face}</div></div>`;
+  const commanders = (p.zones.command || []).map(card => cardHTML(card, card.id && defs[card.id], { mine: false, pid, ctrl: pid, zone: 'command' })).join('');
+  return `<div class="focus-zonebar" aria-label="${esc(p.name)}'s hand and zones">
+    <div class="focus-hand-group"><div class="focus-zone-label">HAND <b>${handN}</b>${revealed ? ' · REVEALED' : ''}</div><div class="focus-hand-cards">${hands}</div></div>
+    ${pile('library', 'LIB')}${pile('graveyard', 'GY')}${pile('exile', 'EXILE')}
+    <div class="focus-pile focus-command"><div class="focus-zone-label">COMMAND</div><div class="focus-command-cards">${commanders || '<span class="muted small">—</span>'}</div></div>
+  </div>`;
+}
+
 function renderOpp(el, pid, idx) {
   const p = S.players[pid], T = S.table || {}, defs = p.defs || {};
   const o = { mine: false, pid };
@@ -1767,7 +1858,8 @@ function renderOpp(el, pid, idx) {
     ${handHTML}
     ${cmdCards ? `<span class="ocmd" title="Command zone">${cmdCards}</span>` : ''}
     ${!p.kept ? '<span class="muted small">mulliganing…</span>' : ''}`;
-  el.querySelector('.obf').innerHTML = `<div class="boardwrap" data-board="${esc(pid)}">${boardHTML(pid, idx)}</div>`;
+  const focusedZones = (curView() === 'side' || curView() === 'focus') && S.focus === pid ? focusedOppZonesHTML(pid) : '';
+  el.querySelector('.obf').innerHTML = `<div class="boardwrap" data-board="${esc(pid)}">${boardHTML(pid, idx)}</div>${focusedZones}`;
 }
 
 function renderMine(idx) {
@@ -2256,10 +2348,16 @@ function onButton(a, btn, e) {
     case 'displaysettings': displaySettings(); break;
   }
 }
+function concedeGame() {
+  const T = S.table;
+  if (!T || !T.started || !T.seats.includes(S.pid) || (T.out && T.out[S.pid])) return;
+  toHost({ t: 'op', op: { k: 'concede' } });
+}
 async function passTurn() {
-  const T = S.table; if (!T || !T.started) return;
+  const T = S.table; if (!T || !T.started || !T.active) return;
   if (T.active !== S.pid && !(await UI.confirm(`It's ${pname(T.active)}'s turn. Pass it for them?`, { okLabel: 'Pass their turn' }))) return;
-  toHost({ t: 'op', op: { k: 'pass', turn: T.turn } });
+  const seq = Math.max(1, num(T.turnSeq, num(T.turn)));
+  toHost({ t: 'op', op: { k: 'pass', turn: seq, turnSeq: seq } });
 }
 // Invite link = this page's address (works on GitHub Pages' /commander-table/ path, the
 // LAN server and file://) + ?join=CODE. The bare room code still works as a fallback.

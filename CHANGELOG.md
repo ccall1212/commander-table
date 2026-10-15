@@ -6,6 +6,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.7.5] - 2026-10-15
+
+### Fixed
+- Reveal top card now publishes the actual current top card to the owner's Library and focused opponent view until that card leaves the top.
+- The turn number now counts full rounds; a separate turn sequence protects against duplicate/late pass messages and keeps Auto-Draw/Auto-Untap running once per individual turn.
+- Reaching zero or negative life prompts the player to concede; declining leaves their life unchanged and allows negative totals. Added a shared pre-game d20 roll to choose turn order and a Concede game menu option.
+- Display settings use a responsive dialog width and max-height with more compact spacing.
+- Focused opponent view includes their hand backs/revealed hand, Library (including a revealed top card), Graveyard, Exile, and Commander, in a bar at the top-right of their board.
+- The top bar says "Round N" to match the log.
+
 ## [0.7.4] - 2026-10-15
 
 ### Fixed
@@ -113,7 +123,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - First playable build: paste-import decks from Moxfield or Archidekt (via Scryfall), 2–4 player rooms over PeerJS with self-healing reconnects, a searchable zone viewer, commander damage tracking and automatic tokens.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.7.4...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.7.5...HEAD
+[0.7.5]: https://github.com/ccall1212/commander-table/compare/v0.7.4...v0.7.5
 [0.7.4]: https://github.com/ccall1212/commander-table/compare/v0.7.3...v0.7.4
 [0.7.3]: https://github.com/ccall1212/commander-table/compare/v0.7.2...v0.7.3
 [0.7.2]: https://github.com/ccall1212/commander-table/compare/v0.7.1...v0.7.2

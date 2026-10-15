@@ -232,19 +232,31 @@ Query options: <code>?relay=&lt;http(s) url of a relay&gt;</code> (only honoured
     async t11_conflicting_pass_and_tsync() {
       const P = await mk('APP'); const CT = P.w.CT;
       CT.S.role = 'host'; CT.S.pid = 'H'; CT.S.room = 'TEST1'; CT.S.players = {}; CT.S.log = []; CT.S.online = {};
-      CT.S.table = { room: 'TEST1', seats: ['H', 'A', 'B'], order: ['H', 'A', 'B'], active: 'H', turn: 4, phase: 3, started: true, monarch: null, initiative: null, out: {}, rev: 10 };
-      CT.hostRecv({ t: 'op', op: { k: 'pass', turn: 4 } }, 'A');
-      CT.hostRecv({ t: 'op', op: { k: 'pass', turn: 4 } }, 'B');   // same moment, now stale
-      const T = CT.S.table;
-      if (T.turn !== 5 || T.active !== 'A') throw new Error('two passes skipped a turn: turn ' + T.turn + ' active ' + T.active);
+      CT.S.table = { room: 'TEST1', seats: ['H', 'A', 'B'], order: [], active: null, turn: 0, turnSeq: 0, phase: 3, started: false, monarch: null, initiative: null, out: {}, rev: 9 };
+      CT.hostRecv({ t: 'op', op: { k: 'rollfirst' } }, 'A');
+      const rolledOrder = CT.S.table.order.slice();
+      if (rolledOrder.length !== 3 || new Set(rolledOrder).size !== 3 || CT.S.table.started) throw new Error('d20 roll did not establish a valid pre-game order');
+      CT.hostRecv({ t: 'op', op: { k: 'start' } }, 'H');
+      if (!CT.S.table.started || CT.S.table.active !== rolledOrder[0]) throw new Error('Start game ignored the d20 roll order');
+      CT.S.table = { room: 'TEST1', seats: ['H', 'A', 'B'], order: ['H', 'A', 'B'], active: 'H', turn: 2, turnSeq: 4, phase: 3, started: true, monarch: null, initiative: null, out: {}, rev: 10 };
+      CT.hostRecv({ t: 'op', op: { k: 'pass', turn: 4, turnSeq: 4 } }, 'A');
+      CT.hostRecv({ t: 'op', op: { k: 'pass', turn: 4, turnSeq: 4 } }, 'B');   // duplicate pass is stale
+      let T = CT.S.table;
+      if (T.turn !== 2 || T.turnSeq !== 5 || T.active !== 'A') throw new Error('round advanced before every player had a turn');
+      CT.hostRecv({ t: 'op', op: { k: 'pass', turn: 5, turnSeq: 5 } }, 'A');
+      T = CT.S.table;
+      if (T.turn !== 2 || T.turnSeq !== 6 || T.active !== 'B') throw new Error('round advanced on second player turn');
+      CT.hostRecv({ t: 'op', op: { k: 'pass', turn: 6, turnSeq: 6 } }, 'B');
+      T = CT.S.table;
+      if (T.turn !== 3 || T.turnSeq !== 7 || T.active !== 'H') throw new Error('round did not advance at end of full turn order');
       const rev = T.rev;
-      CT.hostRecv({ t: 'tsync', table: Object.assign({}, T, { turn: 2, rev: rev - 3 }) }, 'B');  // older: ignore
-      if (CT.S.table.turn !== 5) throw new Error('older table copy overwrote newer state');
-      CT.hostRecv({ t: 'tsync', table: Object.assign({}, T, { turn: 7, active: 'B', rev: rev + 5 }) }, 'B');  // newer: adopt
-      if (CT.S.table.turn !== 7) throw new Error('newer table copy was not adopted');
+      CT.hostRecv({ t: 'tsync', table: Object.assign({}, T, { turn: 1, turnSeq: 1, rev: rev - 3 }) }, 'B');  // older: ignore
+      if (CT.S.table.turn !== 3) throw new Error('older table copy overwrote newer state');
+      CT.hostRecv({ t: 'tsync', table: Object.assign({}, T, { turn: 5, turnSeq: 12, active: 'B', rev: rev + 5 }) }, 'B');  // newer: adopt
+      if (CT.S.table.turn !== 5) throw new Error('newer table copy was not adopted');
       CT.hostRecv({ t: 'tsync', table: Object.assign({}, CT.S.table, { seats: ['A', 'B'], rev: 999 }) }, 'B');  // host missing: reject
       if (!CT.S.table.seats.includes('H')) throw new Error('accepted a table without the host');
-      return 'simultaneous passes → 1 turn; older copy ignored, newer adopted, bogus rejected';
+      return 'd20 roll order preserved; turnSeq rejects duplicate passes; round increments after full turn order; tsync checks preserved';
     },
     async t12_p2p_diagnostics() {
       // Direct WebRTC only. On networks that block it this must end in a clear 'ice' diagnosis, not a hang.

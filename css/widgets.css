@@ -162,6 +162,9 @@
   animation: w-pop .12s ease-out;
 }
 .w-dialog.w-wide { width: min(900px, 100%); }
+.w-dialog.w-display-dialog { width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 32px); }
+@supports (height: 100dvh) { .w-dialog.w-display-dialog { max-height: calc(100dvh - 32px); } }
+.w-display-dialog .w-modal-body { overflow-y: auto; }
 .w-modal-head {
   display: flex;
   align-items: baseline;
