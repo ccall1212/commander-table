@@ -6,6 +6,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.7.4] - 2026-10-15
+
+### Fixed
+- After an update, a normal refresh could run the new page with old cached game code, still showing the old version for up to 10 minutes (GitHub Pages caching). Every file link now carries the version (`?v=0.7.4`). If the page and code ever disagree, the game reloads itself once.
+
+### Added
+- If a new version goes live while the game is open, a notice offers to reload. The game carries on after the reload.
+- `tools/bump-version.py X.Y.Z` sets the version in every place it's stored in one step.
+
 ## [0.7.3] - 2026-10-15
 
 ### Fixed
@@ -104,7 +113,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - First playable build: paste-import decks from Moxfield or Archidekt (via Scryfall), 2–4 player rooms over PeerJS with self-healing reconnects, a searchable zone viewer, commander damage tracking and automatic tokens.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.7.3...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.7.4...HEAD
+[0.7.4]: https://github.com/ccall1212/commander-table/compare/v0.7.3...v0.7.4
 [0.7.3]: https://github.com/ccall1212/commander-table/compare/v0.7.2...v0.7.3
 [0.7.2]: https://github.com/ccall1212/commander-table/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/ccall1212/commander-table/compare/v0.7.0...v0.7.1

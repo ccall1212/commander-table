@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.7.3';
+const APP_VERSION = '0.7.4';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -2613,6 +2613,41 @@ function boot() {
 }
 // Expose a little for debugging from the console.
 window.CT = { S, act, render, dragState: () => drag, hostRecv, cleanTable };
+// ---- stay on one version -----------------------------------------------------------------------
+// GitHub Pages lets browsers reuse cached files for 10 minutes. index.html links every file with ?v=<version>
+// (tools/bump-version.py), so a new page never pulls old files. If this script and the page that loaded it
+// still disagree, reload once from a fresh URL. And if a new version goes live while the game is open, say so.
+const PAGE_VERSION = (document.querySelector('meta[name="app-version"]') || {}).content || APP_VERSION;
+const newerVersion = (a, b) => {
+  const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
+  for (let i = 0; i < 3; i++) if ((pa[i] || 0) !== (pb[i] || 0)) return (pa[i] || 0) > (pb[i] || 0);
+  return false;
+};
+function freshUrl(v) { const u = new URL(location.href); u.searchParams.set('v', v); return u.href; }
+function versionGuard() {
+  if (PAGE_VERSION === APP_VERSION) return false;
+  const k = 'ct.verfix.' + PAGE_VERSION;
+  if (SS.get(k, false)) return false; // already tried once: don't loop
+  SS.set(k, true);
+  location.replace(freshUrl(PAGE_VERSION));
+  return true;
+}
+let updateNoticed = false;
+async function checkForNewVersion() {
+  if (updateNoticed || location.protocol === 'file:' || window.CT_LAN) return; // LAN games use js/updates.js
+  try {
+    const u = new URL(location.href); u.search = ''; u.hash = ''; u.searchParams.set('check', Date.now());
+    const m = (await (await fetch(u.href, { cache: 'no-store' })).text()).match(/<meta name="app-version" content="([^"]+)"/);
+    if (!m || !newerVersion(m[1], APP_VERSION)) return;
+    updateNoticed = true;
+    UI.toast(`Version ${m[1]} is out — reload to get it (your game carries on).`, { ms: 3600000, action: { label: 'Reload', onClick: () => { saveNow(); location.replace(freshUrl(m[1])); } } });
+  } catch (e) { /* offline: try again later */ }
+}
 // tests/net-harness.html loads the page with ?nettest to drive Net directly, without the app.
-if (!new URLSearchParams(location.search).has('nettest')) boot();
+if (!new URLSearchParams(location.search).has('nettest') && !versionGuard()) {
+  boot();
+  setTimeout(checkForNewVersion, 5000);
+  setInterval(checkForNewVersion, 10 * 60 * 1000);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkForNewVersion(); });
+}
 })();

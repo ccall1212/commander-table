@@ -230,3 +230,4 @@ Other shortcuts:
 - Tests: `tests/net-harness.html` and `tests/test_relay_protocol.py`.
 - Releases follow [semantic versioning](https://semver.org/). Each release is tagged `vX.Y.Z` and listed in [CHANGELOG.md](CHANGELOG.md).
 - Licensed under MIT (see [LICENSE](LICENSE)). Card data and images are © their owners, via Scryfall. This is an unofficial fan project, not affiliated with Wizards of the Coast.
+- Releasing: `python tools/bump-version.py X.Y.Z` (sets the version in index.html, its `?v=` file links and js/app.js), add a CHANGELOG.md entry, commit, tag `vX.Y.Z`, push.
