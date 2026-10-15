@@ -293,7 +293,7 @@ body.lens-on #pv { display: none; }
 
 /* ---- My zones (right side of bottom row) ---- */
 #myZones { display: flex; flex-direction: row; gap: 8px; align-items: flex-start; height: 100%;
-  --cw: clamp(58px, 4.4vw, 92px); } /* piles have their own size: Hand size must not inflate them */
+  --cw: clamp(80px, 6.5vw, 140px); } /* piles have their own size: Hand size must not inflate them */
 .ztools { display: grid; grid-template-columns: auto auto; gap: 6px; align-self: flex-start; margin-top: 18px; }
 .ztools .ztool:has([data-a=pass]) { grid-column: 1 / -1; }
 .ztools button { width: 100%; padding: 4px 10px; }
@@ -311,7 +311,7 @@ body.lens-on #pv { display: none; }
   border-radius: inherit; }
 .zcard .ph { padding: 4px; font-size: 10px; background: #1a1e28; }
 .zbox .zcard { transform: translateY(4%); transition: transform .18s ease, box-shadow .18s ease; box-shadow: 0 4px 14px rgba(0,0,0,.5); }
-.zbox:hover .zcard { transform: translateY(-12%) scale(1.06); z-index: 60; box-shadow: 0 14px 34px rgba(0,0,0,.7); outline: 2px solid var(--accent); }
+.zbox:hover .zcard { outline: 2px solid var(--accent); } /* no lift: it covered the AD switch */
 .zbox.dropok .zcard { outline: 2px dashed var(--accent); }
 .zbox.dropok { outline: none; background: none; }
 .zcard.cmdcards { width: auto; min-width: var(--cw); aspect-ratio: auto; height: calc(var(--cw) * 1.397); display: flex; gap: 4px;
@@ -455,7 +455,7 @@ body.lens-on #pv { display: none; }
 /* Fanned + peeking: JS sets inline --rot, --arc and z-index per card; the row's bottom edge (#mine overflow:hidden) cuts them off. */
 #myHand .card { transform: translateY(calc(10% + var(--arc, 0px))) rotate(var(--rot, 0deg)); transform-origin: 50% 110%;
   transition: transform .18s ease, margin .18s ease, box-shadow .18s ease; box-shadow: 0 4px 14px rgba(0,0,0,.55); }
-#myHand .card:hover { transform: translateY(-18%) rotate(0deg) scale(1.15); z-index: 60 !important; box-shadow: 0 14px 34px rgba(0,0,0,.7); }
+#myHand .card.hov { transform: translateY(-18%) rotate(0deg) scale(1.15); z-index: 60 !important; box-shadow: 0 14px 34px rgba(0,0,0,.7); }
 #myHand .card.dragging { transform: none; }
 /* Command-zone cards follow the same peek/lift as the piles (they live inside .zcard.cmdcards, which already transforms) */
 .zbox.cmdbox .zcard.cmdcards .card { box-shadow: 0 4px 14px rgba(0,0,0,.5); }

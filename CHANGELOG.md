@@ -6,6 +6,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.7.3] - 2026-10-15
+
+### Fixed
+- In a hand of 7+ cards the second card couldn't be reached directly: the lifted first card covered it. The lifted card now follows the pointer's position across the hand, so every card is reachable in order.
+- Hovering Library, Graveyard, Exile or Commander no longer lifts the pile over the AD switch; it just outlines the pile.
+
+### Changed
+- The Library, Graveyard, Exile and Commander piles are bigger: about 125px on a 1920-wide screen, up to 140px.
+
 ## [0.7.2] - 2026-10-15
 
 ### Changed
@@ -95,7 +104,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - First playable build: paste-import decks from Moxfield or Archidekt (via Scryfall), 2–4 player rooms over PeerJS with self-healing reconnects, a searchable zone viewer, commander damage tracking and automatic tokens.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.7.2...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.7.3...HEAD
+[0.7.3]: https://github.com/ccall1212/commander-table/compare/v0.7.2...v0.7.3
 [0.7.2]: https://github.com/ccall1212/commander-table/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/ccall1212/commander-table/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/ccall1212/commander-table/compare/v0.6.0...v0.7.0

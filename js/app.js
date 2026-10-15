@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.7.2';
+const APP_VERSION = '0.7.3';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -1791,6 +1791,7 @@ function renderMine(idx) {
       // arc is normalised so the outermost cards dip at most ~12px however big the hand is
       style: `--rot:${(off * step).toFixed(2)}deg;--arc:${(mid ? 12 * (off / mid) ** 2 : 0).toFixed(1)}px;z-index:${i + 1}` }));
   }).join('');
+  if (S.handHov) { const hc = [...$('#myHand').children].find(c => c.dataset.iid === S.handHov); if (hc) hc.classList.add('hov'); } // keep the lifted card up across re-renders
   $('#handLabel').innerHTML = `HAND <b>${z.hand.length}</b>`;
   $('#myHand').style.setProperty('--n', Math.max(1, z.hand.length)); // CSS overlaps cards so the hand never scrolls
   $('#myZones').innerHTML = myZonesHTML();
@@ -1956,6 +1957,28 @@ function bindGame() {
       if (d) preview(d);
     }
   });
+  // Which hand card is "up" is decided by where the pointer is across the fan, using each card's resting
+  // position (offsetLeft ignores transforms). With :hover, the enlarged card covered the next card's strip,
+  // so in a big hand the second card could only be reached by going to the third and back.
+  const handEl = $('#myHand');
+  const setHov = el => {
+    handEl.querySelectorAll('.card.hov').forEach(c => { if (c !== el) c.classList.remove('hov'); });
+    if (el) el.classList.add('hov');
+    S.handHov = el ? el.dataset.iid : null;
+  };
+  handEl.addEventListener('pointermove', e => {
+    if (drag) return;
+    const cards = [...handEl.children].filter(c => c.classList.contains('card'));
+    if (!cards.length || !cards[0].offsetParent) return setHov(null);
+    const x = e.clientX - cards[0].offsetParent.getBoundingClientRect().left;
+    let hit = null;
+    for (let i = 0; i < cards.length; i++) {
+      const l = cards[i].offsetLeft, r = i + 1 < cards.length ? cards[i + 1].offsetLeft : l + cards[i].offsetWidth;
+      if (x >= l && x < r) { hit = cards[i]; break; }
+    }
+    setHov(hit);
+  });
+  handEl.addEventListener('pointerleave', () => setHov(null));
   g.addEventListener('mouseout', e => {
     const from = e.target.closest && e.target.closest('.card, .cref, [data-pvid]');
     const to = e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('.card, .cref, [data-pvid]');
