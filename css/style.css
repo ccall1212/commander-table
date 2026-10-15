@@ -63,6 +63,11 @@ kbd { background: var(--panel2); border: 1px solid var(--border); border-radius:
 .pill.reconnecting, .pill.connecting { color: var(--accent); border-color: var(--accent); }
 .pill.error, .pill.offline { color: var(--danger); border-color: var(--danger); }
 #turnBox { display: flex; align-items: center; gap: 8px; min-width: 0; }
+#turnActions { display: flex; align-items: center; flex: none; }
+.turn-actions { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.turn-actions .ztool { display: flex; align-items: center; gap: 4px; }
+.turn-actions .ztool > button { flex: none; width: auto; padding: 3px 8px; }
+.turn-actions .tgl { margin: 0 2px 0 0; }
 .phases { display: flex; gap: 2px; }
 .phases button { padding: 2px 7px; font-size: 12px; color: var(--muted); }
 .phases button.on { color: #1a1405; background: var(--accent); border-color: var(--accent); }
@@ -261,7 +266,14 @@ body.lens-on #pv { display: none; }
 
 /* Narrow windows: the topbar never scrolls, and the phase buttons go. */
 @media (max-width: 900px) {
-  #topbar { overflow: hidden; }
+  #topbar { overflow: hidden; gap: 6px; padding: 0 6px; }
+  .tb-left, .tb-right { gap: 4px; }
+  .brand { display: none; }
+  .room { padding: 3px 6px; letter-spacing: 1px; }
+  .pill { padding: 2px 5px; }
+  .viewsw button { padding: 3px 5px; }
+  .turn-actions { gap: 4px; }
+  .turn-actions .ztool > button { padding: 3px 5px; font-size: 12px; }
   .phases { display: none; }
 }
 
@@ -289,6 +301,9 @@ body.lens-on #pv { display: none; }
 .zlabel { background: rgba(0,0,0,.55); border: 1px solid var(--border); border-radius: 10px; padding: 1px 9px; font-size: 11px;
   text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; white-space: nowrap; color: var(--muted); }
 .zlabel b { color: var(--text); }
+.zlabel-lib { display: flex; align-items: center; justify-content: center; gap: 4px; }
+.ad-control { display: inline-flex; align-items: center; gap: 4px; margin-left: 3px; }
+.ad-label { color: var(--good); font-size: 10px; font-weight: 800; letter-spacing: .4px; cursor: help; user-select: none; }
 .zsub { color: var(--muted); font-size: 10px; }
 .zcard { width: var(--cw); aspect-ratio: 63 / 88; position: relative; border-radius: calc(var(--cw) * .055);
   border: 1px dashed var(--border); overflow: hidden; }
@@ -487,7 +502,7 @@ body.lens-on #pv { display: none; }
 .ohhand.empty .ohn { margin-left: 2px; color: var(--muted); }
 @media (prefers-reduced-motion: reduce) { .ohhand .card { transition: none; } }
 
-/* ---------- Draw / Untap all + a small auto toggle switch beside each ---------- */
+/* ---------- Auto toggle switches used by the Library and top turn toolbar ---------- */
 .ztool { display: flex; align-items: center; gap: 6px; }
 .ztool > button { flex: 1; }
 .tgl { position: relative; display: inline-block; width: 26px; height: 14px; flex: none; cursor: pointer; }

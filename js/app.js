@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.7.1';
+const APP_VERSION = '0.7.2';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -87,7 +87,7 @@ function fittedLayout() {
   const wrap = $('#myBf');
   let W = wrap && wrap.clientWidth, H = wrap && wrap.clientHeight;
   if (!W || !H) { // not laid out yet (e.g. resuming): estimate from the window and the chosen layout
-    const v = LS.get('ct.view', 'top');
+    const v = LS.get('ct.view', 'side');
     W = innerWidth * (v === 'side' || v === 'focus' ? 0.8 : 1);
     H = v === 'top' ? innerHeight * 0.55 : innerHeight - 50;
   }
@@ -802,7 +802,7 @@ function createToken(def, n = 1) {
     return [`created ${n > 1 ? n + ' ' : 'a '}{0} token${n > 1 ? 's' : ''}`, [def]];
   });
 }
-// A copy behaves like a token (it ceases to exist off the battlefield) but is labelled COPY.
+// A copy behaves like a token (it ceases to exist off the battlefield) but is labelled TOKEN COPY.
 function copyCard(def, flipped, tapped) {
   if (!def || !def.id) return;
   act(() => {
@@ -1337,7 +1337,7 @@ function toggleArrange() {
   if (S.arrange) UI.toast('Drag a zone by its name to move it (its cards come along). Drag the corner to resize. Everyone sees your layout.', { ms: 7000 });
   render();
 }
-// Pass turn sits next to Draw / Untap all (highlighted on your turn; greyed until the game starts).
+// Shared Pass Turn button (highlighted on your turn; disabled until the game starts).
 function passBtn() {
   const T = S.table, started = !!(T && T.started), mine = started && T.active === S.pid;
   return `<div class="ztool"><button data-a="pass" class="${mine ? 'primary' : ''}"${started ? '' : ' disabled'} title="Pass the turn to the next player">Pass turn ▶</button></div>`;
@@ -1375,8 +1375,8 @@ function displaySettings() {
 }
 // Current view mode; with no opponents there's only one sensible layout.
 function curView() {
-  if (!S.view) S.view = LS.get('ct.view', 'top');
-  return oppPids().length ? (['top', 'side', 'grid', 'focus'].includes(S.view) ? S.view : 'top') : 'top';
+  if (!S.view) S.view = LS.get('ct.view', 'side');
+  return oppPids().length ? (['top', 'side', 'grid', 'focus'].includes(S.view) ? S.view : 'side') : 'top';
 }
 
 // =====================================================================
@@ -1439,7 +1439,7 @@ function cardHTML(c, def, o) {
     const casts = (ctrl === S.pid ? S.me.casts : ((S.players[ctrl] || {}).casts || {}))[c.iid] || 0;
     if (casts) badges += `<span class="tax" title="Commander tax">+${2 * casts}</span>`;
   }
-  const extra = (c.cp ? '<span class="tk cp" title="A copy — it disappears when it leaves the battlefield">COPY</span>' : c.tok ? '<span class="tk">TOKEN</span>' : '') +
+  const extra = (c.cp ? '<span class="tk cp" title="A copy — it disappears when it leaves the battlefield">TOKEN COPY</span>' : c.tok ? '<span class="tk">TOKEN</span>' : '') +
     (c.own && c.own !== o.pid ? `<span class="own" style="--oc:${colorOf(c.own)}" title="Owned by ${esc(pname(c.own))}">${esc(pname(c.own))}</span>` : '');
   return `<div class="${cls.join(' ')}" data-iid="${esc(c.iid)}" data-pid="${esc(ctrl)}" data-zone="${o.zone}"${o.style ? ` style="${o.style}"` : ''}>${inner}${extra}${pips}${ctrs ? `<div class="ctrs">${ctrs}</div>` : ''}<div class="badges">${badges}</div></div>`;
 }
@@ -1576,17 +1576,13 @@ function pileInfo(pid) {
 function myZonesHTML() {
   const pi = pileInfo(S.pid), me = S.me;
   const box = (k, label, sub) => `<div class="zbox" data-pile="${k}" data-pid="${esc(S.pid)}" data-drop="${k}" title="${esc(pi[k].tip)}">
-      <div class="zlabel">${label} <b>${pi[k].n}</b>${sub ? ` <span class="zsub">${sub}</span>` : ''}</div><div class="zcard">${pi[k].face}</div></div>`;
+      <div class="zlabel${k === 'library' ? ' zlabel-lib' : ''}">${label} <b>${pi[k].n}</b>${sub ? ` <span class="zsub">${sub}</span>` : ''}${k === 'library' ? `<span class="ad-control"><span class="ad-label" title="AD means Auto-Draw — automatically draws a card at the start of your turn">AD</span>${auto('autodraw', me.autoDraw, 'Draw a card')}</span>` : ''}</div><div class="zcard">${pi[k].face}</div></div>`;
   const cmd = me.zones.command;
   const taxIid = (cmd[0] && cmd[0].iid) || (me.cmdrs[0] && me.cmdrs[0].iid) || '';
   const tax = taxIid ? 2 * (me.casts[taxIid] || 0) : 0;
-  // Draw / Untap all each have a small switch beside them: on = happens automatically at the start of your turn
+  // Auto-Draw lives beside LIB; Auto-Untap and turn actions live in the top toolbar.
   const auto = (key, on, what) => `<label class="tgl" title="Auto: ${what} at the start of your turn (${on ? 'on' : 'off'})"><input type="checkbox" data-a="${key}"${on ? ' checked' : ''}><span></span></label>`;
-  return `<div class="ztools">
-      <div class="ztool"><button data-a="draw" title="Draw (D)">Draw</button>${auto('autodraw', me.autoDraw, 'Draw a card')}</div>
-      <div class="ztool"><button data-a="untapall" title="Untap all (U)">Untap all</button>${auto('autountap', me.autoUntap, 'Untap everything')}</div>
-      ${passBtn()}</div>` +
-    box('library', 'LIB') + box('graveyard', 'GY', pi.graveyard.n ? `${pi.graveyard.tc.perm}P` : '') + box('exile', 'EXILE') +
+  return box('library', 'LIB') + box('graveyard', 'GY', pi.graveyard.n ? `${pi.graveyard.tc.perm}P` : '') + box('exile', 'EXILE') +
     `<div class="zbox cmdbox" data-drop="command">
       ${taxIid ? `<div class="taxchip" data-a="tax" data-iid="${esc(taxIid)}" title="Commander tax — left-click +2, right-click −2">🪙 <b>${tax}</b></div>` : ''}
       <div class="zlabel">CMD</div>
@@ -1659,6 +1655,11 @@ function renderTop() {
     html = `<span>Turn <b>${T.turn}</b> · <b style="color:${colorOf(T.active)}">${esc(mine ? 'Your' : pname(T.active) + "'s")}</b> turn</span>`;
   }
   $('#turnBox').innerHTML = html;
+  const turnActions = $('#turnActions');
+  if (turnActions) {
+    const autoUntap = `<label class="tgl" title="Auto: Untap everything at the start of your turn (${S.me.autoUntap ? 'on' : 'off'})"><input type="checkbox" data-a="autountap"${S.me.autoUntap ? ' checked' : ''}><span></span></label>`;
+    turnActions.innerHTML = `<div class="turn-actions"><div class="ztool"><button data-a="untapall" title="Untap all (U)">Untap All</button>${autoUntap}</div>${passBtn()}</div>`;
+  }
   const banner = $('#banner');
   if (S.role === 'client' && S.net.state !== 'online') {
     banner.textContent = `${S.net.text || 'Reconnecting to the host…'} Your cards are saved — keep playing, it will catch up.`;
@@ -1697,7 +1698,7 @@ function renderOpps(idx) {
   document.body.classList.toggle('view-grid', view === 'grid');
   tbl.dataset.n = pids.length;
   tbl.classList.toggle('has-focus', !!S.focus && view !== 'top');
-  document.querySelectorAll('.viewsw [data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === (S.view || 'top')));
+  document.querySelectorAll('.viewsw [data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === (S.view || 'side')));
   // keep one stable element per opponent
   const have = new Map([...box.children].map(el => [el.dataset.opp, el]));
   pids.forEach((pid, i) => {
@@ -1898,6 +1899,7 @@ function bindGame() {
     if (ctr && card && card.dataset.pid === S.pid) { addCounter(card.dataset.iid, ctr.dataset.ctr, 1); return; }
     const ptb = t.closest('.badges .pt');
     if (ptb && card && card.dataset.pid === S.pid) { changePT(card.dataset.iid, 1, 1); return; }
+    if (t.closest('.ad-control')) return; // Auto-Draw control is inside the clickable Library pile
     const pile = t.closest('[data-pile]');
     if (pile) {
       const { pile: zone, pid } = pile.dataset;
@@ -1972,6 +1974,7 @@ function bindGame() {
     const handle = e.target.closest('.board.arrange .rlabel, .board.arrange .grip');
     if (handle && handle.closest('.board').dataset.pid === S.pid) { startRegionDrag(e, handle); return; }
     // dragging one of my piles drags its top card (library: top of deck; graveyard/exile: newest)
+    if (e.target.closest('.ad-control')) return; // the Auto-Draw switch inside the Library pile isn't a drag handle
     const pile = e.target.closest('.zbox[data-pile]');
     if (pile) {
       if (pile.dataset.pid !== S.pid) return;
@@ -2272,6 +2275,11 @@ function onKey(e) {
   if (e.key === 'Escape' && S.attachFrom) { endAttach(); return; }
   if (e.target.closest && e.target.closest('input,textarea,select,[contenteditable]')) return;
   if (document.querySelector('.w-backdrop')) return; // a dialog/viewer is open
+  if (e.code === 'Space' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey) {
+    // Leave Spacebar's native behavior alone when a button or other interactive control has focus.
+    if (e.target.closest && e.target.closest('button,a,[role="button"],[tabindex],label')) return;
+    e.preventDefault(); passTurn(); return;
+  }
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); return; }
   const h = S.hover;
   const mine = h && h.pid === S.pid && findCard(h.iid);
@@ -2297,7 +2305,7 @@ function onKey(e) {
     return;
   }
   if (!mine) return;
-  const map = { t: () => toggleTap(h.iid), ' ': () => toggleTap(h.iid), f: () => flip(h.iid), g: () => doMove(h.iid, 'graveyard'),
+  const map = { t: () => toggleTap(h.iid), f: () => flip(h.iid), g: () => doMove(h.iid, 'graveyard'),
     x: () => doMove(h.iid, 'exile'), h: () => doMove(h.iid, 'hand'), b: () => doMove(h.iid, 'battlefield'), a: () => startAttach(h.iid),
     z: () => toggleFaceDown(h.iid), j: () => customCounter(h.iid),
     '+': () => addCounter(h.iid, '+1/+1', 1), '=': () => addCounter(h.iid, '+1/+1', 1),
