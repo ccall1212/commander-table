@@ -6,6 +6,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.7.2] - 2026-10-15
+
+### Changed
+- Untap All, its auto-untap switch and Pass Turn moved to the top bar.
+- The Draw button is gone: click your Library or press D to draw. The auto-draw switch is now a small **AD** switch beside LIB.
+- Spacebar passes the turn instead of tapping the hovered card. Press T to tap.
+- Copied cards are labelled **TOKEN COPY**.
+- New players start in the Sidebar layout.
+
+### Notes
+- Prepared as a patch by ChatGPT and adapted on integration: the AD switch can't start a library-card drag, and the shortcut help mentions Space.
+
 ## [0.7.1] - 2026-10-14
 
 ### Fixed
@@ -83,7 +95,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - First playable build: paste-import decks from Moxfield or Archidekt (via Scryfall), 2–4 player rooms over PeerJS with self-healing reconnects, a searchable zone viewer, commander damage tracking and automatic tokens.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.7.1...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.7.2...HEAD
+[0.7.2]: https://github.com/ccall1212/commander-table/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/ccall1212/commander-table/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/ccall1212/commander-table/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/ccall1212/commander-table/compare/v0.5.0...v0.6.0

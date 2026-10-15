@@ -107,7 +107,7 @@ Dropped connections and crashed tabs happen, and recovering from them is the mai
 - Double-click a card in your hand to play it.
 - Double-click your commander to cast it. Commander tax is manual: left-click the 🪙 chip above CMD for +2, right-click for −2 (or use the commander's right-click menu).
 - Right-click any of your cards for options: counters, transform, face down, **Copy this card**, give control, and move to any zone.
-- Right-click an opponent's card (or use the graveyard/exile viewer) to **Copy this card** onto your battlefield — handy for Clone effects. Copies show a purple **COPY** label and vanish if they leave the battlefield.
+- Right-click an opponent's card (or use the graveyard/exile viewer) to **Copy this card** onto your battlefield — handy for Clone effects. Copies show a purple **TOKEN COPY** label and vanish if they leave the battlefield.
 - Drag cards between hand, battlefield, graveyard, exile, library, and command zone. Shift-drop onto the library to put a card on the bottom. Drag cards within your hand to reorder it.
 - **Give control by dragging:** drag any card (from your battlefield, hand, graveyard, exile, and so on) onto another player's battlefield to give them control of it. It lands where you drop it and still shows you as the owner, the same as **Give control to** in the right-click menu. They can give it back the same way or with **Return to owner**.
 - **Card preview:** hover a card to see a big preview floating next to your mouse.
@@ -116,7 +116,7 @@ Dropped connections and crashed tabs happen, and recovering from them is the mai
 **Your battlefield**
 
 - Your battlefield has three zones: **Creatures / Planeswalkers**, **Lands**, **Artifacts / Enchantments**. New cards drop into the right zone automatically, and basic lands / identical tokens pile up neatly.
-- Your **LIB · GY · EXILE · CMD** piles, your hand, and the **Draw**, **Untap all** and **Pass turn** buttons float over the bottom of your battlefield, so the battlefield uses the full height. Drag a card onto one to put it there (Shift-drop on LIB = bottom); click LIB to draw; click GY/EXILE to search; drag a pile to pull its top card. Opponents' LIB / GY / EX / HAND counts and their commander are in their header.
+- Your **LIB · GY · EXILE · CMD** piles and your hand float over the bottom of your battlefield, so the battlefield uses the full height. Drag a card onto one to put it there (Shift-drop on LIB = bottom); click LIB to draw; click GY/EXILE to search; drag a pile to pull its top card. Opponents' LIB / GY / EX / HAND counts and their commander are in their header.
 - Drag any card anywhere you like — it stays exactly where you put it.
 - Open ☰ → **Arrange zones** to move a zone (drag its name — its cards come with it) or resize it (drag the bottom-right corner). While you're arranging, **Tidy cards**, **Reset zones** and **Done** appear in the small box at the top-right of your battlefield. **Tidy cards** puts everything back into its zone; **Reset zones** restores the default layout. Your layout is remembered for future games. If you haven't arranged your zones yourself, the default zones stretch to fill the battlefield in every layout (cards keep their size). Zones you've arranged stay exactly where you put them.
 - What you see is what everyone sees: opponents see your board exactly as you arranged it, and you see theirs the way they arranged it.
@@ -125,7 +125,7 @@ Dropped connections and crashed tabs happen, and recovering from them is the mai
 - Drag the bar between the opponents' area and yours to give your board more or less room. In the Top and Grid layouts, right-click a player's name → **Show this board large** (or double-click their board) to show it large.
 - **Table layout** — switch with the buttons in the top bar (remembered):
   - ▤ **Top**: opponents across the top.
-  - ▥ **Sidebar**: your board big on the left. The right-hand column lists every player, with your own tile (marked YOU) first. Hover a tile to see an eye, and click it to view that player's board big. Your hand and buttons stay at the bottom while you look. Click your YOU tile to go back to your own board.
+  - ▥ **Sidebar**: your board big on the left. The right-hand column lists every player, with your own tile (marked YOU) first. Hover a tile to see an eye, and click it to view that player's board big. Your hand and piles stay at the bottom while you look. Click your YOU tile to go back to your own board. New players start in this layout until they pick another.
   - ▦ **Grid**: every player gets an equal quadrant, with you bottom-left. Opponents' boards are biggest here.
   - ◎ **Focus**: the active player's battlefield gets the big spot, and it follows the turn automatically. Turn that off in Display settings, or use the eye on a player's tile in the right-hand column to pick a board yourself.
 - The **📜 Log** button in the top bar slides the game log (and the shortcut help) out from the right edge. Click it again to close.
@@ -183,6 +183,7 @@ Hover over a card and press:
 
 Other shortcuts:
 
+- **Space** pass turn (it doesn't tap the hovered card; use **T** to tap)
 - **D** draw, **U** untap all, **S** search library, **Ctrl+Z** undo
 - **Hold V** over the table to open the magnifier (see **Cards on the table**). Release to close.
 
@@ -203,8 +204,8 @@ Other shortcuts:
 
 ## Turn helpers
 
-- **Auto-untap and auto-draw** at the start of your turn are toggled with the small **on/off switch next to Draw and Untap all** at the bottom-right (green = on); they're also still in the ☰ menu. Both start off in every game. In 1v1, the first player skips the first draw.
-- A **Pass turn** button at the bottom-right, next to **Draw** and **Untap all**. It's safe to click: if two players press it at the same moment, only one pass counts.
+- **Auto-untap and auto-draw** at the start of your turn are toggled with switches (green = on): auto-untap is the switch next to **Untap All** in the top bar, and auto-draw is the small **AD** switch next to the LIB label. They're also still in the ☰ menu. Both start off in every game. In 1v1, the first player skips the first draw.
+- A **Pass turn** button in the top bar, next to the turn indicator. It's safe to click: if two players press it at the same moment, only one pass counts.
 - Dice, a coin, and a random player picker.
 - London mulligan, with the first mulligan free.
 - A game log where card names show the card when you hover over them.
