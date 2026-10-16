@@ -12,6 +12,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Added 15 selectable card backs, spanning red, blue, green, gold, purple, dragon, ocean, celestial, and necromancer themes.
 - Added 10 selectable play-area backgrounds, including a dragon's lair, armored knight, nature vista, spellcasting mage, mage duel, necromancer's dominion, floating islands, forest, mountains, and arcane library.
 - Appearance choices persist in the browser and are shared with other players so their table views show the selected card backs and backgrounds.
+- Replaced low-resolution sprite atlases with 15 individual 300×450 card-back WebPs and 10 individual 1920×1080 background WebPs; the built-in card-back design remains visible if an image fails to load.
 
 ## [0.7.5] - 2026-10-15
 
