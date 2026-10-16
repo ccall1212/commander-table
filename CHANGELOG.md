@@ -14,6 +14,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Changed
 - When you view another player's board (Sidebar, Focus or Grid), you now see their hand, Library, Graveyard, Exile and Command in the same bottom strip as your own. Their hand is shown as face-down card backs (face-up if they revealed it). Your own hand and piles are hidden until you click **YOU**. The floating zone bar at the top right of their board is gone.
 - The bottom strip has its own reserved space on every board, so it never covers cards. Their Lands area can be hovered again, and your own board no longer hides cards under your hand.
+- Right-click a card you own that another player controls (one you gave them) and choose **Take back** to get it straight back. They don't have to give it back; it goes to your battlefield and the log records it. Tokens you gave away can be taken back or returned too.
 - New games start with a smaller Creatures / Planeswalkers area and bigger Lands and Artifacts / Enchantments areas. Saved layouts are left alone (☰ → Reset zones to adopt the new default).
 
 ## [0.9.1] - 2026-10-16

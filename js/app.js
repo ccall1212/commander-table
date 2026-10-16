@@ -532,7 +532,7 @@ function onReq(req, from) {
       if (!S.me.defs[d.id]) S.me.defs[d.id] = d;
       if (findCard(c.iid)) return null; // already have it (duplicate message)
       const card = { iid: c.iid, id: d.id, own: c.own || from, t: zone === 'battlefield' ? !!c.t : false, fl: false, fd: false, c: zone === 'battlefield' ? c.c : {}, tok: !!c.tok, cmd: !!c.cmd, cp: !!c.cp };
-      if (req.k === 'return' && card.tok) return null;
+      if (req.k === 'return' && card.tok && zone !== 'battlefield') return null;
       insertCard(card, zone, zone === 'battlefield' && Number.isFinite(+req.x) && Number.isFinite(+req.y) ? { x: +req.x, y: +req.y } : { pos: req.pos });
       return req.k === 'give'
         ? [`gained control of {0} from ${pname(from)}`, [d]]
@@ -541,6 +541,21 @@ function onReq(req, from) {
     if (req.k === 'return' && c.cmd && c.own === S.pid && zone !== 'command' && zone !== 'battlefield' && findCard(c.iid)) {
       UI.toast(`Your commander ${dname(d)} went to your ${ZL[zone]}.`, { ms: 9000, action: { label: 'Move to command zone', onClick: () => doMove(c.iid, 'command') } });
     }
+    return;
+  }
+  if (req.k === 'take' && typeof req.iid === 'string') {
+    // only the card's owner may do this; I hand it straight back to them
+    const f = findCard(req.iid);
+    if (!f || f.zone !== 'battlefield' || f.card.own !== from || from === S.pid) return;
+    const d = defOf(f.card);
+    act(() => {
+      S.me.zones.battlefield.splice(f.idx, 1);
+      const orphans = detachFrom(S.pid, req.iid);
+      if (orphans.length) setTimeout(() => orphanToast(orphans), 0);
+      const card = Object.assign({}, f.card); delete card.x; delete card.y; card.att = null;
+      sendReq(from, { k: 'return', card, def: Deck.slimDef(d), zone: 'battlefield' });
+      return [`had {0} taken back by its owner, ${pname(from)}`, [d]];
+    }, { noUndo: true });
     return;
   }
   if (req.k === 'life') {
@@ -915,6 +930,13 @@ function giveControl(iid, to, at) {
     return [`gave control of {0} to ${pname(to)}${f.zone !== 'battlefield' ? ` (from ${ZL[f.zone]})` : ''}`, [d]];
   });
 }
+// Owner reclaims a card they gave away: ask the controller's game to hand it straight back (no approval needed).
+function takeBack(pid, iid) {
+  const f = oppCard(pid, iid);
+  if (!f || f.c.own !== S.pid) return;
+  sendReq(pid, { k: 'take', iid });
+  UI.toast(`Taking back ${f.def ? dname(f.def) : 'your card'} from ${pname(pid)}…`, { ms: 3000 });
+}
 function returnControl(iid) {
   const f = findCard(iid); if (!f) return;
   const d = defOf(f.card);
@@ -1215,10 +1237,16 @@ function oppCard(pid, iid) {
 function oppCardMenu(x, y, pid, iid) {
   const f = oppCard(pid, iid);
   if (!f) return;
-  UI.menu(x, y, [
+  const items = [];
+  // a card I own that another player controls (I gave it to them): I can always take it back
+  if (f.c.own === S.pid && pid !== S.pid && (S.players[pid].zones.battlefield || []).some(x => x.iid === iid)) {
+    items.push({ label: `Take back ${f.def ? dname(f.def) : 'this card'}`, hint: 'yours', onClick: () => takeBack(pid, iid) }, { sep: true });
+  }
+  items.push(
     { label: 'View information', disabled: !f.def, onClick: () => viewInfo(f.def) },
     { label: 'Copy this card', disabled: !f.def, hint: f.def ? '' : 'face down', onClick: () => copyCard(f.def, f.c.fl) }
-  ]);
+  );
+  UI.menu(x, y, items);
 }
 function counterItems(iid) {
   const f = findCard(iid); const c = (f && f.card.c) || {};
