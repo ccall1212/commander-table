@@ -2,33 +2,33 @@
 (function () {
   'use strict';
   const BACKS = [
-    {id:'classic-bronze',name:'Classic Bronze',src:'assets/card-backs/classic-bronze.webp'},
-    {id:'flame-red',name:'Flame Red',src:'assets/card-backs/flame-red.webp'},
-    {id:'arcane-blue',name:'Arcane Blue',src:'assets/card-backs/arcane-blue.webp'},
-    {id:'forest-green',name:'Forest Green',src:'assets/card-backs/forest-green.webp'},
-    {id:'radiant-gold',name:'Radiant Gold',src:'assets/card-backs/radiant-gold.webp'},
-    {id:'bone-necromancer',name:'Bone Necromancer',src:'assets/card-backs/bone-necromancer.webp'},
-    {id:'spectrum',name:'Spectrum',src:'assets/card-backs/spectrum.webp'},
-    {id:'dragon-scale',name:'Dragon Scale',src:'assets/card-backs/dragon-scale.webp'},
-    {id:'knights-crest',name:"Knight's Crest",src:'assets/card-backs/knights-crest.webp'},
-    {id:'forest-leaves',name:'Forest Leaves',src:'assets/card-backs/forest-leaves.webp'},
-    {id:'ocean-wave',name:'Ocean Wave',src:'assets/card-backs/ocean-wave.webp'},
-    {id:'arcane-runes',name:'Arcane Runes',src:'assets/card-backs/arcane-runes.webp'},
-    {id:'celestial',name:'Celestial',src:'assets/card-backs/celestial.webp'},
-    {id:'stone-metal',name:'Stone & Metal',src:'assets/card-backs/stone-metal.webp'},
-    {id:'shadow-energy',name:'Shadow Energy',src:'assets/card-backs/shadow-energy.webp'}
+    {id:'classic-bronze',name:'Classic Bronze',src:'assets/card-backs/classic-bronze.svg'},
+    {id:'flame-red',name:'Flame Red',src:'assets/card-backs/flame-red.svg'},
+    {id:'arcane-blue',name:'Arcane Blue',src:'assets/card-backs/arcane-blue.svg'},
+    {id:'forest-green',name:'Forest Green',src:'assets/card-backs/forest-green.svg'},
+    {id:'radiant-gold',name:'Radiant Gold',src:'assets/card-backs/radiant-gold.svg'},
+    {id:'bone-necromancer',name:'Bone Necromancer',src:'assets/card-backs/bone-necromancer.svg'},
+    {id:'spectrum',name:'Spectrum',src:'assets/card-backs/spectrum.svg'},
+    {id:'dragon-scale',name:'Dragon Scale',src:'assets/card-backs/dragon-scale.svg'},
+    {id:'knights-crest',name:"Knight's Crest",src:'assets/card-backs/knights-crest.svg'},
+    {id:'forest-leaves',name:'Forest Leaves',src:'assets/card-backs/forest-leaves.svg'},
+    {id:'ocean-wave',name:'Ocean Wave',src:'assets/card-backs/ocean-wave.svg'},
+    {id:'arcane-runes',name:'Arcane Runes',src:'assets/card-backs/arcane-runes.svg'},
+    {id:'celestial',name:'Celestial',src:'assets/card-backs/celestial.svg'},
+    {id:'stone-metal',name:'Stone & Metal',src:'assets/card-backs/stone-metal.svg'},
+    {id:'shadow-energy',name:'Shadow Energy',src:'assets/card-backs/shadow-energy.svg'}
   ];
   const BACKGROUNDS = [
-    {id:'dragons-lair',name:"Dragon's Lair",src:'assets/backgrounds/dragons-lair.webp'},
-    {id:'knights-vigil',name:"Knight's Vigil",src:'assets/backgrounds/knights-vigil.webp'},
-    {id:'nature-vista',name:'Nature Vista',src:'assets/backgrounds/nature-vista.webp'},
-    {id:'arcane-mage',name:'Mage Casting Magic',src:'assets/backgrounds/arcane-mage.webp'},
-    {id:'mage-duel',name:'Two Mages Fighting',src:'assets/backgrounds/mage-duel.webp'},
-    {id:'floating-islands',name:'Floating Islands',src:'assets/backgrounds/floating-islands.webp'},
-    {id:'necromancers-dominion',name:"Necromancer's Dominion",src:'assets/backgrounds/necromancers-dominion.webp'},
-    {id:'enchanted-forest',name:'Enchanted Forest',src:'assets/backgrounds/enchanted-forest.webp'},
-    {id:'mountain-peaks',name:'Mountain Peaks',src:'assets/backgrounds/mountain-peaks.webp'},
-    {id:'arcane-library',name:'Arcane Library',src:'assets/backgrounds/arcane-library.webp'}
+    {id:'dragons-lair',name:"Dragon's Lair",src:'assets/backgrounds/dragons-lair.svg'},
+    {id:'knights-vigil',name:"Knight's Vigil",src:'assets/backgrounds/knights-vigil.svg'},
+    {id:'nature-vista',name:'Nature Vista',src:'assets/backgrounds/nature-vista.svg'},
+    {id:'arcane-mage',name:'Mage Casting Magic',src:'assets/backgrounds/arcane-mage.svg'},
+    {id:'mage-duel',name:'Two Mages Fighting',src:'assets/backgrounds/mage-duel.svg'},
+    {id:'floating-islands',name:'Floating Islands',src:'assets/backgrounds/floating-islands.svg'},
+    {id:'necromancers-dominion',name:"Necromancer's Dominion",src:'assets/backgrounds/necromancers-dominion.svg'},
+    {id:'enchanted-forest',name:'Enchanted Forest',src:'assets/backgrounds/enchanted-forest.svg'},
+    {id:'mountain-peaks',name:'Mountain Peaks',src:'assets/backgrounds/mountain-peaks.svg'},
+    {id:'arcane-library',name:'Arcane Library',src:'assets/backgrounds/arcane-library.svg'}
   ];
   const backMap=Object.fromEntries(BACKS.map(x=>[x.id,x]));
   const bgMap=Object.fromEntries(BACKGROUNDS.map(x=>[x.id,x]));
