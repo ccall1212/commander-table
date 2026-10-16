@@ -9,6 +9,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - `AGENTS.md`: how changes are made, tested, versioned and released (for AI assistants and humans).
 
+## [0.9.1] - 2026-10-16
+
+### Fixed
+- Cards flickered on every action in Safari (Mac). The table was being redrawn from scratch each time, and Safari briefly shows re-created card images blank. Only the cards that actually changed are touched now, and card images no longer use lazy loading.
+
+### Added
+- ☰ → Connection details now also lists browser information (browser, screen size, view, image-loading and redraw timing) to help diagnose display problems. Copy it and send it along with a description.
+
 ## [0.9.0] - 2026-10-16
 
 ### Added
@@ -149,7 +157,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - First playable build: paste-import decks from Moxfield or Archidekt (via Scryfall), 2–4 player rooms over PeerJS with self-healing reconnects, a searchable zone viewer, commander damage tracking and automatic tokens.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.9.1...HEAD
+[0.9.1]: https://github.com/ccall1212/commander-table/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/ccall1212/commander-table/compare/v0.8.1...v0.9.0
 [0.8.1]: https://github.com/ccall1212/commander-table/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/ccall1212/commander-table/compare/v0.7.5...v0.8.0

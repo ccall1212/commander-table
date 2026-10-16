@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.9.0';
+const APP_VERSION = '0.9.1';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -1453,6 +1453,43 @@ function curView() {
 //  Rendering
 // =====================================================================
 let rq = false;
+// Draw a container's HTML by patching the existing elements instead of replacing them. Re-creating every
+// card image on every action makes Safari flash them blank; now only cards that really changed are touched
+// (cards are matched by data-iid, so moving or tapping one leaves the rest alone). Falls back to a plain
+// replace if anything unexpected happens.
+let uiEpoch = 0;
+function syncAttrs(a, b) {
+  for (const at of [...a.attributes]) if (!b.hasAttribute(at.name)) a.removeAttribute(at.name);
+  for (const at of b.attributes) if (a.getAttribute(at.name) !== at.value) a.setAttribute(at.name, at.value);
+  if (a.tagName === 'INPUT') { if (a.type === 'checkbox' || a.type === 'radio') a.checked = b.checked; else if (document.activeElement !== a) a.value = b.getAttribute('value') || ''; }
+}
+function patchKids(a, b) {
+  const keyed = new Map();
+  for (const c of a.children) if (c.dataset && c.dataset.iid && !keyed.has(c.dataset.iid)) keyed.set(c.dataset.iid, c);
+  const bk = [...b.childNodes];
+  bk.forEach((n, i) => {
+    let cur = a.childNodes[i];
+    const key = n.nodeType === 1 && n.dataset ? n.dataset.iid : null;
+    if (key && keyed.has(key)) {
+      const f = keyed.get(key);
+      if (f !== cur) a.insertBefore(f, cur || null);
+      cur = f;
+    }
+    if (!cur) { a.appendChild(n.cloneNode(true)); return; }
+    if (cur.nodeType !== n.nodeType || (n.nodeType === 1 && (cur.tagName !== n.tagName ||
+      (key && cur.dataset.iid !== key) || (!key && cur.dataset && cur.dataset.iid)))) { a.replaceChild(n.cloneNode(true), cur); return; }
+    if (n.nodeType === 3 || n.nodeType === 8) { if (cur.nodeValue !== n.nodeValue) cur.nodeValue = n.nodeValue; return; }
+    syncAttrs(cur, n);
+    if (cur.tagName !== 'IMG') patchKids(cur, n);
+  });
+  while (a.childNodes.length > bk.length) a.removeChild(a.lastChild);
+}
+function setHTML(el, html) {
+  if (el.__h === html && el.__e === uiEpoch) return;
+  try { const t = document.createElement('template'); t.innerHTML = html; patchKids(el, t.content); }
+  catch (e) { console.error(e); el.innerHTML = html; }
+  el.__h = html; el.__e = uiEpoch;
+}
 function render() {
   if (rq) return;
   rq = true;
@@ -1462,8 +1499,16 @@ function render() {
   requestAnimationFrame(run);
   setTimeout(run, 150);
 }
+const renderStats = { count: 0, lastMs: 0, maxMs: 0 };
 function renderNow() {
   if (!S.me || $('#game').classList.contains('hidden')) return;
+  const t0 = performance.now();
+  try { renderBody(); } finally {
+    const ms = performance.now() - t0;
+    renderStats.count++; renderStats.lastMs = Math.round(ms * 10) / 10; renderStats.maxMs = Math.max(renderStats.maxMs, renderStats.lastMs);
+  }
+}
+function renderBody() {
   const idx = buildIndex();
   renderTop(); renderOpps(idx); renderMine(idx); renderLog();
   fitBoards();
@@ -1491,7 +1536,7 @@ function cardHTML(c, def, o) {
     const u = def ? (back ? def.imgBack : def.img) : '';
     const rot = c.fl && def && !def.imgBack ? ' class="rot"' : '';
     inner = IMG_OK(u)
-      ? `<img src="${esc(u)}"${rot} alt="${esc(def.name)}" loading="lazy" draggable="false">`
+      ? `<img src="${esc(u)}"${rot} alt="${esc(def.name)}" decoding="sync" draggable="false">`
       : `<div class="ph">${esc(def ? (c.fl && def.backName ? def.backName : dname(def)) : '?')}${def && def.pt ? `<br>${esc(def.pt)}` : ''}</div>`;
   }
   let badges = '', ctrs = '';
@@ -1711,7 +1756,7 @@ function pileHTML(zone, cards, defs, o, extraTop) {
 function cardFace(c, defs, pid = S.pid) {
   const d = c.id && defs[c.id];
   if (c.fd || !d) return UI.cardBackHTML('', appearanceBackFor(pid));
-  return IMG_OK(d.img) ? `<img src="${esc(d.img)}" alt="" loading="lazy" draggable="false" data-pvid="${esc(d.id)}">` : `<div class="ph">${esc(dname(d))}</div>`;
+  return IMG_OK(d.img) ? `<img src="${esc(d.img)}" alt="" decoding="sync" draggable="false" data-pvid="${esc(d.id)}">` : `<div class="ph">${esc(dname(d))}</div>`;
 }
 
 function renderTop() {
@@ -1857,7 +1902,7 @@ function renderOpp(el, pid, idx) {
     ? p.revHand.map((c, i) => cardHTML(c, c.id && defs[c.id], Object.assign({}, o, { zone: 'hand', style: fan(i) }))).join('')
     : Array.from({ length: shown }, (_, i) => `<div class="card oback" style="${fan(i)}">${UI.cardBackHTML('', appearanceBackFor(pid))}</div>`).join('');
   const handHTML = `<span class="ohhand${revealed ? ' revealed' : ''}${handN ? '' : ' empty'}" title="${esc(p.name)} has ${plural(handN, 'card')} in hand${revealed ? ' (revealed — hover to read)' : ''}">${handCards}<b class="ohn">${handN}</b></span>`;
-  el.querySelector('.ohead').innerHTML = `<span class="dot" style="--pc:${colorOf(pid)}"></span>
+  setHTML(el.querySelector('.ohead'), `<span class="dot" style="--pc:${colorOf(pid)}"></span>
     <span class="pname" data-phead="${esc(pid)}" title="Right-click for options">${esc(p.name)}</span>
     ${off ? '<span class="tag off">RECONNECTING</span>' : ''}${T.out && T.out[pid] ? '<span class="tag off">OUT</span>' : ''}
     ${T.active === pid ? '<span class="tag">TURN</span>' : ''}${T.monarch === pid ? '<span title="Monarch">👑</span>' : ''}${T.initiative === pid ? '<span title="Initiative">🏰</span>' : ''}
@@ -1866,9 +1911,9 @@ function renderOpp(el, pid, idx) {
     <span class="ozones">${oz('library', 'LIB')}${oz('graveyard', 'GY', pi.graveyard.n ? pi.graveyard.tc.perm + 'P' : '')}${oz('exile', 'EX')}</span>
     ${handHTML}
     ${cmdCards ? `<span class="ocmd" title="Command zone">${cmdCards}</span>` : ''}
-    ${!p.kept ? '<span class="muted small">mulliganing…</span>' : ''}`;
+    ${!p.kept ? '<span class="muted small">mulliganing…</span>' : ''}`);
   const focusedZones = (curView() === 'side' || curView() === 'focus') && S.focus === pid ? focusedOppZonesHTML(pid) : '';
-  el.querySelector('.obf').innerHTML = `<div class="boardwrap" data-board="${esc(pid)}" style="${esc(appearanceBoardStyleFor(pid))}">${boardHTML(pid, idx)}</div>${focusedZones}`;
+  setHTML(el.querySelector('.obf'), `<div class="boardwrap" data-board="${esc(pid)}" style="${esc(appearanceBoardStyleFor(pid))}">${boardHTML(pid, idx)}</div>${focusedZones}`);
 }
 
 function renderMine(idx) {
@@ -1883,19 +1928,19 @@ function renderMine(idx) {
     ${S.arrange ? `<span class="mb-actions"><button data-a="tidy" title="Put every card back into its zone">Tidy cards</button><button data-a="resetzones">Reset zones</button>
       <button data-a="arrange" class="primary" title="Finish moving and resizing your zones">✓ Done arranging</button></span>` : ''}`;
   // --- battlefield, hand, bottom-right zones
-  $('#myBf').innerHTML = `<div class="boardwrap" data-board="${esc(S.pid)}" style="${esc(appearanceBoardStyleFor(S.pid))}">${boardHTML(S.pid, idx)}</div>`;
+  setHTML($('#myBf'), `<div class="boardwrap" data-board="${esc(S.pid)}" style="${esc(appearanceBoardStyleFor(S.pid))}">${boardHTML(S.pid, idx)}</div>`);
   // fan the hand: each card tilts a little away from the middle and dips on a gentle arc (CSS uses --rot / --arc)
   const nh = z.hand.length, mid = (nh - 1) / 2, step = nh > 1 ? Math.min(3, 28 / nh) : 0;
-  $('#myHand').innerHTML = z.hand.map((c, i) => {
+  setHTML($('#myHand'), z.hand.map((c, i) => {
     const off = i - mid;
     return cardHTML(c, defOf(c), Object.assign({}, o, { zone: 'hand',
       // arc is normalised so the outermost cards dip at most ~12px however big the hand is
       style: `--rot:${(off * step).toFixed(2)}deg;--arc:${(mid ? 12 * (off / mid) ** 2 : 0).toFixed(1)}px;z-index:${i + 1}` }));
-  }).join('');
+  }).join(''));
   if (S.handHov) { const hc = [...$('#myHand').children].find(c => c.dataset.iid === S.handHov); if (hc) hc.classList.add('hov'); } // keep the lifted card up across re-renders
   $('#handLabel').innerHTML = `HAND <b>${z.hand.length}</b>`;
   $('#myHand').style.setProperty('--n', Math.max(1, z.hand.length)); // CSS overlaps cards so the hand never scrolls
-  $('#myZones').innerHTML = myZonesHTML();
+  setHTML($('#myZones'), myZonesHTML());
   const mb = $('#mullBar');
   if (!m.kept) {
     const next = m.mull === 0 ? 'next mulligan is free' : `next mulligan: put ${m.mull} on the bottom`;
@@ -2209,10 +2254,10 @@ function beginCardDrag(e) {
   const f = findCard(drag.iid);
   drag.attachable = !!(f && isAttachable(defOf(f.card)));
   el.classList.add('dragging');
-  S.dragging = true;
+  S.dragging = true; uiEpoch++;
   UI.closeMenu && UI.closeMenu();
 }
-function clearHighlights() { document.querySelectorAll('.dropok,.dropattach').forEach(x => x.classList.remove('dropok', 'dropattach')); }
+function clearHighlights() { uiEpoch++; document.querySelectorAll('.dropok,.dropattach').forEach(x => x.classList.remove('dropok', 'dropattach')); }
 // Convert a screen point to logical board coordinates for one board wrapper.
 function boardPoint(wrap, clientX, clientY) {
   const b = wrap.firstElementChild, s = +b.dataset.s || 1, ox = +b.dataset.ox || 0, oy = +b.dataset.oy || 0, rect = wrap.getBoundingClientRect();
@@ -2385,15 +2430,35 @@ function copyRoom() {
   const fail = () => UI.prompt({ title: 'Invite link', label: `Send this to your friends (room code ${S.room}):`, value: link, okLabel: 'Done' });
   try { navigator.clipboard.writeText(link).then(done, fail); } catch (e) { fail(); }
 }
+// Browser facts that help explain display problems (e.g. flicker only in Safari).
+function browserDiag() {
+  const nav = navigator, d = { userAgent: nav.userAgent, platform: nav.platform, vendor: nav.vendor, language: nav.language };
+  const safe = f => { try { return f(); } catch (e) { return 'n/a'; } };
+  d.viewport = innerWidth + 'x' + innerHeight;
+  d.screen = safe(() => screen.width + 'x' + screen.height);
+  d.pixelRatio = devicePixelRatio;
+  d.view = S.view || 'side';
+  d.dark = safe(() => matchMedia('(prefers-color-scheme: dark)').matches);
+  d.reducedMotion = safe(() => matchMedia('(prefers-reduced-motion: reduce)').matches);
+  d.online = nav.onLine;
+  d.visibility = document.visibilityState;
+  d.storage = safe(() => { localStorage.setItem('ct.probe', '1'); localStorage.removeItem('ct.probe'); return 'ok'; });
+  d.webpEncode = safe(() => document.createElement('canvas').toDataURL('image/webp').startsWith('data:image/webp'));
+  d.cores = nav.hardwareConcurrency; d.memoryGB = nav.deviceMemory;
+  d.renders = Object.assign({}, renderStats);
+  d.cardImages = document.querySelectorAll('.card img').length;
+  d.imagesNotLoaded = [...document.querySelectorAll('.card img')].filter(i => !i.complete || !i.naturalWidth).length;
+  return d;
+}
 function showConnInfo() {
-  const d = Object.assign({ page: location.href.split('?')[0], app: APP_VERSION }, Net.diag());
+  const d = Object.assign({ page: location.href.split('?')[0], app: APP_VERSION }, Net.diag(), { browser: browserDiag() });
   const pre = document.createElement('pre');
   pre.className = 'conn-diag';
   pre.textContent = JSON.stringify(d, null, 2);
   const wrap = document.createElement('div');
   const p = document.createElement('p');
   p.className = 'muted small';
-  p.textContent = 'If you have connection trouble, copy this and send it along with what you see.';
+  p.textContent = 'If you have connection or display trouble (flicker, missing images), copy this and send it along with what you see.';
   const b = document.createElement('button');
   b.textContent = 'Copy';
   b.onclick = () => { try { navigator.clipboard.writeText(pre.textContent).then(() => UI.toast('Copied.')); } catch (e) { /* ignore */ } };
