@@ -36,12 +36,8 @@
   /* ------------------------------------------------------------------ */
 
   /** CSS-only card back; fills its container. Styled in widgets.css. */
-  UI.cardBackHTML = function (extraClass, backId) {
-    const art = backId && window.CTAppearance
-      ? '<span class="w-cardback-art" style="' + esc(window.CTAppearance.cardBackStyle(backId)) + '"></span>'
-      : '';
-    // Keep the built-in card back underneath so a failed image leaves a visible fallback.
-    return '<div class="w-cardback' + (extraClass ? ' ' + esc(extraClass) : '') + '">' + art + '</div>';
+  UI.cardBackHTML = function (extraClass) {
+    return '<div class="w-cardback' + (extraClass ? ' ' + esc(extraClass) : '') + '"></div>';
   };
 
   /* ------------------------------------------------------------------ */

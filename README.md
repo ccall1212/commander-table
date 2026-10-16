@@ -21,10 +21,6 @@ A free, browser-based Magic: The Gathering Commander table for playing with frie
 
 Want to play without the website? There's also a downloadable copy of the game for local-network play. See **Playing on a LAN** below.
 
-## Your look: card backs and play-area backgrounds
-
-Before starting a game, use **Your look** on the opening screen to choose from 15 card backs and 10 illustrated play-area backgrounds. Options include blue, red, green, gold, purple, dragon, ocean, celestial, and **Bone Necromancer** card backs. Backgrounds include a dragon's lair, knight in armor, nature, a mage casting magic, two mages fighting, a necromancer and skeletons, floating islands, an enchanted forest, mountains, and an arcane library. Your choices are saved in your browser and shared with the table, so other players see your selected card backs and play-area background. You can change them before your next game.
-
 ## Importing your deck
 
 1. Export your deck:
