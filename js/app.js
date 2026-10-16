@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.13.0';
+const APP_VERSION = '0.13.1';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -1772,7 +1772,7 @@ function pileInfo(pid) {
 function myZonesHTML() {
   const pi = pileInfo(S.pid), me = S.me;
   const box = (k, label, sub) => `<div class="zbox" data-pile="${k}" data-pid="${esc(S.pid)}" data-drop="${k}" title="${esc(pi[k].tip)}">
-      <div class="zlabel${k === 'library' ? ' zlabel-lib' : ''}">${label} <b>${pi[k].n}</b>${sub ? ` <span class="zsub">${sub}</span>` : ''}${k === 'library' ? `<span class="ad-control"><span class="ad-label" title="AD means Auto-Draw — automatically draws a card at the start of your turn">AD</span>${auto('autodraw', me.autoDraw, 'Draw a card')}</span>` : ''}</div><div class="zcard">${pi[k].face}</div></div>`;
+      <div class="zlabel${k === 'library' ? ' zlabel-lib' : ''}">${label} <b>${pi[k].n}</b>${sub ? ` <span class="zsub">${sub}</span>` : ''}</div><div class="zcard">${pi[k].face}</div></div>`;
   const cmd = me.zones.command;
   const taxIid = (cmd[0] && cmd[0].iid) || (me.cmdrs[0] && me.cmdrs[0].iid) || '';
   const tax = taxIid ? 2 * (me.casts[taxIid] || 0) : 0;
@@ -1886,7 +1886,8 @@ function renderTop() {
   const turnActions = $('#turnActions');
   if (turnActions) {
     const autoUntap = `<label class="tgl" title="Auto: Untap everything at the start of your turn (${S.me.autoUntap ? 'on' : 'off'})"><input type="checkbox" data-a="autountap"${S.me.autoUntap ? ' checked' : ''}><span></span></label>`;
-    turnActions.innerHTML = `<div class="turn-actions"><div class="ztool"><button data-a="untapall" title="Untap all (U)">Untap All</button>${autoUntap}</div>${passBtn()}</div>`;
+    const autoDraw = `<span class="ad-label" title="AD means Auto-Draw: automatically draws a card at the start of your turn">AD</span><label class="tgl" title="Auto: Draw a card at the start of your turn (${S.me.autoDraw ? 'on' : 'off'})"><input type="checkbox" data-a="autodraw"${S.me.autoDraw ? ' checked' : ''}><span></span></label>`;
+    turnActions.innerHTML = `<div class="turn-actions"><div class="ztool"><button data-a="untapall" title="Untap all (U)">Untap All</button>${autoUntap}${autoDraw}</div>${passBtn()}</div>`;
   }
   const banner = $('#banner');
   if (S.role === 'client' && S.net.state !== 'online') {
@@ -1997,16 +1998,22 @@ function oppZonesHTML(pid) {
 
 // Opponent miniature (Sidebar / Grid): life and commander damage top-left, their hand + piles in a strip under the
 // board, all drawn inside the scaled board so the tile looks like their real board (EDHPlay style).
+// Spacing between hand cards in a miniature strip so the fan uses the free width between the hand and the piles.
+function handSpread(n, bw) {
+  const cw = 66, avail = bw - 16 - (cw * 4 + 30) - 24;
+  if (n < 2) return 0;
+  const step = clamp((avail - cw) / (n - 1), 20, cw * 1.05);
+  return Math.round(step - cw);
+}
 function myTileOverlayHTML(bh, bw) {
   const m = S.me, z = m.zones, pi = pileInfo(S.pid);
   const n = z.hand.length, mid = (n - 1) / 2, step = n > 1 ? Math.min(4, 30 / n) : 0;
   const fan = i => { const off = i - mid; return `--rot:${(off * step).toFixed(1)}deg;--arc:${(mid ? 8 * (off / mid) ** 2 : 0).toFixed(1)}px;z-index:${i + 1}`; };
   const hand = z.hand.map((c, i) => cardHTML(c, defOf(c), { mine: true, pid: S.pid, zone: 'hand', style: fan(i) })).join('');
-  const ad = `<span class="ad-control"><span class="ad-label" title="Auto-Draw">AD</span><label class="tgl"><input type="checkbox" data-a="autodraw"${m.autoDraw ? ' checked' : ''}><span></span></label></span>`;
-  const pile = (k, label) => `<div class="tpile" data-pile="${k}" data-pid="${esc(S.pid)}" data-drop="${k}" title="${esc(pi[k].tip)}"><div class="tpcard">${pi[k].face || ''}</div><div class="tplabel">${label} <b>${pi[k].n}</b>${k === 'library' ? ad : ''}</div></div>`;
+  const pile = (k, label) => `<div class="tpile" data-pile="${k}" data-pid="${esc(S.pid)}" data-drop="${k}" title="${esc(pi[k].tip)}"><div class="tpcard">${pi[k].face || ''}</div><div class="tplabel">${label} <b>${pi[k].n}</b></div></div>`;
   const cmd = z.command.map(c => cardHTML(c, defOf(c), { mine: true, pid: S.pid, zone: 'command' })).join('');
   return `<div class="tlife">${lifeBoxHTML(S.pid, true)}</div>
-    <div class="tstrip" style="top:${bh}px;width:${bw}px"><div class="thand mine" data-drop="hand">${hand}${n ? `<b class="thn">${n}</b>` : ''}</div>
+    <div class="tstrip" style="top:${bh}px;width:${bw}px"><div class="thand mine" data-drop="hand" style="--hm:${handSpread(n, bw)}px">${hand}${n ? `<b class="thn">${n}</b>` : ''}</div>
       <div class="tpiles">${pile('library', 'LIB')}${pile('graveyard', 'GY')}${pile('exile', 'EXILE')}<div class="tpile tcmd" data-drop="command"><div class="tpcard">${cmd}</div><div class="tplabel">CMD</div></div></div></div>`;
 }
 function renderMyTile(el, idx) {
@@ -2030,7 +2037,7 @@ function tileOverlayHTML(pid, bh, bw) {
   const pile = (k, label) => `<div class="tpile"><div class="tpcard">${pi[k].face || ''}</div><div class="tplabel">${label} <b>${pi[k].n}</b></div></div>`;
   const cmd = (p.zones.command || []).map(c => cardHTML(c, c.id && defs[c.id], { mine: false, pid, ctrl: pid, zone: 'command' })).join('');
   return `<div class="tlife">${lifeBoxHTML(pid, true)}</div>
-    <div class="tstrip" style="top:${bh}px;width:${bw}px"><div class="thand">${hand}${handN ? `<b class="thn">${handN}</b>` : ''}</div>
+    <div class="tstrip" style="top:${bh}px;width:${bw}px"><div class="thand" style="--hm:${handSpread(n, bw)}px">${hand}${handN ? `<b class="thn">${handN}</b>` : ''}</div>
       <div class="tpiles">${pile('library', 'LIB')}${pile('graveyard', 'GY')}${pile('exile', 'EXILE')}<div class="tpile tcmd"><div class="tpcard">${cmd}</div><div class="tplabel">CMD</div></div></div></div>`;
 }
 

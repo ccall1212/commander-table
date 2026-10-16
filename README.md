@@ -209,7 +209,7 @@ Other shortcuts:
 
 ## Turn helpers
 
-- **Auto-untap and auto-draw** at the start of your turn are toggled with switches (green = on): auto-untap is the switch next to **Untap All** in the top bar, and auto-draw is the small **AD** switch next to the LIB label. They're also still in the ☰ menu. Both start off in every game. In 1v1, the first player skips the first draw.
+- **Auto-untap and auto-draw** at the start of your turn are toggled with switches (green = on): auto-untap is the switch next to **Untap All** in the top bar, and auto-draw is the small **AD** switch right beside it. They're also still in the ☰ menu. Both start off in every game. In 1v1, the first player skips the first draw.
 - A **Pass turn** button in the top bar, next to **Round N**. The round goes up only after every player has had a turn. It's safe to click: if two players press it at the same moment, only one pass counts.
 - 🎲 **Dice**, including **Roll for first player (d20)** before the game starts: everyone rolls a d20 (ties re-roll), the highest goes first, and **Start game** uses that order. Also a coin and a random player picker.
 - London mulligan, with the first mulligan free.

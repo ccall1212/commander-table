@@ -9,6 +9,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - `AGENTS.md`: how changes are made, tested, versioned and released (for AI assistants and humans).
 
+## [0.13.1] - 2026-10-17
+
+### Changed
+- The Auto-Draw (**AD**) switch moved from the Library pile to the top bar, right beside Untap All and its auto-untap switch. It no longer covers the Graveyard.
+- In the miniature strips (Grid and the opponent tiles) the hand fan now spreads across the free space between the hand and the piles instead of bunching up on the left.
+
 ## [0.13.0] - 2026-10-17
 
 ### Changed
@@ -206,7 +212,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - First playable build: paste-import decks from Moxfield or Archidekt (via Scryfall), 2–4 player rooms over PeerJS with self-healing reconnects, a searchable zone viewer, commander damage tracking and automatic tokens.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.13.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.13.1...HEAD
+[0.13.1]: https://github.com/ccall1212/commander-table/compare/v0.13.0...v0.13.1
 [0.13.0]: https://github.com/ccall1212/commander-table/compare/v0.12.1...v0.13.0
 [0.12.1]: https://github.com/ccall1212/commander-table/compare/v0.12.0...v0.12.1
 [0.12.0]: https://github.com/ccall1212/commander-table/compare/v0.11.0...v0.12.0
