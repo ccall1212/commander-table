@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.9.1';
+const APP_VERSION = '0.10.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -55,9 +55,9 @@ const OLD_BW = 1400; // board width of clients before v0.7 (they don't send `bw`
 const myBH = () => (S.me && S.me.bh) || BH;
 const DEFAULT_LAYOUT = [
   // library / graveyard / exile / command zone live in the bottom row, not on the board
-  { k: 'creatures', label: 'Creatures / Planeswalkers', x: 0, y: 0, w: 1000, h: 250 },
-  { k: 'lands', label: 'Lands', x: 0, y: 260, w: 540, h: 170 },
-  { k: 'permanents', label: 'Artifacts / Enchantments', x: 550, y: 260, w: 450, h: 170 }
+  { k: 'creatures', label: 'Creatures / Planeswalkers', x: 0, y: 0, w: 1000, h: 170 },
+  { k: 'lands', label: 'Lands', x: 0, y: 180, w: 540, h: 250 },
+  { k: 'permanents', label: 'Artifacts / Enchantments', x: 550, y: 180, w: 450, h: 250 }
 ];
 const PLAYER_CTR_ICONS = { Poison: '☠', Energy: '⚡', Experience: '✦', Rad: '☢', Tickets: '🎟' };
 const PILE_ZONES = ['library', 'graveyard', 'exile'];
@@ -1510,6 +1510,7 @@ function renderNow() {
 }
 function renderBody() {
   const idx = buildIndex();
+  { const row = $('#myRow'), h = row && row.offsetHeight; if (h) $('#table').style.setProperty('--stripH', h + 'px'); }
   renderTop(); renderOpps(idx); renderMine(idx); renderLog();
   fitBoards();
   S.viewers.forEach(v => { try { v.refresh(); } catch (e) { console.error(e); } });
@@ -1860,24 +1861,29 @@ function renderYouTile(el, idx) {
   el.querySelector('.obf').innerHTML = viewingMe ? '<div class="viewing-note">👁 Viewing your board</div>'
     : `<div class="boardwrap thumb" data-board="thumb:${esc(S.pid)}">${boardHTML(S.pid, idx).replace(/ data-(iid|pid|zone|region|c)="[^"]*"/g, '')}</div>`;
 }
-function focusedOppZonesHTML(pid) {
-  const p = S.players[pid];
-  if (!p) return '';
-  const defs = p.defs || {}, pi = pileInfo(pid), handN = num(p.hand);
+// The player whose board is shown big (Sidebar / Focus / Grid) when it isn't mine; null when I'm looking at my own.
+function viewedOpp() {
+  if (!S.focus || curView() === 'top' || S.focus === S.pid) return null;
+  return S.players[S.focus] ? S.focus : null;
+}
+// Their hand + piles, drawn in the same bottom strip as mine (same markup, read-only): hand face-down unless revealed.
+function oppHandHTML(pid) {
+  const p = S.players[pid], defs = p.defs || {};
   const revealed = !!(p.revHand && p.revHand.length);
-  const shown = revealed ? p.revHand.length : Math.min(handN, 10);
-  const mid = (shown - 1) / 2, step = shown > 1 ? Math.min(8, 48 / shown) : 0;
-  const fan = i => { const off = i - mid; return `--rot:${(off * step).toFixed(1)}deg;--arc:${(mid ? 3 * (off / mid) ** 2 : 0).toFixed(1)}px;z-index:${i + 1}`; };
-  const hands = revealed
-    ? p.revHand.map((card, i) => cardHTML(card, card.id && defs[card.id], { mine: false, pid, ctrl: pid, zone: 'hand', style: fan(i) })).join('')
-    : Array.from({ length: shown }, (_, i) => `<div class="card oback" style="${fan(i)}">${UI.cardBackHTML('', appearanceBackFor(pid))}</div>`).join('');
-  const pile = (key, label) => `<div class="focus-pile" data-pile="${key}" data-pid="${esc(pid)}" title="${esc(pi[key].tip)}"><div class="focus-zone-label">${label} <b>${pi[key].n}</b></div><div class="focus-pile-card">${pi[key].face}</div></div>`;
-  const commanders = (p.zones.command || []).map(card => cardHTML(card, card.id && defs[card.id], { mine: false, pid, ctrl: pid, zone: 'command' })).join('');
-  return `<div class="focus-zonebar" aria-label="${esc(p.name)}'s hand and zones">
-    <div class="focus-hand-group"><div class="focus-zone-label">HAND <b>${handN}</b>${revealed ? ' · REVEALED' : ''}</div><div class="focus-hand-cards">${hands}</div></div>
-    ${pile('library', 'LIB')}${pile('graveyard', 'GY')}${pile('exile', 'EXILE')}
-    <div class="focus-pile focus-command"><div class="focus-zone-label">COMMAND</div><div class="focus-command-cards">${commanders || '<span class="muted small">—</span>'}</div></div>
-  </div>`;
+  const n = revealed ? p.revHand.length : Math.min(num(p.hand), 14);
+  const mid = (n - 1) / 2, step = n > 1 ? Math.min(3, 28 / n) : 0;
+  const fan = i => { const off = i - mid; return `--rot:${(off * step).toFixed(2)}deg;--arc:${(mid ? 12 * (off / mid) ** 2 : 0).toFixed(1)}px;z-index:${i + 1}`; };
+  return revealed
+    ? p.revHand.map((c, i) => cardHTML(c, c.id && defs[c.id], { mine: false, pid, ctrl: pid, zone: 'hand', style: fan(i) })).join('')
+    : Array.from({ length: n }, (_, i) => `<div class="card oback" style="${fan(i)}">${UI.cardBackHTML('', appearanceBackFor(pid))}</div>`).join('');
+}
+function oppZonesHTML(pid) {
+  const p = S.players[pid], defs = p.defs || {}, pi = pileInfo(pid);
+  const box = (k, label, sub) => `<div class="zbox" data-pile="${k}" data-pid="${esc(pid)}" title="${esc(pi[k].tip)}${k === 'library' ? '' : ' — click to search'}">
+      <div class="zlabel">${label} <b>${pi[k].n}</b>${sub ? ` <span class="zsub">${sub}</span>` : ''}</div><div class="zcard">${pi[k].face}</div></div>`;
+  const cmd = (p.zones.command || []).map(c => cardHTML(c, c.id && defs[c.id], { mine: false, pid, ctrl: pid, zone: 'command' })).join('');
+  return box('library', 'LIB') + box('graveyard', 'GY', pi.graveyard.n ? `${pi.graveyard.tc.perm}P` : '') + box('exile', 'EXILE') +
+    `<div class="zbox cmdbox"><div class="zlabel">CMD</div><div class="zcard cmdcards">${cmd}</div></div>`;
 }
 
 function renderOpp(el, pid, idx) {
@@ -1912,7 +1918,7 @@ function renderOpp(el, pid, idx) {
     ${handHTML}
     ${cmdCards ? `<span class="ocmd" title="Command zone">${cmdCards}</span>` : ''}
     ${!p.kept ? '<span class="muted small">mulliganing…</span>' : ''}`);
-  const focusedZones = (curView() === 'side' || curView() === 'focus') && S.focus === pid ? focusedOppZonesHTML(pid) : '';
+  const focusedZones = '';
   setHTML(el.querySelector('.obf'), `<div class="boardwrap" data-board="${esc(pid)}" style="${esc(appearanceBoardStyleFor(pid))}">${boardHTML(pid, idx)}</div>${focusedZones}`);
 }
 
@@ -1931,16 +1937,20 @@ function renderMine(idx) {
   setHTML($('#myBf'), `<div class="boardwrap" data-board="${esc(S.pid)}" style="${esc(appearanceBoardStyleFor(S.pid))}">${boardHTML(S.pid, idx)}</div>`);
   // fan the hand: each card tilts a little away from the middle and dips on a gentle arc (CSS uses --rot / --arc)
   const nh = z.hand.length, mid = (nh - 1) / 2, step = nh > 1 ? Math.min(3, 28 / nh) : 0;
-  setHTML($('#myHand'), z.hand.map((c, i) => {
+  const vo = viewedOpp();
+  $('#myRow').classList.toggle('viewing-opp', !!vo);
+  if (vo) $('#myHand').removeAttribute('data-drop'); else $('#myHand').setAttribute('data-drop', 'hand');
+  setHTML($('#myHand'), vo ? oppHandHTML(vo) : z.hand.map((c, i) => {
     const off = i - mid;
     return cardHTML(c, defOf(c), Object.assign({}, o, { zone: 'hand',
       // arc is normalised so the outermost cards dip at most ~12px however big the hand is
       style: `--rot:${(off * step).toFixed(2)}deg;--arc:${(mid ? 12 * (off / mid) ** 2 : 0).toFixed(1)}px;z-index:${i + 1}` }));
   }).join(''));
   if (S.handHov) { const hc = [...$('#myHand').children].find(c => c.dataset.iid === S.handHov); if (hc) hc.classList.add('hov'); } // keep the lifted card up across re-renders
-  $('#handLabel').innerHTML = `HAND <b>${z.hand.length}</b>`;
-  $('#myHand').style.setProperty('--n', Math.max(1, z.hand.length)); // CSS overlaps cards so the hand never scrolls
-  setHTML($('#myZones'), myZonesHTML());
+  const hn = vo ? $('#myHand').children.length : z.hand.length;
+  $('#handLabel').innerHTML = vo ? `${esc(S.players[vo].name)} · HAND <b>${num(S.players[vo].hand)}</b>${S.players[vo].revHand && S.players[vo].revHand.length ? ' · REVEALED' : ''}` : `HAND <b>${z.hand.length}</b>`;
+  $('#myHand').style.setProperty('--n', Math.max(1, hn)); // CSS overlaps cards so the hand never scrolls
+  setHTML($('#myZones'), vo ? oppZonesHTML(vo) : myZonesHTML());
   const mb = $('#mullBar');
   if (!m.kept) {
     const next = m.mull === 0 ? 'next mulligan is free' : `next mulligan: put ${m.mull} on the bottom`;

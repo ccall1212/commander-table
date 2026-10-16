@@ -136,7 +136,7 @@ Dropped connections and crashed tabs happen, and recovering from them is the mai
 - The **📜 Log** button in the top bar slides the game log (and the shortcut help) out from the right edge. Click it again to close.
 - Cards overlap more as your hand grows, and the card under your mouse lifts up so you can read it.
 - Every opponent's hand shows in their header, right next to their commander: a small fan of card backs with the number of cards. If they turn on **Reveal my hand to everyone**, the fan shows their real cards face-up (marked REVEALED) — hover one to read it in the card preview.
-- In the Sidebar and Focus layouts, when you view another player's board, a bar at the top-right of that board shows their hand (card backs, or the cards if they revealed their hand), Library (with a revealed top card), Graveyard, Exile and Commander. Click a pile to look through it.
+- When you view another player's board (Sidebar, Focus or Grid), their hand (face-down card backs, or the real cards if they revealed it), Library, Graveyard, Exile and Command appear in the same bottom strip as yours, and your own are hidden. Click a pile to look through it. Click **YOU** to come back to your own board.
 
 **Auras & Equipment**
 

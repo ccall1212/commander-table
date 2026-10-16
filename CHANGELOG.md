@@ -9,6 +9,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - `AGENTS.md`: how changes are made, tested, versioned and released (for AI assistants and humans).
 
+## [0.10.0] - 2026-10-16
+
+### Changed
+- When you view another player's board (Sidebar, Focus or Grid), you now see their hand, Library, Graveyard, Exile and Command in the same bottom strip as your own. Their hand is shown as face-down card backs (face-up if they revealed it). Your own hand and piles are hidden until you click **YOU**. The floating zone bar at the top right of their board is gone.
+- The bottom strip has its own reserved space on every board, so it never covers cards. Their Lands area can be hovered again, and your own board no longer hides cards under your hand.
+- New games start with a smaller Creatures / Planeswalkers area and bigger Lands and Artifacts / Enchantments areas. Saved layouts are left alone (☰ → Reset zones to adopt the new default).
+
 ## [0.9.1] - 2026-10-16
 
 ### Fixed
@@ -157,7 +164,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - First playable build: paste-import decks from Moxfield or Archidekt (via Scryfall), 2–4 player rooms over PeerJS with self-healing reconnects, a searchable zone viewer, commander damage tracking and automatic tokens.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.9.1...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/ccall1212/commander-table/compare/v0.9.1...v0.10.0
 [0.9.1]: https://github.com/ccall1212/commander-table/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/ccall1212/commander-table/compare/v0.8.1...v0.9.0
 [0.8.1]: https://github.com/ccall1212/commander-table/compare/v0.8.0...v0.8.1

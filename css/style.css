@@ -133,7 +133,11 @@ body.side-open #side { display: grid; }
 /* keep the splitter in the grid (just invisible) — display:none would shift #mine into the 0px row */
 #table.noopps #split { visibility: hidden; pointer-events: none; }
 #table.noopps #opps:empty::after { font-size: 13px; }
-#myBf { position: absolute; inset: 0; overflow: hidden; padding: 6px 8px; min-height: 0; }
+#myBf { position: absolute; inset: 0; overflow: hidden; padding: 6px 8px calc(var(--stripH, 110px) + 4px); min-height: 0; }
+/* The big board of the player being viewed keeps the same bottom strip free: nothing sits under their hand and piles. */
+#table.view-side.has-focus .opp.focus .obf, #table.view-grid.has-focus .opp.focus .obf { padding-bottom: calc(var(--stripH, 110px) + 4px); }
+.opp.focus .ozones, .opp.focus .ohhand, .opp.focus .ocmd { display: none; }
+#myRow.viewing-opp #myHand { --cw: 82px; }
 /* Hand + piles overlay the bottom of the battlefield; empty areas let clicks through to the board. */
 #myRow { --cw: 82px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; background: transparent;
   height: calc(var(--cw) * 1.397 * 0.66 + 34px); align-items: start; position: absolute; left: 0; right: 0; bottom: 0; z-index: 65;
@@ -480,7 +484,10 @@ body.lens-on #pv { display: none; }
 #table.view-grid[data-n="5"] .opp:nth-child(5) { grid-row: 2; grid-column: 3; }
 /* Focus: one opponent fills the whole grid, everything else is hidden (keeps its cell, so layout doesn't jump) */
 #table.view-grid.has-focus[data-n] .opp.focus { grid-column: 1 / -1; grid-row: 1 / -1; z-index: 20; }
-#table.view-grid.has-focus > #mine, #table.view-grid.has-focus .opp:not(.focus) { visibility: hidden; }
+#table.view-grid.has-focus .opp:not(.focus) { visibility: hidden; }
+/* same as Sidebar: while viewing someone, #mine is only the transparent strip over their board */
+#table.view-grid.has-focus #mine { grid-column: 1 / -1; grid-row: 1 / -1; z-index: 25; background: transparent; border: none; box-shadow: none; pointer-events: none; }
+#table.view-grid.has-focus #myBf, #table.view-grid.has-focus #myBar { visibility: hidden; }
 
 /* ---- E. Hand overlap + lift (EDHPlay-style): JS sets --n = number of cards on #myHand; --cw comes from #myRow ---- */
 #myHand .card { transition: transform .14s ease, margin .14s ease; transform-origin: 50% 100%; }
