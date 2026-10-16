@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.12.1';
+const APP_VERSION = '0.13.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -2016,6 +2016,7 @@ function renderOpp(el, pid, idx) {
   if (tile) {
     setHTML(el.querySelector('.ohead'), `<span class="dot" style="--pc:${colorOf(pid)}"></span><span class="pname" data-phead="${esc(pid)}" title="Right-click for options">${esc(p.name)}</span>
       ${off ? '<span class="tag off">RECONNECTING</span>' : ''}${T.out && T.out[pid] ? '<span class="tag off">OUT</span>' : ''}${T.active === pid ? '<span class="tag">TURN</span>' : ''}${T.monarch === pid ? '<span title="Monarch">👑</span>' : ''}${T.initiative === pid ? '<span title="Initiative">🏰</span>' : ''}`);
+    el.querySelector('.obf').removeAttribute('style');
     setHTML(el.querySelector('.obf'), `<div class="boardwrap tile" data-board="${esc(pid)}" style="${esc(appearanceBoardStyleFor(pid))}">${boardHTML(pid, idx, 'tile')}</div>`);
     return;
   }
@@ -2042,7 +2043,8 @@ function renderOpp(el, pid, idx) {
     ${cmdCards ? `<span class="ocmd" title="Command zone">${cmdCards}</span>` : ''}
     ${!p.kept ? '<span class="muted small">mulliganing…</span>' : ''}`);
   const focusedZones = '';
-  setHTML(el.querySelector('.obf'), `<div class="boardwrap" data-board="${esc(pid)}" style="${esc(appearanceBoardStyleFor(pid))}">${boardHTML(pid, idx, bigMode())}</div>${focusedZones}`);
+  el.querySelector('.obf').style.cssText = appearanceBoardStyleFor(pid);
+  setHTML(el.querySelector('.obf'), `<div class="boardwrap" data-board="${esc(pid)}">${boardHTML(pid, idx, bigMode())}</div>${focusedZones}`);
 }
 
 function renderMine(idx) {
@@ -2056,7 +2058,8 @@ function renderMine(idx) {
     ${S.arrange ? `<span class="mb-actions"><button data-a="tidy" title="Put every card back into its zone">Tidy cards</button><button data-a="resetzones">Reset zones</button>
       <button data-a="arrange" class="primary" title="Finish moving and resizing your zones">✓ Done arranging</button></span>` : ''}`;
   // --- battlefield, hand, bottom-right zones
-  setHTML($('#myBf'), `<div class="boardwrap" data-board="${esc(S.pid)}" style="${esc(appearanceBoardStyleFor(S.pid))}">${boardHTML(S.pid, idx, bigMode())}</div>`);
+  $('#myBf').style.cssText = appearanceBoardStyleFor(S.pid); // art continues behind the hand / piles strip
+  setHTML($('#myBf'), `<div class="boardwrap" data-board="${esc(S.pid)}">${boardHTML(S.pid, idx, bigMode())}</div>`);
   // fan the hand: each card tilts a little away from the middle and dips on a gentle arc (CSS uses --rot / --arc)
   const nh = z.hand.length, mid = (nh - 1) / 2, step = nh > 1 ? Math.min(3, 28 / nh) : 0;
   const vo = viewedOpp();

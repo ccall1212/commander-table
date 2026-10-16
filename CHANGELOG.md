@@ -9,6 +9,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - `AGENTS.md`: how changes are made, tested, versioned and released (for AI assistants and humans).
 
+## [0.13.0] - 2026-10-17
+
+### Changed
+- The hand and piles strip now looks like EDHPlay's: the board's background art runs behind it instead of a separate dark band, and the labels (HAND, LIB, GY, EXILE, CMD) are plain text rather than boxed pills. This applies to your own board, to another player's board when you view them, and in every layout. The strip still keeps its own space under the cards, so nothing is covered.
+
 ## [0.12.1] - 2026-10-17
 
 ### Changed
@@ -198,7 +203,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - First playable build: paste-import decks from Moxfield or Archidekt (via Scryfall), 2–4 player rooms over PeerJS with self-healing reconnects, a searchable zone viewer, commander damage tracking and automatic tokens.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.12.1...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.13.0...HEAD
+[0.13.0]: https://github.com/ccall1212/commander-table/compare/v0.12.1...v0.13.0
 [0.12.1]: https://github.com/ccall1212/commander-table/compare/v0.12.0...v0.12.1
 [0.12.0]: https://github.com/ccall1212/commander-table/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/ccall1212/commander-table/compare/v0.10.0...v0.11.0
