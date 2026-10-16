@@ -31,6 +31,10 @@ So the normal flow is:
   if you changed any of them.
 - **Cross-check names:** grep that every function, CSS class, `data-a="…"` action and element id you
   use actually exists, and that every one you renamed or removed has no remaining references.
+- **Images/assets:** check that every new image actually contains visible pixels (not blank or fully
+  transparent) and is big enough for where it's shown (card backs ≥ 250×350, full-board backgrounds
+  ≈ 1920×1080). Prefer separate files over sprite atlases, and always keep a fallback so a missing
+  image never makes cards or the board invisible.
 - **Don't guess at behaviour you can't see.** If a change depends on layout, sizes or timing, say so
   and leave it for the browser test.
 - **Write the test list** in the PR or commit: the exact clicks and keys to try, how many players, which
@@ -45,8 +49,8 @@ So the normal flow is:
   from `main`, root folder).
 - Online play goes through a Cloudflare relay (`relay/`, Worker + Durable Object). The browser side is
   `js/relay-peer.js` and `js/net.js`; see `docs/NETWORKING.md` and `docs/relay-protocol.md`.
-- Optional LAN mode: `lan-server.py` (Python stdlib) has an in-app updater that installs whatever is on
-  `main`. **Every push to `main` is a release** for LAN users too.
+- LAN mode (`lan-server.py`, `Start LAN game.bat`, `js/lan.js`, `js/updates.js`) is **unused** — nobody plays
+  that way. Don't build features for it; it's a candidate for removal.
 
 ## Files you'll touch most
 
