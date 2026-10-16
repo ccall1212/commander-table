@@ -6,6 +6,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+- `AGENTS.md`: how changes are made, tested, versioned and released (for AI assistants and humans).
+
 ## [0.8.0] - 2026-10-16
 
 ### Added

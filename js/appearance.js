@@ -1,4 +1,4 @@
-/* Commander Table appearance options; each selection uses its own opaque WebP asset. */
+/* Commander Table appearance options; each selection uses its own standalone SVG asset. */
 (function () {
   'use strict';
   const BACKS = [
