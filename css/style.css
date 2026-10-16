@@ -338,8 +338,8 @@ body.lens-on #pv { display: none; }
 .lifeN { font-size: 22px; font-weight: 700; min-width: 42px; text-align: center; }
 .ohead .lifeN { font-size: 18px; }
 .ctrpanel { position: absolute; z-index: 60; top: 100%; left: 8px; margin-top: 4px; min-width: 240px; background: var(--panel);
-#myBar .ctrpanel { left: auto; right: 0; } /* the floating life box sits at the right edge */
   border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; box-shadow: 0 10px 30px rgba(0,0,0,.5); }
+#myBar .ctrpanel { left: auto; right: 0; } /* the floating life box sits at the right edge */
 .ctrrow { display: grid; grid-template-columns: 20px 1fr 34px auto auto; align-items: center; gap: 6px; padding: 4px 0; }
 .ctrrow .ci { text-align: center; }
 .ctrrow .cn { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -636,3 +636,20 @@ body.lens-on #pv { display: none; }
 
 /* Hovering a tile greys the whole miniature and shows an eye */
 #table.view-side .opp:not(.focus):not(.viewing) .obody::after { background: rgba(60,64,72,.68); font-size: 40px; border-radius: 0; z-index: 100; }
+
+/* ---- Commander damage lives in the life menu (▾), grouped by player in that player's colour ---- */
+.cdgroup { margin: 2px 0 6px; padding-left: 8px; border-left: 3px solid var(--tc, #888); }
+.cdghead { font-size: 11px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--tc, #aaa); margin-bottom: 1px; }
+.cdrow { grid-template-columns: 1fr 34px auto auto; }
+.cdrow b { background: color-mix(in srgb, var(--tc, #666) 30%, #0a0d12); }
+.cdrow.lethal b { background: var(--danger); color: #fff; }
+.ctrsep { height: 1px; background: var(--border); margin: 6px 0; }
+.cdbadge { color: #ff9d57; font-weight: 700; }
+.cdbadge.lethal { color: var(--danger); }
+.cdrow .cn { min-width: 0; }
+.ctrpanel { min-width: 260px; }
+
+#oppPanel { position: fixed; z-index: 3500; width: 270px; max-height: 70vh; overflow-y: auto; }
+#oppPanel .ctrpanel { position: static; margin: 0; }
+#myBar:has(.ctrpanel) { z-index: 90; }
+#myBar .ctrpanel { max-height: min(70vh, 480px); overflow-y: auto; }

@@ -1543,6 +1543,7 @@ function renderBody() {
   { const row = $('#myRow'), h = row && row.offsetHeight; if (h) $('#table').style.setProperty('--stripH', h + 'px'); }
   renderTop(); renderOpps(idx); renderMine(idx); renderLog();
   fitBoards();
+  renderOppPanel();
   S.viewers.forEach(v => { try { v.refresh(); } catch (e) { console.error(e); } });
 }
 
@@ -1756,37 +1757,67 @@ function myZonesHTML() {
       <div class="zcard cmdcards">${cmd.map(c => cardHTML(c, defOf(c), { mine: true, pid: S.pid, zone: 'command' })).join('')}</div></div>`;
 }
 // Life box + expandable counters panel (EDHPlay style). Mine is editable; opponents' life +/- sends a request.
-function lifeBoxHTML(pid) {
+// The ▾ menu: commander damage (grouped by player, in their colour) and the other player counters.
+function ctrPanelHTML(pid) {
+  const mine = pid === S.pid;
+  const p = mine ? null : S.players[pid];
+  const vals = mine ? Object.assign({ Poison: S.me.poison }, S.me.ctr) : Object.assign({ Poison: p.poison }, p.ctr || {});
+  const rows = Object.keys(PLAYER_CTR_ICONS).map(k => `<div class="ctrrow"><span class="ci">${PLAYER_CTR_ICONS[k]}</span><span class="cn">${k}</span><b>${vals[k] || 0}</b>` +
+    (mine ? `<button data-a="pctr" data-k="${k}" data-d="-1">−</button><button data-a="pctr" data-k="${k}" data-d="1">+</button>` : '<span></span><span></span>') + '</div>').join('');
+  const cdPanel = cmdDmgPanelHTML(pid);
+  return `<div class="ctrpanel">${cdPanel}${cdPanel ? '<div class="ctrsep"></div>' : ''}${rows}</div>`;
+}
+function lifeBoxHTML(pid, noPanel) {
   const mine = pid === S.pid;
   const p = mine ? null : S.players[pid];
   const life = mine ? S.me.life : p.life;
   const open = mine ? S.ctrOpen === S.pid : S.ctrOpen === pid;
   const a = mine ? 'life' : 'olife';
   const vals = mine ? Object.assign({ Poison: S.me.poison }, S.me.ctr) : Object.assign({ Poison: p.poison }, p.ctr || {});
-  const rows = Object.keys(PLAYER_CTR_ICONS).map(k => `<div class="ctrrow"><span class="ci">${PLAYER_CTR_ICONS[k]}</span><span class="cn">${k}</span><b>${vals[k] || 0}</b>` +
-    (mine ? `<button data-a="pctr" data-k="${k}" data-d="-1">−</button><button data-a="pctr" data-k="${k}" data-d="1">+</button>` : '<span></span><span></span>') + '</div>').join('');
   const any = Object.keys(PLAYER_CTR_ICONS).filter(k => vals[k]).map(k => `${PLAYER_CTR_ICONS[k]}${vals[k]}`).join(' ');
+  const cd = cmdDmgInfo(pid);
+  const cdBadge = cd.max ? `<span class="cdbadge${cd.max >= 21 ? ' lethal' : ''}" title="Highest commander damage taken">⚔${cd.max}</span> ` : '';
   return `<span class="lifebox" title="Life${mine ? ' (Shift-click: ±5)' : ` — changing it asks ${esc(p.name)}'s game to apply it`}">
       <button data-a="${a}" data-pid="${esc(pid)}" data-d="-1">−</button><b class="lifeN">${life}</b><button data-a="${a}" data-pid="${esc(pid)}" data-d="1">+</button>
-      <button class="more" data-a="ctrs" data-pid="${esc(pid)}" title="Poison, energy, experience, rad, tickets">${any ? esc(any) + ' ' : ''}▾</button></span>` +
-    (open ? `<div class="ctrpanel">${rows}</div>` : '');
+      <button class="more" data-a="ctrs" data-pid="${esc(pid)}" title="Commander damage, poison, energy, experience, rad, tickets">${cdBadge}${any ? esc(any) + ' ' : ''}▾</button></span>` +
+    (open && !noPanel ? ctrPanelHTML(pid) : '');
 }
-// Colored commander-damage tags: the damage `victim` has taken from each other player's commander(s).
-function cmdTagsHTML(victim) {
+// Opponent miniatures can't hold the menu (their tile clips it), so it floats next to the tile instead.
+function renderOppPanel() {
+  let el = document.getElementById('oppPanel');
+  const pid = S.ctrOpen;
+  const tile = pid && pid !== S.pid && S.players[pid] ? document.querySelector(`#opps .opp.tile[data-opp="${CSS.escape(pid)}"]`) : null;
+  if (!tile) { if (el) el.remove(); return; }
+  if (!el) { el = document.createElement('div'); el.id = 'oppPanel'; $('#game').appendChild(el); }
+  const r = tile.getBoundingClientRect();
+  el.innerHTML = ctrPanelHTML(pid);
+  const pw = 270;
+  el.style.left = Math.max(8, Math.min(innerWidth - pw - 8, r.left + 8)) + 'px';
+  el.style.top = Math.min(innerHeight - 40, r.top + 34) + 'px';
+}
+// Commander damage `victim` has taken from each other player's commander(s), grouped by player (colored in the life menu).
+function cmdDmgInfo(victim) {
   const vMine = victim === S.pid;
   const dmg = vMine ? S.me.cmdDmg : ((S.players[victim] || {}).cmdDmg || {});
   const sources = ((S.table && S.table.seats) || []).filter(p => p !== victim && (p === S.pid ? S.me.cmdrs.length : S.players[p]));
-  const tags = [];
+  const groups = []; let max = 0;
   for (const src of sources) {
     const cmdrs = src === S.pid ? S.me.cmdrs : (S.players[src].cmdrs || []);
-    for (const cm of cmdrs) {
+    const rows = cmdrs.map(cm => {
       const key = src + ':' + cm.iid, v = dmg[key] || 0;
-      const can = vMine || src === S.pid; // I track my own damage, and can deal damage with my commander
-      tags.push(`<span class="cdtag${vMine ? ' mine' : can ? ' can' : ''}${v >= 21 ? ' lethal' : ''}${v ? '' : ' zero'}" style="--tc:${colorOf(src)}"${can ? ` data-a="cdmg" data-k="${esc(key)}" data-pid="${esc(victim)}"` : ''}
-        title="${esc(vMine ? 'You have' : pname(victim) + ' has')} taken ${v} commander damage from ${esc(pname(src))}'s ${esc(cm.name)}${can ? ' — left-click +1, right-click −1' : ''}">${v}</span>`);
-    }
+      max = Math.max(max, v);
+      return { key, name: cm.name, v, can: vMine || src === S.pid }; // I track my own damage, and can deal damage with my commander
+    });
+    if (rows.length) groups.push({ src, rows });
   }
-  return tags.length ? `<span class="cdtags">${tags.join('')}</span>` : '';
+  return { groups, max };
+}
+function cmdDmgPanelHTML(victim) {
+  const { groups } = cmdDmgInfo(victim);
+  return groups.map(g => `<div class="cdgroup" style="--tc:${colorOf(g.src)}"><div class="cdghead">${esc(pname(g.src))}</div>` + g.rows.map(r =>
+    `<div class="ctrrow cdrow${r.v >= 21 ? ' lethal' : ''}"><span class="cn" title="${esc(r.name)}">${esc(r.name)}</span><b>${r.v}</b>` +
+    (r.can ? `<button data-a="cdmg" data-k="${esc(r.key)}" data-pid="${esc(victim)}" data-d="-1">−</button><button data-a="cdmg" data-k="${esc(r.key)}" data-pid="${esc(victim)}" data-d="1">+</button>` : '<span></span><span></span>') +
+    '</div>').join('') + '</div>').join('');
 }
 function pileHTML(zone, cards, defs, o, extraTop) {
   const n = cards.length;
@@ -1942,7 +1973,7 @@ function tileOverlayHTML(pid, bh) {
     : Array.from({ length: n }, (_, i) => `<div class="card oback" style="${fan(i)}">${UI.cardBackHTML('', appearanceBackFor(pid))}</div>`).join('');
   const pile = (k, label) => `<div class="tpile"><div class="tpcard">${pi[k].face || ''}</div><div class="tplabel">${label} <b>${pi[k].n}</b></div></div>`;
   const cmd = (p.zones.command || []).map(c => cardHTML(c, c.id && defs[c.id], { mine: false, pid, ctrl: pid, zone: 'command' })).join('');
-  return `<div class="tlife">${lifeBoxHTML(pid)}${cmdTagsHTML(pid)}</div>
+  return `<div class="tlife">${lifeBoxHTML(pid, true)}</div>
     <div class="tstrip" style="top:${bh}px"><div class="thand">${hand}${handN ? `<b class="thn">${handN}</b>` : ''}</div>
       <div class="tpiles">${pile('library', 'LIB')}${pile('graveyard', 'GY')}${pile('exile', 'EXILE')}<div class="tpile tcmd"><div class="tpcard">${cmd}</div><div class="tplabel">CMD</div></div></div></div>`;
 }
@@ -1982,7 +2013,6 @@ function renderOpp(el, pid, idx) {
     ${off ? '<span class="tag off">RECONNECTING</span>' : ''}${T.out && T.out[pid] ? '<span class="tag off">OUT</span>' : ''}
     ${T.active === pid ? '<span class="tag">TURN</span>' : ''}${T.monarch === pid ? '<span title="Monarch">👑</span>' : ''}${T.initiative === pid ? '<span title="Initiative">🏰</span>' : ''}
     ${lifeBoxHTML(pid)}
-    ${cmdTagsHTML(pid)}
     <span class="ozones">${oz('library', 'LIB')}${oz('graveyard', 'GY', pi.graveyard.n ? pi.graveyard.tc.perm + 'P' : '')}${oz('exile', 'EX')}</span>
     ${handHTML}
     ${cmdCards ? `<span class="ocmd" title="Command zone">${cmdCards}</span>` : ''}
@@ -1999,7 +2029,6 @@ function renderMine(idx) {
   $('#myBar').innerHTML = `<span class="dot" style="--pc:${colorOf(S.pid)}"></span><span class="pname" data-phead="${esc(S.pid)}" title="Right-click for options">${esc(m.name)}</span>
     ${T.monarch === S.pid ? '<span title="Monarch">👑</span>' : ''}${T.initiative === S.pid ? '<span title="Initiative">🏰</span>' : ''}
     ${lifeBoxHTML(S.pid)}
-    ${cmdTagsHTML(S.pid)}
     ${S.arrange ? `<span class="mb-actions"><button data-a="tidy" title="Put every card back into its zone">Tidy cards</button><button data-a="resetzones">Reset zones</button>
       <button data-a="arrange" class="primary" title="Finish moving and resizing your zones">✓ Done arranging</button></span>` : ''}`;
   // --- battlefield, hand, bottom-right zones
@@ -2449,7 +2478,7 @@ function onButton(a, btn, e) {
     case 'ctrs': S.ctrOpen = S.ctrOpen === btn.dataset.pid ? null : btn.dataset.pid; render(); break;
     case 'tax': changeTax(btn.dataset.iid, 1); break;
     case 'addctr': UI.menu(r.left, r.bottom + 4, PLAYER_COUNTERS.map(k => ({ label: k, onClick: () => act(() => { S.me.ctr[k] = (S.me.ctr[k] || 0) + 1; }) }))); break;
-    case 'cdmg': cmdDmgClick(btn, 1); break;
+    case 'cdmg': cmdDmgClick(btn, +btn.dataset.d || 1); break;
     case 'olife': sendReq(btn.dataset.pid, { k: 'life', d }); break;
     case 'draw': draw(1); break;
     case 'untapall': untapAll(); break;

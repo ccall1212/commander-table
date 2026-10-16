@@ -17,6 +17,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Hovering a tile greys it out and shows an eye; click anywhere on it to view that board big. The life +/- buttons still work without opening it.
 - The right-hand column is wider (about a quarter of the screen), and your own YOU tile is slim while you look at your own board.
 
+- Commander damage moved into the life menu (the ▾ under your life, like EDHPlay). It's grouped by player in that player's colour, with each commander's damage and − / + buttons (you can change yours and the damage your commander deals). The coloured chips beside the life total are gone; the ▾ shows ⚔ and the highest damage when there is any (red at 21). The menu floats above the board, so it is never cut off.
+
 ### Fixed
 - Boards in the Top and Grid layouts shrank in 0.10.0 because space was reserved for the hand and piles strip. The reserved space now only applies to Sidebar and Focus, where it costs nothing, so Top and Grid boards are full size again.
 
