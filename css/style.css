@@ -455,11 +455,6 @@ body.lens-on #pv { display: none; }
 .boardwrap.thumb { pointer-events: none; }
 /* Click-to-view hint on any tile that isn't the one currently shown big */
 #table.view-side .opp:not(.focus):not(.viewing) .obody { position: relative; cursor: pointer; }
-#table.view-side .opp:not(.focus):not(.viewing) .obody::after { content: '\1F441\FE0F'; position: absolute; inset: 0; z-index: 3;
-  display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.45); color: #fff; font-size: 14px;
-  border-radius: 0 0 calc(var(--radius) - 1px) calc(var(--radius) - 1px); pointer-events: none; opacity: 0; transition: opacity .15s ease; }
-#table.view-side .opp:not(.focus):not(.viewing):hover .obody::after { opacity: 1; }
-@media (prefers-reduced-motion: reduce) { #table.view-side .opp .obody::after { transition: none; } }
 
 /* ---- B. Grid view: equal quadrants, me bottom-left ---- */
 #table.view-grid { grid-template-columns: 1fr 1fr; grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); gap: 6px; padding: 6px; }
@@ -580,7 +575,7 @@ body.lens-on #pv { display: none; }
 }
 /* Bottom tray: a soft dark backing under the floating hand / piles so the zone outlines behind them
    don't show through (still ignores the pointer except on the interactive bits). */
-#myRow { background: linear-gradient(to top, rgba(11,14,19,.96) 0%, rgba(11,14,19,.9) 62%, rgba(11,14,19,0) 100%); }
+#myRow { background: transparent; }
 
 
 /* ---------- Player appearance (opening lobby + per-player playmat) ---------- */
@@ -614,16 +609,16 @@ body.lens-on #pv { display: none; }
 .tlife .lifebox { display: inline-flex; align-items: center; gap: 2px; background: rgba(11,14,19,.8); border: 1px solid var(--border); border-radius: 8px; padding: 1px 3px; }
 .tlife .lifeN { min-width: 24px; text-align: center; font-size: 15px; }
 .tlife button { padding: 0 5px; line-height: 16px; font-size: 12px; }
-.tstrip { position: absolute; left: 0; width: 1000px; height: 152px; z-index: 5; display: flex; align-items: flex-start; justify-content: space-between;
-  padding: 4px 8px 0; background: linear-gradient(to bottom, rgba(11,14,19,.55), rgba(11,14,19,.9)); pointer-events: none; }
+.tstrip { position: absolute; left: 0; height: 120px; z-index: 5; display: flex; align-items: flex-start; justify-content: space-between;
+  padding: 4px 8px 0; background: none; pointer-events: none; }
 .tstrip .card { pointer-events: auto; }
-.thand { position: relative; display: flex; align-items: flex-start; padding-left: 4px; }
-.thand .card { position: relative; flex: none; margin-left: -46px; transform: translateY(var(--arc, 0px)) rotate(var(--rot, 0deg)); box-shadow: 0 3px 8px rgba(0,0,0,.55); }
+.thand { position: relative; display: flex; align-items: flex-start; padding-left: 4px; --cw: 66px; }
+.thand .card { position: relative; flex: none; margin-left: -38px; transform: translateY(var(--arc, 0px)) rotate(var(--rot, 0deg)); box-shadow: 0 3px 8px rgba(0,0,0,.55); }
 .thand .card:first-child { margin-left: 0; }
 .thn { align-self: center; margin-left: 10px; font-size: calc(18px * min(var(--inv, 1), 2.6)); color: var(--text); }
 .tpiles { display: flex; gap: 10px; align-items: flex-start; }
-.tpile { width: 80px; text-align: center; }
-.tpcard { position: relative; width: 80px; height: 112px; border: 1px dashed rgba(255,255,255,.25); border-radius: 5px; overflow: hidden; }
+.tpile { width: 66px; text-align: center; }
+.tpcard { position: relative; width: 66px; height: 92px; border: 1px dashed rgba(255,255,255,.25); border-radius: 5px; overflow: hidden; }
 .tpcard > img, .tpcard > .w-cardback, .tpcard .ph { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .tpcard .card { position: absolute; inset: 0; width: 100%; }
 .tplabel { margin-top: 2px; font-size: calc(11px * min(var(--inv, 1), 2.6)); color: var(--muted); white-space: nowrap; }
@@ -635,7 +630,6 @@ body.lens-on #pv { display: none; }
 .tlife { transform: scale(calc(var(--inv, 1) * .85)); flex-wrap: nowrap; }
 
 /* Hovering a tile greys the whole miniature and shows an eye */
-#table.view-side .opp:not(.focus):not(.viewing) .obody::after { background: rgba(60,64,72,.68); font-size: 40px; border-radius: 0; z-index: 100; }
 
 /* ---- Commander damage lives in the life menu (▾), grouped by player in that player's colour ---- */
 .cdgroup { margin: 2px 0 6px; padding-left: 8px; border-left: 3px solid var(--tc, #888); }
@@ -656,10 +650,6 @@ body.lens-on #pv { display: none; }
 
 /* ---- Hover eye + click-to-view on every miniature, in every layout ---- */
 #table .opp.tile:not(.focus):not(.viewing) .obody { position: relative; cursor: pointer; }
-#table .opp.tile:not(.focus):not(.viewing) .obody::after { content: '\1F441\FE0F'; position: absolute; inset: 0; z-index: 100;
-  display: flex; align-items: center; justify-content: center; background: rgba(60,64,72,.68); color: #fff; font-size: 40px;
-  pointer-events: none; opacity: 0; transition: opacity .15s ease; }
-#table .opp.tile:not(.focus):not(.viewing):hover .obody::after { opacity: 1; }
 .opp.youtile.tile .obody { cursor: pointer; }
 
 /* ---- Top layout while viewing someone: tiles in a row on top (incl. YOU), their board big underneath ---- */

@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.12.0';
+const APP_VERSION = '0.12.1';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -51,7 +51,7 @@ const IMG_OK = u => typeof u === 'string' && u.startsWith('https://cards.scryfal
 // is published with their board, and opponents scale that whole board to fit their panel.
 // v0.7: BW 1400 -> 1000 so cards draw ~40% bigger. Boards from older versions are rescaled (see cleanPub / normalizeMe).
 const BW = 1000, BH = 430, BH_MAX = 1400, CW = 80, CH = 112;
-const TILE_STRIP = 152; // extra logical height under an opponent's miniature for their hand + piles
+const TILE_STRIP = 120; // extra logical height under an opponent's miniature for their hand + piles
 const OLD_BW = 1400; // board width of clients before v0.7 (they don't send `bw`)
 const myBH = () => (S.me && S.me.bh) || BH;
 const DEFAULT_LAYOUT = [
@@ -1673,7 +1673,7 @@ function computeFit(W, H, N, bh0, mode, extra) {
   const capPx = mode === 'tile' ? 56 : 150;
   const sOcc = Math.sqrt(0.5 * W * H / (Math.max(N, 6) * CW * CH * 0.6)); // allow ~40% overlap when crowded
   let s = Math.max(sNat, Math.min(sOcc, capPx / CW));
-  const dhMin = CH * 2.4; // at least ~2 rows of cards
+  const dhMin = CH * (mode === 'tile' ? 2.8 : 2.4); // keep ~2-3 rows of cards, so boards never look flattened
   let dh = Math.max(H / s - extra, dhMin);
   s = Math.min(s, H / (dh + extra));
   dh = Math.max(H / s - extra, dhMin);
@@ -2322,11 +2322,11 @@ function bindGame() {
     e.preventDefault();
     const r = $('#table').getBoundingClientRect();
     const mv = ev => setSplit((ev.clientY - r.top) / r.height);
-    const up = () => { window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); LS.set('ct.split', S.split); };
+    const up = () => { window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); LS.set('ct.split3', S.split); };
     window.addEventListener('pointermove', mv);
     window.addEventListener('pointerup', up);
   });
-  setSplit(LS.get('ct.split', 0.38));
+  setSplit(LS.get('ct.split3', 0.47));
 
   // ---- hand-size splitter (drag up = bigger hand cards)
   const handSplit = $('#handSplit');

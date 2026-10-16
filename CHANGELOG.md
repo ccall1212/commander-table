@@ -9,6 +9,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - `AGENTS.md`: how changes are made, tested, versioned and released (for AI assistants and humans).
 
+## [0.12.1] - 2026-10-17
+
+### Changed
+- Hovering an opponent's tile no longer greys it out or shows an eye in any layout. Clicking the tile still opens their board (the pointer just turns into a hand over it).
+- The dark backing behind your hand and piles, and behind the hand/piles row in opponent tiles, is gone.
+- Opponent tiles in the Top layout are no longer squashed: the top row is taller by default (about 47% of the screen), the hand and piles row in a tile is smaller, and boards keep at least ~3 rows of cards.
+
 ## [0.12.0] - 2026-10-17
 
 ### Added
@@ -191,7 +198,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - First playable build: paste-import decks from Moxfield or Archidekt (via Scryfall), 2–4 player rooms over PeerJS with self-healing reconnects, a searchable zone viewer, commander damage tracking and automatic tokens.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.12.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.12.1...HEAD
+[0.12.1]: https://github.com/ccall1212/commander-table/compare/v0.12.0...v0.12.1
 [0.12.0]: https://github.com/ccall1212/commander-table/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/ccall1212/commander-table/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/ccall1212/commander-table/compare/v0.9.1...v0.10.0
