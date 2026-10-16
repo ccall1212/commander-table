@@ -4,6 +4,40 @@ Read this before changing anything. It describes how every change has been made 
 The owner is Chris (GitHub `ccall1212`). He is not a programmer: explain things in plain language,
 and **never push to `main` or publish without his explicit OK** ("publish" / "push").
 
+## Who does what
+
+Two assistants work on this repo, and they have different abilities:
+
+| | ChatGPT (via GitHub) | Claude Code (on Chris's laptop) |
+|---|---|---|
+| Writes code on a branch / PR | ✅ main job | ✅ |
+| Runs the game in a real browser, multiplayer tabs, test suites | ❌ assume not available | ✅ |
+| Publishes to `main` / tags / checks the live site | ❌ never | ✅ only when Chris says "publish" |
+
+So the normal flow is:
+1. **ChatGPT** makes the change on a branch, following steps 1–3 and 5–8 of the routine below.
+   It can't browser-test, so it does the **checks without a browser** (below) and pushes the branch.
+   It writes the manual test list in the commit message or pull-request description.
+2. **Chris** tells Claude: *"Test and publish branch `<name>`"* (or just "test branch `<name>`").
+3. **Claude** pulls the branch, runs the browser tests, fixes anything broken, and reports. On Chris's
+   OK it publishes (steps 10–11).
+
+### If you can't run a browser (ChatGPT)
+- Keep each branch **small and focused** on one feature or fix. Big rewrites can't be reviewed safely.
+- **Syntax:** if your environment has Node, run `node --check js/<file>.js` on every changed file.
+  If not, re-read each changed function and check that braces, brackets, parentheses and template
+  literals (backticks, `${…}`) are balanced, and that no `const`/`let` is declared twice in the same scope.
+- **Python:** run `python -m py_compile lan-server.py tools/bump-version.py tests/test_relay_protocol.py`
+  if you changed any of them.
+- **Cross-check names:** grep that every function, CSS class, `data-a="…"` action and element id you
+  use actually exists, and that every one you renamed or removed has no remaining references.
+- **Don't guess at behaviour you can't see.** If a change depends on layout, sizes or timing, say so
+  and leave it for the browser test.
+- **Write the test list** in the PR or commit: the exact clicks and keys to try, how many players, which
+  layout (Top / Sidebar / Grid / Focus) and screen size, and what should happen.
+- **State clearly what you did NOT test.** Never write "tested" for something you only read.
+- Don't merge to `main`, tag, or bump past a version that's already tagged.
+
 ## What this is
 
 - A browser-based Magic: The Gathering Commander tabletop. It is plain HTML/CSS/JS with **no build step,
@@ -83,7 +117,7 @@ and **never push to `main` or publish without his explicit OK** ("publish" / "pu
 8. **Commit** with [Conventional Commits](https://www.conventionalcommits.org/): `feat: …`, `fix: …`,
    `docs: …`, `chore: …`, `feat(ui): …`. Include the version in the subject for releases, e.g.
    `fix(ui): piles keep their own size (v0.7.1)`. Say in the body what changed and why.
-9. **Push the branch** and/or open a pull request. **Stop here** unless Chris has said "publish".
+9. **Push the branch** and/or open a pull request. **Stop here.** (ChatGPT stops here every time; Claude tests and, on Chris's OK, publishes.)
 10. **Publish (only on Chris's OK):**
     ```bash
     git switch main && git pull --ff-only
