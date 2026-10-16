@@ -36,8 +36,11 @@
   /* ------------------------------------------------------------------ */
 
   /** CSS-only card back; fills its container. Styled in widgets.css. */
-  UI.cardBackHTML = function (extraClass) {
-    return '<div class="w-cardback' + (extraClass ? ' ' + esc(extraClass) : '') + '"></div>';
+  UI.cardBackHTML = function (extraClass, backId) {
+    const style = backId && window.CTAppearance
+      ? ' style="' + esc(window.CTAppearance.cardBackStyle(backId)) + '"'
+      : '';
+    return '<div class="w-cardback' + (extraClass ? ' ' + esc(extraClass) : '') + '"' + style + '></div>';
   };
 
   /* ------------------------------------------------------------------ */

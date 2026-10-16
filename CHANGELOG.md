@@ -6,6 +6,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-10-16
+
+### Added
+- Added 15 selectable card backs, spanning red, blue, green, gold, purple, dragon, ocean, celestial, and necromancer themes.
+- Added 10 selectable play-area backgrounds, including a dragon's lair, armored knight, nature vista, spellcasting mage, mage duel, necromancer's dominion, floating islands, forest, mountains, and arcane library.
+- Appearance choices persist in the browser and are shared with other players so their table views show the selected card backs and backgrounds.
+
 ## [0.7.5] - 2026-10-15
 
 ### Fixed
@@ -123,7 +130,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - First playable build: paste-import decks from Moxfield or Archidekt (via Scryfall), 2–4 player rooms over PeerJS with self-healing reconnects, a searchable zone viewer, commander damage tracking and automatic tokens.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.7.5...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/ccall1212/commander-table/compare/v0.7.5...v0.8.0
 [0.7.5]: https://github.com/ccall1212/commander-table/compare/v0.7.4...v0.7.5
 [0.7.4]: https://github.com/ccall1212/commander-table/compare/v0.7.3...v0.7.4
 [0.7.3]: https://github.com/ccall1212/commander-table/compare/v0.7.2...v0.7.3

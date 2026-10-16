@@ -657,3 +657,7 @@ a.w-ci-price:focus-visible { outline: 2px solid var(--accent, #7c9cff); outline-
   user-select: none; -webkit-user-drag: none;
 }
 .lens-tile .rot, .lens-tile img.rot { transform: rotate(180deg); }
+
+/* Card-back sprite assets provide the complete design, without the generic emblem. */
+.w-cardback[style] { background-repeat: no-repeat; }
+.w-cardback[style]::before, .w-cardback[style]::after { display: none; }

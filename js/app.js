@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.7.5';
+const APP_VERSION = '0.8.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -135,7 +135,7 @@ function colorOf(pid) {
 // =====================================================================
 function newPlayer(deck, name, prev) {
   const m = {
-    pid: S.pid, name, life: 40, poison: 0, ctr: {}, cmdDmg: {}, casts: {}, mull: 0, kept: false,
+    pid: S.pid, name, appearance: CTAppearance.getPrefs(), life: 40, poison: 0, ctr: {}, cmdDmg: {}, casts: {}, mull: 0, kept: false,
     revealHand: false, revealTop: false, revealTopOnce: null, seq: 0, lastTurn: 0, lastTurnSeq: 0,
     autoUntap: false, autoDraw: false, // always start a game with these off
     layout: prev && prev.layout ? cloneLayout(prev.layout) : defaultLayout(),
@@ -158,6 +158,7 @@ function newPlayer(deck, name, prev) {
 }
 // Bring older saved games up to the current shape (layout + card positions).
 function normalizeMe(m) {
+  m.appearance = CTAppearance.normalizePrefs(m.appearance);
   if (!layoutOk(m.layout)) {
     // zones changed in this version: switch to the new layout and re-sort cards into it
     m.layout = defaultLayout();
@@ -267,7 +268,7 @@ function publicView() {
     return p;
   });
   return {
-    pid: m.pid, bw: BW, name: m.name, life: m.life, poison: m.poison, ctr: m.ctr, cmdDmg: m.cmdDmg, cmdrs: m.cmdrs,
+    pid: m.pid, bw: BW, name: m.name, appearance: CTAppearance.normalizePrefs(m.appearance), life: m.life, poison: m.poison, ctr: m.ctr, cmdDmg: m.cmdDmg, cmdrs: m.cmdrs,
     casts: m.casts, hand: z.hand.length, lib: z.library.length, kept: m.kept, layout: m.layout, bh: myBH(),
     zones: { battlefield: take(z.battlefield), graveyard: take(z.graveyard), exile: take(z.exile), command: take(z.command) },
     revHand: m.revealHand ? take(z.hand) : null,
@@ -475,7 +476,7 @@ function cleanPub(p, from) {
     if (Array.isArray(p.layout)) p.layout = p.layout.map(r => (isObj(r) ? Object.assign({}, r, { x: num(r.x) * k, w: num(r.w) * k }) : r));
   }
   return {
-    pid: from, name: String(p.name || 'Player').slice(0, 24), life: num(p.life, 40), poison: num(p.poison),
+    pid: from, name: String(p.name || 'Player').slice(0, 24), appearance: CTAppearance.normalizePrefs(p.appearance), life: num(p.life, 40), poison: num(p.poison),
     ctr: numMap(p.ctr), cmdDmg: numMap(p.cmdDmg), casts: numMap(p.casts),
     cmdrs: Array.isArray(p.cmdrs) ? p.cmdrs.slice(0, 3).filter(isObj).map(c => ({ iid: String(c.iid).slice(0, 40), name: String(c.name || '').slice(0, 80) })) : [],
     hand: num(p.hand), lib: num(p.lib), kept: !!p.kept,
@@ -1469,6 +1470,14 @@ function renderNow() {
   S.viewers.forEach(v => { try { v.refresh(); } catch (e) { console.error(e); } });
 }
 
+function appearanceBackFor(pid) {
+  const owner = pid === S.pid ? S.me : (S.players[pid] || null);
+  return CTAppearance.normalizePrefs(owner && owner.appearance).cardBack;
+}
+function appearanceBoardStyleFor(pid) {
+  const owner = pid === S.pid ? S.me : (S.players[pid] || null);
+  return CTAppearance.boardBackgroundStyle(CTAppearance.normalizePrefs(owner && owner.appearance).background);
+}
 function cardHTML(c, def, o) {
   // o: {mine, pid (board owner), ctrl (who controls it), zone, style}
   const ctrl = o.ctrl || o.pid;
@@ -1476,7 +1485,7 @@ function cardHTML(c, def, o) {
   if (c.t) cls.push('tapped'); if (o.mine) cls.push('mine'); if (c.att) cls.push('att');
   let inner;
   if (c.fd) {
-    inner = UI.cardBackHTML() + (o.mine && def ? `<span class="fdname">${esc(dname(def))}</span>` : '');
+    inner = UI.cardBackHTML('', appearanceBackFor(o.pid)) + (o.mine && def ? `<span class="fdname">${esc(dname(def))}</span>` : '');
   } else {
     const back = c.fl && def && def.imgBack;
     const u = def ? (back ? def.imgBack : def.img) : '';
@@ -1637,7 +1646,7 @@ function pileInfo(pid) {
       if (parts.length) tip += '\n' + parts.join(' · ');
     }
     d.tip = tip;
-    d.face = d.top ? cardFace(d.top, defs) : (k === 'library' && d.n ? UI.cardBackHTML() : '');
+    d.face = d.top ? cardFace(d.top, defs, pid) : (k === 'library' && d.n ? UI.cardBackHTML('', appearanceBackFor(pid)) : '');
   }
   return out;
 }
@@ -1693,15 +1702,15 @@ function cmdTagsHTML(victim) {
 function pileHTML(zone, cards, defs, o, extraTop) {
   const n = cards.length;
   let top = '';
-  if (zone === 'library') top = extraTop ? cardFace(extraTop, defs) : (n ? UI.cardBackHTML() : '');
-  else if (n) top = cardFace(cards[n - 1], defs);
+  if (zone === 'library') top = extraTop ? cardFace(extraTop, defs, o.pid) : (n ? UI.cardBackHTML('', appearanceBackFor(o.pid)) : '');
+  else if (n) top = cardFace(cards[n - 1], defs, o.pid);
   const lbl = { library: 'Library', graveyard: 'Graveyard', exile: 'Exile' }[zone];
   return `<div class="pile" data-pile="${zone}" data-pid="${esc(o.pid)}"${o.mine ? ` data-drop="${zone}"` : ''} title="${lbl}">
     <div class="pcard">${top}</div><div class="plabel">${lbl} <b>${n}</b></div></div>`;
 }
-function cardFace(c, defs) {
+function cardFace(c, defs, pid = S.pid) {
   const d = c.id && defs[c.id];
-  if (c.fd || !d) return UI.cardBackHTML();
+  if (c.fd || !d) return UI.cardBackHTML('', appearanceBackFor(pid));
   return IMG_OK(d.img) ? `<img src="${esc(d.img)}" alt="" loading="lazy" draggable="false" data-pvid="${esc(d.id)}">` : `<div class="ph">${esc(dname(d))}</div>`;
 }
 
@@ -1816,7 +1825,7 @@ function focusedOppZonesHTML(pid) {
   const fan = i => { const off = i - mid; return `--rot:${(off * step).toFixed(1)}deg;--arc:${(mid ? 3 * (off / mid) ** 2 : 0).toFixed(1)}px;z-index:${i + 1}`; };
   const hands = revealed
     ? p.revHand.map((card, i) => cardHTML(card, card.id && defs[card.id], { mine: false, pid, ctrl: pid, zone: 'hand', style: fan(i) })).join('')
-    : Array.from({ length: shown }, (_, i) => `<div class="card oback" style="${fan(i)}">${UI.cardBackHTML()}</div>`).join('');
+    : Array.from({ length: shown }, (_, i) => `<div class="card oback" style="${fan(i)}">${UI.cardBackHTML('', appearanceBackFor(pid))}</div>`).join('');
   const pile = (key, label) => `<div class="focus-pile" data-pile="${key}" data-pid="${esc(pid)}" title="${esc(pi[key].tip)}"><div class="focus-zone-label">${label} <b>${pi[key].n}</b></div><div class="focus-pile-card">${pi[key].face}</div></div>`;
   const commanders = (p.zones.command || []).map(card => cardHTML(card, card.id && defs[card.id], { mine: false, pid, ctrl: pid, zone: 'command' })).join('');
   return `<div class="focus-zonebar" aria-label="${esc(p.name)}'s hand and zones">
@@ -1846,7 +1855,7 @@ function renderOpp(el, pid, idx) {
   const fan = i => { const off = i - mid; return `--rot:${(off * step).toFixed(1)}deg;--arc:${(mid ? 3 * (off / mid) ** 2 : 0).toFixed(1)}px;z-index:${i + 1}`; };
   const handCards = revealed
     ? p.revHand.map((c, i) => cardHTML(c, c.id && defs[c.id], Object.assign({}, o, { zone: 'hand', style: fan(i) }))).join('')
-    : Array.from({ length: shown }, (_, i) => `<div class="card oback" style="${fan(i)}">${UI.cardBackHTML()}</div>`).join('');
+    : Array.from({ length: shown }, (_, i) => `<div class="card oback" style="${fan(i)}">${UI.cardBackHTML('', appearanceBackFor(pid))}</div>`).join('');
   const handHTML = `<span class="ohhand${revealed ? ' revealed' : ''}${handN ? '' : ' empty'}" title="${esc(p.name)} has ${plural(handN, 'card')} in hand${revealed ? ' (revealed — hover to read)' : ''}">${handCards}<b class="ohn">${handN}</b></span>`;
   el.querySelector('.ohead').innerHTML = `<span class="dot" style="--pc:${colorOf(pid)}"></span>
     <span class="pname" data-phead="${esc(pid)}" title="Right-click for options">${esc(p.name)}</span>
@@ -1859,7 +1868,7 @@ function renderOpp(el, pid, idx) {
     ${cmdCards ? `<span class="ocmd" title="Command zone">${cmdCards}</span>` : ''}
     ${!p.kept ? '<span class="muted small">mulliganing…</span>' : ''}`;
   const focusedZones = (curView() === 'side' || curView() === 'focus') && S.focus === pid ? focusedOppZonesHTML(pid) : '';
-  el.querySelector('.obf').innerHTML = `<div class="boardwrap" data-board="${esc(pid)}">${boardHTML(pid, idx)}</div>${focusedZones}`;
+  el.querySelector('.obf').innerHTML = `<div class="boardwrap" data-board="${esc(pid)}" style="${esc(appearanceBoardStyleFor(pid))}">${boardHTML(pid, idx)}</div>${focusedZones}`;
 }
 
 function renderMine(idx) {
@@ -1874,7 +1883,7 @@ function renderMine(idx) {
     ${S.arrange ? `<span class="mb-actions"><button data-a="tidy" title="Put every card back into its zone">Tidy cards</button><button data-a="resetzones">Reset zones</button>
       <button data-a="arrange" class="primary" title="Finish moving and resizing your zones">✓ Done arranging</button></span>` : ''}`;
   // --- battlefield, hand, bottom-right zones
-  $('#myBf').innerHTML = `<div class="boardwrap" data-board="${esc(S.pid)}">${boardHTML(S.pid, idx)}</div>`;
+  $('#myBf').innerHTML = `<div class="boardwrap" data-board="${esc(S.pid)}" style="${esc(appearanceBoardStyleFor(S.pid))}">${boardHTML(S.pid, idx)}</div>`;
   // fan the hand: each card tilts a little away from the middle and dips on a gentle arc (CSS uses --rot / --arc)
   const nh = z.hand.length, mid = (nh - 1) / 2, step = nh > 1 ? Math.min(3, 28 / nh) : 0;
   $('#myHand').innerHTML = z.hand.map((c, i) => {
@@ -2542,6 +2551,7 @@ function showLobby() {
   $('#game').classList.add('hidden'); $('#lobby').classList.remove('hidden');
   document.title = 'Commander Table';
   $('#nameIn').value = LS.get('ct.name', '') || '';
+  renderAppearancePickers();
   selDeck = LS.get('ct.selDeck', null);
   renderDeckList();
   $('#netWarn').classList.toggle('hidden', typeof Peer !== 'undefined');
@@ -2585,6 +2595,8 @@ function renderDeckList() {
 }
 function bindLobby() {
   $('#ver').textContent = APP_VERSION;
+  $('#cardBackPicker').addEventListener('click', e => chooseAppearance(e, 'cardBack'));
+  $('#backgroundPicker').addEventListener('click', e => chooseAppearance(e, 'background'));
   $('#deckList').addEventListener('click', async e => {
     const del = e.target.closest('[data-del]');
     if (del) {
@@ -2605,6 +2617,21 @@ function bindLobby() {
   $('#joinBtn').onclick = () => begin('client');
   $('#joinIn').addEventListener('input', e => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); });
   $('#joinIn').addEventListener('keydown', e => { if (e.key === 'Enter') begin('client'); });
+}
+function renderAppearancePickers() {
+  const prefs = CTAppearance.getPrefs();
+  $('#cardBackPicker').innerHTML = CTAppearance.renderCardBacks(prefs.cardBack);
+  $('#backgroundPicker').innerHTML = CTAppearance.renderBackgrounds(prefs.background);
+}
+function chooseAppearance(e, kind) {
+  const choice = e.target.closest('[data-appearance-id]');
+  if (!choice) return;
+  const prefs = CTAppearance.getPrefs(), id = choice.dataset.appearanceId;
+  if (kind === 'cardBack' && !CTAppearance.backOptions.some(x => x.id === id)) return;
+  if (kind === 'background' && !CTAppearance.backgroundOptions.some(x => x.id === id)) return;
+  prefs[kind] = id;
+  CTAppearance.savePrefs(prefs);
+  renderAppearancePickers();
 }
 function closeImport() {
   $('#importBox').classList.add('hidden'); $('#importBtn').classList.remove('hidden');
