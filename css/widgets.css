@@ -657,3 +657,8 @@ a.w-ci-price:focus-visible { outline: 2px solid var(--accent, #7c9cff); outline-
   user-select: none; -webkit-user-drag: none;
 }
 .lens-tile .rot, .lens-tile img.rot { transform: rotate(180deg); }
+
+/* Selected card-back art overlays the built-in design; keep the base and emblem visible as fallback. */
+.w-cardback-art { position: absolute; inset: 0; z-index: 0; display: block; border-radius: inherit;
+  background-color: transparent; background-repeat: no-repeat; background-position: center; background-size: 100% 100%; }
+.w-cardback::before, .w-cardback::after { z-index: 1; }
