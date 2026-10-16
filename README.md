@@ -23,7 +23,7 @@ Want to play without the website? There's also a downloadable copy of the game f
 
 ## Your look: card backs and play-area backgrounds
 
-Before starting a game, use **Your look** on the opening screen to choose from 15 card backs and 10 illustrated play-area backgrounds. Options include blue, red, green, gold, purple, dragon, ocean, celestial, and **Bone Necromancer** card backs. Backgrounds include a dragon's lair, knight in armor, nature, a mage casting magic, two mages fighting, a necromancer and skeletons, floating islands, an enchanted forest, mountains, and an arcane library. Your choices are saved in your browser and shared with the table, so other players see your selected card backs and play-area background. You can change them before your next game.
+Before starting a game, use **Your look** on the opening screen to choose from 12 painted card backs (dragon, flame, arcane, ocean, frost, tree of life, necromancer, skull, shadow, sun, stained glass and more) and 10 illustrated play-area backgrounds (dragon's lair, knight's vigil, nature, arcane study, mage duel, necromancer's dominion, celestial realm, haunted ruins, tranquil shores, eldritch horizon). Your choices are saved in your browser and shared with the table, so other players see your card back on your cards and your background on your board. You can change them before your next game.
 
 ## Importing your deck
 

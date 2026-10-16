@@ -9,6 +9,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - `AGENTS.md`: how changes are made, tested, versioned and released (for AI assistants and humans).
 
+## [0.9.0] - 2026-10-16
+
+### Added
+- Card backs and play-area backgrounds, take two: 12 painted card backs and 10 painted 16:9 backgrounds, picked under **Your look** on the opening screen. Your choice is saved in your browser and shared with the table.
+- If a picture fails to load, the built-in card back and a plain dark board still show.
+
+### Notes
+- The artwork was generated with ChatGPT; the images were cropped and resized for the game (WebP). This replaces the code-drawn artwork that was rolled back in 0.8.1.
+
 ## [0.8.1] - 2026-10-16
 
 ### Removed
@@ -140,7 +149,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - First playable build: paste-import decks from Moxfield or Archidekt (via Scryfall), 2–4 player rooms over PeerJS with self-healing reconnects, a searchable zone viewer, commander damage tracking and automatic tokens.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.8.1...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/ccall1212/commander-table/compare/v0.8.1...v0.9.0
 [0.8.1]: https://github.com/ccall1212/commander-table/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/ccall1212/commander-table/compare/v0.7.5...v0.8.0
 [0.7.5]: https://github.com/ccall1212/commander-table/compare/v0.7.4...v0.7.5
