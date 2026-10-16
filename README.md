@@ -51,7 +51,6 @@ Open ☰ → **Display settings…** to adjust how things look on your screen:
 
 - **Magnifier size:** how big the magnifier circle is (see **Magnifier** under **Cards on the table** below).
 - **Hand size:** a slider for how big your hand cards are, with a **Reset** button.
-- **Focus auto-follow:** a checkbox that controls whether the Focus view follows the turn (see **Table layout** below).
 - On very wide monitors (2500px and up), opponent names get a bit larger.
 
 ## Playing on a LAN (optional)
@@ -129,14 +128,13 @@ Dropped connections and crashed tabs happen, and recovering from them is the mai
 - Battlefield cards are about 40% bigger (about 12 across instead of 17), so busy boards start overlapping cards sooner.
 - Drag the bar between the opponents' area and yours to give your board more or less room. In the Top and Grid layouts, right-click a player's name → **Show this board large** (or double-click their board) to show it large.
 - **Table layout** — switch with the buttons in the top bar (remembered):
-  - ▤ **Top**: opponents across the top.
+  - ▤ **Top**: opponents as small copies of their boards in a row across the top, your board big underneath. Hover a tile to grey it out with an eye, and click it to view that board big (your own YOU tile then appears in the row to click back). Cards are auto-fitted so they're as large as they fit; your saved positions don't change.
   - ▥ **Sidebar**: your board big on the left. The right-hand column shows every other player as a small copy of their board, with their life top-left and their hand and piles along the bottom; your own slim YOU tile comes first. Hover a tile to grey it out and show an eye, and click it to view that player's board big (their hand is then face-down in the bottom strip, and yours is hidden). Click your YOU tile to go back. New players start in this layout until they pick another.
-  - ▦ **Grid**: every player gets an equal quadrant, with you bottom-left. Opponents' boards are biggest here.
-  - ◎ **Focus**: the active player's battlefield gets the big spot, and it follows the turn automatically. Turn that off in Display settings, or use the eye on a player's tile in the right-hand column to pick a board yourself.
+  - ▦ **Grid**: every player gets an equal quadrant, with you bottom-left, and cards auto-fitted to be as big as they fit. Click an opponent to view them full size and use **← My board** to come back.
 - The **📜 Log** button in the top bar slides the game log (and the shortcut help) out from the right edge. Click it again to close.
 - Cards overlap more as your hand grows, and the card under your mouse lifts up so you can read it.
 - Every opponent's hand shows in their header, right next to their commander: a small fan of card backs with the number of cards. If they turn on **Reveal my hand to everyone**, the fan shows their real cards face-up (marked REVEALED) — hover one to read it in the card preview.
-- When you view another player's board (Sidebar, Focus or Grid), their hand (face-down card backs, or the real cards if they revealed it), Library, Graveyard, Exile and Command appear in the same bottom strip as yours, and your own are hidden. Click a pile to look through it. Click **YOU** to come back to your own board.
+- When you view another player's board (Sidebar, Top or Grid), their hand (face-down card backs, or the real cards if they revealed it), Library, Graveyard, Exile and Command appear in the same bottom strip as yours, and your own are hidden. Click a pile to look through it. Click **YOU** to come back to your own board.
 
 **Auras & Equipment**
 

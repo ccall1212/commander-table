@@ -134,10 +134,10 @@ body.side-open #side { display: grid; }
 #table.noopps #split { visibility: hidden; pointer-events: none; }
 #table.noopps #opps:empty::after { font-size: 13px; }
 #myBf { position: absolute; inset: 0; overflow: hidden; padding: 6px 8px; min-height: 0; }
-/* Sidebar / Focus: the board is limited by width, so keeping the strip's space free costs no card size. */
-#table.view-side #myBf { padding-bottom: calc(var(--stripH, 110px) + 4px); }
+/* The hand/piles strip always has its own space under the board (the auto-fit keeps cards big in Top / Grid). */
+#myBf { padding-bottom: calc(var(--stripH, 110px) + 4px); }
 /* The big board of the player being viewed keeps the same bottom strip free: nothing sits under their hand and piles. */
-#table.view-side.has-focus .opp.focus .obf { padding-bottom: calc(var(--stripH, 110px) + 4px); }
+#table.has-focus .opp.focus .obf { padding-bottom: calc(var(--stripH, 110px) + 4px); }
 .opp.focus .ozones, .opp.focus .ohhand, .opp.focus .ocmd { display: none; }
 #myRow.viewing-opp #myHand { --cw: 82px; }
 /* Hand + piles overlay the bottom of the battlefield; empty areas let clicks through to the board. */
@@ -431,7 +431,7 @@ body.lens-on #pv { display: none; }
 /* ---- A. Sidebar view: my board big on the left, opponents stacked in a right column ---- */
 /* JS sets --rows = number of tiles in the right-hand column (the YOU tile counts; the focused opponent doesn't). */
 #table.view-side { grid-template-columns: minmax(0, 1fr) clamp(320px, 23vw, 460px); grid-template-rows: repeat(var(--rows, 1), minmax(0, 1fr)); padding-bottom: 4px; }
-#table.view-side.view-focus { grid-template-columns: minmax(0, 1fr) clamp(320px, 23vw, 460px); }
+
 #table.view-side #split { display: none; }
 #table.view-side #opps { display: contents; }
 #table.view-side #mine { grid-column: 1; grid-row: 1 / -1; }
@@ -455,7 +455,7 @@ body.lens-on #pv { display: none; }
 .boardwrap.thumb { pointer-events: none; }
 /* Click-to-view hint on any tile that isn't the one currently shown big */
 #table.view-side .opp:not(.focus):not(.viewing) .obody { position: relative; cursor: pointer; }
-#table.view-side .opp:not(.focus):not(.viewing) .obody::after { content: '\1F441'; position: absolute; inset: 0; z-index: 3;
+#table.view-side .opp:not(.focus):not(.viewing) .obody::after { content: '\1F441\FE0F'; position: absolute; inset: 0; z-index: 3;
   display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.45); color: #fff; font-size: 14px;
   border-radius: 0 0 calc(var(--radius) - 1px) calc(var(--radius) - 1px); pointer-events: none; opacity: 0; transition: opacity .15s ease; }
 #table.view-side .opp:not(.focus):not(.viewing):hover .obody::after { opacity: 1; }
@@ -653,3 +653,21 @@ body.lens-on #pv { display: none; }
 #oppPanel .ctrpanel { position: static; margin: 0; }
 #myBar:has(.ctrpanel) { z-index: 90; }
 #myBar .ctrpanel { max-height: min(70vh, 480px); overflow-y: auto; }
+
+/* ---- Hover eye + click-to-view on every miniature, in every layout ---- */
+#table .opp.tile:not(.focus):not(.viewing) .obody { position: relative; cursor: pointer; }
+#table .opp.tile:not(.focus):not(.viewing) .obody::after { content: '\1F441\FE0F'; position: absolute; inset: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: center; background: rgba(60,64,72,.68); color: #fff; font-size: 40px;
+  pointer-events: none; opacity: 0; transition: opacity .15s ease; }
+#table .opp.tile:not(.focus):not(.viewing):hover .obody::after { opacity: 1; }
+.opp.youtile.tile .obody { cursor: pointer; }
+
+/* ---- Top layout while viewing someone: tiles in a row on top (incl. YOU), their board big underneath ---- */
+#table.view-top.has-focus { grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr)); }
+#table.view-top.has-focus #opps { display: contents; }
+#table.view-top.has-focus .opp { grid-row: 1; margin: 6px 3px 6px 3px; }
+#table.view-top.has-focus .opp.focus { grid-row: 3; grid-column: 1 / -1; margin: 0; }
+#table.view-top.has-focus #split { grid-row: 2; grid-column: 1 / -1; }
+#table.view-top.has-focus #mine { grid-row: 3; grid-column: 1 / -1; z-index: 5; background: transparent; border-top: none; box-shadow: none; pointer-events: none; }
+#table.view-top.has-focus #myBf, #table.view-top.has-focus #myBar { visibility: hidden; }
+.opp.focus .ohead button[data-a="viewme"] { padding: 1px 8px; }

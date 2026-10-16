@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.11.0';
+const APP_VERSION = '0.12.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -89,7 +89,7 @@ function fittedLayout() {
   let W = wrap && wrap.clientWidth, H = wrap && wrap.clientHeight;
   if (!W || !H) { // not laid out yet (e.g. resuming): estimate from the window and the chosen layout
     const v = LS.get('ct.view', 'side');
-    W = innerWidth * (v === 'side' || v === 'focus' ? 0.8 : 1);
+    W = innerWidth * (v === 'side' ? 0.8 : 1);
     H = v === 'top' ? innerHeight * 0.55 : innerHeight - 50;
   }
   const fit = clamp(Math.round(Math.min(BW * H / W, 800)), BH, BH_MAX), f = fit / BH;
@@ -115,10 +115,9 @@ const S = {
   dragEndAt: 0,
   arrange: false,   // editing my zone layout
   focus: null,      // opponent pid shown large
-  autoFocus: LS.get('ct.autoFocus', true) !== false, // follow the active player in Focus view
   attachFrom: null, // iid waiting for an attach target
   attachToast: null,
-  tileTbh: {},      // pid -> logical board height that fills their miniature tile
+  fit: {},          // 'mode:pid' -> {dw, dh} display size the auto-fit chose for that board
   regionDrag: null,
   viewers: new Set()
 };
@@ -1458,7 +1457,6 @@ function displaySettings() {
         <input class="display-scale" id="ctHandSize" type="range" min="60" max="160" step="2" value="${S.handCw || 82}" aria-label="Hand card size">
         <div class="display-scale-ends"><span>Small</span><button type="button" id="ctHandReset">Reset</button><span>Large</span></div>
       </div>
-      <label class="display-check"><input id="ctAutoFocus" type="checkbox" ${S.autoFocus ? 'checked' : ''}><span>Auto-focus the active player in Focus view</span></label>
       <p class="display-note">Saved in this browser only; doesn't change what other players see.</p>
     </div>` });
   const hs = m.el.querySelector('#ctHandSize'), hv = m.el.querySelector('#ctHandValue');
@@ -1467,16 +1465,12 @@ function displaySettings() {
   m.el.querySelector('#ctHandReset').addEventListener('click', () => setHand(82));
   const lens = m.el.querySelector('#ctLensSize'), lv = m.el.querySelector('#ctLensValue');
   lens.addEventListener('input', () => { const r = window.Lens ? Lens.setRadius(+lens.value) : +lens.value; lv.textContent = r + 'px'; });
-  m.el.querySelector('#ctAutoFocus').addEventListener('change', e => {
-    S.autoFocus = e.target.checked;
-    LS.set('ct.autoFocus', S.autoFocus);
-    render();
-  });
 }
 // Current view mode; with no opponents there's only one sensible layout.
 function curView() {
   if (!S.view) S.view = LS.get('ct.view', 'side');
-  return oppPids().length ? (['top', 'side', 'grid', 'focus'].includes(S.view) ? S.view : 'side') : 'top';
+  if (!['top', 'side', 'grid'].includes(S.view)) S.view = 'side'; // the old Focus view is gone
+  return oppPids().length ? (['top', 'side', 'grid'].includes(S.view) ? S.view : 'side') : 'top';
 }
 
 // =====================================================================
@@ -1618,20 +1612,30 @@ function buildIndex() {
   }
   return { entries, atts };
 }
-function boardHTML(pid, idx, tile) {
+// Auto-fit ("squish"): a board is drawn in a display space DW x DH instead of its stored 1000 x bh, with cards keeping their
+// size. Zones and card positions are mapped linearly, so the stored layout never changes (and drops map back, see storedPos).
+// Used for opponent miniatures and for the big board in Top / Grid, where it lets cards be as large as the cards fit.
+function fitKey(pid, mode) { return mode + ':' + pid; }
+function fitSizeFor(pid, mode, bh0) {
+  const f = mode && S.fit[fitKey(pid, mode)];
+  return f ? { dw: f.dw, dh: Math.max(f.dh, 120) } : { dw: BW, dh: bh0 };
+}
+function boardHTML(pid, idx, mode) {
   const mine = pid === S.pid;
   const p = mine ? null : S.players[pid];
   const layout = mine ? S.me.layout : (p.layout || DEFAULT_LAYOUT);
   const editing = mine && S.arrange;
-  // Miniature tile: squish the board vertically to the tile's shape (cards keep their size, rows overlap a little).
+  if (editing) mode = null; // arranging zones by hand always shows the real layout
+  const tile = mode === 'tile';
   const bh0 = mine ? myBH() : ((p && p.bh) || BH);
-  const th = tile ? clamp(Math.min(bh0, num(S.tileTbh[pid], 460)), 200, bh0) : bh0;
-  const fr = th / bh0, fc = bh0 > CH ? Math.max(0.05, (th - CH) / (bh0 - CH)) : 1;
-  const RY = v => tile ? Math.round(v * fr) : v, CY = v => tile ? Math.round(v * fc) : v;
-  let html = layout.map(r => `<div class="region" data-region="${esc(r.k)}" style="left:${num(r.x)}px;top:${RY(num(r.y))}px;width:${num(r.w)}px;height:${RY(num(r.h))}px">
+  const { dw, dh } = fitSizeFor(pid, mode, bh0);
+  const fitted = !!mode && (dw !== BW || dh !== bh0);
+  const rx = fitted ? dw / BW : 1, ry = fitted ? dh / bh0 : 1;
+  const cx = fitted ? (dw - CW) / (BW - CW) : 1, cy = fitted && bh0 > CH ? Math.max(0.05, (dh - CH) / (bh0 - CH)) : 1;
+  let html = layout.map(r => `<div class="region" data-region="${esc(r.k)}" style="left:${Math.round(num(r.x) * rx)}px;top:${Math.round(num(r.y) * ry)}px;width:${Math.round(num(r.w) * rx)}px;height:${Math.round(num(r.h) * ry)}px">
     <span class="rlabel">${esc(r.label)}</span>${editing ? ['nw', 'ne', 'sw', 'se'].map(c => `<span class="grip ${c}" data-c="${c}" title="Drag to resize"></span>`).join('') : ''}</div>`).join('');
   let z = 10;
-  const place = (e, zone, x, y, zi) => cardHTML(e.c, e.def, { mine: e.ctrl === S.pid, pid, ctrl: e.ctrl, zone, style: `left:${x}px;top:${CY(y)}px;z-index:${zi}` });
+  const place = (e, zone, x, y, zi) => cardHTML(e.c, e.def, { mine: e.ctrl === S.pid, pid, ctrl: e.ctrl, zone, style: `left:${Math.round(x * cx)}px;top:${Math.round(y * cy)}px;z-index:${zi}` });
   for (const e of idx.entries) {
     if (e.ctrl !== pid || (e.c.att && !e.orphan)) continue;
     const x = num(e.c.x, 10), y = num(e.c.y, 20);
@@ -1641,9 +1645,15 @@ function boardHTML(pid, idx, tile) {
     html += place(e, 'battlefield', x, y, z + list.length + 1);
     z += list.length + 2;
   }
-  const bh = th;
-  if (tile) html += tileOverlayHTML(pid, bh);
-  return `<div class="board${editing ? ' arrange' : ''}" data-pid="${esc(pid)}"${tile ? ` data-th="${bh}"` : ''} style="height:${bh + (tile ? TILE_STRIP : 0)}px">${html}</div>`;
+  if (tile) html += tileOverlayHTML(pid, dh, dw);
+  const bw = mode ? dw : BW;
+  return `<div class="board${editing ? ' arrange' : ''}" data-pid="${esc(pid)}"${mode ? ` data-fit="${mode}" data-dw="${dw}" data-dh="${dh}" data-bh0="${bh0}"` : ''} style="width:${bw}px;height:${(mode ? dh : bh0) + (tile ? TILE_STRIP : 0)}px">${html}</div>`;
+}
+// A point on a fitted board's display space -> where that card's top-left corner belongs in the stored 1000 x bh space.
+function storedPos(board, x, y) {
+  if (!board || !board.dataset.fit) return { x, y };
+  const dw = +board.dataset.dw, dh = +board.dataset.dh, bh0 = +board.dataset.bh0;
+  return { x: dw > CW ? x * (BW - CW) / (dw - CW) : x, y: dh > CH ? y * (bh0 - CH) / (dh - CH) : y };
 }
 // Untouched default zones follow the board's shape in the current view: zones and the cards in them
 // spread vertically (cards keep their size), so switching Top / Sidebar / Grid never shrinks the cards.
@@ -1657,33 +1667,51 @@ function stretchAutoLayout(W, H) {
   m.bh = 0;
   saveSoon(); publish(); setTimeout(render, 0);
 }
+// Auto-fit sizing: the largest cards that still fit this many cards in the area (never smaller than the natural scale).
+function computeFit(W, H, N, bh0, mode, extra) {
+  const sNat = Math.min(W / BW, H / (bh0 + extra));
+  const capPx = mode === 'tile' ? 56 : 150;
+  const sOcc = Math.sqrt(0.5 * W * H / (Math.max(N, 6) * CW * CH * 0.6)); // allow ~40% overlap when crowded
+  let s = Math.max(sNat, Math.min(sOcc, capPx / CW));
+  const dhMin = CH * 2.4; // at least ~2 rows of cards
+  let dh = Math.max(H / s - extra, dhMin);
+  s = Math.min(s, H / (dh + extra));
+  dh = Math.max(H / s - extra, dhMin);
+  return { dw: Math.round(clamp(W / s, CW * 3, 3000)), dh: Math.round(dh) };
+}
 function fitBoards() {
   document.querySelectorAll('.boardwrap').forEach(w => {
     const b = w.firstElementChild; if (!b) return;
     const W = w.clientWidth, H = w.clientHeight; if (!W || !H) return;
     const thumb = w.classList.contains('thumb'), pid = thumb ? w.dataset.board.slice(6) : w.dataset.board;
-    if (pid === S.pid && !thumb && S.me && S.me.layoutAuto && !S.arrange && !S.dragging) stretchAutoLayout(W, H);
-    const bh = pid === S.pid && S.me ? (thumb ? myBH() : myBoardHeight(W, H)) : ((S.players[pid] && S.players[pid].bh) || BH);
-    const isTile = w.classList.contains('tile');
-    if (isTile) { // keep the squish matched to this tile's shape; redraw if it changed
-      const want = clamp(Math.round(BW * H / W) - TILE_STRIP, 200, BH_MAX);
-      if (Math.abs(want - num(S.tileTbh[pid], 460)) > 14) { S.tileTbh[pid] = want; setTimeout(render, 0); }
+    const mode = b.dataset.fit || null;
+    if (!mode && pid === S.pid && !thumb && S.me && S.me.layoutAuto && !S.arrange && !S.dragging) stretchAutoLayout(W, H);
+    const bh = pid === S.pid && S.me ? (thumb || mode ? myBH() : myBoardHeight(W, H)) : ((S.players[pid] && S.players[pid].bh) || BH);
+    let dw = BW, dh = bh;
+    const extra = mode === 'tile' ? TILE_STRIP : 0;
+    if (mode) { // size the board to this area; redraw if the chosen size changed
+      const bf = pid === S.pid ? S.me.zones.battlefield : ((S.players[pid] && S.players[pid].zones.battlefield) || []);
+      const want = computeFit(W, H, bf.length, bh, mode, extra), key = fitKey(pid, mode), cur = S.fit[key];
+      if (!cur || Math.abs(cur.dw - want.dw) > 8 || Math.abs(cur.dh - want.dh) > 8) { S.fit[key] = want; setTimeout(render, 0); }
+      dw = num(b.dataset.dw, BW); dh = num(b.dataset.dh, bh);
     }
-    const tot = isTile ? num(b.dataset.th, bh) + TILE_STRIP : bh;
-    b.style.height = tot + 'px';
+    const tot = dh + extra;
+    b.style.width = dw + 'px'; b.style.height = tot + 'px';
     // Boards always fit their area (never scroll); hold V to magnify cards instead.
-    const s = Math.min(W / BW, H / tot);
-    const ox = Math.max(0, (W - BW * s) / 2);
+    const s = Math.min(W / dw, H / tot);
+    const ox = Math.max(0, (W - dw * s) / 2);
     b.style.transform = `translate(${ox}px,0) scale(${s})`;
     b.dataset.s = s; b.dataset.ox = ox; b.dataset.oy = 0;
     b.style.setProperty('--inv', (1 / s).toFixed(3)); // lets labels stay a readable size at any zoom
     b.style.setProperty('--s', s.toFixed(4));
+    b.style.setProperty('--bw', dw + 'px');
   });
   fitOppArea();
 }
 // Opponents' boards keep their shape, so a tall opponents' area just leaves blank space under
 // them. Shrink that area to what the boards actually need (never more than the user's splitter).
 function fitOppArea() {
+  return; // opponent tiles fit any height now
   const table = $('#table');
   if (!table || table.classList.contains('noopps') || !table.classList.contains('view-top') || !S.split) return;
   const th = table.clientHeight; if (!th) return;
@@ -1882,22 +1910,16 @@ function renderOpps(idx) {
   const box = $('#opps');
   const pids = oppPids();
   const view = curView();
-  if (view === 'focus' && S.autoFocus) {
-    const active = S.table && S.table.started ? S.table.active : null;
-    S.focus = active && active !== S.pid && pids.includes(active) ? active : null;
-  }
   if (S.focus && !pids.includes(S.focus)) S.focus = null;
   box.className = 'n' + pids.length;
   const tbl = $('#table');
   tbl.classList.toggle('noopps', !pids.length);
   // Focus reuses sidebar geometry but follows the active player into the large slot.
-  ['top', 'side', 'grid', 'focus'].forEach(v => tbl.classList.toggle('view-' + v, v === view));
-  tbl.classList.toggle('view-side', view === 'side' || view === 'focus');
-  document.body.classList.toggle('view-side', view === 'side' || view === 'focus');
-  document.body.classList.toggle('view-focus', view === 'focus');
+  ['top', 'side', 'grid'].forEach(v => tbl.classList.toggle('view-' + v, v === view));
+  document.body.classList.toggle('view-side', view === 'side');
   document.body.classList.toggle('view-grid', view === 'grid');
   tbl.dataset.n = pids.length;
-  tbl.classList.toggle('has-focus', !!S.focus && view !== 'top');
+  tbl.classList.toggle('has-focus', !!S.focus);
   document.querySelectorAll('.viewsw [data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === (S.view || 'side')));
   // keep one stable element per opponent
   const have = new Map([...box.children].map(el => [el.dataset.opp, el]));
@@ -1914,7 +1936,7 @@ function renderOpps(idx) {
   });
   have.forEach(el => el.remove());
   // Sidebar / Focus layouts: a "YOU" tile heads the list, so you can always get back to your own board.
-  const sideLike = view === 'side' || view === 'focus';
+  const sideLike = view === 'side' || (view === 'top' && !!S.focus); // Top shows my YOU tile only while I'm viewing someone else
   let you = box.querySelector('.youtile');
   if (sideLike && pids.length) {
     if (!you) { you = document.createElement('div'); you.className = 'opp youtile'; you.innerHTML = '<div class="ohead"></div><div class="obody"><div class="obf"></div></div>'; }
@@ -1922,7 +1944,8 @@ function renderOpps(idx) {
     renderYouTile(you, idx);
   } else if (you) you.remove();
   // rows in the right-hand column: everyone not shown in the big area (+ the YOU tile)
-  tbl.style.setProperty('--rows', Math.max(1, (sideLike && pids.length ? 1 : 0) + pids.length - (S.focus && view !== 'top' ? 1 : 0)));
+  tbl.style.setProperty('--rows', Math.max(1, (sideLike && pids.length ? 1 : 0) + pids.length - (S.focus ? 1 : 0)));
+  tbl.style.setProperty('--cols', Math.max(1, (sideLike && pids.length ? 1 : 0) + pids.length - (S.focus ? 1 : 0)));
 }
 // The YOU tile: a read-only miniature of my board while I'm looking at someone else's; just a label otherwise.
 function renderYouTile(el, idx) {
@@ -1936,8 +1959,10 @@ function renderYouTile(el, idx) {
     : `<div class="boardwrap thumb" data-board="thumb:${esc(S.pid)}">${boardHTML(S.pid, idx).replace(/ data-(iid|pid|zone|region|c)="[^"]*"/g, '')}</div>`;
 }
 // The player whose board is shown big (Sidebar / Focus / Grid) when it isn't mine; null when I'm looking at my own.
+// Top and Grid draw the big board auto-fitted (bigger cards in the space available); Sidebar shows the real layout.
+function bigMode() { return S.arrange ? null : (['top', 'grid'].includes(curView()) ? 'big' : null); }
 function viewedOpp() {
-  if (!S.focus || curView() === 'top' || S.focus === S.pid) return null;
+  if (!S.focus || S.focus === S.pid) return null;
   return S.players[S.focus] ? S.focus : null;
 }
 // Their hand + piles, drawn in the same bottom strip as mine (same markup, read-only): hand face-down unless revealed.
@@ -1962,7 +1987,7 @@ function oppZonesHTML(pid) {
 
 // Opponent miniature (Sidebar / Grid): life and commander damage top-left, their hand + piles in a strip under the
 // board, all drawn inside the scaled board so the tile looks like their real board (EDHPlay style).
-function tileOverlayHTML(pid, bh) {
+function tileOverlayHTML(pid, bh, bw) {
   const p = S.players[pid], defs = p.defs || {}, pi = pileInfo(pid);
   const revealed = !!(p.revHand && p.revHand.length);
   const handN = num(p.hand), n = revealed ? p.revHand.length : Math.min(handN, 12);
@@ -1974,7 +1999,7 @@ function tileOverlayHTML(pid, bh) {
   const pile = (k, label) => `<div class="tpile"><div class="tpcard">${pi[k].face || ''}</div><div class="tplabel">${label} <b>${pi[k].n}</b></div></div>`;
   const cmd = (p.zones.command || []).map(c => cardHTML(c, c.id && defs[c.id], { mine: false, pid, ctrl: pid, zone: 'command' })).join('');
   return `<div class="tlife">${lifeBoxHTML(pid, true)}</div>
-    <div class="tstrip" style="top:${bh}px"><div class="thand">${hand}${handN ? `<b class="thn">${handN}</b>` : ''}</div>
+    <div class="tstrip" style="top:${bh}px;width:${bw}px"><div class="thand">${hand}${handN ? `<b class="thn">${handN}</b>` : ''}</div>
       <div class="tpiles">${pile('library', 'LIB')}${pile('graveyard', 'GY')}${pile('exile', 'EXILE')}<div class="tpile tcmd"><div class="tpcard">${cmd}</div><div class="tplabel">CMD</div></div></div></div>`;
 }
 
@@ -1985,14 +2010,13 @@ function renderOpp(el, pid, idx) {
   const off = S.role !== 'solo' && S.online[pid] === false;
   el.classList.toggle('offline', off);
   el.classList.toggle('out', !!(T.out && T.out[pid]));
-  el.classList.toggle('mini', curView() === 'top' && !!S.focus && S.focus !== pid);
   el.classList.toggle('focus', S.focus === pid);
-  const tile = curView() !== 'top' && S.focus !== pid;
+  const tile = S.focus !== pid;
   el.classList.toggle('tile', tile);
   if (tile) {
     setHTML(el.querySelector('.ohead'), `<span class="dot" style="--pc:${colorOf(pid)}"></span><span class="pname" data-phead="${esc(pid)}" title="Right-click for options">${esc(p.name)}</span>
       ${off ? '<span class="tag off">RECONNECTING</span>' : ''}${T.out && T.out[pid] ? '<span class="tag off">OUT</span>' : ''}${T.active === pid ? '<span class="tag">TURN</span>' : ''}${T.monarch === pid ? '<span title="Monarch">👑</span>' : ''}${T.initiative === pid ? '<span title="Initiative">🏰</span>' : ''}`);
-    setHTML(el.querySelector('.obf'), `<div class="boardwrap tile" data-board="${esc(pid)}" style="${esc(appearanceBoardStyleFor(pid))}">${boardHTML(pid, idx, true)}</div>`);
+    setHTML(el.querySelector('.obf'), `<div class="boardwrap tile" data-board="${esc(pid)}" style="${esc(appearanceBoardStyleFor(pid))}">${boardHTML(pid, idx, 'tile')}</div>`);
     return;
   }
   const pi = pileInfo(pid);
@@ -2008,7 +2032,7 @@ function renderOpp(el, pid, idx) {
     ? p.revHand.map((c, i) => cardHTML(c, c.id && defs[c.id], Object.assign({}, o, { zone: 'hand', style: fan(i) }))).join('')
     : Array.from({ length: shown }, (_, i) => `<div class="card oback" style="${fan(i)}">${UI.cardBackHTML('', appearanceBackFor(pid))}</div>`).join('');
   const handHTML = `<span class="ohhand${revealed ? ' revealed' : ''}${handN ? '' : ' empty'}" title="${esc(p.name)} has ${plural(handN, 'card')} in hand${revealed ? ' (revealed — hover to read)' : ''}">${handCards}<b class="ohn">${handN}</b></span>`;
-  setHTML(el.querySelector('.ohead'), `<span class="dot" style="--pc:${colorOf(pid)}"></span>
+  setHTML(el.querySelector('.ohead'), `${curView() === 'grid' ? '<button data-a="viewme" title="Back to my board">← My board</button>' : ''}<span class="dot" style="--pc:${colorOf(pid)}"></span>
     <span class="pname" data-phead="${esc(pid)}" title="Right-click for options">${esc(p.name)}</span>
     ${off ? '<span class="tag off">RECONNECTING</span>' : ''}${T.out && T.out[pid] ? '<span class="tag off">OUT</span>' : ''}
     ${T.active === pid ? '<span class="tag">TURN</span>' : ''}${T.monarch === pid ? '<span title="Monarch">👑</span>' : ''}${T.initiative === pid ? '<span title="Initiative">🏰</span>' : ''}
@@ -2018,7 +2042,7 @@ function renderOpp(el, pid, idx) {
     ${cmdCards ? `<span class="ocmd" title="Command zone">${cmdCards}</span>` : ''}
     ${!p.kept ? '<span class="muted small">mulliganing…</span>' : ''}`);
   const focusedZones = '';
-  setHTML(el.querySelector('.obf'), `<div class="boardwrap" data-board="${esc(pid)}" style="${esc(appearanceBoardStyleFor(pid))}">${boardHTML(pid, idx)}</div>${focusedZones}`);
+  setHTML(el.querySelector('.obf'), `<div class="boardwrap" data-board="${esc(pid)}" style="${esc(appearanceBoardStyleFor(pid))}">${boardHTML(pid, idx, bigMode())}</div>${focusedZones}`);
 }
 
 function renderMine(idx) {
@@ -2032,7 +2056,7 @@ function renderMine(idx) {
     ${S.arrange ? `<span class="mb-actions"><button data-a="tidy" title="Put every card back into its zone">Tidy cards</button><button data-a="resetzones">Reset zones</button>
       <button data-a="arrange" class="primary" title="Finish moving and resizing your zones">✓ Done arranging</button></span>` : ''}`;
   // --- battlefield, hand, bottom-right zones
-  setHTML($('#myBf'), `<div class="boardwrap" data-board="${esc(S.pid)}" style="${esc(appearanceBoardStyleFor(S.pid))}">${boardHTML(S.pid, idx)}</div>`);
+  setHTML($('#myBf'), `<div class="boardwrap" data-board="${esc(S.pid)}" style="${esc(appearanceBoardStyleFor(S.pid))}">${boardHTML(S.pid, idx, bigMode())}</div>`);
   // fan the hand: each card tilts a little away from the middle and dips on a gentle arc (CSS uses --rot / --arc)
   const nh = z.hand.length, mid = (nh - 1) / 2, step = nh > 1 ? Math.min(3, 28 / nh) : 0;
   const vo = viewedOpp();
@@ -2141,11 +2165,10 @@ function bindGame() {
     if (btn) { onButton(btn.dataset.a, btn, e); return; }
     if (S.ctrOpen && !t.closest('.ctrpanel')) { S.ctrOpen = null; render(); }
     // Sidebar / Focus layouts: click a player's tile to view their board big (YOU tile = back to mine)
-    const tile = ['side', 'focus'].includes(curView()) && t.closest('#opps .opp:not(.focus)');
+    const tile = t.closest('#opps .opp:not(.focus)');
     if (tile && !t.closest('button, .life, .lifebox, .oz, [data-pile], .ohhand, .ctrpanel, .cdchip, .ocmd')) {
       const pid = tile.classList.contains('youtile') ? null : tile.dataset.opp;
       if (tile.classList.contains('youtile') && !S.focus) return;
-      if (curView() === 'focus' && S.autoFocus) { S.autoFocus = false; LS.set('ct.autoFocus', false); }
       S.focus = pid; render();
       return;
     }
@@ -2396,14 +2419,15 @@ function dropCard(d, e) {
   const wrap = el.closest('.boardwrap');
   if (wrap && wrap.dataset.board === S.pid) {
     const pt = boardPoint(wrap, e.clientX - d.offC.dx, e.clientY - d.offC.dy);
-    doMove(d.iid, 'battlefield', { x: pt.x - CW / 2, y: pt.y - CH / 2 });
+    const sp = storedPos(wrap.firstElementChild, pt.x - CW / 2, pt.y - CH / 2);
+    doMove(d.iid, 'battlefield', { x: sp.x, y: sp.y });
     return;
   }
   if (wrap && wrap.dataset.board && wrap.dataset.board !== S.pid && S.players[wrap.dataset.board]) {
     // Dropped on a friend's board: they get control of it, centred where it was dropped. (The grab
     // offset is measured at our own board's zoom, so it doesn't apply to a differently scaled board.)
     const pt = boardPoint(wrap, e.clientX, e.clientY);
-    giveControl(d.iid, wrap.dataset.board, { x: pt.x - CW / 2, y: pt.y - CH / 2 });
+    { const sp = storedPos(wrap.firstElementChild, pt.x - CW / 2, pt.y - CH / 2); giveControl(d.iid, wrap.dataset.board, { x: sp.x, y: sp.y }); }
     return;
   }
   const tgt = el.closest('[data-drop]');
@@ -2503,8 +2527,8 @@ function onButton(a, btn, e) {
       LS.del('ct.layout2'); tidyBoard(); return ['reset their zone layout'];
     }); break;
     case 'focus':
-      if (curView() === 'focus' && S.autoFocus) { S.autoFocus = false; LS.set('ct.autoFocus', false); }
       toggleFocus(btn.dataset.pid); break;
+    case 'viewme': S.focus = null; render(); break;
     case 'side': document.body.classList.toggle('side-open'); break;
     case 'view': S.view = btn.dataset.v; LS.set('ct.view', S.view); S.focus = null; document.body.classList.remove('side-open'); render(); break;
     case 'displaysettings': displaySettings(); break;

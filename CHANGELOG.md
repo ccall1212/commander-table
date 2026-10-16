@@ -9,6 +9,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - `AGENTS.md`: how changes are made, tested, versioned and released (for AI assistants and humans).
 
+## [0.12.0] - 2026-10-17
+
+### Added
+- Opponents across the top (Top layout) now use the same simple miniature tiles as the Sidebar, with the greying eye on hover. Click a tile to view that board big underneath; your own YOU tile appears in the row so you can click back.
+- In the Grid layout, click an opponent to view their board full size, and use **← My board** to come back.
+
+### Changed
+- Cards are bigger in Top and Grid: the board is auto-fitted to its area, so cards are as large as they fit (about 1.6x in Grid and 1.5x in Top at 1920x1000; miniature tiles about 1.5x). Zones and cards are spread or squeezed to fit, rows overlap a little when crowded, and your saved positions are never changed. Dragging cards (including giving one to a player) still lands exactly where you drop it.
+- The hand and piles strip always keeps its own space under the board.
+
+### Removed
+- The Focus layout (◎): it behaved like Sidebar. If you had it selected you'll start in Sidebar, and the "Auto-focus" setting is gone.
+
 ## [0.11.0] - 2026-10-17
 
 ### Changed
@@ -178,7 +191,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - First playable build: paste-import decks from Moxfield or Archidekt (via Scryfall), 2–4 player rooms over PeerJS with self-healing reconnects, a searchable zone viewer, commander damage tracking and automatic tokens.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.11.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.12.0...HEAD
+[0.12.0]: https://github.com/ccall1212/commander-table/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/ccall1212/commander-table/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/ccall1212/commander-table/compare/v0.9.1...v0.10.0
 [0.9.1]: https://github.com/ccall1212/commander-table/compare/v0.9.0...v0.9.1

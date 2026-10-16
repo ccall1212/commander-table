@@ -38,7 +38,7 @@ So the normal flow is:
 - **Don't guess at behaviour you can't see.** If a change depends on layout, sizes or timing, say so
   and leave it for the browser test.
 - **Write the test list** in the PR or commit: the exact clicks and keys to try, how many players, which
-  layout (Top / Sidebar / Grid / Focus) and screen size, and what should happen.
+  layout (Top / Sidebar / Grid) and screen size, and what should happen.
 - **State clearly what you did NOT test.** Never write "tested" for something you only read.
 - Don't merge to `main`, tag, or bump past a version that's already tagged.
 
@@ -96,7 +96,7 @@ So the normal flow is:
    - Open `http://127.0.0.1:8099/index.html`, host a game, and join from a second tab with
      `http://127.0.0.1:8099/index.html?join=<ROOM>` (use 3–4 tabs for multiplayer features).
      Check the browser console has no errors.
-   - Check layouts at 1920×1080 and 1366×768, and in the Top, Sidebar, Grid and Focus views if the UI changed.
+   - Check layouts at 1920×1080 and 1366×768, and in the Top, Sidebar and Grid views if the UI changed.
    - Network regression suite (13 checks, real relay):
      `http://127.0.0.1:8099/tests/net-harness.html?relay=https://commander-table-relay.chris-call1212.workers.dev&net=relay&auto=1`
    - Protocol tests (only if relay/LAN code changed): `python tests/test_relay_protocol.py`
