@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.13.1';
+const APP_VERSION = '0.14.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -1469,8 +1469,8 @@ function displaySettings() {
 // Current view mode; with no opponents there's only one sensible layout.
 function curView() {
   if (!S.view) S.view = LS.get('ct.view', 'side');
-  if (!['top', 'side', 'grid'].includes(S.view)) S.view = 'side'; // the old Focus view is gone
-  return oppPids().length ? (['top', 'side', 'grid'].includes(S.view) ? S.view : 'side') : 'top';
+  if (!['side', 'grid'].includes(S.view)) S.view = 'side'; // the old Top and Focus layouts are gone
+  return oppPids().length ? S.view : 'top'; // 'top' is only the internal layout for a table with nobody else at it (solo)
 }
 
 // =====================================================================

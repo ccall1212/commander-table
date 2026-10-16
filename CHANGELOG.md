@@ -9,6 +9,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - `AGENTS.md`: how changes are made, tested, versioned and released (for AI assistants and humans).
 
+## [0.14.0] - 2026-10-17
+
+### Removed
+- The "Opponents across the top" layout (▤). Only Sidebar and Grid remain. If you had Top selected you'll start in Sidebar. (A table with nobody else at it, such as Practice solo, still shows your board full width.)
+
 ## [0.13.1] - 2026-10-17
 
 ### Changed
@@ -212,7 +217,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - First playable build: paste-import decks from Moxfield or Archidekt (via Scryfall), 2–4 player rooms over PeerJS with self-healing reconnects, a searchable zone viewer, commander damage tracking and automatic tokens.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.13.1...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.14.0...HEAD
+[0.14.0]: https://github.com/ccall1212/commander-table/compare/v0.13.1...v0.14.0
 [0.13.1]: https://github.com/ccall1212/commander-table/compare/v0.13.0...v0.13.1
 [0.13.0]: https://github.com/ccall1212/commander-table/compare/v0.12.1...v0.13.0
 [0.12.1]: https://github.com/ccall1212/commander-table/compare/v0.12.0...v0.12.1

@@ -128,13 +128,12 @@ Dropped connections and crashed tabs happen, and recovering from them is the mai
 - Battlefield cards are about 40% bigger (about 12 across instead of 17), so busy boards start overlapping cards sooner.
 - Drag the bar between the opponents' area and yours to give your board more or less room. In the Top and Grid layouts, right-click a player's name → **Show this board large** (or double-click their board) to show it large.
 - **Table layout** — switch with the buttons in the top bar (remembered):
-  - ▤ **Top**: opponents as small copies of their boards in a row across the top, your board big underneath. Click a tile to view that board big (your own YOU tile then appears in the row to click back). Cards are auto-fitted so they're as large as they fit; your saved positions don't change.
   - ▥ **Sidebar**: your board big on the left. The right-hand column shows every other player as a small copy of their board, with their life top-left and their hand and piles along the bottom; your own slim YOU tile comes first. Click a tile to view that player's board big (their hand is then face-down in the bottom strip, and yours is hidden). Click your YOU tile to go back. New players start in this layout until they pick another.
   - ▦ **Grid**: every player gets an equal quadrant, and yours is drawn exactly like the opponents' (small hand fan bottom-left, piles bottom-right, life top-left). Cards are auto-fitted to be as big as they fit. Click an opponent to view them full size and use **← My board** to come back.
 - The **📜 Log** button in the top bar slides the game log (and the shortcut help) out from the right edge. Click it again to close.
 - Cards overlap more as your hand grows, and the card under your mouse lifts up so you can read it.
 - Every opponent's hand shows in their header, right next to their commander: a small fan of card backs with the number of cards. If they turn on **Reveal my hand to everyone**, the fan shows their real cards face-up (marked REVEALED) — hover one to read it in the card preview.
-- When you view another player's board (Sidebar, Top or Grid), their hand (face-down card backs, or the real cards if they revealed it), Library, Graveyard, Exile and Command appear in the same bottom strip as yours, and your own are hidden. Click a pile to look through it. Click **YOU** to come back to your own board.
+- When you view another player's board (Sidebar or Grid), their hand (face-down card backs, or the real cards if they revealed it), Library, Graveyard, Exile and Command appear in the same bottom strip as yours, and your own are hidden. Click a pile to look through it. Click **YOU** to come back to your own board.
 
 **Auras & Equipment**
 
