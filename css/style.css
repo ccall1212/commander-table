@@ -133,9 +133,11 @@ body.side-open #side { display: grid; }
 /* keep the splitter in the grid (just invisible) — display:none would shift #mine into the 0px row */
 #table.noopps #split { visibility: hidden; pointer-events: none; }
 #table.noopps #opps:empty::after { font-size: 13px; }
-#myBf { position: absolute; inset: 0; overflow: hidden; padding: 6px 8px calc(var(--stripH, 110px) + 4px); min-height: 0; }
+#myBf { position: absolute; inset: 0; overflow: hidden; padding: 6px 8px; min-height: 0; }
+/* Sidebar / Focus: the board is limited by width, so keeping the strip's space free costs no card size. */
+#table.view-side #myBf { padding-bottom: calc(var(--stripH, 110px) + 4px); }
 /* The big board of the player being viewed keeps the same bottom strip free: nothing sits under their hand and piles. */
-#table.view-side.has-focus .opp.focus .obf, #table.view-grid.has-focus .opp.focus .obf { padding-bottom: calc(var(--stripH, 110px) + 4px); }
+#table.view-side.has-focus .opp.focus .obf { padding-bottom: calc(var(--stripH, 110px) + 4px); }
 .opp.focus .ozones, .opp.focus .ohhand, .opp.focus .ocmd { display: none; }
 #myRow.viewing-opp #myHand { --cw: 82px; }
 /* Hand + piles overlay the bottom of the battlefield; empty areas let clicks through to the board. */
@@ -428,8 +430,8 @@ body.lens-on #pv { display: none; }
 
 /* ---- A. Sidebar view: my board big on the left, opponents stacked in a right column ---- */
 /* JS sets --rows = number of tiles in the right-hand column (the YOU tile counts; the focused opponent doesn't). */
-#table.view-side { grid-template-columns: minmax(0, 1fr) 340px; grid-template-rows: repeat(var(--rows, 1), minmax(0, 1fr)); padding-bottom: 4px; }
-#table.view-side.view-focus { grid-template-columns: minmax(0, 1fr) clamp(280px, 21vw, 420px); }
+#table.view-side { grid-template-columns: minmax(0, 1fr) clamp(320px, 23vw, 460px); grid-template-rows: repeat(var(--rows, 1), minmax(0, 1fr)); padding-bottom: 4px; }
+#table.view-side.view-focus { grid-template-columns: minmax(0, 1fr) clamp(320px, 23vw, 460px); }
 #table.view-side #split { display: none; }
 #table.view-side #opps { display: contents; }
 #table.view-side #mine { grid-column: 1; grid-row: 1 / -1; }
@@ -453,7 +455,7 @@ body.lens-on #pv { display: none; }
 .boardwrap.thumb { pointer-events: none; }
 /* Click-to-view hint on any tile that isn't the one currently shown big */
 #table.view-side .opp:not(.focus):not(.viewing) .obody { position: relative; cursor: pointer; }
-#table.view-side .opp:not(.focus):not(.viewing) .obody::after { content: '\1F441\00a0 Click to view'; position: absolute; inset: 0; z-index: 3;
+#table.view-side .opp:not(.focus):not(.viewing) .obody::after { content: '\1F441'; position: absolute; inset: 0; z-index: 3;
   display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.45); color: #fff; font-size: 14px;
   border-radius: 0 0 calc(var(--radius) - 1px) calc(var(--radius) - 1px); pointer-events: none; opacity: 0; transition: opacity .15s ease; }
 #table.view-side .opp:not(.focus):not(.viewing):hover .obody::after { opacity: 1; }
@@ -601,3 +603,36 @@ body.lens-on #pv { display: none; }
   .background-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .appearance-choice .appearance-name { font-size: 10px; }
 }
+
+/* ---- Opponent miniature tiles (Sidebar / Grid): slim title, board + life + hand/piles drawn inside the scaled board ---- */
+.opp.tile { grid-template-rows: auto minmax(0, 1fr); }
+.opp.tile .ohead { justify-content: center; gap: 6px; padding: 3px 8px; font-size: 12px; flex-wrap: nowrap; }
+.opp.tile .obf { padding: 0; }
+.boardwrap.tile { background-size: cover; }
+.tlife { position: absolute; left: 6px; top: 4px; z-index: 60; display: flex; align-items: center; gap: 4px; flex-wrap: wrap;
+  max-width: calc(var(--s, 1) * 1000px - 12px); transform: scale(var(--inv, 1)); transform-origin: 0 0; font-size: 12px; }
+.tlife .lifebox { display: inline-flex; align-items: center; gap: 2px; background: rgba(11,14,19,.8); border: 1px solid var(--border); border-radius: 8px; padding: 1px 3px; }
+.tlife .lifeN { min-width: 24px; text-align: center; font-size: 15px; }
+.tlife button { padding: 0 5px; line-height: 16px; font-size: 12px; }
+.tstrip { position: absolute; left: 0; width: 1000px; height: 152px; z-index: 5; display: flex; align-items: flex-start; justify-content: space-between;
+  padding: 4px 8px 0; background: linear-gradient(to bottom, rgba(11,14,19,.55), rgba(11,14,19,.9)); pointer-events: none; }
+.tstrip .card { pointer-events: auto; }
+.thand { position: relative; display: flex; align-items: flex-start; padding-left: 4px; }
+.thand .card { position: relative; flex: none; margin-left: -46px; transform: translateY(var(--arc, 0px)) rotate(var(--rot, 0deg)); box-shadow: 0 3px 8px rgba(0,0,0,.55); }
+.thand .card:first-child { margin-left: 0; }
+.thn { align-self: center; margin-left: 10px; font-size: calc(18px * min(var(--inv, 1), 2.6)); color: var(--text); }
+.tpiles { display: flex; gap: 10px; align-items: flex-start; }
+.tpile { width: 80px; text-align: center; }
+.tpcard { position: relative; width: 80px; height: 112px; border: 1px dashed rgba(255,255,255,.25); border-radius: 5px; overflow: hidden; }
+.tpcard > img, .tpcard > .w-cardback, .tpcard .ph { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.tpcard .card { position: absolute; inset: 0; width: 100%; }
+.tplabel { margin-top: 2px; font-size: calc(11px * min(var(--inv, 1), 2.6)); color: var(--muted); white-space: nowrap; }
+.tplabel b { color: var(--text); }
+
+/* the YOU tile only shows a note while I'm looking at my own board: keep it slim so opponents get the height */
+#table.view-side:not(.has-focus) .opp.youtile .obody { display: none; }
+#table.view-side:not(.has-focus) { grid-template-rows: auto repeat(calc(var(--rows, 1) - 1), minmax(0, 1fr)); }
+.tlife { transform: scale(calc(var(--inv, 1) * .85)); flex-wrap: nowrap; }
+
+/* Hovering a tile greys the whole miniature and shows an eye */
+#table.view-side .opp:not(.focus):not(.viewing) .obody::after { background: rgba(60,64,72,.68); font-size: 40px; border-radius: 0; z-index: 100; }

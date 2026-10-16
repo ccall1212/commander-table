@@ -9,6 +9,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - `AGENTS.md`: how changes are made, tested, versioned and released (for AI assistants and humans).
 
+## [0.11.0] - 2026-10-17
+
+### Changed
+- Opponent tiles in the Sidebar, Focus and Grid layouts are now simple, EDHPlay-style miniatures: a slim name bar, then a small copy of their board with their life and commander damage in the top-left corner and their hand (face-down, or face-up if revealed) and Library / Graveyard / Exile / Command in a strip along the bottom. The tall header with counters and the hand fan is gone.
+- A miniature squishes the board vertically to fit its tile, so cards stay as large as possible (rows overlap a little when the board is tall).
+- Hovering a tile greys it out and shows an eye; click anywhere on it to view that board big. The life +/- buttons still work without opening it.
+- The right-hand column is wider (about a quarter of the screen), and your own YOU tile is slim while you look at your own board.
+
+### Fixed
+- Boards in the Top and Grid layouts shrank in 0.10.0 because space was reserved for the hand and piles strip. The reserved space now only applies to Sidebar and Focus, where it costs nothing, so Top and Grid boards are full size again.
+
 ## [0.10.0] - 2026-10-16
 
 ### Changed
@@ -165,7 +176,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - First playable build: paste-import decks from Moxfield or Archidekt (via Scryfall), 2–4 player rooms over PeerJS with self-healing reconnects, a searchable zone viewer, commander damage tracking and automatic tokens.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/ccall1212/commander-table/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/ccall1212/commander-table/compare/v0.9.1...v0.10.0
 [0.9.1]: https://github.com/ccall1212/commander-table/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/ccall1212/commander-table/compare/v0.8.1...v0.9.0

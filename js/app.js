@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.10.0';
+const APP_VERSION = '0.11.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -51,6 +51,7 @@ const IMG_OK = u => typeof u === 'string' && u.startsWith('https://cards.scryfal
 // is published with their board, and opponents scale that whole board to fit their panel.
 // v0.7: BW 1400 -> 1000 so cards draw ~40% bigger. Boards from older versions are rescaled (see cleanPub / normalizeMe).
 const BW = 1000, BH = 430, BH_MAX = 1400, CW = 80, CH = 112;
+const TILE_STRIP = 152; // extra logical height under an opponent's miniature for their hand + piles
 const OLD_BW = 1400; // board width of clients before v0.7 (they don't send `bw`)
 const myBH = () => (S.me && S.me.bh) || BH;
 const DEFAULT_LAYOUT = [
@@ -117,6 +118,7 @@ const S = {
   autoFocus: LS.get('ct.autoFocus', true) !== false, // follow the active player in Focus view
   attachFrom: null, // iid waiting for an attach target
   attachToast: null,
+  tileTbh: {},      // pid -> logical board height that fills their miniature tile
   regionDrag: null,
   viewers: new Set()
 };
@@ -1615,15 +1617,20 @@ function buildIndex() {
   }
   return { entries, atts };
 }
-function boardHTML(pid, idx) {
+function boardHTML(pid, idx, tile) {
   const mine = pid === S.pid;
   const p = mine ? null : S.players[pid];
   const layout = mine ? S.me.layout : (p.layout || DEFAULT_LAYOUT);
   const editing = mine && S.arrange;
-  let html = layout.map(r => `<div class="region" data-region="${esc(r.k)}" style="left:${num(r.x)}px;top:${num(r.y)}px;width:${num(r.w)}px;height:${num(r.h)}px">
+  // Miniature tile: squish the board vertically to the tile's shape (cards keep their size, rows overlap a little).
+  const bh0 = mine ? myBH() : ((p && p.bh) || BH);
+  const th = tile ? clamp(Math.min(bh0, num(S.tileTbh[pid], 460)), 200, bh0) : bh0;
+  const fr = th / bh0, fc = bh0 > CH ? Math.max(0.05, (th - CH) / (bh0 - CH)) : 1;
+  const RY = v => tile ? Math.round(v * fr) : v, CY = v => tile ? Math.round(v * fc) : v;
+  let html = layout.map(r => `<div class="region" data-region="${esc(r.k)}" style="left:${num(r.x)}px;top:${RY(num(r.y))}px;width:${num(r.w)}px;height:${RY(num(r.h))}px">
     <span class="rlabel">${esc(r.label)}</span>${editing ? ['nw', 'ne', 'sw', 'se'].map(c => `<span class="grip ${c}" data-c="${c}" title="Drag to resize"></span>`).join('') : ''}</div>`).join('');
   let z = 10;
-  const place = (e, zone, x, y, zi) => cardHTML(e.c, e.def, { mine: e.ctrl === S.pid, pid, ctrl: e.ctrl, zone, style: `left:${x}px;top:${y}px;z-index:${zi}` });
+  const place = (e, zone, x, y, zi) => cardHTML(e.c, e.def, { mine: e.ctrl === S.pid, pid, ctrl: e.ctrl, zone, style: `left:${x}px;top:${CY(y)}px;z-index:${zi}` });
   for (const e of idx.entries) {
     if (e.ctrl !== pid || (e.c.att && !e.orphan)) continue;
     const x = num(e.c.x, 10), y = num(e.c.y, 20);
@@ -1633,8 +1640,9 @@ function boardHTML(pid, idx) {
     html += place(e, 'battlefield', x, y, z + list.length + 1);
     z += list.length + 2;
   }
-  const bh = mine ? myBH() : ((p && p.bh) || BH);
-  return `<div class="board${editing ? ' arrange' : ''}" data-pid="${esc(pid)}" style="height:${bh}px">${html}</div>`;
+  const bh = th;
+  if (tile) html += tileOverlayHTML(pid, bh);
+  return `<div class="board${editing ? ' arrange' : ''}" data-pid="${esc(pid)}"${tile ? ` data-th="${bh}"` : ''} style="height:${bh + (tile ? TILE_STRIP : 0)}px">${html}</div>`;
 }
 // Untouched default zones follow the board's shape in the current view: zones and the cards in them
 // spread vertically (cards keep their size), so switching Top / Sidebar / Grid never shrinks the cards.
@@ -1655,13 +1663,20 @@ function fitBoards() {
     const thumb = w.classList.contains('thumb'), pid = thumb ? w.dataset.board.slice(6) : w.dataset.board;
     if (pid === S.pid && !thumb && S.me && S.me.layoutAuto && !S.arrange && !S.dragging) stretchAutoLayout(W, H);
     const bh = pid === S.pid && S.me ? (thumb ? myBH() : myBoardHeight(W, H)) : ((S.players[pid] && S.players[pid].bh) || BH);
-    b.style.height = bh + 'px';
+    const isTile = w.classList.contains('tile');
+    if (isTile) { // keep the squish matched to this tile's shape; redraw if it changed
+      const want = clamp(Math.round(BW * H / W) - TILE_STRIP, 200, BH_MAX);
+      if (Math.abs(want - num(S.tileTbh[pid], 460)) > 14) { S.tileTbh[pid] = want; setTimeout(render, 0); }
+    }
+    const tot = isTile ? num(b.dataset.th, bh) + TILE_STRIP : bh;
+    b.style.height = tot + 'px';
     // Boards always fit their area (never scroll); hold V to magnify cards instead.
-    const s = Math.min(W / BW, H / bh);
+    const s = Math.min(W / BW, H / tot);
     const ox = Math.max(0, (W - BW * s) / 2);
     b.style.transform = `translate(${ox}px,0) scale(${s})`;
     b.dataset.s = s; b.dataset.ox = ox; b.dataset.oy = 0;
     b.style.setProperty('--inv', (1 / s).toFixed(3)); // lets labels stay a readable size at any zoom
+    b.style.setProperty('--s', s.toFixed(4));
   });
   fitOppArea();
 }
@@ -1914,6 +1929,24 @@ function oppZonesHTML(pid) {
     `<div class="zbox cmdbox"><div class="zlabel">CMD</div><div class="zcard cmdcards">${cmd}</div></div>`;
 }
 
+// Opponent miniature (Sidebar / Grid): life and commander damage top-left, their hand + piles in a strip under the
+// board, all drawn inside the scaled board so the tile looks like their real board (EDHPlay style).
+function tileOverlayHTML(pid, bh) {
+  const p = S.players[pid], defs = p.defs || {}, pi = pileInfo(pid);
+  const revealed = !!(p.revHand && p.revHand.length);
+  const handN = num(p.hand), n = revealed ? p.revHand.length : Math.min(handN, 12);
+  const mid = (n - 1) / 2, step = n > 1 ? Math.min(4, 30 / n) : 0;
+  const fan = i => { const off = i - mid; return `--rot:${(off * step).toFixed(1)}deg;--arc:${(mid ? 8 * (off / mid) ** 2 : 0).toFixed(1)}px;z-index:${i + 1}`; };
+  const hand = revealed
+    ? p.revHand.map((c, i) => cardHTML(c, c.id && defs[c.id], { mine: false, pid, ctrl: pid, zone: 'hand', style: fan(i) })).join('')
+    : Array.from({ length: n }, (_, i) => `<div class="card oback" style="${fan(i)}">${UI.cardBackHTML('', appearanceBackFor(pid))}</div>`).join('');
+  const pile = (k, label) => `<div class="tpile"><div class="tpcard">${pi[k].face || ''}</div><div class="tplabel">${label} <b>${pi[k].n}</b></div></div>`;
+  const cmd = (p.zones.command || []).map(c => cardHTML(c, c.id && defs[c.id], { mine: false, pid, ctrl: pid, zone: 'command' })).join('');
+  return `<div class="tlife">${lifeBoxHTML(pid)}${cmdTagsHTML(pid)}</div>
+    <div class="tstrip" style="top:${bh}px"><div class="thand">${hand}${handN ? `<b class="thn">${handN}</b>` : ''}</div>
+      <div class="tpiles">${pile('library', 'LIB')}${pile('graveyard', 'GY')}${pile('exile', 'EXILE')}<div class="tpile tcmd"><div class="tpcard">${cmd}</div><div class="tplabel">CMD</div></div></div></div>`;
+}
+
 function renderOpp(el, pid, idx) {
   const p = S.players[pid], T = S.table || {}, defs = p.defs || {};
   const o = { mine: false, pid };
@@ -1923,6 +1956,14 @@ function renderOpp(el, pid, idx) {
   el.classList.toggle('out', !!(T.out && T.out[pid]));
   el.classList.toggle('mini', curView() === 'top' && !!S.focus && S.focus !== pid);
   el.classList.toggle('focus', S.focus === pid);
+  const tile = curView() !== 'top' && S.focus !== pid;
+  el.classList.toggle('tile', tile);
+  if (tile) {
+    setHTML(el.querySelector('.ohead'), `<span class="dot" style="--pc:${colorOf(pid)}"></span><span class="pname" data-phead="${esc(pid)}" title="Right-click for options">${esc(p.name)}</span>
+      ${off ? '<span class="tag off">RECONNECTING</span>' : ''}${T.out && T.out[pid] ? '<span class="tag off">OUT</span>' : ''}${T.active === pid ? '<span class="tag">TURN</span>' : ''}${T.monarch === pid ? '<span title="Monarch">👑</span>' : ''}${T.initiative === pid ? '<span title="Initiative">🏰</span>' : ''}`);
+    setHTML(el.querySelector('.obf'), `<div class="boardwrap tile" data-board="${esc(pid)}" style="${esc(appearanceBoardStyleFor(pid))}">${boardHTML(pid, idx, true)}</div>`);
+    return;
+  }
   const pi = pileInfo(pid);
   const oz = (k, label, sub) => `<span class="oz" data-pile="${k}" data-pid="${esc(pid)}" title="${esc(pi[k].tip)}${k === 'library' ? '' : ' — click to search'}">${label} <b>${pi[k].n}</b>${sub ? ` <span class="zsub">${sub}</span>` : ''}</span>`;
   const cmdCards = (p.zones.command || []).map(c => cardHTML(c, c.id && defs[c.id], Object.assign({}, o, { zone: 'command' }))).join('');

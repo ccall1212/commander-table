@@ -130,7 +130,7 @@ Dropped connections and crashed tabs happen, and recovering from them is the mai
 - Drag the bar between the opponents' area and yours to give your board more or less room. In the Top and Grid layouts, right-click a player's name → **Show this board large** (or double-click their board) to show it large.
 - **Table layout** — switch with the buttons in the top bar (remembered):
   - ▤ **Top**: opponents across the top.
-  - ▥ **Sidebar**: your board big on the left. The right-hand column lists every player, with your own tile (marked YOU) first. Hover a tile to see an eye, and click it to view that player's board big. Your hand and piles stay at the bottom while you look. Click your YOU tile to go back to your own board. New players start in this layout until they pick another.
+  - ▥ **Sidebar**: your board big on the left. The right-hand column shows every other player as a small copy of their board, with their life top-left and their hand and piles along the bottom; your own slim YOU tile comes first. Hover a tile to grey it out and show an eye, and click it to view that player's board big (their hand is then face-down in the bottom strip, and yours is hidden). Click your YOU tile to go back. New players start in this layout until they pick another.
   - ▦ **Grid**: every player gets an equal quadrant, with you bottom-left. Opponents' boards are biggest here.
   - ◎ **Focus**: the active player's battlefield gets the big spot, and it follows the turn automatically. Turn that off in Display settings, or use the eye on a player's tile in the right-hand column to pick a board yourself.
 - The **📜 Log** button in the top bar slides the game log (and the shortcut help) out from the right edge. Click it again to close.
