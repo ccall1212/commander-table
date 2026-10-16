@@ -668,3 +668,23 @@ body.lens-on #pv { display: none; }
 .zlabel { padding: 0; background: none; border: none; border-radius: 0; font-size: 12px; color: #dfe3ec; text-shadow: 0 1px 3px #000, 0 0 8px #000; }
 .zlabel b, .handlabel b { color: #fff; }
 .boardwrap:not(.tile) { background: transparent; }
+
+/* ---- Grid: my quadrant is a miniature exactly like the opponents' ---- */
+#table.view-grid .opp.mytile { grid-row: 2; grid-column: 1; margin: 0; }
+#table.view-grid[data-n="2"] .opp.mytile { grid-column: 1 / span 2; }
+#table.view-grid.has-focus .opp.mytile { visibility: hidden; }
+#table.grid-mine #mine { background: none; border: none; box-shadow: none; pointer-events: none; z-index: 30; }
+#table.grid-mine #myBf, #table.grid-mine #myBar, #table.grid-mine #myHand, #table.grid-mine #handLabel, #table.grid-mine #myZones { visibility: hidden; }
+#table.grid-mine #myRow { background: none; }
+.opp.mytile .obody { cursor: default; }
+.tstrip .thand.mine, .tstrip .tpile[data-pile] { pointer-events: auto; }
+.thand.mine .card:hover { z-index: 60 !important; transform: translateY(-16px) scale(1.4); transition: transform .12s ease; }
+.tpile[data-pile] { cursor: pointer; }
+.tpile.dropok .tpcard { outline: 2px dashed var(--accent); }
+.tplabel .ad-control { display: inline-flex; align-items: center; gap: 3px; margin-left: 4px; transform: scale(var(--inv, 1)); transform-origin: left center; }
+.tplabel .tgl { pointer-events: auto; }
+
+/* ---- Top layout: cards may sit behind the hand and piles (like EDHPlay), and a lifted hand card stays small ---- */
+#table.view-top #myBf { padding-bottom: 6px; }
+#table.view-top.has-focus .opp.focus .obf { padding-bottom: 4px; }
+#table.view-top #myHand .card.hov { transform: translateY(-9%) rotate(0deg) scale(1.04); }

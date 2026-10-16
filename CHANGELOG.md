@@ -13,6 +13,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 - The hand and piles strip now looks like EDHPlay's: the board's background art runs behind it instead of a separate dark band, and the labels (HAND, LIB, GY, EXILE, CMD) are plain text rather than boxed pills. This applies to your own board, to another player's board when you view them, and in every layout. The strip still keeps its own space under the cards, so nothing is covered.
+- Grid: your own quadrant is now a copy of the opponents' miniatures: life top-left, a small face-up hand fan bottom-left and small piles bottom-right, all drawn inside the board. Playing and dragging cards, tapping, the right-click menu, keyboard shortcuts, drawing from the Library, the AD switch, life and the ▾ menu all work from it.
+- Top layout: cards can sit behind your hand and piles (like EDHPlay) instead of the board stopping above them, and a lifted hand card stays small so it doesn't cover its neighbours.
+- Hovering a card in your hand shows the big preview in a fixed spot just above the hand instead of next to the mouse, so it never hides the other hand cards.
 
 ## [0.12.1] - 2026-10-17
 

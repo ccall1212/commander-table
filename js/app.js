@@ -1814,7 +1814,7 @@ function lifeBoxHTML(pid, noPanel) {
 function renderOppPanel() {
   let el = document.getElementById('oppPanel');
   const pid = S.ctrOpen;
-  const tile = pid && pid !== S.pid && S.players[pid] ? document.querySelector(`#opps .opp.tile[data-opp="${CSS.escape(pid)}"]`) : null;
+  const tile = !pid ? null : (pid === S.pid ? document.querySelector('#opps .opp.mytile') : (S.players[pid] ? document.querySelector(`#opps .opp.tile[data-opp="${CSS.escape(pid)}"]`) : null));
   if (!tile) { if (el) el.remove(); return; }
   if (!el) { el = document.createElement('div'); el.id = 'oppPanel'; $('#game').appendChild(el); }
   const r = tile.getBoundingClientRect();
@@ -1922,7 +1922,7 @@ function renderOpps(idx) {
   tbl.classList.toggle('has-focus', !!S.focus);
   document.querySelectorAll('.viewsw [data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === (S.view || 'side')));
   // keep one stable element per opponent
-  const have = new Map([...box.children].map(el => [el.dataset.opp, el]));
+  const have = new Map([...box.children].filter(el => !el.classList.contains('mytile')).map(el => [el.dataset.opp, el]));
   pids.forEach((pid, i) => {
     let el = have.get(pid);
     if (!el) {
@@ -1943,6 +1943,14 @@ function renderOpps(idx) {
     if (box.firstElementChild !== you) box.insertBefore(you, box.firstElementChild);
     renderYouTile(you, idx);
   } else if (you) you.remove();
+  // Grid: my own quadrant, drawn like the opponents' tiles
+  let mt = box.querySelector('.mytile');
+  tbl.classList.toggle('grid-mine', gridMine());
+  if (gridMine()) {
+    if (!mt) { mt = document.createElement('div'); mt.className = 'opp tile mytile'; mt.innerHTML = '<div class="ohead"></div><div class="obody"><div class="obf"></div></div>'; box.appendChild(mt); }
+    else if (box.lastElementChild !== mt) box.appendChild(mt);
+    renderMyTile(mt, idx);
+  } else if (mt) mt.remove();
   // rows in the right-hand column: everyone not shown in the big area (+ the YOU tile)
   tbl.style.setProperty('--rows', Math.max(1, (sideLike && pids.length ? 1 : 0) + pids.length - (S.focus ? 1 : 0)));
   tbl.style.setProperty('--cols', Math.max(1, (sideLike && pids.length ? 1 : 0) + pids.length - (S.focus ? 1 : 0)));
@@ -1958,6 +1966,8 @@ function renderYouTile(el, idx) {
   el.querySelector('.obf').innerHTML = viewingMe ? '<div class="viewing-note">👁 Viewing your board</div>'
     : `<div class="boardwrap thumb" data-board="thumb:${esc(S.pid)}">${boardHTML(S.pid, idx).replace(/ data-(iid|pid|zone|region|c)="[^"]*"/g, '')}</div>`;
 }
+// Grid: my own quadrant is drawn exactly like the opponents' miniatures (hand fan, piles and life drawn inside the scaled board).
+function gridMine() { return !!S.me && curView() === 'grid' && !S.arrange && !S.focus && oppPids().length > 0; }
 // The player whose board is shown big (Sidebar / Focus / Grid) when it isn't mine; null when I'm looking at my own.
 // Top and Grid draw the big board auto-fitted (bigger cards in the space available); Sidebar shows the real layout.
 function bigMode() { return S.arrange ? null : (['top', 'grid'].includes(curView()) ? 'big' : null); }
@@ -1987,7 +1997,28 @@ function oppZonesHTML(pid) {
 
 // Opponent miniature (Sidebar / Grid): life and commander damage top-left, their hand + piles in a strip under the
 // board, all drawn inside the scaled board so the tile looks like their real board (EDHPlay style).
+function myTileOverlayHTML(bh, bw) {
+  const m = S.me, z = m.zones, pi = pileInfo(S.pid);
+  const n = z.hand.length, mid = (n - 1) / 2, step = n > 1 ? Math.min(4, 30 / n) : 0;
+  const fan = i => { const off = i - mid; return `--rot:${(off * step).toFixed(1)}deg;--arc:${(mid ? 8 * (off / mid) ** 2 : 0).toFixed(1)}px;z-index:${i + 1}`; };
+  const hand = z.hand.map((c, i) => cardHTML(c, defOf(c), { mine: true, pid: S.pid, zone: 'hand', style: fan(i) })).join('');
+  const ad = `<span class="ad-control"><span class="ad-label" title="Auto-Draw">AD</span><label class="tgl"><input type="checkbox" data-a="autodraw"${m.autoDraw ? ' checked' : ''}><span></span></label></span>`;
+  const pile = (k, label) => `<div class="tpile" data-pile="${k}" data-pid="${esc(S.pid)}" data-drop="${k}" title="${esc(pi[k].tip)}"><div class="tpcard">${pi[k].face || ''}</div><div class="tplabel">${label} <b>${pi[k].n}</b>${k === 'library' ? ad : ''}</div></div>`;
+  const cmd = z.command.map(c => cardHTML(c, defOf(c), { mine: true, pid: S.pid, zone: 'command' })).join('');
+  return `<div class="tlife">${lifeBoxHTML(S.pid, true)}</div>
+    <div class="tstrip" style="top:${bh}px;width:${bw}px"><div class="thand mine" data-drop="hand">${hand}${n ? `<b class="thn">${n}</b>` : ''}</div>
+      <div class="tpiles">${pile('library', 'LIB')}${pile('graveyard', 'GY')}${pile('exile', 'EXILE')}<div class="tpile tcmd" data-drop="command"><div class="tpcard">${cmd}</div><div class="tplabel">CMD</div></div></div></div>`;
+}
+function renderMyTile(el, idx) {
+  const T = S.table || {}, m = S.me;
+  el.classList.toggle('active', T.active === S.pid);
+  setHTML(el.querySelector('.ohead'), `<span class="dot" style="--pc:${colorOf(S.pid)}"></span><span class="pname" data-phead="${esc(S.pid)}" title="Right-click for options">${esc(m.name)}</span><span class="tag you">YOU</span>
+    ${T.active === S.pid ? '<span class="tag">TURN</span>' : ''}${T.monarch === S.pid ? '<span title="Monarch">👑</span>' : ''}${T.initiative === S.pid ? '<span title="Initiative">🏰</span>' : ''}`);
+  el.querySelector('.obf').removeAttribute('style');
+  setHTML(el.querySelector('.obf'), `<div class="boardwrap tile" data-board="${esc(S.pid)}" style="${esc(appearanceBoardStyleFor(S.pid))}">${boardHTML(S.pid, idx, 'tile')}</div>`);
+}
 function tileOverlayHTML(pid, bh, bw) {
+  if (pid === S.pid) return myTileOverlayHTML(bh, bw);
   const p = S.players[pid], defs = p.defs || {}, pi = pileInfo(pid);
   const revealed = !!(p.revHand && p.revHand.length);
   const handN = num(p.hand), n = revealed ? p.revHand.length : Math.min(handN, 12);
@@ -2111,6 +2142,12 @@ let pvMouse = { x: 0, y: 0 };
 function placePv() {
   const pv = $('#pv'); if (!pv || pv.classList.contains('hidden')) return;
   const w = pv.offsetWidth, h = pv.offsetHeight, gap = 18, m = 8;
+  if (S.pvFix) { // a card in my hand: show the preview in a fixed spot just above the hand so it never covers the other hand cards
+    const hr = S.pvFix.getBoundingClientRect();
+    const fx = clamp(hr.left + 8, m, Math.max(m, innerWidth - w - m)), fy = clamp(hr.top - h - 10, m, Math.max(m, innerHeight - h - m));
+    pv.style.transform = `translate(${Math.round(fx)}px,${Math.round(fy)}px)`;
+    return;
+  }
   let x = pvMouse.x + gap;
   if (x + w > innerWidth - m) x = pvMouse.x - gap - w;            // flip to the left of the cursor
   x = clamp(x, m, Math.max(m, innerWidth - w - m));
@@ -2135,6 +2172,7 @@ const tagOf = c => (c.cp ? 'Copy' : c.tok ? 'Token' : '');
 function previewFromEl(cardEl) {
   const pid = cardEl.dataset.pid, iid = cardEl.dataset.iid;
   S.hover = { pid, iid };
+  S.pvFix = pid === S.pid && cardEl.dataset.zone === 'hand' ? (cardEl.closest('#myHand, .thand') || null) : null;
   if (pid === S.pid) {
     const f = findCard(iid);
     if (f) {
@@ -2168,7 +2206,7 @@ function bindGame() {
     if (btn) { onButton(btn.dataset.a, btn, e); return; }
     if (S.ctrOpen && !t.closest('.ctrpanel')) { S.ctrOpen = null; render(); }
     // Sidebar / Focus layouts: click a player's tile to view their board big (YOU tile = back to mine)
-    const tile = t.closest('#opps .opp:not(.focus)');
+    const tile = t.closest('#opps .opp:not(.focus):not(.mytile)');
     if (tile && !t.closest('button, .life, .lifebox, .oz, [data-pile], .ohhand, .ctrpanel, .cdchip, .ocmd')) {
       const pid = tile.classList.contains('youtile') ? null : tile.dataset.opp;
       if (tile.classList.contains('youtile') && !S.focus) return;
@@ -2278,12 +2316,12 @@ function bindGame() {
     if (handle && handle.closest('.board').dataset.pid === S.pid) { startRegionDrag(e, handle); return; }
     // dragging one of my piles drags its top card (library: top of deck; graveyard/exile: newest)
     if (e.target.closest('.ad-control')) return; // the Auto-Draw switch inside the Library pile isn't a drag handle
-    const pile = e.target.closest('.zbox[data-pile]');
+    const pile = e.target.closest('.zbox[data-pile], .tpile[data-pile]');
     if (pile) {
       if (pile.dataset.pid !== S.pid) return;
       const list = S.me.zones[pile.dataset.pile] || [];
       const top = pile.dataset.pile === 'library' ? list[0] : list[list.length - 1];
-      if (top) drag = { iid: top.iid, el: pile.querySelector('.zcard') || pile, sx: e.clientX, sy: e.clientY, moved: false };
+      if (top) drag = { iid: top.iid, el: pile.querySelector('.zcard, .tpcard') || pile, sx: e.clientX, sy: e.clientY, moved: false };
       return;
     }
     const card = e.target.closest('.card');
