@@ -22,7 +22,7 @@ The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES
 
 - **Pull request:** [#4 — Animate opening first-player dice roll](https://github.com/ccall1212/commander-table/pull/4) — open for review.
 - **Branch:** `feat/animated-first-player-roll`.
-- Pressing **Start game** now automatically runs the host-side d20 roll for every seated player. A shared `firstroll` event carries the exact final results; every connected screen shows the number-roll animation and highlights the winner.
+- Pressing **Start game** now automatically runs the host-side d20 roll for every seated player. Every connected screen shows a slower, roughly 2.4-second tumble per die, with an angular faceted d20 graphic and spinning/perspective motion before revealing the synchronized final values and winner.
 - The same existing tie-reroll logic determines `T.order`; the highest roll starts the game. The separate Dice-menu action was removed so no extra step is needed. The overlay ignores pointer input and respects reduced-motion preferences.
 - Updated the app/cache version to `0.15.0`, added the player-facing help and Changelog notes, and moved Objective 2 to in progress / Objective 3 to next.
 - **Browser status:** not tested by ChatGPT. Press Start game with two to six players, confirm every player sees all final results and the winner marker, then verify the highest roller is the starting player. Test Sidebar and Grid and ensure the overlay dismisses without blocking clicks. Also verify reduced-motion mode.

@@ -545,7 +545,21 @@ function showFirstRoll(msg) {
                data-roll="${result.value}" data-winner="${result.pid === winner ? 'true' : 'false'}"
                aria-label="${esc(result.name)} d20 result">
             <div class="first-roll-name">${esc(result.name)}</div>
-            <div class="first-roll-die" aria-hidden="true"><span class="first-roll-number">20</span></div>
+            <div class="first-roll-die" aria-hidden="true">
+              <svg class="first-roll-d20-art" viewBox="0 0 100 100" focusable="false">
+                <polygon class="first-roll-d20-base" points="50,3 77,14 95,39 90,67 68,91 32,91 10,67 5,39 23,14"/>
+                <path class="first-roll-d20-facet facet-light" d="M50 3 L77 14 L50 39 Z"/>
+                <path class="first-roll-d20-facet facet-dark" d="M77 14 L95 39 L65 51 L50 39 Z"/>
+                <path class="first-roll-d20-facet facet-light" d="M95 39 L90 67 L65 62 L65 51 Z"/>
+                <path class="first-roll-d20-facet facet-dark" d="M90 67 L68 91 L56 68 L65 62 Z"/>
+                <path class="first-roll-d20-facet facet-light" d="M68 91 L32 91 L44 68 L56 68 Z"/>
+                <path class="first-roll-d20-facet facet-dark" d="M32 91 L10 67 L35 62 L44 68 Z"/>
+                <path class="first-roll-d20-facet facet-light" d="M10 67 L5 39 L35 51 L35 62 Z"/>
+                <path class="first-roll-d20-facet facet-dark" d="M5 39 L23 14 L50 39 L35 51 Z"/>
+                <path class="first-roll-d20-engraving" d="M50 3 L50 39 L35 51 L5 39 M23 14 L35 51 L10 67 M35 51 L44 68 L32 91 M35 51 L65 51 L68 91 M50 39 L65 51 L90 67 M65 51 L77 14 M65 51 L56 68 L50 39 M77 14 L95 39"/>
+              </svg>
+              <span class="first-roll-number">20</span>
+            </div>
             <div class="first-roll-die-caption">D20</div>
             <div class="first-roll-winner">GOES FIRST</div>
           </div>`).join('')}
@@ -569,22 +583,28 @@ function showFirstRoll(msg) {
     }
 
     tile.classList.add('rolling');
-    const stopAfter = 850 + index * 125;
-    lastRevealAt = Math.max(lastRevealAt, stopAfter);
-    const startedAt = Date.now();
-    const interval = setInterval(() => {
-      if (!overlay.isConnected) { clearInterval(interval); return; }
-      if (Date.now() - startedAt >= stopAfter) {
-        clearInterval(interval);
-        number.textContent = String(result);
-        tile.classList.remove('rolling');
-        tile.classList.add('revealed');
-        if (tile.dataset.winner === 'true') tile.classList.add('winner');
-      } else {
-        number.textContent = String(rnd(20) + 1);
-      }
-    }, 55);
-    overlay._ctRollIntervals.push(interval);
+    const rollDelay = index * 140;
+    const stopAfter = 2400;
+    lastRevealAt = Math.max(lastRevealAt, rollDelay + stopAfter);
+    // Stagger when each d20 starts, then let it tumble for a full three rotations.
+    const startRoll = setTimeout(() => {
+      if (!overlay.isConnected) return;
+      const startedAt = Date.now();
+      const interval = setInterval(() => {
+        if (!overlay.isConnected) { clearInterval(interval); return; }
+        if (Date.now() - startedAt >= stopAfter) {
+          clearInterval(interval);
+          number.textContent = String(result);
+          tile.classList.remove('rolling');
+          tile.classList.add('revealed');
+          if (tile.dataset.winner === 'true') tile.classList.add('winner');
+        } else {
+          number.textContent = String(rnd(20) + 1);
+        }
+      }, 75);
+      overlay._ctRollIntervals.push(interval);
+    }, rollDelay);
+    overlay._ctRollTimeouts.push(startRoll);
   });
 
   const dismiss = setTimeout(() => {
@@ -592,7 +612,7 @@ function showFirstRoll(msg) {
     overlay.classList.add('is-leaving');
     const remove = setTimeout(() => overlay.remove(), 240);
     overlay._ctRollTimeouts.push(remove);
-  }, (reduceMotion ? 0 : lastRevealAt) + 1750);
+  }, (reduceMotion ? 0 : lastRevealAt) + 1800);
   overlay._ctRollTimeouts.push(dismiss);
 }
 
