@@ -3276,12 +3276,17 @@ async function findRandomCommanderDeck() {
     for (const summary of shuffledCopy(summaries).slice(0, 24)) {
       const b = deckBracket(summary);
       if (b != null && b !== bracket) continue;
-      const rawUrl = summary.publicUrl || summary.url || summary.link || (source === 'moxfield' && summary.publicId ? 'https://moxfield.com/decks/' + summary.publicId : '');
+      let rawUrl = summary.publicUrl || summary.url || summary.link || '';
+      const deckId = summary.publicId || summary.id || summary.deckId || summary.deck_id;
+      if (rawUrl && !/^https:\/\//i.test(rawUrl)) {
+        rawUrl = source === 'moxfield' ? 'https://moxfield.com/decks/' + rawUrl : 'https://archidekt.com/decks/' + rawUrl;
+      }
+      if (!rawUrl && deckId) rawUrl = source === 'moxfield' ? 'https://moxfield.com/decks/' + deckId : 'https://archidekt.com/decks/' + deckId;
       if (!rawUrl) continue;
       let result;
       try { result = await fetchWebsiteDeck(rawUrl); } catch (e) { lastError = e; continue; }
       const actualBracket = deckBracket(result.data);
-      if (actualBracket !== bracket || !(deckLooksCommander(result.data) || source === 'archidekt')) continue;
+      if ((actualBracket == null ? b : actualBracket) !== bracket || !(deckLooksCommander(result.data) || source === 'archidekt')) continue;
       const parsed = Deck.parse(result.text);
       if (!parsed.main.length && !parsed.commanders.length) continue;
       $('#randomDeckResult').innerHTML = '<div class="random-deck-result"><b>Random match:</b> ' + esc(result.data.name || result.info.url) + ' · Bracket ' + bracket + ' · <a href="' + esc(result.info.url) + '" target="_blank" rel="noopener">Open source deck</a></div>';
