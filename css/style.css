@@ -300,6 +300,9 @@ body.side-open #side { display: grid; }
 .card.dragging { opacity: .25; }
 .card.ghost { position: fixed; pointer-events: none; z-index: 3000; opacity: .92; margin: 0; transition: none;
   box-shadow: 0 12px 30px rgba(0,0,0,.6); }
+/* A selected group uses one fixed preview layer with one clone per card. */
+.ct-group-ghost { position: fixed; pointer-events: none; z-index: 3000; opacity: .92; margin: 0; transition: none; }
+.ct-group-ghost > .card { box-shadow: 0 12px 30px rgba(0,0,0,.6); transition: none !important; }
 .card.dropattach { outline: 4px solid #7c4dff !important; outline-offset: 2px; }
 .boardwrap.dropok { outline: 2px dashed var(--accent); outline-offset: -3px; }
 body.attaching .board .card { cursor: crosshair; }
