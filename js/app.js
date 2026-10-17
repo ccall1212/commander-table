@@ -3205,7 +3205,7 @@ function listFromSearchResponse(data) {
   return [];
 }
 function deckBracket(data) {
-  const candidates = [data && data.bracket, data && data.userBracket, data && data.autoBracket, data && data.deckBracket,
+  const candidates = [data && data.edhBracket, data && data.bracket, data && data.userBracket, data && data.autoBracket, data && data.deckBracket,
     data && data.deck && data.deck.bracket, data && data.settings && data.settings.bracket];
   for (let v of candidates) {
     if (v && typeof v === 'object') v = v.value != null ? v.value : (v.name != null ? v.name : (v.label != null ? v.label : (v.id != null ? v.id : v.bracket)));
