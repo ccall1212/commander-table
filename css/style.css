@@ -1011,11 +1011,19 @@ html:has(body.touch-mode), body.touch-mode {
   overflow: hidden;
   overscroll-behavior: none;
 }
+body.touch-mode #lobby {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
 body.touch-mode #game {
   height: 100vh;
   height: 100dvh;
   min-height: 0;
   overflow: hidden;
+  padding-bottom: env(safe-area-inset-bottom);
 }
 body.touch-mode #table,
 body.touch-mode #mine,
