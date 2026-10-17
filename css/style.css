@@ -906,13 +906,10 @@ body.lens-on #pv { display: none; }
   position: fixed;
   z-index: 2147483647;
   pointer-events: none;
-  border: 2px solid transparent;
+  border: 4px solid transparent;
   background-clip: padding-box, border-box;
   will-change: transform, opacity;
   filter: drop-shadow(0 3px 8px rgba(0, 0, 0, .45));
-}
-@media (prefers-reduced-motion: reduce) {
-  .ct-slam-ring { display: none !important; }
 }
 
 /* Draw animation: a click-through flight from a player's Library to their hand. */
