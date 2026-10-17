@@ -2,11 +2,11 @@
 
 This folder records changes prepared or committed by ChatGPT for Commander Table, along with release steps that remain incomplete. It is a handoff log, not a replacement for `CHANGELOG.md` (which is the player-facing release history) or `AGENTS.md` (which documents the project's development and release workflow).
 
-The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES.md). Objectives 1–3 are complete and deployed; Objective 4 (larger battlefield cards on larger displays) is next. Objectives 9–12 remain queued, including the random-deck picker, Auto-Draw label, drag-selection, and Forge-inspired targeting arrows.
+The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES.md). Objectives 1–3 are complete and deployed; Objective 10 (Auto-Draw label) is the active small fix. Objective 4 (larger battlefield cards) is intentionally deferred for now. Objectives 9–12 remain queued, including random deck selection, the Auto-Draw label, drag-selection, and Forge-inspired targeting arrows.
 
-**Status checked:** 2026-10-17  
+**Status checked:** 2026-10-16  
 **App version on main:** `0.15.1` (merged and deployed)  
-**App version on active feature branch:** none; PR #6 was merged.  
+**App version on active feature branch:** `0.15.2` (Objective 10, Auto-Draw label; awaiting preview and approval).  
 **Release tag status:** annotated tags `v0.14.1`, `v0.14.2`, `v0.15.0`, and `v0.15.1` still need to be created and verified locally; see “Remaining release housekeeping” below.
 
 ## Active-player yellow outline — v0.14.2 (merged to main)
@@ -39,6 +39,14 @@ The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES
 - **Browser status:** Chris reviewed the preview and authorized publication. ChatGPT did not independently run real-browser hit testing or the multiplayer life-request checks. The PR lists the recommended checks for Sidebar/Grid at 1920×1080 and 1366×768.
 - **Release tag:** `v0.15.1` should point to merge commit `5927f82caf2e6ff82a9e065535044f27c653294b`; annotated tag creation remains a local step.
 - Objective #12 (Forge-inspired targeting arrows) is queued and is not part of this life-control change.
+
+## Auto-Draw label — v0.15.2 in progress
+
+- **Objective:** #10 — spell out the top-bar AD label as **Auto-Draw**.
+- **Branch:** `fix/auto-draw-label`.
+- Replaces the small `AD` abbreviation with `Auto-Draw`, updates its tooltip, trims minor letter spacing to keep it compact, and updates the player guide and Changelog.
+- Bumps app/cache references to `0.15.2`.
+- **Browser status:** ChatGPT has not run a real browser. Preview at 1920×1080 and 1366×768 in Sidebar and Grid layouts, and confirm the longer label does not crowd Untap All, Pass Turn, phase controls, or room/status information.
 
 ## Changes made by ChatGPT
 

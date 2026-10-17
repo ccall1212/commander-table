@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.15.1';
+const APP_VERSION = '0.15.2';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -1995,7 +1995,7 @@ function renderTop() {
   const turnActions = $('#turnActions');
   if (turnActions) {
     const autoUntap = `<label class="tgl" title="Auto: Untap everything at the start of your turn (${S.me.autoUntap ? 'on' : 'off'})"><input type="checkbox" data-a="autountap"${S.me.autoUntap ? ' checked' : ''}><span></span></label>`;
-    const autoDraw = `<span class="ad-label" title="AD means Auto-Draw: automatically draws a card at the start of your turn">AD</span><label class="tgl" title="Auto: Draw a card at the start of your turn (${S.me.autoDraw ? 'on' : 'off'})"><input type="checkbox" data-a="autodraw"${S.me.autoDraw ? ' checked' : ''}><span></span></label>`;
+    const autoDraw = `<span class="ad-label" title="Auto-Draw: automatically draws a card at the start of your turn">Auto-Draw</span><label class="tgl" title="Auto: Draw a card at the start of your turn (${S.me.autoDraw ? 'on' : 'off'})"><input type="checkbox" data-a="autodraw"${S.me.autoDraw ? ' checked' : ''}><span></span></label>`;
     turnActions.innerHTML = `<div class="turn-actions"><div class="ztool"><button data-a="untapall" title="Untap all (U)">Untap All</button>${autoUntap}${autoDraw}</div>${passBtn()}</div>`;
   }
   const banner = $('#banner');

@@ -1,6 +1,6 @@
 # Commander Table — Objectives Backlog
 
-This is the working list of the next UI and gameplay improvements requested by Chris. Keep the original numbering so we can work through them one at a time. Objectives 1–3 are complete; **Objective 4** is next. Objectives 7–12 remain queued.
+This is the working list of the next UI and gameplay improvements requested by Chris. Keep the original numbering so we can work through them one at a time. Objectives 1–3 are complete; **Objective 10** is the active small fix. Objective 4 (larger cards) is intentionally deferred for now. Objectives 7–9 and 11–12 remain queued.
 
 ## Status key
 
@@ -93,11 +93,11 @@ Add a **Choose Random Deck** option on the opening/join screen for quick testing
 - Load the chosen deck into the lobby using the existing deck import flow wherever source access allows.
 - Investigate what public search/API support each source provides; keep manual import available if random discovery is restricted.
 
-## 10. Spell out the Auto-Draw label — QUEUED
+## 10. Spell out the Auto-Draw label — IN PROGRESS (v0.15.2 branch)
 
 Replace the tiny **AD** label in the top controls with **Auto-Draw** so it is clear what the toggle does.
 
-- Keep the control readable without pushing other top-bar actions out of place.
+- The branch now uses the full **Auto-Draw** label, keeps the text on one line, and trims a little extra letter spacing to help it fit.
 - Check at 1920×1080 and 1366×768, and in both Sidebar and Grid layouts.
 
 ## 11. Drag a selection rectangle to move multiple cards — QUEUED

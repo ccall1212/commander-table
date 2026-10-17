@@ -840,4 +840,4 @@ body.lens-on #pv { display: none; }
 #table.view-top.has-focus .opp.focus .obf { padding-bottom: 4px; }
 #table.view-top #myHand .card.hov { transform: translateY(-9%) rotate(0deg) scale(1.04); }
 
-.turn-actions .ad-label { color: var(--good); font-size: 11px; font-weight: 800; letter-spacing: .4px; cursor: help; user-select: none; margin-left: 4px; }
+.turn-actions .ad-label { color: var(--good); font-size: 11px; font-weight: 800; letter-spacing: 0; cursor: help; user-select: none; margin-left: 2px; flex: none; }
