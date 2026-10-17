@@ -2,7 +2,7 @@
 
 This folder records changes prepared or committed by ChatGPT for Commander Table, along with release steps that remain incomplete. It is a handoff log, not a replacement for `CHANGELOG.md` (which is the player-facing release history) or `AGENTS.md` (which documents the project's development and release workflow).
 
-The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES.md). Objectives 1–3 and 8, 10, and 13 are complete and deployed. Objective 4 (larger battlefield cards) is intentionally deferred for now. Objectives 5–7, 9, 11, and 12 remain queued.
+The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES.md). Objectives 1–3 and 8, 10, and 13 are complete and deployed. Objective 4 (larger battlefield cards) is intentionally deferred for now. **Objective #9 (random deck picker plus website URL import) is in progress; Objective #6 (draw-card animation) is next.** Objectives 5, 7, and 11–12 remain queued.
 
 **Status checked:** 2026-10-17  
 **App version on main:** `0.16.0` (merged and deployed).  
@@ -10,6 +10,14 @@ The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES
 **GitHub Pages:** [deployment run `38996909975`](https://github.com/ccall1212/commander-table/actions/runs/38996909975) succeeded.  
 **Browser testing:** ChatGPT verified source-level checks only; real-browser/multiplayer checks remain for Chris to run.  
 **Release tag status:** annotated tags `v0.14.1`, `v0.14.2`, `v0.15.0`, `v0.15.1`, and `v0.16.0` still need to be created and verified locally; see “Remaining release housekeeping” below.
+**Active feature branch:** `feat/random-commander-deck-picker` — v0.17.0 preview for Objective #9, not merged or published.
+
+## Next feature priorities
+
+1. **Objective #9 — Random deck picker from Archidekt or Moxfield.** Investigate what public deck discovery/import interfaces are actually available and whether bracket metadata can be trusted. Keep manual deck import available if automated discovery or bracket filters are limited.
+2. **Objective #6 — Draw-card animation.** Once the random deck picker is addressed, animate a draw from Library toward hand and flipping on arrival, including an appropriate opponent-visible animation. Keep it brief and non-blocking, and avoid animating unrelated hand movements.
+
+The numbered objective IDs remain unchanged; these are execution priorities only.
 
 ## Active-player yellow outline — v0.14.2 (merged to main)
 
@@ -54,6 +62,18 @@ The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES
 - App/meta and the 14 local CSS/JS cache-busting references are set to `0.16.0`.
 - **Browser status:** ChatGPT ran syntax/source checks only. Manual checks should confirm the hotkeys work only in their intended context, including T playing a hand card tapped into the correct battlefield area and T still tapping/untapping battlefield cards; the mill action should move exactly one top card, animation and sound should be brief, and the Hotkey list should fit the modal. Check at 1920×1080 and 1366×768 in Sidebar and Grid.
 - **Release tag:** `v0.16.0` should point to merge commit `5840ed166e1759fb249bfe0b855817640e23412e`; creating and pushing the annotated tag is still a local step.
+
+## Random Commander deck picker and website URL import — v0.17.0 in progress
+
+- **Priority:** Objective #9 is being implemented first; Objective #6 (draw-card animation) remains the next feature after this one.
+- **Branch:** `feat/random-commander-deck-picker`; the app/meta version and 14 CSS/JS cache-busting references are being advanced to `0.17.0` on the preview branch only.
+- Added a lobby panel to choose Archidekt or Moxfield and bracket 1–4 for random public Commander deck discovery.
+- Added **Import from website** for public Moxfield and Archidekt deck URLs, including the example Moxfield URL supplied by Chris. Fetched card lists go through the existing Scryfall resolution, commander selection, and Save deck flow.
+- The providers' deck endpoints are not guaranteed stable public APIs. Moxfield may block unauthenticated/automated requests and browser-origin access; Archidekt can also change its undocumented endpoints. The interface surfaces errors and keeps plain-text export/import as a fallback. Random picks require a clear matching bracket; unknown-bracket decks are not treated as a match.
+- **Source research:** [Moxfield unofficial API notes](https://github.com/wildfire111/moxfield_api_docs/blob/main/docs.json), [recent report of public API access being blocked](https://www.reddit.com/r/Moxfield/comments/1ubbry2/deck_api_no_longer_works/), and [Archidekt community discussion of deck APIs](https://archidekt.com/forum/thread/16962481).
+- **Source-level checks:** JavaScript parses successfully. Checked that the app version, HTML meta version and all 14 local CSS/JS cache-busting references agree on `0.17.0`. A small in-tool fixture check exercised the supplied Moxfield URL format, a sample Archidekt URL, numeric/named bracket values, and synthetic deck data through the existing parser; commander/name/quantity handling worked and sideboard/maybeboard entries were excluded.
+- **Not tested yet:** real-browser retrieval of the provided Moxfield URL or an Archidekt URL, random selection for all four brackets, CORS/provider errors, deck-resolution behavior, and visual layout. Moxfield's unofficial API documentation says access is not officially supported and current API calls may require bearer authentication, while a June 2026 user report describes Cloudflare blocking unauthenticated deck fetches; see [the unofficial docs](https://github.com/wildfire111/moxfield_api_docs/blob/main/docs.json) and [the report](https://www.reddit.com/r/Moxfield/comments/1ubbry2/deck_api_no_longer_works/). The interface must surface these limitations and keep plain-text import as the fallback.
+- No changes have been merged or published for v0.17.0. The live app remains v0.16.0 until Chris approves the feature.
 
 ## Changes made by ChatGPT
 
