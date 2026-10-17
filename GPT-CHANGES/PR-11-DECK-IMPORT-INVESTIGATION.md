@@ -48,6 +48,10 @@ This led to adding `https://api.moxfield.com/v2/decks/all/{deckId}` as a third f
 - Random search has not been tested against live search results or bracket metadata.
 - The app has not been browser-tested at typical viewport sizes or in multiplayer.
 
+## Release/version coordination
+
+Draft PR #12 (draw-card animation) is now active separately from this paused PR. Both preview branches currently use version `0.17.0` because neither change has shipped. If PR #12 is merged first, update PR #11's app version, all cache-busting refs, changelog and compare links to the next unused version before considering #11 for merge. Do not merge both unchanged as two different v0.17.0 releases.
+
 ## Instructions for Claude Code
 
 1. Review PR #11 and this handoff. Keep it as a draft; do not merge it or publish v0.17.0.
