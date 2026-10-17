@@ -15,7 +15,7 @@
 3. **Only on play:** drag/reposition the Commander after it is on the battlefield. No slam should play.
 4. **Other cards:** move a normal card from your hand onto the battlefield. It should not get the Commander slam.
 5. **Other moves:** move a Commander from graveyard or exile to the battlefield. It should not get the command-zone slam.
-6. **Multiplayer:** with a second player, play a Commander from the command zone. Both players should see the same brief effect, and the card must remain clickable during the animation.
+6. **Online (the case that was broken):** click **Host a game** in the first tab, copy the room code, and in a second tab open `http://127.0.0.1:8099/index.html?join=<ROOM>` with another name and deck. In the first tab, cast your Commander from the command zone by double-clicking it, then again (after returning it) by dragging it onto your battlefield. **Both tabs** should show the colored ring, and you should hear a short thud in the tab that cast it. Try it from the second tab too. The card must stay clickable during the animation.
 7. **Layouts/sizes:** test Sidebar and Grid at approximately 1920×1080 and 1366×768.
 8. **Reduced motion:** enable your operating system/browser reduced-motion preference and reload. The effect should show a brief static color flash (no movement); the impact sound should still play.
 9. **Console:** check for errors.
