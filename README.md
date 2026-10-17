@@ -41,6 +41,7 @@ Decks are saved in your browser.
 - One person clicks **Host a game** and gets a 5-letter room code. Click the code in the top-left to copy an invite link, and send it to your friends. (☰ → **Copy invite link** does the same thing.)
 - Everyone else opens the link (or enters the code) and clicks **Join**.
 - The host clicks **Start game** to begin. If everyone rolled for first player (🎲 Dice, see **Turn helpers**), that order is used. Otherwise the turn order is random.
+- The player whose turn it is has a yellow outline around their board in Sidebar and Grid layouts.
 - Supports 2 to 4 players comfortably, and the table seats up to 6. It's designed for 1v1 up to 4-player Commander.
 - Want to practice alone? Click **Practice solo**.
 - To concede, ☰ → **Concede game…** marks you out and skips you in turn order. If it was your turn, play passes to the next player.

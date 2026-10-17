@@ -91,7 +91,14 @@ body.side-open #side { display: grid; }
 #opps:empty::after { content: 'Waiting for other players to join… share the room code at the top left.'; margin: auto; color: var(--muted); }
 .opp { flex: 1; min-width: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); background: var(--panel);
   border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-.opp.active, #mine.active { box-shadow: 0 0 0 2px var(--accent) inset; }
+/* Draw the active-player border above board content; the old inset shadow was hidden by the opaque board layers. */
+.opp.active::after, #mine.active::after {
+  content: ""; position: absolute; inset: 0; border: 3px solid var(--accent); border-radius: inherit;
+  pointer-events: none; z-index: 100;
+}
+/* #mine overlays a viewed opponent / the miniature YOU board, so it must not outline the wrong surface. */
+#table.has-focus #mine.active::after, #table.grid-mine #mine.active::after,
+#table.view-side:not(.has-focus) .opp.youtile.active::after { display: none; }
 .opp.offline { opacity: .6; }
 .opp.out { opacity: .35; }
 .ohead, #myBar { position: relative; display: flex; align-items: center; gap: 8px; padding: 4px 8px; flex-wrap: wrap; font-size: 13px; }
