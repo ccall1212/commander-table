@@ -2254,13 +2254,13 @@ function renderBody() {
 }
 
 function appearanceBackFor(pid) {
-  const owner = pid === S.pid ? S.me : (S.players[pid] || null);
-  if (pid === S.pid && CTAppearance.getCustom().cardBack) return 'custom-local';
+  const owner = pid === S.pid ? S.me : (S.players[pid] || null), custom = CTAppearance.getCustom();
+  if (pid === S.pid && custom.cardBack && custom.cardBackActive) return 'custom-local';
   return CTAppearance.normalizePrefs(owner && owner.appearance).cardBack;
 }
 function appearanceBoardStyleFor(pid) {
-  const owner = pid === S.pid ? S.me : (S.players[pid] || null);
-  if (pid === S.pid && CTAppearance.getCustom().background) return CTAppearance.boardBackgroundStyle('custom-local');
+  const owner = pid === S.pid ? S.me : (S.players[pid] || null), custom = CTAppearance.getCustom();
+  if (pid === S.pid && custom.background && custom.backgroundActive) return CTAppearance.boardBackgroundStyle('custom-local');
   return CTAppearance.boardBackgroundStyle(CTAppearance.normalizePrefs(owner && owner.appearance).background);
 }
 function cardHTML(c, def, o) {
@@ -3843,17 +3843,14 @@ function bindLobby() {
 }
 function renderAppearancePickers() {
   const prefs = CTAppearance.getPrefs(), custom = CTAppearance.getCustom();
-  $('#cardBackPicker').innerHTML = CTAppearance.renderCardBacks(prefs.cardBack);
-  $('#backgroundPicker').innerHTML = CTAppearance.renderBackgrounds(prefs.background);
-  const bp = $('#customBackPreview'), gp = $('#customBackgroundPreview');
-  if (bp) bp.style.cssText = custom.cardBack ? CTAppearance.cardBackStyle('custom-local') : '';
-  if (gp) gp.style.cssText = custom.background ? CTAppearance.backgroundPreviewStyle('custom-local') : '';
+  $('#cardBackPicker').innerHTML = CTAppearance.renderCardBacks(custom.cardBack && custom.cardBackActive ? 'custom-local' : prefs.cardBack);
+  $('#backgroundPicker').innerHTML = CTAppearance.renderBackgrounds(custom.background && custom.backgroundActive ? 'custom-local' : prefs.background);
   const rb = $('#resetCustomBack'), rg = $('#resetCustomBackground');
   if (rb) rb.disabled = !custom.cardBack;
   if (rg) rg.disabled = !custom.background;
   const bs = $('#customBackStatus'), gs = $('#customBackgroundStatus');
-  if (bs && !bs.textContent) bs.textContent = custom.cardBack ? 'Custom image active on this browser.' : 'Using selected preset.';
-  if (gs && !gs.textContent) gs.textContent = custom.background ? 'Custom image active on this browser.' : 'Using selected preset.';
+  if (bs) bs.textContent = custom.cardBack ? (custom.cardBackActive ? 'Saved in this browser · currently in use.' : 'Saved in this browser · not currently selected.') : 'No saved card-back image.';
+  if (gs) gs.textContent = custom.background ? (custom.backgroundActive ? 'Saved in this browser · currently in use.' : 'Saved in this browser · not currently selected.') : 'No saved background image.';
 }
 function readCustomImage(file, kind) {
   const status = $(kind === 'cardBack' ? '#customBackStatus' : '#customBackgroundStatus');
@@ -3877,7 +3874,6 @@ function readCustomImage(file, kind) {
     while (data.length > 1450000 && quality > 0.5) { quality -= 0.1; data = canvas.toDataURL('image/webp', quality); }
     if (data.length > 1450000) { status.textContent = 'That image is still too large after optimization. Try a simpler or smaller image.'; return; }
     if (!CTAppearance.saveCustom(kind, data)) { status.textContent = 'Browser storage is full. Clear site storage or try a smaller image.'; return; }
-    status.textContent = 'Custom image saved in this browser.';
     renderAppearancePickers();
     if (!$('#game').classList.contains('hidden')) render();
   };
@@ -3886,8 +3882,6 @@ function readCustomImage(file, kind) {
 }
 function resetCustomImage(kind) {
   CTAppearance.clearCustom(kind);
-  const status = $(kind === 'cardBack' ? '#customBackStatus' : '#customBackgroundStatus');
-  status.textContent = 'Using selected preset.';
   const input = $(kind === 'cardBack' ? '#customBackFile' : '#customBackgroundFile');
   if (input) input.value = '';
   renderAppearancePickers();
@@ -3897,11 +3891,17 @@ function chooseAppearance(e, kind) {
   const choice = e.target.closest('[data-appearance-id]');
   if (!choice) return;
   const prefs = CTAppearance.getPrefs(), id = choice.dataset.appearanceId;
-  if (kind === 'cardBack' && !CTAppearance.backOptions.some(x => x.id === id)) return;
-  if (kind === 'background' && !CTAppearance.backgroundOptions.some(x => x.id === id)) return;
-  prefs[kind] = id;
-  CTAppearance.savePrefs(prefs);
+  if (id === 'custom-local') {
+    if (!CTAppearance.setCustomActive(kind, true)) return;
+  } else {
+    if (kind === 'cardBack' && !CTAppearance.backOptions.some(x => x.id === id)) return;
+    if (kind === 'background' && !CTAppearance.backgroundOptions.some(x => x.id === id)) return;
+    CTAppearance.setCustomActive(kind, false);
+    prefs[kind] = id;
+    CTAppearance.savePrefs(prefs);
+  }
   renderAppearancePickers();
+  if (!$('#game').classList.contains('hidden')) render();
 }
 function closeImport() {
   $('#importBox').classList.add('hidden'); $('#importBtn').classList.remove('hidden');
