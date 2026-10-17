@@ -107,6 +107,7 @@ Add a **Choose Random Deck** option on the opening/join screen for quick testing
 - **Source-level tests completed:** JavaScript parses; URL parsing accepts the supplied Moxfield URL and a sample Archidekt URL; synthetic Moxfield/Archidekt response fixtures preserve the deck name, commander, quantities, and exclude sideboard/maybeboard cards; numeric and named bracket values are recognized. These fixtures do not prove the live provider endpoints work.
 - **Manual browser tests still needed:** try the supplied Moxfield URL and a public Archidekt URL, all four bracket choices, provider-blocked/private/error fallbacks, card-resolution errors, and visual layout. Do not mark Objective #9 complete until checked.
 - **Current preview:** [Draft PR #11](https://github.com/ccall1212/commander-table/pull/11) on branch `feat/random-commander-deck-picker-preview`; it is not merged or published.
+- The earlier docs-only [PR #10](https://github.com/ccall1212/commander-table/pull/10) was closed as superseded; its priority notes are included here and in PR #11.
 
 ## 10. Spell out the Auto-Draw label — COMPLETE (v0.16.0 merged and deployed)
 
