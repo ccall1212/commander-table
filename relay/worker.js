@@ -54,6 +54,8 @@ function deckApiTargets(site, action, id) {
       return [
         { url: `https://api2.moxfield.com/v3/decks/all/${encodeURIComponent(id)}`, ttl: 900, site },
         { url: `https://api2.moxfield.com/v2/decks/all/${encodeURIComponent(id)}`, ttl: 900, site },
+        // Forge uses this older host/version for public deck URL imports.
+        { url: `https://api.moxfield.com/v2/decks/all/${encodeURIComponent(id)}`, ttl: 900, site },
       ];
     }
   }
