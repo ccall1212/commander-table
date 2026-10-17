@@ -320,6 +320,12 @@ body.attaching .board .card:hover { outline: 3px solid #7c4dff; }
   position: absolute; bottom: calc(100% + 26px); left: 50%; transform: translateX(-50%); z-index: 40; white-space: nowrap;
   box-shadow: 0 8px 24px rgba(0,0,0,.5); }
 
+/* Optional iPad touch mode: keep card previews actionable and suppress Safari callouts. */
+body.touch-mode #pv.floatpv { pointer-events: auto; width: min(320px, calc(100vw - 24px)); max-height: calc(100vh - 24px); overflow-y: auto; }
+body.touch-mode .ct-touch-actions { display: block; width: 100%; min-height: 44px; margin-top: 8px; border: 1px solid var(--accent); border-radius: 8px; background: var(--accent); color: #17130a; font: 700 15px/1.2 system-ui, sans-serif; }
+body.touch-mode .card, body.touch-mode .board, body.touch-mode .w-menu { -webkit-touch-callout: none; }
+body.touch-mode .card:hover { transform: none; }
+
 /* ---------- Lanes & cards ---------- */
 .lane { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-height: 6px; }
 .lane:empty { display: none; }
