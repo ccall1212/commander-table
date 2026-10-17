@@ -1,6 +1,6 @@
 # Commander Table — Objectives backlog
 
-Features Chris has asked for that are **not built yet**. The numbers are Chris's original numbering; finished ones (1, 2, 3, 6, 8, 10, 13, 14) were removed, and #7 (opponent boards looking dim) was dropped: the dimming only applies to players who are reconnecting or out, on purpose. Work on one at a time on its own branch and pull request, and read `AGENTS.md` first.
+Features Chris has asked for that are **not built yet or remain open**. The numbers are Chris's original numbering; finished ones (1, 2, 3, 6, 8, 10, 13, 14, 16) were removed, and #7 (opponent boards looking dim) was dropped: the dimming only applies to players who are reconnecting or out, on purpose. Objective #15 is in progress; see [GPT-CHANGES/README.md](README.md). Work on one at a time on its own branch and pull request, and read `AGENTS.md` first.
 
 Status key: **Queued** = requested, not started. **In progress** = a branch / PR exists (see `README.md`). **Paused** = started, waiting on something. **Deferred** = on purpose not now.
 
@@ -16,13 +16,14 @@ Cards feel a little small when the browser is maximized on a 2K display (the siz
 - **Where to look:** in Sidebar your own board is drawn at its natural scale (limited by width). In Grid and in the opponent miniatures the board is auto-fitted: `computeFit()` in `js/app.js` picks the card size, and its `capPx` caps card width (56 px in miniatures, 150 px for a big board). Changing those numbers is the likely lever, but check that crowded boards still fit.
 - Avoid clipping or overlapping cards more than today.
 
-## 5. One-time "slam" animation when a card is played — IN PROGRESS
+## 5. One-time "slam" animation when a card is played — SHIPPED; SOUND REFINEMENT OPEN
 
-When a Commander moves from the command zone to the battlefield, play a brief, clearly visible slam animation with a glow in the card's colour identity and a short impact sound. Ordinary card placements and battlefield repositioning use a softer tap; Commander casts use a heavier boom and a longer color-identity ring. Optionally do the same the first time a card with mana value 8 or more enters the battlefield.
+The Commander-to-battlefield slam animation and synthesized impact sound are published in v0.20.6 (PR #28). Chris wants to keep refining the sound, so any further audio work should be a separate focused change and must not disturb the currently published v0.20.6 version while under review.
 
 - Trigger on the play event only, never on later dragging or repositioning.
-- Keep it short, make it click-through, and respect `prefers-reduced-motion`.
-- **Where to look:** card moves go through `moveCard()` / `doMove()` in `js/app.js`. The draw-card animation (`animateDrawCard()` and the `drawfx` message) is a working example of a click-through overlay effect that other players also see; copy its approach (a small host-validated message carrying no hidden information).
+- Keep it short, click-through, and respectful of `prefers-reduced-motion`.
+- Ordinary card placements and battlefield repositioning should use the softer tap; Commander casts use the heavier boom and longer color-identity ring.
+- **Where to look:** card moves go through `moveCard()` / `doMove()` in `js/app.js`. The draw-card animation (`animateDrawCard()` and the `drawfx` message) is a working example of a click-through overlay effect that other players also see.
 
 ## 9. Choose a random deck from Archidekt or Moxfield — PAUSED
 
@@ -34,19 +35,8 @@ Let a player draw an arrow from one card (or player) to another so the table can
 
 - Right-click a card → **Send arrow to…**, then click the target (any player's battlefield). Everyone sees the same arrow. Make cancelling and clearing easy.
 - Arrows are visual only: they must never move cards or change game state. Keep the existing right-click menus, dragging and touch behaviour working.
-- **Where to look:** cross-player actions are messages relayed by the host, which validates the sender (see how `drawfx` is validated in `hostRecv`). Arrows need the same treatment, and must survive layout changes and the board scaling, so anchor them to card ids (`data-iid`), not pixel positions, and redraw after each render (`setHTML()` patches the DOM in place and cards are matched by `data-iid`).
-- Start with one simple arrow at a time; decide colours/labels and the exact menu wording during implementation.
-
-
-## 15. Upload custom table backgrounds and card backs — QUEUED
-
-Allow players to upload their own image for a table background and/or card back, if the current rendering and settings structure can support it cleanly.
-
-- Clearly show the required/recommended pixel dimensions, aspect ratio, and supported file types beside the upload control **before** the player chooses a file. Derive these requirements from the actual rendering behavior rather than guessing dimensions.
-- Explain whether the image will be cropped, stretched, or fitted, and provide a preview if practical.
-- Validate files and handle oversized or unsupported images with a clear message; avoid breaking the table if an image fails to load.
-- Define whether uploads are local to that player's browser or shared with other players before implementation. Do not upload user images to a server unless that is explicitly designed and explained.
-- Keep default backgrounds and card backs available, with an easy way to restore them.
+- **Where to look:** cross-player actions are messages relayed by the host, which validates the sender (see how `drawfx` is validated in `hostRecv`). Arrows need the same treatment, and must survive layout changes and board scaling, so anchor them to card ids (`data-iid`), not pixel positions, and redraw after each render (`setHTML()` patches the DOM in place and cards are matched by `data-iid`).
+- Start with one simple arrow at a time; decide colours/labels and exact menu wording during implementation.
 
 ## 17. Separate floating chat notifications — QUEUED
 
