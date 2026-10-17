@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.16.0';
+const APP_VERSION = '0.17.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -3052,6 +3052,258 @@ function renderDeckList() {
       <span class="dn">${esc(d.name)}</span><span class="dc">${esc(d.commanderNames.join(' + ') || 'no commander')} · ${d.count} cards</span>
       <button class="x" data-del="${esc(d.id)}" title="Delete deck">✕</button></div>`).join('');
 }
+// Public deck URL import and random Commander deck discovery.
+// These provider endpoints are unofficial and may reject browser requests; the existing
+// plain-text importer remains the reliable fallback.
+function publicDeckSource(raw) {
+  let u;
+  try { u = new URL(String(raw || '').trim()); } catch (e) { throw new Error('Paste a full Moxfield or Archidekt deck URL.'); }
+  if (u.protocol !== 'https:') throw new Error('For safety, use an HTTPS Moxfield or Archidekt deck link.');
+  const host = u.hostname.toLowerCase();
+  const parts = u.pathname.split('/').filter(Boolean);
+  if ((host === 'moxfield.com' || host === 'www.moxfield.com') && parts[0] === 'decks' && parts[1] && /^[A-Za-z0-9_-]+$/.test(parts[1])) {
+    return { source: 'moxfield', id: parts[1], url: 'https://moxfield.com/decks/' + parts[1] };
+  }
+  if ((host === 'archidekt.com' || host === 'www.archidekt.com') && parts[0] === 'decks' && parts[1] && /^\d+$/.test(parts[1])) {
+    return { source: 'archidekt', id: parts[1], url: 'https://archidekt.com/decks/' + parts[1] };
+  }
+  throw new Error('That link does not look like a public Moxfield or Archidekt deck URL.');
+}
+async function fetchProviderJson(url, provider) {
+  let res;
+  try { res = await fetch(url, { headers: { Accept: 'application/json' } }); }
+  catch (e) {
+    throw new Error(provider + ' did not allow this browser to read its deck data. Open the deck website, use Export → Copy Plain Text, then choose “+ Import a deck” to paste it. This avoids relying on the provider’s restricted API.');
+  }
+  if (!res.ok) throw new Error(provider + ' returned HTTP ' + res.status + '. The deck may be private, or the site may be restricting public API access. You can still import its plain-text export.');
+  let data;
+  try { data = await res.json(); } catch (e) { throw new Error(provider + ' returned data that Commander Table could not read. Use the website’s plain-text export instead.'); }
+  return data;
+}
+function safeDeckName(v) { return String(v || '').replace(/[\r\n]+/g, ' ').trim().slice(0, 120); }
+function cardRowFromApi(key, item) {
+  item = item || {};
+  const card = item.card || item.cardData || item;
+  const name = safeDeckName(card.name || (card.oracleCard && card.oracleCard.name) || item.name || key);
+  const quantity = Math.floor(Number(item.quantity != null ? item.quantity : (item.qty != null ? item.qty : 1)));
+  if (!name || !Number.isFinite(quantity) || quantity < 1 || quantity > 500) return null;
+  return { name, quantity, raw: item };
+}
+function entriesFromBoard(board) {
+  if (!board) return [];
+  if (Array.isArray(board)) return board.map((item, i) => cardRowFromApi(i, item)).filter(Boolean);
+  if (board.cards && !Array.isArray(board.cards)) board = board.cards;
+  if (board.cards && Array.isArray(board.cards)) board = board.cards;
+  if (Array.isArray(board)) return board.map((item, i) => cardRowFromApi(i, item)).filter(Boolean);
+  return Object.entries(board).map(([key, item]) => cardRowFromApi(key, item)).filter(Boolean);
+}
+function archidektCategoryNames(entry, categoryNames) {
+  const out = [];
+  const values = []
+    .concat(Array.isArray(entry.categories) ? entry.categories : [])
+    .concat(Array.isArray(entry.category) ? entry.category : (entry.category != null ? [entry.category] : []));
+  values.forEach(v => {
+    if (v && typeof v === 'object') {
+      if (v.name) out.push(String(v.name));
+      else if (v.id != null && categoryNames.has(String(v.id))) out.push(categoryNames.get(String(v.id)));
+    } else if (categoryNames.has(String(v))) out.push(categoryNames.get(String(v)));
+    else if (typeof v === 'string') out.push(v);
+  });
+  return out.join(' ').toLowerCase();
+}
+function deckTextFromProvider(data, info) {
+  if (!data || typeof data !== 'object') throw new Error('The provider returned an empty deck.');
+  let name = safeDeckName(data.name || data.deckName) || (info.source === 'moxfield' ? 'Moxfield deck' : 'Archidekt deck');
+  let commanders = [], main = [];
+  if (info.source === 'moxfield') {
+    const boards = data.boards && typeof data.boards === 'object' ? data.boards : data;
+    const getBoard = key => {
+      const b = boards[key] || {};
+      return entriesFromBoard(b.cards && !Array.isArray(b.cards) ? b.cards : b.cards || b);
+    };
+    commanders = getBoard('commanders');
+    main = getBoard('mainboard');
+    // Some exports return a top-level card map without the nested boards wrapper.
+    if (!main.length && !commanders.length && data.cards) main = entriesFromBoard(data.cards);
+  } else {
+    const catMap = new Map();
+    (Array.isArray(data.categories) ? data.categories : []).forEach(c => { if (c && c.id != null && c.name) catMap.set(String(c.id), String(c.name)); });
+    const cards = Array.isArray(data.cards) ? data.cards : (data.deck && Array.isArray(data.deck.cards) ? data.deck.cards : []);
+    cards.forEach(item => {
+      const row = cardRowFromApi('', item);
+      if (!row) return;
+      const cn = archidektCategoryNames(item, catMap);
+      if (/\bcommander\b/.test(cn)) commanders.push(row);
+      else if (!/\b(sideboard|maybeboard|considering|tokens?|companion)\b/.test(cn)) main.push(row);
+    });
+  }
+  const text = ['About:', 'Name: ' + name, '# Source: ' + info.url, ''];
+  if (commanders.length) {
+    text.push('Commanders:');
+    commanders.forEach(row => text.push(row.quantity + ' ' + row.name));
+    text.push('');
+  }
+  if (main.length) {
+    text.push('Deck:');
+    main.forEach(row => text.push(row.quantity + ' ' + row.name));
+  }
+  if (!main.length && !commanders.length) throw new Error('The public deck data contained no cards that could be imported.');
+  return text.join('\n');
+}
+async function fetchWebsiteDeck(raw) {
+  const info = publicDeckSource(raw);
+  if (info.source === 'archidekt') {
+    let lastError = null;
+    for (const url of ['https://archidekt.com/api/decks/' + encodeURIComponent(info.id) + '/', 'https://archidekt.com/api/decks/' + encodeURIComponent(info.id)]) {
+      try {
+        const data = await fetchProviderJson(url, 'Archidekt');
+        return { info, text: deckTextFromProvider(data, info), data };
+      } catch (e) { lastError = e; }
+    }
+    throw lastError || new Error('Could not fetch this Archidekt deck.');
+  }
+  let lastError = null;
+  for (const url of [
+    'https://api2.moxfield.com/v3/decks/all/' + encodeURIComponent(info.id),
+    'https://api2.moxfield.com/v2/decks/all/' + encodeURIComponent(info.id)
+  ]) {
+    try {
+      const data = await fetchProviderJson(url, 'Moxfield');
+      return { info, text: deckTextFromProvider(data, info), data };
+    } catch (e) { lastError = e; }
+  }
+  throw lastError || new Error('Could not fetch this Moxfield deck.');
+}
+function deckImportStatus(message, kind) {
+  const el = $('#randomDeckStatus');
+  if (!el) return;
+  el.textContent = message || '';
+  el.classList.toggle('error', kind === 'error');
+  el.classList.toggle('success', kind === 'success');
+}
+async function loadDeckTextInExistingFlow(text, label) {
+  $('#importBox').classList.remove('hidden');
+  $('#importBtn').classList.add('hidden');
+  $('#deckText').value = text;
+  $('#impResult').innerHTML = '';
+  $('#impStatus').textContent = label || '';
+  $('#importBox').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  await loadDeck();
+  return !!$('#impResult').querySelector('#saveDeck');
+}
+async function importDeckWebsite() {
+  const raw = $('#deckWebsiteUrl').value.trim();
+  const btn = $('#importDeckUrlBtn');
+  btn.disabled = true;
+  deckImportStatus('Fetching public deck…');
+  try {
+    const result = await fetchWebsiteDeck(raw);
+    $('#deckWebsiteUrl').value = result.info.url;
+    const loaded = await loadDeckTextInExistingFlow(result.text, 'Resolving cards from ' + (result.info.source === 'moxfield' ? 'Moxfield' : 'Archidekt') + '…');
+    if (!loaded) { deckImportStatus('The website returned a deck, but card resolution did not finish. Try the plain-text export instead.', 'error'); return; }
+    deckImportStatus('Deck fetched. Review the cards below, choose a commander if needed, then Save deck.', 'success');
+  } catch (e) {
+    deckImportStatus(e.message || 'Could not import that website deck.', 'error');
+  } finally { btn.disabled = false; }
+}
+function listFromSearchResponse(data) {
+  if (Array.isArray(data)) return data;
+  for (const key of ['data', 'results', 'decks', 'items']) {
+    if (Array.isArray(data && data[key])) return data[key];
+    if (data && data[key] && Array.isArray(data[key].data)) return data[key].data;
+  }
+  return [];
+}
+function deckBracket(data) {
+  const candidates = [data && data.bracket, data && data.userBracket, data && data.autoBracket, data && data.deckBracket,
+    data && data.deck && data.deck.bracket, data && data.settings && data.settings.bracket];
+  for (let v of candidates) {
+    if (v && typeof v === 'object') v = v.value != null ? v.value : (v.name != null ? v.name : (v.label != null ? v.label : (v.id != null ? v.id : v.bracket)));
+    if (typeof v === 'string') {
+      const label = v.toLowerCase();
+      const named = label.match(/(?:bracket\s*)?([1-5])\b/);
+      if (named) return Number(named[1]);
+      if (/\bexhibition\b/.test(label)) return 1;
+      if (/\bcore\b/.test(label)) return 2;
+      if (/\bupgraded\b/.test(label)) return 3;
+      if (/\boptimized\b|\boptimised\b/.test(label)) return 4;
+      if (/\bcedh\b|competitive/.test(label)) return 5;
+    }
+    const n = Number(v);
+    if (v != null && v !== '' && Number.isFinite(n) && n >= 1 && n <= 5) return n;
+  }
+  return null;
+}
+function deckLooksCommander(data) {
+  const vals = [data && data.format, data && data.formatName, data && data.deckFormat, data && data.formatName,
+    data && data.format && data.format.name, data && data.deckFormat && data.deckFormat.name];
+  return vals.some(v => typeof v === 'string' && /commander|edh/i.test(v)) ||
+    vals.some(v => typeof v === 'number' && v === 3);
+}
+function isPublicDeckSummary(d) {
+  if (!d || d.private === true || d.isPrivate === true || d.unlisted === true || d.visibility === 'private' || d.visibility === 'unlisted') return false;
+  return true;
+}
+function shuffledCopy(list) {
+  const out = list.slice();
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1)); [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+async function findRandomCommanderDeck() {
+  const btn = $('#findRandomDeck'), source = $('#randomDeckSource').value;
+  const bracket = Number($('#randomDeckBracket').value);
+  btn.disabled = true;
+  deckImportStatus('Searching public ' + (source === 'moxfield' ? 'Moxfield' : 'Archidekt') + ' Commander decks for bracket ' + bracket + '…');
+  $('#randomDeckResult').innerHTML = '';
+  try {
+    let summaries = [], lastError = null;
+    const urls = source === 'archidekt'
+      ? [
+          'https://archidekt.com/api/decks/v3/?deckFormat=3&orderBy=-createdAt&pageSize=100',
+          'https://archidekt.com/api/decks/v3/?deckFormat=3&orderBy=-updatedAt&pageSize=100'
+        ]
+      : [
+          'https://api2.moxfield.com/v2/decks/search-sfw?fmt=commander&sortType=updated&sortDirection=descending&pageNumber=1&pageSize=100',
+          'https://api2.moxfield.com/v2/decks/search?fmt=commander&sortType=updated&sortDirection=descending&pageNumber=1&pageSize=100'
+        ];
+    for (const url of urls) {
+      try {
+        const data = await fetchProviderJson(url, source === 'moxfield' ? 'Moxfield' : 'Archidekt');
+        summaries = listFromSearchResponse(data).filter(isPublicDeckSummary);
+        if (summaries.length) break;
+      } catch (e) { lastError = e; }
+    }
+    if (!summaries.length) throw lastError || new Error('The provider did not return a public deck list. You can import a specific deck URL above, or use plain-text import.');
+    for (const summary of shuffledCopy(summaries).slice(0, 12)) {
+      const b = deckBracket(summary);
+      if (b != null && b !== bracket) continue;
+      let rawUrl = summary.publicUrl || summary.url || summary.link || '';
+      const deckId = summary.publicId || summary.id || summary.deckId || summary.deck_id;
+      if (rawUrl && !/^https:\/\//i.test(rawUrl)) {
+        rawUrl = source === 'moxfield' ? 'https://moxfield.com/decks/' + rawUrl : 'https://archidekt.com/decks/' + rawUrl;
+      }
+      if (!rawUrl && deckId) rawUrl = source === 'moxfield' ? 'https://moxfield.com/decks/' + deckId : 'https://archidekt.com/decks/' + deckId;
+      if (!rawUrl) continue;
+      let result;
+      try { result = await fetchWebsiteDeck(rawUrl); } catch (e) { lastError = e; continue; }
+      const actualBracket = deckBracket(result.data);
+      if ((actualBracket == null ? b : actualBracket) !== bracket || !(deckLooksCommander(result.data) || source === 'archidekt')) continue;
+      const parsed = Deck.parse(result.text);
+      if (!parsed.main.length && !parsed.commanders.length) continue;
+      $('#randomDeckResult').innerHTML = '<div class="random-deck-result"><b>Random match:</b> ' + esc(result.data.name || result.info.url) + ' · Bracket ' + bracket + ' · <a href="' + esc(result.info.url) + '" target="_blank" rel="noopener">Open source deck</a></div>';
+      const loaded = await loadDeckTextInExistingFlow(result.text, 'Random deck selected; resolving its cards…');
+      if (!loaded) { deckImportStatus('A matching public deck was found, but card resolution did not finish. Try another deck or use website/plain-text import.', 'error'); return; }
+      deckImportStatus('Found a public Commander deck for bracket ' + bracket + '. Review the card list and save it below.', 'success');
+      return;
+    }
+    throw lastError || new Error('No public Commander deck with a clearly reported bracket ' + bracket + ' was found in the sampled results. Try again, switch source, or import a deck URL above.');
+  } catch (e) {
+    deckImportStatus(e.message || 'Could not find a random deck. Try the other source or import a deck URL.', 'error');
+  } finally { btn.disabled = false; }
+}
+
 function bindLobby() {
   $('#ver').textContent = APP_VERSION;
   $('#cardBackPicker').addEventListener('click', e => chooseAppearance(e, 'cardBack'));
@@ -3070,6 +3322,11 @@ function bindLobby() {
   $('#importBtn').onclick = () => { $('#importBox').classList.remove('hidden'); $('#importBtn').classList.add('hidden'); $('#deckText').focus(); };
   $('#cancelImport').onclick = closeImport;
   $('#loadDeck').onclick = loadDeck;
+  $('#randomDeckBtn').onclick = () => { $('#randomDeckBox').classList.toggle('hidden'); if (!$('#randomDeckBox').classList.contains('hidden')) $('#deckWebsiteUrl').focus(); };
+  $('#importDeckUrlBtn').onclick = importDeckWebsite;
+  $('#findRandomDeck').onclick = findRandomCommanderDeck;
+  $('#cancelRandomDeck').onclick = () => { $('#randomDeckBox').classList.add('hidden'); deckImportStatus(''); };
+  $('#randomDeckManual').onclick = () => { $('#importBox').classList.remove('hidden'); $('#importBtn').classList.add('hidden'); $('#deckText').focus(); };
   $('#nameIn').addEventListener('change', () => LS.set('ct.name', $('#nameIn').value.trim()));
   $('#hostBtn').onclick = () => begin('host');
   $('#soloBtn').onclick = () => begin('solo');
