@@ -23,15 +23,15 @@
 Expected: a visible, click-through slam effect and short impact sound only when a Commander is played from the command zone; no Commander slam on later repositioning or ordinary card moves; ordinary battlefield placements/repositioning use only the softer tap.
 
 
-# Manual test checklist — custom appearance uploads (v0.21.0 candidate)
+# Manual test checklist — custom appearance uploads (v0.21.1 candidate)
 
 1. Extract the test ZIP and run `python -m http.server 8099 --bind 127.0.0.1` from its folder.
 2. Open `http://127.0.0.1:8099/index.html` in Chrome, Edge, or Firefox.
-3. In **Your look**, upload a JPG, PNG, or WebP card back at least 250 × 350 px and a background at least 1280 × 720 px. Confirm each preview updates and the images appear in the game.
+3. In **Your look**, confirm the upload controls start collapsed behind the small **Upload your own images** control. Open it, upload a JPG, PNG, or WebP card back at least 250 × 350 px and a background at least 1280 × 720 px. Confirm each upload appears as a selected **Your upload** tile in the relevant preset grid and the game uses that image.
 4. Try an unsupported file, an image under the minimum dimensions, and a file over 10 MB. Confirm clear errors appear and the previous appearance remains active.
-5. Click **Use selected preset** for each image. Confirm the built-in preset returns and the reset button becomes disabled.
+5. Choose a built-in preset and confirm it becomes selected while the saved **Your upload** tile remains available but unselected. Click **Your upload** again and confirm it becomes selected. Reopen the upload panel and use **Remove saved ... image** only to delete the upload.
 6. Check Practice solo, Sidebar and Grid at 1920 × 1080 and 1366 × 768.
 7. Join a room from a second browser/tab. Confirm custom images stay local to the browser that uploaded them and do not leak to other players; built-in preset appearance should still be shared.
-8. Reload the page and confirm the custom images remain saved. Check the console for errors, then stop the server with Ctrl+C.
+8. Reload the page and confirm the custom images remain saved and selected after reload. Check the console for errors, then stop the server with Ctrl+C.
 
 Custom images are optimized to WebP and stored in that browser's local storage. They are not uploaded to the game server. Clearing site data removes them.
