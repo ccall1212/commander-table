@@ -893,3 +893,71 @@ body.lens-on #pv { display: none; }
   [data-pile="graveyard"].mill-receive .zcard,
   [data-pile="graveyard"].mill-receive .tpcard { animation: none !important; }
 }
+
+
+/* Draw animation: a click-through flight from a player's Library to their hand. */
+.ct-draw-flight {
+  position: fixed;
+  z-index: 6000;
+  pointer-events: none;
+  perspective: 900px;
+  transform-origin: center center;
+  will-change: transform;
+  filter: drop-shadow(0 5px 8px rgba(0, 0, 0, .42));
+}
+.ct-draw-flip {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  border-radius: 4px;
+  perspective: 800px;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+.ct-draw-face {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, .64);
+  border-radius: 4px;
+  background: #111722;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .32);
+}
+.ct-draw-face > img,
+.ct-draw-face > .ph,
+.ct-draw-face > .ct-draw-placeholder,
+.ct-draw-face > .w-cardback {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+.ct-draw-face > .w-cardback { overflow: hidden; }
+.ct-draw-face > .ct-draw-placeholder {
+  display: grid;
+  place-items: center;
+  padding: 5px;
+  color: #fff;
+  background: linear-gradient(145deg, #28374d, #111722);
+  font-size: 10px;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.ct-draw-front,
+.ct-draw-back-reverse { transform: rotateY(180deg); }
+@media (prefers-reduced-motion: reduce) {
+  .ct-draw-flight, .ct-draw-flip { animation: none !important; transition: none !important; }
+}
+
+
+/* Keep the actual drawn card invisible until its animated copy reaches the hand. */
+.ct-draw-pending {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}

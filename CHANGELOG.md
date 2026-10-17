@@ -9,6 +9,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - `AGENTS.md`: how changes are made, tested, versioned and released (for AI assistants and humans).
 
+## [0.17.0] - 2026-10-16
+
+### Added
+- Animate a drawn card from the Library toward its owner's hand, with a short flip as it arrives.
+- Other players see the card-back version of the animation, so the draw cue does not reveal a hidden card.
+
+### Notes
+- The animation is visual-only, does not block clicks or dragging, and is skipped when reduced motion is preferred. Chris reviewed the preview; ChatGPT completed source-level checks but did not run a real-browser or multiplayer test.
+
 ## [0.16.0] - 2026-10-16
 
 ### Added
@@ -252,7 +261,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - First playable build: paste-import decks from Moxfield or Archidekt (via Scryfall), 2–4 player rooms over PeerJS with self-healing reconnects, a searchable zone viewer, commander damage tracking and automatic tokens.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.16.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.17.0...HEAD
+[0.17.0]: https://github.com/ccall1212/commander-table/compare/v0.16.0...v0.17.0
 [0.16.0]: https://github.com/ccall1212/commander-table/compare/v0.15.1...v0.16.0
 [0.15.1]: https://github.com/ccall1212/commander-table/compare/v0.15.0...v0.15.1
 [0.15.0]: https://github.com/ccall1212/commander-table/compare/v0.14.2...v0.15.0

@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.16.0';
+const APP_VERSION = '0.17.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -304,6 +304,12 @@ function hostRecv(msg, from) {
       break;
     }
     case 'log': { const e = cleanLog(msg, from); if (e) broadcast({ t: 'log', e }); break; }
+    case 'drawfx': {
+      if (!S.table.seats.includes(from)) return;
+      const count = clamp(Math.floor(num(msg.count, 1)), 1, 5);
+      broadcast({ t: 'drawfx', pid: from, count });
+      break;
+    }
     case 'op': tableOp(msg.op, from); break;
     case 'req': {
       if (typeof msg.to !== 'string') return;
@@ -608,6 +614,7 @@ function onBroadcast(msg) {
   switch (msg.t) {
     case 'pub': if (msg.p && msg.p.pid) { S.players[msg.p.pid] = msg.p; if (msg.p.pid !== S.pid) checkOrphans(); } break;
     case 'log': S.log.push(msg.e); if (S.log.length > 300) S.log.splice(0, S.log.length - 300); break;
+    case 'drawfx': if (typeof msg.pid === 'string') animateDrawCard(msg.pid, clamp(Math.floor(num(msg.count, 1)), 1, 5)); break;
     case 'table': S.table = msg.table; afterTable(); break;
     case 'firstroll': showFirstRoll(msg); break;
     case 'online': S.online = msg.online || {}; break;
@@ -689,11 +696,18 @@ function afterTable() {
     m.lastTurnSeq = turnSeq; m.lastTurn = turnSeq;
     const skipDraw = turnSeq === 1 && T.order.length === 2; // 2-player: first player skips first draw
     const bits = [];
+    let drew = 0;
     act(() => {
       if (m.autoUntap && m.zones.battlefield.some(c => c.t)) { m.zones.battlefield.forEach(c => { c.t = false; }); bits.push('untapped'); }
-      if (m.autoDraw && !skipDraw && m.zones.library.length) { m.zones.hand.push(m.zones.library.shift()); bits.push('drew a card'); }
+      if (m.autoDraw && !skipDraw && m.zones.library.length) {
+        const card = m.zones.library.shift();
+        queuePendingDraw([card]);
+        m.zones.hand.push(card);
+        bits.push('drew a card'); drew = 1;
+      }
       return bits.length ? [bits.join(' and ')] : null;
     }, { noUndo: true });
+    if (drew) emitDrawAnimation(drew);
   }
 }
 function resetForNewGame() {
@@ -886,10 +900,184 @@ function endAttach() {
   S.attachToast = null;
 }
 
+// Ephemeral draw cue. The drawn card is hidden in its real hand slot until its animation lands.
+const drawPendingIids = new Set();
+const pendingDrawQueue = [];
+function queuePendingDraw(cards) {
+  for (const card of cards || []) {
+    if (!card || typeof card.iid !== 'string') continue;
+    drawPendingIids.add(card.iid);
+    pendingDrawQueue.push(card.iid);
+  }
+}
+function takePendingDraw(count) {
+  const ids = [];
+  while (ids.length < count && pendingDrawQueue.length) ids.push(pendingDrawQueue.shift());
+  return ids;
+}
+function finishPendingDraw(ids) {
+  let changed = false;
+  for (const id of ids || []) changed = drawPendingIids.delete(id) || changed;
+  if (changed) render();
+}
+
+// Draw cards into the hand before committing the state. Only the first five are animated;
+// any additional cards from a Draw X action remain visible and are not left pending.
 function draw(n = 1) {
-  const z = S.me.zones; let k = 0;
-  act(() => { while (k < n && z.library.length) { z.hand.push(z.library.shift()); k++; } if (k) S.me.revealTopOnce = null; return k ? [`drew ${plural(k, 'card')}`] : null; });
-  if (k < n) UI.toast('Your library is empty!', { kind: 'warn' });
+  if (!S.me) return;
+  const z = S.me.zones;
+  const requested = clamp(Math.floor(num(n, 1)), 1, 30);
+  const drawn = [];
+  act(() => {
+    while (drawn.length < requested && z.library.length) {
+      const card = z.library.shift();
+      z.hand.push(card);
+      drawn.push(card);
+    }
+    if (drawn.length) {
+      S.me.revealTopOnce = null;
+      queuePendingDraw(drawn.slice(0, 5));
+    }
+    return drawn.length ? [`drew ${plural(drawn.length, 'card')}`] : null;
+  });
+  if (drawn.length) emitDrawAnimation(Math.min(drawn.length, 5));
+  if (drawn.length < requested) UI.toast('Your library is empty!', { kind: 'warn' });
+}
+// Event contains no card ID/name. The host validates the sender and relays only player ID + count.
+function emitDrawAnimation(count) {
+  const n = clamp(Math.floor(num(count, 1)), 1, 5);
+  if (S.role === 'solo') {
+    onBroadcast({ t: 'drawfx', pid: S.pid, count: n });
+    return;
+  }
+  toHost({ t: 'drawfx', count: n });
+}
+function drawAnimationVisible(el) {
+  if (!el || !el.isConnected) return false;
+  const rect = el.getBoundingClientRect();
+  if (rect.width < 1 || rect.height < 1) return false;
+  const style = getComputedStyle(el);
+  return style.display !== 'none' && style.visibility !== 'hidden' && Number(style.opacity || 1) > 0;
+}
+function drawAnimationPile(pid) {
+  const candidates = [...document.querySelectorAll('[data-pile="library"][data-pid]')]
+    .filter(el => el.dataset.pid === pid && drawAnimationVisible(el))
+    .map(el => {
+      const visual = el.querySelector('.zcard, .tpcard, .pcard') || el;
+      const rect = visual.getBoundingClientRect();
+      return { el: visual, rect, area: rect.width * rect.height };
+    })
+    .filter(x => x.rect.width >= 8 && x.rect.height >= 12)
+    .sort((a, b) => b.area - a.area);
+  return candidates[0] || null;
+}
+function drawAnimationHand(pid) {
+  if (pid === S.pid) {
+    const ownHand = $('#myHand');
+    if (!viewedOpp() && drawAnimationVisible(ownHand)) return ownHand;
+    const miniHands = [...document.querySelectorAll('.thand.mine')]
+      .filter(drawAnimationVisible)
+      .sort((a, b) => b.getBoundingClientRect().width - a.getBoundingClientRect().width);
+    return miniHands[0] || null;
+  }
+  const heads = [...document.querySelectorAll('.ohead')];
+  const head = heads.find(el => [...el.querySelectorAll('[data-phead]')].some(p => p.dataset.phead === pid));
+  const hand = head && head.querySelector('.ohhand');
+  return drawAnimationVisible(hand) ? hand : null;
+}
+function drawAnimationCardFaces(pid, drawnCard) {
+  const back = UI.cardBackHTML('', appearanceBackFor(pid));
+  if (pid !== S.pid || !drawnCard) {
+    // Opponents see a face-down card only; both sides use the player's chosen card back.
+    return '<div class="ct-draw-face ct-draw-back">' + back + '</div><div class="ct-draw-face ct-draw-back-reverse">' + back + '</div>';
+  }
+  const def = defOf(drawnCard);
+  const front = def && IMG_OK(def.img)
+    ? '<img src="' + esc(def.img) + '" alt="" draggable="false">'
+    : '<div class="ct-draw-placeholder">' + esc(def ? dname(def) : 'Card') + '</div>';
+  return '<div class="ct-draw-face ct-draw-back">' + back + '</div><div class="ct-draw-face ct-draw-front">' + front + '</div>';
+}
+function animateDrawCard(pid, count) {
+  const requested = clamp(Math.floor(num(count, 1)), 1, 5);
+  // Only the drawing player owns local pending IDs; no hidden identities are sent over the network.
+  const pendingIds = pid === S.pid ? takePendingDraw(requested) : [];
+  const release = () => finishPendingDraw(pendingIds);
+  if (!pid || $('#game').classList.contains('hidden') || !document.body) { release(); return; }
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) { release(); return; }
+
+  let started = false;
+  const startAnimation = () => {
+    if (started) return;
+    started = true;
+    const source = drawAnimationPile(pid);
+    const target = drawAnimationHand(pid);
+    if (!source || !target) { release(); return; }
+    const src = source.rect;
+    // Include the locally hidden card so its true slot can be measured even while invisible.
+    const targetCards = [...target.querySelectorAll('.card')].filter(el =>
+      drawAnimationVisible(el) || el.classList.contains('ct-draw-pending'));
+    const localCards = pid === S.pid ? pendingIds.map(id => S.me.zones.hand.find(c => c.iid === id)).filter(Boolean) : [];
+    const n = pid === S.pid ? localCards.length : requested;
+    if (!n) { release(); return; }
+
+    const motions = [];
+    const flyers = [];
+    for (let i = 0; i < n; i++) {
+      const card = pid === S.pid ? localCards[i] : null;
+      const cardEl = card && targetCards.find(el => el.dataset.iid === card.iid);
+      const fallbackEl = targetCards[targetCards.length - 1];
+      const dstEl = cardEl || fallbackEl;
+      const dst = (dstEl || target).getBoundingClientRect();
+      // If an opponent's hand is empty, aim for the hand area using a normal card ratio.
+      const width = dstEl
+        ? Math.max(24, Math.min(src.width, dst.width || src.width))
+        : (pid === S.pid ? Math.max(24, Math.min(src.width, 63)) : 24);
+      const height = dstEl
+        ? Math.max(34, Math.min(src.height, dst.height || src.height))
+        : (pid === S.pid ? Math.max(34, Math.min(src.height, 88)) : Math.round(width * 88 / 63));
+      const sx = src.left + (src.width - width) / 2;
+      const sy = src.top + (src.height - height) / 2;
+      const tx = dst.left + dst.width / 2 - width / 2;
+      const ty = dst.top + dst.height / 2 - height / 2;
+      const flyer = document.createElement('div');
+      flyer.className = 'ct-draw-flight';
+      flyer.setAttribute('aria-hidden', 'true');
+      flyer.style.left = sx + 'px';
+      flyer.style.top = sy + 'px';
+      flyer.style.width = width + 'px';
+      flyer.style.height = height + 'px';
+      const flip = document.createElement('div');
+      flip.className = 'ct-draw-flip';
+      flip.innerHTML = drawAnimationCardFaces(pid, card);
+      flyer.appendChild(flip);
+      if (typeof flyer.animate !== 'function' || typeof flip.animate !== 'function') {
+        flyers.forEach(f => f.remove());
+        flyer.remove();
+        release();
+        return;
+      }
+      document.body.appendChild(flyer);
+      flyers.push(flyer);
+      const delay = i * 45;
+      motions.push(flyer.animate([
+        { transform: 'translate3d(0,0,0) scale(1) rotate(-3deg)' },
+        { transform: 'translate3d(' + (tx - sx) + 'px,' + (ty - sy) + 'px,0) scale(' + Math.max(.55, Math.min(1.15, (dst.width || width) / width)) + ') rotate(2deg)' }
+      ], { duration: 360, delay, easing: 'cubic-bezier(.22,.72,.25,1)', fill: 'forwards' }));
+      flip.animate([
+        { transform: 'rotateY(0deg)' },
+        { transform: 'rotateY(180deg)' }
+      ], { duration: 270, delay: delay + 55, easing: 'ease-in-out', fill: 'forwards' });
+    }
+    Promise.all(motions.map(m => m.finished.catch(() => {}))).then(() => {
+      flyers.forEach(flyer => flyer.remove());
+      // Reveal the real hand card only after the flight has landed.
+      setTimeout(release, 20);
+    });
+  };
+  // Start promptly after the scheduled hand render; timeout fallback avoids leaving a card hidden
+  // in a throttled/background tab where requestAnimationFrame may be paused.
+  requestAnimationFrame(() => requestAnimationFrame(startAnimation));
+  setTimeout(startAnimation, 175);
 }
 function untapAll() { act(() => { S.me.zones.battlefield.forEach(c => { c.t = false; }); return ['untapped everything']; }); }
 let shuffleAudioContext = null;
@@ -1759,6 +1947,7 @@ function cardHTML(c, def, o) {
   // o: {mine, pid (board owner), ctrl (who controls it), zone, style}
   const ctrl = o.ctrl || o.pid;
   const cls = ['card'];
+  if (typeof drawPendingIids !== 'undefined' && drawPendingIids.has(c.iid)) cls.push('ct-draw-pending');
   if (c.t) cls.push('tapped'); if (o.mine) cls.push('mine'); if (c.att) cls.push('att');
   let inner;
   if (c.fd) {
