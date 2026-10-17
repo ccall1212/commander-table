@@ -27,14 +27,25 @@ Before starting a game, use **Your look** on the opening screen to choose from 1
 
 ## Importing your deck
 
-1. Export your deck:
-   - **Moxfield:** More, then Export, then "Copy Plain Text" (or "Copy for MTGA")
-   - **Archidekt:** Export, then "Copy to clipboard"
-2. Paste it into "Import a deck" in Commander Table.
-3. Click **Load cards**, then **Save**.
-4. If the export doesn't mark your commander, pick it from the dropdown. You can also set an optional partner or background.
+You have two options:
 
-Decks are saved in your browser.
+**Import from a website URL**
+1. On the opening screen, click **🎲 Choose a random Commander deck** to open the deck tools.
+2. Paste a public Moxfield or Archidekt deck link into **Import from website**, then click **Import this URL**.
+3. If the website allows direct access, Commander Table fetches the deck list and resolves the cards for you. If the provider blocks the request, use the plain-text export option below instead.
+
+**Import with plain text**
+1. Export your deck:
+   - **Moxfield:** More, then Export, then **Copy Plain Text** (or **Copy for MTGA**).
+   - **Archidekt:** Export, then **Copy to clipboard**.
+2. Click **+ Import a deck**, paste the list, then click **Load cards**.
+3. Review the results and click **Save**. If the export doesn't mark your commander, pick it from the dropdown. You can also set an optional partner or background.
+
+**Choose a random deck**
+- Click **🎲 Choose a random Commander deck**, choose Archidekt or Moxfield and a bracket from **1–4**, then click **Find random deck**.
+- This needs the provider to allow public deck search and expose a recognizable bracket. If the provider blocks search or a deck has no clear bracket, it won't be selected. You can switch sources or import a specific URL instead.
+
+Decks are saved in your browser. Provider APIs are not guaranteed to remain available, so plain-text import stays as a fallback.
 
 ## Playing a game
 
