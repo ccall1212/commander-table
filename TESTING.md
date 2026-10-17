@@ -1,41 +1,25 @@
-# Manual test checklist — Draw Animation (v0.18.2 candidate)
-
-This ZIP contains the v0.18.2 candidate for the card-draw animation. Please focus on the draw-flight tests first; the selection-rectangle regression checklist is retained below.
+# Manual test checklist — all card printings (v0.19.0 candidate)
 
 ## Start the app
 
-1. Extract the ZIP to a folder.
+1. Extract this ZIP to a folder.
 2. Open a terminal in that folder.
-3. Run:
-
-   ```bash
-   python -m http.server 8099 --bind 127.0.0.1
-   ```
-
-4. In your browser, open http://127.0.0.1:8099/index.html
-5. Start a Practice game with a deck that has several battlefield cards. To test online group control, host a game and join from a second tab as described in AGENTS.md.
+3. Run `python -m http.server 8099 --bind 127.0.0.1`.
+4. Open http://127.0.0.1:8099/index.html.
+5. Import a deck and start a Practice game. An internet connection is needed to load printings from Scryfall.
 6. Stop the server with Ctrl+C when finished.
 
-## Draw animation click list
+## Card printing click list
 
-1. **Single draw, Sidebar:** start Practice solo at 1920×1080 and click your Library once. The card should lift out of the stack, travel along a shallow arc, flip during the flight, and ease into its hand slot without a pause, gap, or last-frame jump.
-2. **Draw several cards:** right-click your Library → **Draw X…** → enter 3. Each card should fly and become visible in the hand as its own animation finishes; they should not all pop into view after the last flight.
-3. **Grid:** switch to Grid and repeat the single draw and Draw X tests in your own quadrant.
-4. **Second player:** if convenient, repeat a draw in an online game. The other player should see a card-back-only flight and never see the drawn card's face.
-5. **Smaller screen:** repeat in Sidebar or Grid at 1366×768 if convenient.
+1. **More than 10 results:** right-click a card with many reprints (for example, Sol Ring) → **Switch printing…**. Confirm the list contains more than 10 printings if Scryfall has more available.
+2. **Search by set/product:** search a set name (for example, a set/product name shown in the results) and confirm only matching printings remain.
+3. **Search by code and number:** search a set code and a collector number; confirm matching results remain.
+4. **Search by year:** enter a year shown in the list and confirm matching results remain.
+5. **Clear search:** clear the search field and confirm all fetched printings return.
+6. **Change one card:** choose **Use this printing** and confirm the art changes.
+7. **Change all copies:** with two or more copies of the same card, choose **Use for all copies** and confirm every copy changes.
+8. **Sidebar and Grid:** repeat the picker in both layouts at approximately 1920×1080 and 1366×768. The dialog should fit the screen and the list should scroll.
+9. **Keyboard and no-results:** Arrow Up/Down should navigate visible results when the search field is not focused. A search with no matches should show a clear empty message.
+10. **Console:** check the browser console for errors during loading, filtering, and selecting a printing.
 
-Please note whether the card starts from the top of the Library, whether the upward arc feels natural, and whether it settles cleanly into the hand.
-
-## Selection rectangle regression checks (v0.18.1)
-
-1. **Sidebar:** drag from an empty area of your battlefield around three cards across Creatures and Lands. Release, then drag a selected card. The drag preview should show every selected card in the same relative arrangement—not only the card you grabbed. The cards should move together and keep their spacing.
-2. **Grid:** repeat the test in your own quadrant.
-3. **Selection controls:** hold Shift while drawing to add to the selection. Shift-click a card to toggle it. Click empty battlefield space or press Esc to clear.
-4. **Existing actions:** click one card to tap/untap it, and drag an unselected card; only that card should move.
-5. **Zone drop:** drag a selected group to your Graveyard; the whole group should move.
-6. **Multiplayer:** drag a selected group onto another player's battlefield; the whole group should transfer control.
-7. **Arrange Zones:** open Arrange Zones; any selection should clear, and starting a rectangle should be disabled while arranging.
-
-Try both 1920×1080 and 1366×768 if convenient. Record which steps were repeated and anything that behaved unexpectedly.
-
-The selection rectangle was released in v0.18.1. The draw-animation fix in this ZIP is still a candidate and has not been published; the live game remains https://ccall1212.github.io/commander-table/ (v0.18.1).
+The app should still show the current printing, preserve the existing **Use for all copies** behavior, and never change any card until a printing is chosen.
