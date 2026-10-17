@@ -3069,15 +3069,24 @@ function publicDeckSource(raw) {
   }
   throw new Error('That link does not look like a public Moxfield or Archidekt deck URL.');
 }
-async function fetchProviderJson(url, provider) {
-  let res;
-  try { res = await fetch(url, { headers: { Accept: 'application/json' } }); }
-  catch (e) {
-    throw new Error(provider + ' did not allow this browser to read its deck data. Open the deck website, use Export → Copy Plain Text, then choose “+ Import a deck” to paste it. This avoids relying on the provider’s restricted API.');
+async function fetchProviderJson(site, action, id, provider) {
+  const relayBase = window.CT_NET && window.CT_NET.relayUrl;
+  if (!relayBase) throw new Error('Automatic website import is not configured yet. Use the website’s Copy Plain Text export and “+ Import a deck”.');
+  const url = new URL('/deck-api', relayBase);
+  url.searchParams.set('site', site);
+  url.searchParams.set('action', action);
+  if (id) url.searchParams.set('id', id);
+  let res, data;
+  try {
+    res = await fetch(url.toString(), { headers: { Accept: 'application/json' } });
+    data = await res.json();
+  } catch (e) {
+    throw new Error('Commander Table could not reach the deck-import service. Use the website’s Copy Plain Text export and “+ Import a deck”.');
   }
-  if (!res.ok) throw new Error(provider + ' returned HTTP ' + res.status + '. The deck may be private, or the site may be restricting public API access. You can still import its plain-text export.');
-  let data;
-  try { data = await res.json(); } catch (e) { throw new Error(provider + ' returned data that Commander Table could not read. Use the website’s plain-text export instead.'); }
+  if (!res.ok) {
+    throw new Error((data && data.error) || (provider + ' deck access failed (HTTP ' + res.status + '). Use its plain-text export instead.'));
+  }
+  if (!data || typeof data !== 'object') throw new Error(provider + ' returned data that Commander Table could not read. Use its plain-text export instead.');
   return data;
 }
 function safeDeckName(v) { return String(v || '').replace(/[\r\n]+/g, ' ').trim().slice(0, 120); }
@@ -3152,27 +3161,8 @@ function deckTextFromProvider(data, info) {
 }
 async function fetchWebsiteDeck(raw) {
   const info = publicDeckSource(raw);
-  if (info.source === 'archidekt') {
-    let lastError = null;
-    for (const url of ['https://archidekt.com/api/decks/' + encodeURIComponent(info.id) + '/', 'https://archidekt.com/api/decks/' + encodeURIComponent(info.id)]) {
-      try {
-        const data = await fetchProviderJson(url, 'Archidekt');
-        return { info, text: deckTextFromProvider(data, info), data };
-      } catch (e) { lastError = e; }
-    }
-    throw lastError || new Error('Could not fetch this Archidekt deck.');
-  }
-  let lastError = null;
-  for (const url of [
-    'https://api2.moxfield.com/v3/decks/all/' + encodeURIComponent(info.id),
-    'https://api2.moxfield.com/v2/decks/all/' + encodeURIComponent(info.id)
-  ]) {
-    try {
-      const data = await fetchProviderJson(url, 'Moxfield');
-      return { info, text: deckTextFromProvider(data, info), data };
-    } catch (e) { lastError = e; }
-  }
-  throw lastError || new Error('Could not fetch this Moxfield deck.');
+  const data = await fetchProviderJson(info.source, 'deck', info.id, info.source === 'moxfield' ? 'Moxfield' : 'Archidekt');
+  return { info, text: deckTextFromProvider(data, info), data };
 }
 function deckImportStatus(message, kind) {
   const el = $('#randomDeckStatus');
@@ -3259,24 +3249,18 @@ async function findRandomCommanderDeck() {
   $('#randomDeckResult').innerHTML = '';
   try {
     let summaries = [], lastError = null;
-    const urls = source === 'archidekt'
-      ? [
-          'https://archidekt.com/api/decks/v3/?deckFormat=3&orderBy=-createdAt&pageSize=100',
-          'https://archidekt.com/api/decks/v3/?deckFormat=3&orderBy=-updatedAt&pageSize=100'
-        ]
-      : [
-          'https://api2.moxfield.com/v2/decks/search-sfw?fmt=commander&sortType=updated&sortDirection=descending&pageNumber=1&pageSize=100',
-          'https://api2.moxfield.com/v2/decks/search?fmt=commander&sortType=updated&sortDirection=descending&pageNumber=1&pageSize=100'
-        ];
-    for (const url of urls) {
-      try {
-        const data = await fetchProviderJson(url, source === 'moxfield' ? 'Moxfield' : 'Archidekt');
-        summaries = listFromSearchResponse(data).filter(isPublicDeckSummary);
-        if (summaries.length) break;
-      } catch (e) { lastError = e; }
-    }
+    try {
+      const data = await fetchProviderJson(source, 'search', '', source === 'moxfield' ? 'Moxfield' : 'Archidekt');
+      summaries = listFromSearchResponse(data).filter(isPublicDeckSummary);
+    } catch (e) { lastError = e; }
     if (!summaries.length) throw lastError || new Error('The provider did not return a public deck list. You can import a specific deck URL above, or use plain-text import.');
-    for (const summary of shuffledCopy(summaries).slice(0, 12)) {
+    // Prefer summaries whose bracket is already known to match before spending
+    // requests on full deck details. Unknown-bracket decks are checked after fetch.
+    const candidates = shuffledCopy(summaries.filter(summary => {
+      const b = deckBracket(summary);
+      return b == null || b === bracket;
+    })).slice(0, 12);
+    for (const summary of candidates) {
       const b = deckBracket(summary);
       if (b != null && b !== bracket) continue;
       let rawUrl = summary.publicUrl || summary.url || summary.link || '';
