@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.20.4';
+const APP_VERSION = '0.20.5';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -1318,48 +1318,74 @@ function playCommanderSlamSound() {
     ctx = new AudioContextClass();
     const play = () => {
       const now = ctx.currentTime;
+
+      // A sharp, bright crack right at impact gives the cast its MTG Arena-style punch.
+      const crackFrames = Math.floor(ctx.sampleRate * 0.055);
+      const crackBuffer = ctx.createBuffer(1, crackFrames, ctx.sampleRate);
+      const crackSamples = crackBuffer.getChannelData(0);
+      for (let i = 0; i < crackFrames; i++) {
+        const fade = 1 - i / crackFrames;
+        crackSamples[i] = (Math.random() * 2 - 1) * fade * fade;
+      }
+      const crackNoise = ctx.createBufferSource(), crackFilter = ctx.createBiquadFilter(), crackGain = ctx.createGain();
+      crackNoise.buffer = crackBuffer;
+      crackFilter.type = 'highpass';
+      crackFilter.frequency.setValueAtTime(1500, now);
+      crackFilter.frequency.exponentialRampToValueAtTime(520, now + 0.05);
+      crackGain.gain.setValueAtTime(0.0001, now);
+      crackGain.gain.exponentialRampToValueAtTime(0.8, now + 0.002);
+      crackGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.06);
+      crackNoise.connect(crackFilter); crackFilter.connect(crackGain); crackGain.connect(ctx.destination);
+      crackNoise.start(now); crackNoise.stop(now + 0.06);
+
+      // A short, bright snap layered over the noise makes the impact read clearly on small speakers.
+      const snap = ctx.createOscillator(), snapGain = ctx.createGain();
+      snap.type = 'triangle';
+      snap.frequency.setValueAtTime(1250, now);
+      snap.frequency.exponentialRampToValueAtTime(240, now + 0.055);
+      snapGain.gain.setValueAtTime(0.0001, now);
+      snapGain.gain.exponentialRampToValueAtTime(0.22, now + 0.002);
+      snapGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.065);
+      snap.connect(snapGain); snapGain.connect(ctx.destination);
+      snap.start(now); snap.stop(now + 0.07);
+
+      // The low impact supplies the boom underneath the crack.
       const thud = ctx.createOscillator(), thudGain = ctx.createGain();
       thud.type = 'sine';
-      thud.frequency.setValueAtTime(145, now);
-      thud.frequency.exponentialRampToValueAtTime(32, now + 0.34);
+      thud.frequency.setValueAtTime(118, now);
+      thud.frequency.exponentialRampToValueAtTime(34, now + 0.36);
       thudGain.gain.setValueAtTime(0.0001, now);
-      thudGain.gain.exponentialRampToValueAtTime(0.72, now + 0.014);
-      thudGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.42);
+      thudGain.gain.exponentialRampToValueAtTime(0.72, now + 0.012);
+      thudGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.4);
       thud.connect(thudGain); thudGain.connect(ctx.destination);
-      thud.start(now); thud.stop(now + 0.43);
+      thud.start(now); thud.stop(now + 0.41);
 
-      const crack = ctx.createOscillator(), crackGain = ctx.createGain();
-      crack.type = 'triangle';
-      crack.frequency.setValueAtTime(460, now);
-      crack.frequency.exponentialRampToValueAtTime(115, now + 0.065);
-      crackGain.gain.setValueAtTime(0.0001, now);
-      crackGain.gain.exponentialRampToValueAtTime(0.24, now + 0.004);
-      crackGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.075);
-      crack.connect(crackGain); crackGain.connect(ctx.destination);
-      crack.start(now); crack.stop(now + 0.08);
-
-      // A short burst of noise is the "slam": it has plenty of treble, so small speakers can play it.
-      const frames = Math.floor(ctx.sampleRate * 0.22);
-      const noiseBuffer = ctx.createBuffer(1, frames, ctx.sampleRate);
-      const samples = noiseBuffer.getChannelData(0);
-      for (let i = 0; i < frames; i++) samples[i] = (Math.random() * 2 - 1) * (1 - i / frames);
-      const noise = ctx.createBufferSource(), noiseGain = ctx.createGain();
-      noise.buffer = noiseBuffer;
-      noiseGain.gain.setValueAtTime(0.48, now);
-      noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
-      noise.connect(noiseGain); noiseGain.connect(ctx.destination);
-      noise.start(now);
-      // A delayed, lower sub-impact gives the Commander cast a heavier boom.
+      // A softer, delayed sub-boom makes the hit feel large without turning into a long rumble.
       const boom = ctx.createOscillator(), boomGain = ctx.createGain();
       boom.type = 'sine';
-      boom.frequency.setValueAtTime(72, now + 0.045);
-      boom.frequency.exponentialRampToValueAtTime(28, now + 0.39);
+      boom.frequency.setValueAtTime(68, now + 0.035);
+      boom.frequency.exponentialRampToValueAtTime(29, now + 0.34);
       boomGain.gain.setValueAtTime(0.0001, now);
-      boomGain.gain.setValueAtTime(0.42, now + 0.045);
-      boomGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.44);
+      boomGain.gain.setValueAtTime(0.3, now + 0.035);
+      boomGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.39);
       boom.connect(boomGain); boomGain.connect(ctx.destination);
-      boom.start(now + 0.045); boom.stop(now + 0.45);
-      setTimeout(() => { if (ctx.state !== 'closed') ctx.close().catch(() => {}); }, 560);
+      boom.start(now + 0.035); boom.stop(now + 0.4);
+
+      // A restrained filtered tail adds a little air after the hit.
+      const tailFrames = Math.floor(ctx.sampleRate * 0.12);
+      const tailBuffer = ctx.createBuffer(1, tailFrames, ctx.sampleRate);
+      const tailSamples = tailBuffer.getChannelData(0);
+      for (let i = 0; i < tailFrames; i++) tailSamples[i] = (Math.random() * 2 - 1) * (1 - i / tailFrames);
+      const tail = ctx.createBufferSource(), tailFilter = ctx.createBiquadFilter(), tailGain = ctx.createGain();
+      tail.buffer = tailBuffer;
+      tailFilter.type = 'lowpass';
+      tailFilter.frequency.value = 1000;
+      tailGain.gain.setValueAtTime(0.12, now + 0.025);
+      tailGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.15);
+      tail.connect(tailFilter); tailFilter.connect(tailGain); tailGain.connect(ctx.destination);
+      tail.start(now + 0.025); tail.stop(now + 0.16);
+
+      setTimeout(() => { if (ctx.state !== 'closed') ctx.close().catch(() => {}); }, 500);
     };
     if (ctx.state === 'suspended') ctx.resume().then(play).catch(() => {});
     else play();
