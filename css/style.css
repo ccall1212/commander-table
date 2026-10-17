@@ -738,7 +738,7 @@ body.lens-on #pv { display: none; }
 .appearance-choice .appearance-thumb { display: block; width: 100%; border-radius: 4px; background-repeat: no-repeat; border: 1px solid rgba(255,255,255,.15); }
 .appearance-choice .cardback-thumb { aspect-ratio: 5 / 7; }
 .appearance-choice .background-thumb { aspect-ratio: 16 / 9; }
- .appearance-choice .appearance-name { font-size: 11px; line-height: 1.2; min-height: 26px; display: flex; align-items: center; justify-content: center; text-align: center; }
+.appearance-choice .appearance-name { font-size: 11px; line-height: 1.2; min-height: 26px; display: flex; align-items: center; justify-content: center; text-align: center; }
 .custom-appearance { display: grid; grid-template-columns: minmax(78px, 110px) minmax(0, 1fr); gap: 12px; align-items: start; margin: 10px 0 18px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: rgba(0,0,0,.16); }
 .custom-appearance-preview { width: 100%; min-height: 70px; border-radius: 5px; background-color: #111722; background-position: center; background-size: cover; border: 1px solid rgba(255,255,255,.18); }
 .custom-appearance-preview.cardback-thumb { aspect-ratio: 5 / 7; }
