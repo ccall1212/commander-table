@@ -6,7 +6,7 @@ and **never push to `main` or publish without his explicit OK** ("publish" / "pu
 
 ## Who does what
 
-This is Chris's personal project. **ChatGPT (his personal account) is the main assistant.** Claude Code runs on his work account, so it is only the **backup**: Chris will call on it when ChatGPT can't do something or gets stuck, not by default. Don't plan around Claude Code being available, and don't hand work to it that you can finish yourself.
+This is Chris's personal project. **ChatGPT (his personal account) is the main assistant.** Claude Code runs on his work account, so it is only the **backup**: Chris will call on it when ChatGPT can't do something or gets stuck, not by default. Don't plan around Claude Code being available, and don't hand work to it that you can finish yourself. When Chris does call on it, a headless-browser pass (Playwright + Chromium) of the click list is a quick way to catch bugs before he tests by hand, but it cannot hear sound or use a real mouse hover.
 
 | | ChatGPT (via GitHub) | Claude Code (backup) |
 |---|---|---|
@@ -97,10 +97,10 @@ Read this before changing layout or anything that finds elements on the page. Se
 - **Rendering patches the DOM in place** (`setHTML()`): elements are reused and cards are matched by `data-iid`. Do not assign `innerHTML` on those containers, do not keep references to card elements across renders, and expect `render()` to run often.
 - **Hover shortcuts** (`S`/`X` over the Library, card hotkeys) rely on real mouse position (`:hover`, `S.hover`); scripted events cannot test them. Mark such features "needs a human with a mouse".
 - **Cross-player actions are messages relayed by the host**, which validates the sender (see the `drawfx` message and the `give`, `take`, `life` requests in `onReq`/`hostRecv`). A new message must be validated on the host, must never carry hidden information (card identities), and must be tolerated by older clients.
+- **Practice solo skips the network path.** In solo, `toHost()` calls `hostRecv()` directly, and some effects run locally instead of going through the host. A new message must also be tested by sending it through `hostRecv()` (or with a second tab), otherwise a broken host check hides until someone plays online. The Commander slam shipped (v0.20.0 to v0.20.2) with a host check that rejected every card id because of this.
+- **Regex literals: write `\w`, not `\\w`.** Inside `/.../` a doubled backslash means "a literal backslash". Test a validation regex against a real id such as `p6u6wnase_1` before relying on it.
 - **Cache-busting:** after any CSS/JS change run `tools/bump-version.py`; the browser (and the live site, for about 10 minutes) otherwise serves old files.
 - **Tags and branches:** you cannot create tags (ask for them with the exact commit); delete a branch once its PR is merged.
-
-## The routine for every change
 
 ## Required test ZIP for Chris
 
@@ -112,6 +112,8 @@ Read this before changing layout or anything that finds elements on the page. Se
 - Check the archive contains the intended files and matches the PR head commit before sharing it. Link the ZIP directly in the PR description and in the message to Chris.
 - Keep the ZIP as a test copy only; do not publish it or merge the PR. Wait for Chris's explicit approval before publishing.
 - If a ZIP cannot be generated, explain the blocker and do not claim that one was provided.
+
+## The routine for every change
 
 1. **Start clean from the latest `main`**
    ```bash
@@ -137,7 +139,7 @@ Read this before changing layout or anything that finds elements on the page. Se
    ```bash
    python tools/bump-version.py 0.7.6
    ```
-   This updates `<meta name="app-version">` in `index.html`, the `?v=` on all 13 css/js links, and
+   This updates `<meta name="app-version">` in `index.html`, the `?v=` on all 14 css/js links, and
    `APP_VERSION` in `js/app.js`. **Never edit those by hand.** The `?v=` links stop browsers mixing
    cached old files with a new release, because GitHub Pages caches files for 10 minutes.
 6. **Update `CHANGELOG.md`** ([Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format): add a

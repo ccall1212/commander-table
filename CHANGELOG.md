@@ -4,7 +4,25 @@ All notable changes to Commander Table are listed here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/). Each release is tagged `vX.Y.Z` in git.
 
-## [Unreleased]
+## [Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.20.5...HEAD
+
+## [0.20.5] - 2026-10-17
+
+### Changed
+- Sharpen the Commander cast sound into a punchier boom-crack, with a bright initial snap over a deeper impact.
+
+## [0.20.4] - 2026-10-17
+
+### Changed
+- Add a subtle card-placement sound when cards enter the battlefield or are repositioned on it.
+- Give Commander casts a heavier, layered boom and keep the color-identity ring visible longer.
+
+## [0.20.3] - 2026-10-17
+
+### Added
+- When a Commander is cast from the command zone, a brief slam-and-glow effect plays on the battlefield card in its color identity, with a short impact sound. Everyone at the table sees it, it never blocks clicking, and it only plays when the card is cast (not when it is moved around afterwards).
+- Two-color identities split the ring top and bottom; three to five colors use equal radial segments; colorless Commanders get a neutral glow. With reduced motion turned on you get a brief static flash instead of movement.
+
 
 ## [0.19.1] - 2026-10-17
 
@@ -293,7 +311,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - First playable build: paste-import decks from Moxfield or Archidekt (via Scryfall), 2–4 player rooms over PeerJS with self-healing reconnects, a searchable zone viewer, commander damage tracking and automatic tokens.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.19.1...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.20.5...HEAD
+[0.20.5]: https://github.com/ccall1212/commander-table/compare/v0.20.4...v0.20.5
+[0.20.4]: https://github.com/ccall1212/commander-table/compare/v0.20.3...v0.20.4
+[0.20.3]: https://github.com/ccall1212/commander-table/compare/v0.19.1...v0.20.3
 [0.19.1]: https://github.com/ccall1212/commander-table/compare/v0.19.0...v0.19.1
 [0.19.0]: https://github.com/ccall1212/commander-table/compare/v0.18.2...v0.19.0
 [0.18.2]: https://github.com/ccall1212/commander-table/compare/v0.18.1...v0.18.2

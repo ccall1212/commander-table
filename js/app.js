@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.19.1';
+const APP_VERSION = '0.20.6';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -309,6 +309,24 @@ function hostRecv(msg, from) {
       if (!S.table.seats.includes(from)) return;
       const count = clamp(Math.floor(num(msg.count, 1)), 1, 5);
       broadcast({ t: 'drawfx', pid: from, count });
+      break;
+    }
+    case 'slamfx': {
+      if (!S.table.seats.includes(from) || typeof msg.iid !== 'string' || !/^[\w-]{1,40}$/.test(msg.iid)) return;
+      const player = S.players[from];
+      const card = player && player.zones && Array.isArray(player.zones.battlefield) && player.zones.battlefield.find(c => c.iid === msg.iid);
+      const knownCommander = player && Array.isArray(player.cmdrs) && player.cmdrs.some(c => c.iid === msg.iid);
+      if (!card || !(card.cmd || knownCommander)) return;
+      const ci = Array.isArray(msg.ci) ? [...new Set(msg.ci.filter(c => ['W', 'U', 'B', 'R', 'G'].includes(c)))] : [];
+      broadcast({ t: 'slamfx', pid: from, iid: msg.iid, ci });
+      break;
+    }
+    case 'placefx': {
+      if (!S.table.seats.includes(from) || typeof msg.iid !== 'string' || !/^[\w-]{1,40}$/.test(msg.iid)) return;
+      const player = S.players[from];
+      const card = player && player.zones && Array.isArray(player.zones.battlefield) && player.zones.battlefield.find(c => c.iid === msg.iid);
+      if (!card) return;
+      broadcast({ t: 'placefx', pid: from, iid: msg.iid });
       break;
     }
     case 'op': tableOp(msg.op, from); break;
@@ -616,6 +634,15 @@ function onBroadcast(msg) {
     case 'pub': if (msg.p && msg.p.pid) { S.players[msg.p.pid] = msg.p; if (msg.p.pid !== S.pid) checkOrphans(); } break;
     case 'log': S.log.push(msg.e); if (S.log.length > 300) S.log.splice(0, S.log.length - 300); break;
     case 'drawfx': if (typeof msg.pid === 'string') animateDrawCard(msg.pid, clamp(Math.floor(num(msg.count, 1)), 1, 5)); break;
+    case 'slamfx':
+      if (typeof msg.pid === 'string' && typeof msg.iid === 'string') {
+        const ci = Array.isArray(msg.ci) ? [...new Set(msg.ci.filter(c => ['W', 'U', 'B', 'R', 'G'].includes(c)))] : [];
+        animateCommanderSlam(msg.pid, msg.iid, ci);
+      }
+      break;
+    case 'placefx':
+      if (typeof msg.pid === 'string' && typeof msg.iid === 'string' && msg.pid !== S.pid) playCardPlaceSound();
+      break;
     case 'table': S.table = msg.table; afterTable(); break;
     case 'firstroll': showFirstRoll(msg); break;
     case 'online': S.online = msg.online || {}; break;
@@ -830,8 +857,17 @@ function doMove(iid, to, opts = {}) {
     if (res.repos) return res.wasAtt ? ['unattached {0}', [res.def]] : null;
     return [moveText(res, to, opts), [res.def]];
   });
-  if (!res || res.repos) return;
+  if (!res) return;
+  if (res.repos) {
+    emitCardPlaceSound(res.card.iid);
+    return;
+  }
   const { card, def } = res;
+  if (res.from === 'command' && to === 'battlefield' && !card.fd && !res.gone && def) {
+    emitCommanderSlam(card.iid, def.ci);
+  } else if (to === 'battlefield' && !res.gone) {
+    emitCardPlaceSound(card.iid);
+  }
   if (res.orphans && res.orphans.length) orphanToast(res.orphans);
   if (card.cmd && !res.gone && to !== 'command' && to !== 'battlefield' && card.own === S.pid) {
     UI.toast(`${dname(def)} went to your ${ZL[to]}.`, { ms: 8000, action: { label: 'Move to command zone', onClick: () => doMove(iid, 'command') } });
@@ -1143,6 +1179,224 @@ function animateDrawCard(pid, count) {
   // in a throttled/background tab where requestAnimationFrame may be paused.
   requestAnimationFrame(() => requestAnimationFrame(startAnimation));
   setTimeout(startAnimation, 175);
+}
+
+// Send only a public card instance ID and color identity; no hidden card information is included.
+// The card's new position is published first (messages reach the host in order), so the host can find it.
+function emitCommanderSlam(iid, ci) {
+  const colors = Array.isArray(ci) ? [...new Set(ci.filter(c => ['W', 'U', 'B', 'R', 'G'].includes(c)))] : [];
+  // Play during the initiating click/drag gesture so browser autoplay rules don't swallow it.
+  playCommanderSlamSound();
+  if (S.role === 'solo') {
+    // Run locally instead of routing through the multiplayer broadcast handler.
+    animateCommanderSlam(S.pid, iid, colors);
+    return;
+  }
+  clearTimeout(pubTimer); doPublish();
+  toHost({ t: 'slamfx', iid, ci: colors });
+}
+
+function animateCommanderSlam(pid, iid, ci) {
+  if (!pid || !iid) return;
+  const reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  // The player who cast it already heard the gesture-triggered sound in emitCommanderSlam.
+  if (pid !== S.pid) playCommanderSlamSound();
+  const palette = { W: '#f2e4b5', U: '#62c5f2', B: '#a38bd2', R: '#ff705f', G: '#76cf91' };
+  const colors = [...new Set((ci || []).filter(c => palette[c]).map(c => palette[c]))];
+  if (!colors.length) colors.push('#e6d8a5'); // a neutral glow for colorless commanders
+  const glow = colors.map(c => '0 0 24px 6px ' + c + 'bb').join(', ');
+  const border = colors.length === 1 ? colors[0] : 'transparent';
+  const identityGradient = colors.length === 1
+    ? 'linear-gradient(180deg, ' + colors[0] + ' 0 100%)'
+    : colors.length === 2
+      ? 'linear-gradient(180deg, ' + colors[0] + ' 0 50%, ' + colors[1] + ' 50% 100%)'
+      : (() => {
+          const step = 360 / colors.length;
+          const stops = colors.map((color, i) => color + ' ' + (i * step) + 'deg ' + ((i + 1) * step) + 'deg');
+          return 'conic-gradient(from -90deg, ' + stops.join(', ') + ')';
+        })();
+  let attempts = 0;
+
+  const start = () => {
+    if (!reduceMotion && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const candidates = [...document.querySelectorAll('.card[data-iid][data-zone="battlefield"]')]
+      .filter(el => el.dataset.iid === iid && (!el.dataset.pid || el.dataset.pid === pid) && drawAnimationVisible(el))
+      .map(el => ({ el, rect: el.getBoundingClientRect() }))
+      .filter(x => x.rect.width > 4 && x.rect.height > 8)
+      .sort((a, b) => b.rect.width * b.rect.height - a.rect.width * a.rect.height);
+    const found = candidates[0];
+    if (!found && attempts++ < 8) { requestAnimationFrame(start); return; }
+    if (!found || typeof found.el.animate !== 'function') return;
+
+    const card = found.el, rect = found.rect;
+    const ring = document.createElement('div');
+    ring.className = 'ct-slam-ring';
+    ring.setAttribute('aria-hidden', 'true');
+    Object.assign(ring.style, {
+      left: rect.left + 'px', top: rect.top + 'px',
+      width: rect.width + 'px', height: rect.height + 'px',
+      borderRadius: getComputedStyle(card).borderRadius || '5px',
+      border: '4px solid transparent',
+      borderColor: border,
+      background: 'linear-gradient(rgba(255,255,255,.06), rgba(255,255,255,.06)) padding-box, ' + identityGradient + ' border-box',
+      boxShadow: glow + ', 0 0 0 3px rgba(255,255,255,.5)',
+      zIndex: '2147483647',
+      mixBlendMode: 'screen'
+    });
+    document.body.appendChild(ring);
+
+    if (reduceMotion) {
+      // Respect reduced-motion preferences with a static color flash instead of movement.
+      ring.style.opacity = '1';
+      setTimeout(() => ring.remove(), 760);
+      return;
+    }
+
+    card.animate([
+      { transform: 'translateY(-18px) scale(1.055) rotate(-1.4deg)', filter: 'brightness(1.28)', boxShadow: glow, offset: 0 },
+      { transform: 'translateY(2px) scale(.985) rotate(.25deg)', filter: 'brightness(1.15)', boxShadow: glow, offset: .58 },
+      { transform: 'translateY(0) scale(1) rotate(0)', filter: 'brightness(1)', boxShadow: 'none', offset: 1 }
+    ], { duration: 680, easing: 'cubic-bezier(.2,.75,.25,1)' });
+    const motion = ring.animate([
+      { opacity: 0, transform: 'translateY(-10px) scale(.9)' },
+      { opacity: .95, transform: 'translateY(0) scale(1.02)', offset: .36 },
+      { opacity: .65, transform: 'translateY(0) scale(1.09)', offset: .65 },
+      { opacity: 0, transform: 'translateY(0) scale(1.16)' }
+    ], { duration: 900, easing: 'cubic-bezier(.2,.75,.25,1)' });
+    motion.finished.then(() => ring.remove(), () => ring.remove());
+  };
+  requestAnimationFrame(() => requestAnimationFrame(start));
+}
+function emitCardPlaceSound(iid) {
+  playCardPlaceSound();
+  if (S.role === 'solo') return;
+  clearTimeout(pubTimer); doPublish();
+  toHost({ t: 'placefx', iid });
+}
+
+function playCardPlaceSound() {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return;
+  let ctx;
+  try {
+    ctx = new AudioContextClass();
+    const play = () => {
+      const now = ctx.currentTime;
+      const thud = ctx.createOscillator(), gain = ctx.createGain();
+      thud.type = 'sine';
+      thud.frequency.setValueAtTime(190, now);
+      thud.frequency.exponentialRampToValueAtTime(95, now + 0.09);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.18, now + 0.006);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+      thud.connect(gain); gain.connect(ctx.destination);
+      thud.start(now); thud.stop(now + 0.13);
+      const frames = Math.floor(ctx.sampleRate * 0.055);
+      const buffer = ctx.createBuffer(1, frames, ctx.sampleRate);
+      const samples = buffer.getChannelData(0);
+      for (let i = 0; i < frames; i++) samples[i] = (Math.random() * 2 - 1) * (1 - i / frames);
+      const noise = ctx.createBufferSource(), noiseGain = ctx.createGain();
+      noise.buffer = buffer;
+      noiseGain.gain.setValueAtTime(0.09, now);
+      noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.055);
+      noise.connect(noiseGain); noiseGain.connect(ctx.destination);
+      noise.start(now);
+      setTimeout(() => { if (ctx.state !== 'closed') ctx.close().catch(() => {}); }, 220);
+    };
+    if (ctx.state === 'suspended') ctx.resume().then(play).catch(() => {});
+    else play();
+  } catch (_) {
+    if (ctx && ctx.state !== 'closed') ctx.close().catch(() => {});
+  }
+}
+
+function playCommanderSlamSound() {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return;
+  let ctx;
+  try {
+    ctx = new AudioContextClass();
+    const play = () => {
+      const now = ctx.currentTime;
+
+      // The impact starts with a hard, broadband crack — not a soft musical note.
+      const crackFrames = Math.floor(ctx.sampleRate * 0.085);
+      const crackBuffer = ctx.createBuffer(1, crackFrames, ctx.sampleRate);
+      const crackSamples = crackBuffer.getChannelData(0);
+      for (let i = 0; i < crackFrames; i++) {
+        const t = i / crackFrames;
+        crackSamples[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, 2.5);
+      }
+      const crack = ctx.createBufferSource(), crackFilter = ctx.createBiquadFilter(), crackGain = ctx.createGain();
+      crack.buffer = crackBuffer;
+      crackFilter.type = 'highpass';
+      crackFilter.frequency.setValueAtTime(850, now);
+      crackFilter.Q.value = 0.7;
+      crackGain.gain.setValueAtTime(0.0001, now);
+      crackGain.gain.exponentialRampToValueAtTime(1.0, now + 0.0015);
+      crackGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
+      crack.connect(crackFilter); crackFilter.connect(crackGain); crackGain.connect(ctx.destination);
+      crack.start(now); crack.stop(now + 0.09);
+
+      // A clipped, fast pitch-drop adds the sharp "KRAK" on top of the impact.
+      const snap = ctx.createOscillator(), snapGain = ctx.createGain();
+      snap.type = 'sawtooth';
+      snap.frequency.setValueAtTime(780, now);
+      snap.frequency.exponentialRampToValueAtTime(90, now + 0.075);
+      snapGain.gain.setValueAtTime(0.0001, now);
+      snapGain.gain.exponentialRampToValueAtTime(0.28, now + 0.001);
+      snapGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.08);
+      snap.connect(snapGain); snapGain.connect(ctx.destination);
+      snap.start(now); snap.stop(now + 0.085);
+
+      // Main body: a much louder low thump that drops rapidly in pitch like a heavy landing.
+      const body = ctx.createOscillator(), bodyGain = ctx.createGain();
+      body.type = 'sine';
+      body.frequency.setValueAtTime(105, now);
+      body.frequency.exponentialRampToValueAtTime(27, now + 0.42);
+      bodyGain.gain.setValueAtTime(0.0001, now);
+      bodyGain.gain.exponentialRampToValueAtTime(1.0, now + 0.009);
+      bodyGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.48);
+      body.connect(bodyGain); bodyGain.connect(ctx.destination);
+      body.start(now); body.stop(now + 0.49);
+
+      // A delayed sub hit adds the chesty aftershock of a huge body hitting concrete.
+      const sub = ctx.createOscillator(), subGain = ctx.createGain();
+      sub.type = 'sine';
+      sub.frequency.setValueAtTime(58, now + 0.028);
+      sub.frequency.exponentialRampToValueAtTime(24, now + 0.48);
+      subGain.gain.setValueAtTime(0.0001, now);
+      subGain.gain.setValueAtTime(0.7, now + 0.028);
+      subGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.52);
+      sub.connect(subGain); subGain.connect(ctx.destination);
+      sub.start(now + 0.028); sub.stop(now + 0.53);
+
+      // Short, gritty concrete-debris burst after the initial crack.
+      const debrisFrames = Math.floor(ctx.sampleRate * 0.24);
+      const debrisBuffer = ctx.createBuffer(1, debrisFrames, ctx.sampleRate);
+      const debrisSamples = debrisBuffer.getChannelData(0);
+      for (let i = 0; i < debrisFrames; i++) {
+        const t = i / debrisFrames;
+        debrisSamples[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, 1.8);
+      }
+      const debris = ctx.createBufferSource(), debrisFilter = ctx.createBiquadFilter(), debrisGain = ctx.createGain();
+      debris.buffer = debrisBuffer;
+      debrisFilter.type = 'lowpass';
+      debrisFilter.frequency.setValueAtTime(1800, now + 0.018);
+      debrisFilter.frequency.exponentialRampToValueAtTime(280, now + 0.24);
+      debrisGain.gain.setValueAtTime(0.0001, now);
+      debrisGain.gain.setValueAtTime(0.42, now + 0.018);
+      debrisGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.26);
+      debris.connect(debrisFilter); debrisFilter.connect(debrisGain); debrisGain.connect(ctx.destination);
+      debris.start(now + 0.018); debris.stop(now + 0.27);
+
+      setTimeout(() => { if (ctx.state !== 'closed') ctx.close().catch(() => {}); }, 600);
+    };
+    if (ctx.state === 'suspended') ctx.resume().then(play).catch(() => {});
+    else play();
+  } catch (_) {
+    if (ctx && ctx.state !== 'closed') ctx.close().catch(() => {});
+  }
 }
 function untapAll() { act(() => { S.me.zones.battlefield.forEach(c => { c.t = false; }); return ['untapped everything']; }); }
 let shuffleAudioContext = null;
@@ -3096,6 +3350,7 @@ function moveGroupToZone(group, to, opts = {}) {
     return ['moved ' + results.length + ' cards to ' + (ZL[to] || to)];
   });
   finishGroupZoneMove(results, to);
+  if (to === 'battlefield' && results.length) emitCardPlaceSound(results[0].card.iid);
 }
 function giveControlGroup(group, to, at, anchorIid) {
   if (!group.length) return;
