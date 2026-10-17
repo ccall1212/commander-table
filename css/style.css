@@ -1025,10 +1025,7 @@ body.touch-mode #game {
   overflow: hidden;
   padding-bottom: env(safe-area-inset-bottom);
 }
-body.touch-mode #table,
-body.touch-mode #mine,
 body.touch-mode .boardwrap,
-body.touch-mode .board,
 body.touch-mode #myHand,
 body.touch-mode #myZones,
 body.touch-mode .tstrip,
