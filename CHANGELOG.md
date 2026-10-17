@@ -4,7 +4,16 @@ All notable changes to Commander Table are listed here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/). Each release is tagged `vX.Y.Z` in git.
 
-## [Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.21.4...HEAD
+## [Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.22.0...HEAD
+
+## [0.22.0] - 2026-10-17
+
+### Added
+- Add optional Touch mode from the hamburger menu for iPad and other touch screens, saved locally per browser/device.
+- Let touch players tap cards to inspect them and open an **Actions** menu, or press and hold cards and piles to open their context menu.
+- Keep the standard desktop interaction path unchanged when Touch mode is off.
+
+[0.22.0]: https://github.com/ccall1212/commander-table/compare/v0.21.4...v0.22.0
 
 ## [0.21.4] - 2026-10-17
 
