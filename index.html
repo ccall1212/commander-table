@@ -30,12 +30,28 @@
     <section class="box appearance-box">
       <h2><span class="step">✦</span> Your look</h2>
       <p class="muted small">Choose a preset or use your own image. Preset choices are shared with the table; custom images stay in this browser and only change what you see.</p>
+      <details id="customAppearancePanel" class="custom-appearance-panel">
+        <summary>Upload your own images</summary>
+        <p class="muted small">Uploads are saved in this browser and stay private. Choose a saved “Your upload” tile to use it again, or select a preset without deleting your upload.</p>
+        <div class="custom-appearance-controls">
+          <label for="customBackFile">Card-back image</label>
+          <p class="muted small">JPG, PNG, or WebP · minimum 250 × 350 px · portrait 5:7 recommended (630 × 882). The image fills the card shape and may stretch slightly. Files up to 10 MB are optimized for browser storage.</p>
+          <input id="customBackFile" type="file" accept="image/jpeg,image/png,image/webp">
+          <span id="customBackStatus" class="muted small" role="status"></span>
+          <button id="resetCustomBack" type="button">Remove saved card-back image</button>
+        </div>
+        <div class="custom-appearance-controls">
+          <label for="customBackgroundFile">Play-area background</label>
+          <p class="muted small">JPG, PNG, or WebP · minimum 1280 × 720 px · landscape 16:9 recommended (1920 × 1080 ideal). The background covers the play area and may crop at the edges; a dark overlay keeps cards readable. Files up to 10 MB are optimized for browser storage.</p>
+          <input id="customBackgroundFile" type="file" accept="image/jpeg,image/png,image/webp">
+          <span id="customBackgroundStatus" class="muted small" role="status"></span>
+          <button id="resetCustomBackground" type="button">Remove saved background image</button>
+        </div>
+      </details>
       <h3>Card back</h3>
       <div id="cardBackPicker" class="appearance-grid cardback-grid" aria-label="Choose a card back"></div>
-      <div class="custom-appearance"><div class="custom-appearance-preview cardback-thumb" id="customBackPreview" aria-label="Custom card back preview"></div><div class="custom-appearance-controls"><label for="customBackFile">Use your own card-back image</label><p class="muted small">JPG, PNG, or WebP · at least 250 × 350 px · portrait 5:7 recommended (for example 630 × 882). The image fills the card shape and may stretch slightly. Files up to 10 MB are accepted and optimized for browser storage.</p><input id="customBackFile" type="file" accept="image/jpeg,image/png,image/webp"><button id="resetCustomBack" type="button">Use selected preset</button><span id="customBackStatus" class="muted small" role="status"></span></div></div>
       <h3>Play area background</h3>
       <div id="backgroundPicker" class="appearance-grid background-grid" aria-label="Choose a play area background"></div>
-      <div class="custom-appearance"><div class="custom-appearance-preview background-thumb" id="customBackgroundPreview" aria-label="Custom background preview"></div><div class="custom-appearance-controls"><label for="customBackgroundFile">Use your own play-area background</label><p class="muted small">JPG, PNG, or WebP · at least 1280 × 720 px · landscape 16:9 recommended (1920 × 1080 ideal). The background covers the play area, so edges may be cropped; a dark overlay keeps cards readable. Files up to 10 MB are accepted and optimized for browser storage.</p><input id="customBackgroundFile" type="file" accept="image/jpeg,image/png,image/webp"><button id="resetCustomBackground" type="button">Use selected preset</button><span id="customBackgroundStatus" class="muted small" role="status"></span></div></div>
     </section>
 
     <section class="box">
