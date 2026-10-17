@@ -5,9 +5,9 @@ This folder records changes prepared or committed by ChatGPT for Commander Table
 The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES.md). Objectives 1–3, 6, 8, 10, and 13 are complete in main; v0.17.0 draw-animation publication is being verified. Objective 4 (larger battlefield cards) is intentionally deferred. Objective #9 (random deck / website URL import) remains paused in draft [PR #11](https://github.com/ccall1212/commander-table/pull/11); its source has not been merged or published. See the [PR #11 investigation handoff](PR-11-DECK-IMPORT-INVESTIGATION.md). Objectives 5, 7, 11, and 12 remain queued.
 
 **Status checked:** 2026-10-16  
-**App version on main:** `0.17.0` (draw-card animation merged; checking GitHub Pages deployment).  
+**App version on main/live:** `0.17.0` (draw-card animation merged and Pages deployment succeeded).  
 **Latest release commit:** [`d5bf4c2`](https://github.com/ccall1212/commander-table/commit/d5bf4c24c00e896e5189320f2798b6ad2e372042), via [PR #12](https://github.com/ccall1212/commander-table/pull/12).  
-**GitHub Pages:** v0.17.0 deployment status is being checked.  
+**GitHub Pages:** [deployment run `39001886198`](https://github.com/ccall1212/commander-table/actions/runs/39001886198) succeeded for main commit `c611981` after the v0.17.0 app source and release docs were in place.  
 **Browser testing:** ChatGPT verified source-level checks only; real-browser/multiplayer checks remain for Chris to run.  
 **Release tag status:** annotated tags `v0.14.1`, `v0.14.2`, `v0.15.0`, `v0.15.1`, `v0.16.0`, and `v0.17.0` still need to be created and verified locally; the current GitHub connection cannot create annotated tags.
 
