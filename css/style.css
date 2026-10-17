@@ -901,6 +901,20 @@ body.lens-on #pv { display: none; }
 }
 
 
+/* Commander slam: a brief, click-through color-identity impact ring. */
+.ct-slam-ring {
+  position: fixed;
+  z-index: 6001;
+  pointer-events: none;
+  border: 2px solid transparent;
+  background-clip: padding-box, border-box;
+  will-change: transform, opacity;
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, .45));
+}
+@media (prefers-reduced-motion: reduce) {
+  .ct-slam-ring { display: none !important; }
+}
+
 /* Draw animation: a click-through flight from a player's Library to their hand. */
 .ct-draw-flight {
   position: fixed;
