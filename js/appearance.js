@@ -34,7 +34,7 @@
   function normalizePrefs(p){p=p&&typeof p==='object'?p:{};return{cardBack:backMap[p.cardBack]?p.cardBack:'ruby-sigil',background:bgMap[p.background]?p.background:'haunted-ruins'};}
   function getPrefs(){try{return normalizePrefs(JSON.parse(localStorage.getItem('ct.appearance')||'{}'));}catch(_){return normalizePrefs(null);}}
   function savePrefs(p){const v=normalizePrefs(p);try{localStorage.setItem('ct.appearance',JSON.stringify(v));}catch(_){/* storage is optional */}return v;}
-  function validCustom(v){return typeof v==='string'&&v.length<=1600000&&/^data:image\/webp;base64,[A-Za-z0-9+/=]+$/.test(v);}
+  function validCustom(v){return typeof v==='string'&&v.length<=850000&&/^data:image\/webp;base64,[A-Za-z0-9+/=]+$/.test(v);}
   function getCustom(){try{const p=JSON.parse(localStorage.getItem(CUSTOM_KEY)||'{}'),cardBack=validCustom(p.cardBack)?p.cardBack:'',background=validCustom(p.background)?p.background:'';return{cardBack,background,cardBackActive:cardBack?(typeof p.cardBackActive==='boolean'?p.cardBackActive:true):false,backgroundActive:background?(typeof p.backgroundActive==='boolean'?p.backgroundActive:true):false};}catch(_){return{cardBack:'',background:'',cardBackActive:false,backgroundActive:false};}}
   function saveCustom(kind,data){if((kind!=='cardBack'&&kind!=='background')||!validCustom(data))return false;const all=getCustom();all[kind]=data;all[kind+'Active']=true;try{localStorage.setItem(CUSTOM_KEY,JSON.stringify(all));return true;}catch(_){return false;}}
   function setCustomActive(kind,active){if(kind!=='cardBack'&&kind!=='background')return false;const all=getCustom();if(!all[kind])return false;all[kind+'Active']=!!active;try{localStorage.setItem(CUSTOM_KEY,JSON.stringify(all));return true;}catch(_){return false;}}
