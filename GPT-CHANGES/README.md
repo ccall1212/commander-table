@@ -15,7 +15,7 @@ The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES
 - Restores a clearly visible yellow/gold outline on the active player's board in Sidebar and Grid layouts using a positioned overlay border, with the overlay suppressed where it would outline the wrong surface.
 - App version and all 14 local CSS/JS cache-busting references are set to `0.14.2`; `CHANGELOG.md` and the player-facing guide describe the behavior, and the README badge was updated to `0.14.2` in [commit `aec758b`](https://github.com/ccall1212/commander-table/commit/aec758b139a394640008f43206719f07b3226b72).
 - **Browser status:** Chris previewed the feature locally and confirmed that it looked good before explicitly authorizing publication. ChatGPT did not independently operate the browser.
-- **Deployment status:** GitHub Pages deployment succeeded for the code merge commit [`78b6d5a`](https://github.com/ccall1212/commander-table/actions/runs/38990952959). Documentation updates after that commit trigger a newer Pages run; verify the latest run before declaring every publishing check complete.
+- **Deployment status:** GitHub Pages deployment succeeded for the merge commit and again for the latest main tree at handoff commit [`33acd59`](https://github.com/ccall1212/commander-table/actions/runs/38991021652). That run completed successfully. The final live HTML was not independently fetched, so treat workflow success as deployment confirmation but not a separate browser-visible version check.
 - **Tag status:** GitHub lookups found neither `v0.14.1` nor `v0.14.2`. The connected GitHub actions available here cannot create annotated tags, so the release tags still need to be created and verified locally. See the commands under “Remaining release housekeeping” below.
 
 ## Changes made by ChatGPT
@@ -46,7 +46,7 @@ The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES
   - [README deployment workflow](https://github.com/ccall1212/commander-table/actions/runs/38988499062)
 - Source checks confirmed `index.html` and `js/app.js` both report `0.14.2`, and all 14 CSS/JS cache-busting references match.
 - The live `github.io` page was not independently fetched by ChatGPT during the final verification, so a browser-visible live-version check should still be done if certainty is required.
-- GitHub's tag lookup returned no `v0.14.1` reference. The tag is the known remaining release task.
+- GitHub's tag lookups found neither `v0.14.1` nor `v0.14.2`. Both annotated tags remain outstanding; see the commands under “Remaining release housekeeping.”
 
 ## Remaining release housekeeping
 
