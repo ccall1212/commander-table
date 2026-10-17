@@ -1,4 +1,4 @@
-# Manual test checklist — Commander slam animation (v0.20.0 candidate)
+# Manual test checklist — Commander slam animation (v0.20.1 candidate)
 
 ## Start the app
 
@@ -10,7 +10,7 @@
 
 ## Click-by-click checks
 
-1. **Commander slam:** move your Commander from the command zone onto the battlefield. Expect a brief lift-and-impact animation with a glow matching its color identity.
+1. **Commander slam:** move your Commander from the command zone onto the battlefield. Expect a visible lift-and-impact animation with a bright color-identity ring and a short, quiet thud.
 2. **Color identities:** if possible, test a mono-color Commander, a multicolor Commander, and a colorless Commander. The colorless card should get a neutral glow.
 3. **Only on play:** drag/reposition the Commander after it is on the battlefield. No slam should play.
 4. **Other cards:** move a normal card from your hand onto the battlefield. It should not get the Commander slam.
@@ -20,4 +20,4 @@
 8. **Reduced motion:** enable your operating system/browser reduced-motion preference and reload. The slam animation should be skipped.
 9. **Console:** check for errors.
 
-Expected: a short, click-through slam effect only when a Commander is played from the command zone; no effect on later repositioning or ordinary card moves.
+Expected: a visible, click-through slam effect and short impact sound only when a Commander is played from the command zone; no effect on later repositioning or ordinary card moves.
