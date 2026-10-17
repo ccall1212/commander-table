@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.17.0';
+const APP_VERSION = '0.17.1';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -960,7 +960,7 @@ function drawAnimationVisible(el) {
   return style.display !== 'none' && style.visibility !== 'hidden' && Number(style.opacity || 1) > 0;
 }
 function drawAnimationPile(pid) {
-  const candidates = [...document.querySelectorAll('[data-pile="library"][data-pid]')]
+  const candidates = [...document.querySelectorAll('[data-pile="library"][data-pid], [data-fx="library"][data-pid]')]
     .filter(el => el.dataset.pid === pid && drawAnimationVisible(el))
     .map(el => {
       const visual = el.querySelector('.zcard, .tpcard, .pcard') || el;
@@ -971,15 +971,31 @@ function drawAnimationPile(pid) {
     .sort((a, b) => b.area - a.area);
   return candidates[0] || null;
 }
+// A hand's own box can be zero-width (its cards overflow it), so count it as present when it or any card in it has a size.
+function drawAnimationSized(el) {
+  if (!el || !el.isConnected) return false;
+  const r = el.getBoundingClientRect();
+  return r.width >= 1 && r.height >= 1;
+}
+function drawAnimationHandUsable(hand) {
+  if (!hand || !hand.isConnected) return false;
+  const cs = getComputedStyle(hand);
+  if (cs.display === 'none' || cs.visibility === 'hidden') return false;
+  return drawAnimationSized(hand) || [...hand.querySelectorAll('.card')].some(drawAnimationSized);
+}
 function drawAnimationHand(pid) {
+  const bigHand = $('#myHand');
   if (pid === S.pid) {
-    const ownHand = $('#myHand');
-    if (!viewedOpp() && drawAnimationVisible(ownHand)) return ownHand;
+    if (!viewedOpp() && drawAnimationHandUsable(bigHand)) return bigHand;
     const miniHands = [...document.querySelectorAll('.thand.mine')]
       .filter(drawAnimationVisible)
       .sort((a, b) => b.getBoundingClientRect().width - a.getBoundingClientRect().width);
     return miniHands[0] || null;
   }
+  // someone else: their hand in the big strip while I'm viewing them, else their miniature's hand fan
+  if (viewedOpp() === pid && drawAnimationHandUsable(bigHand)) return bigHand;
+  const tile = document.querySelector(`#opps .opp.tile[data-opp="${CSS.escape(pid)}"] .thand`);
+  if (tile && (drawAnimationVisible(tile) || drawAnimationHandUsable(tile))) return tile;
   const heads = [...document.querySelectorAll('.ohead')];
   const head = heads.find(el => [...el.querySelectorAll('[data-phead]')].some(p => p.dataset.phead === pid));
   const hand = head && head.querySelector('.ohhand');
@@ -2431,7 +2447,7 @@ function tileOverlayHTML(pid, bh, bw) {
   const hand = revealed
     ? p.revHand.map((c, i) => cardHTML(c, c.id && defs[c.id], { mine: false, pid, ctrl: pid, zone: 'hand', style: fan(i) })).join('')
     : Array.from({ length: n }, (_, i) => `<div class="card oback" style="${fan(i)}">${UI.cardBackHTML('', appearanceBackFor(pid))}</div>`).join('');
-  const pile = (k, label) => `<div class="tpile"><div class="tpcard">${pi[k].face || ''}</div><div class="tplabel">${label} <b>${pi[k].n}</b></div></div>`;
+  const pile = (k, label) => `<div class="tpile"${k === 'library' ? ` data-fx="library" data-pid="${esc(pid)}"` : ''}><div class="tpcard">${pi[k].face || ''}</div><div class="tplabel">${label} <b>${pi[k].n}</b></div></div>`;
   const cmd = (p.zones.command || []).map(c => cardHTML(c, c.id && defs[c.id], { mine: false, pid, ctrl: pid, zone: 'command' })).join('');
   return `<div class="tlife">${lifeBoxHTML(pid, true)}</div>
     <div class="tstrip" style="top:${bh}px;width:${bw}px"><div class="thand" style="--hm:${handSpread(n, bw)}px">${hand}${handN ? `<b class="thn">${handN}</b>` : ''}</div>

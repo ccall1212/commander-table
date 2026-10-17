@@ -4,12 +4,12 @@ This folder records changes prepared or committed by ChatGPT for Commander Table
 
 The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES.md). Objectives 1–3, 6, 8, 10, and 13 are complete in main; v0.17.0 draw-animation publication is being verified. Objective 4 (larger battlefield cards) is intentionally deferred. Objective #9 (random deck / website URL import) remains paused in draft [PR #11](https://github.com/ccall1212/commander-table/pull/11); its source has not been merged or published. See the [PR #11 investigation handoff](PR-11-DECK-IMPORT-INVESTIGATION.md). Objectives 5, 7, 11, and 12 remain queued.
 
-**Status checked:** 2026-10-16  
-**App version on main/live:** `0.17.0` (draw-card animation merged and Pages deployment succeeded).  
+**Status checked:** 2026-10-17 (by Claude Code, see "Claude Code verification" below)  
+**App version on main/live:** `0.17.1` (0.17.0 draw animation plus a fix so it actually plays).  
 **Latest release commit:** [`d5bf4c2`](https://github.com/ccall1212/commander-table/commit/d5bf4c24c00e896e5189320f2798b6ad2e372042), via [PR #12](https://github.com/ccall1212/commander-table/pull/12).  
 **GitHub Pages:** [deployment run `39001886198`](https://github.com/ccall1212/commander-table/actions/runs/39001886198) succeeded for main commit `c611981` after the v0.17.0 app source and release docs were in place.  
 **Browser testing:** ChatGPT verified source-level checks only; real-browser/multiplayer checks remain for Chris to run.  
-**Release tag status:** annotated tags `v0.14.1`, `v0.14.2`, `v0.15.0`, `v0.15.1`, `v0.16.0`, and `v0.17.0` still need to be created and verified locally; the current GitHub connection cannot create annotated tags.
+**Release tag status:** all release tags now exist on GitHub: `v0.14.1`, `v0.14.2`, `v0.15.0`, `v0.15.1`, `v0.16.0`, `v0.17.0` (created by Claude Code on 2026-10-17 at the commits listed below) and `v0.17.1`.
 
 ## PR #11 — random deck picker / website URL import (draft, not in main)
 
@@ -101,40 +101,47 @@ The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES
 - The live `github.io` page was not independently fetched by ChatGPT during the final verification, so a browser-visible live-version check should still be done if certainty is required.
 - GitHub's tag lookups found neither `v0.14.1` nor `v0.14.2`. Both annotated tags remain outstanding; see the commands under “Remaining release housekeeping.”
 
-## Remaining release housekeeping
+## Release housekeeping — tags (completed 2026-10-17)
 
-**This section is required for every release.** After publishing, update this checklist with the current release tag, the exact commit it should point to, tag existence/verification, and the latest GitHub Pages deployment result.
+Claude Code created and pushed the missing annotated tags, after checking each target commit exists, is an ancestor of `main`, and carries the matching app version. Verified with `git ls-remote --tags origin`:
 
-GitHub's tag-reference lookup currently shows that only `v0.14.0` exists among these historical/current release tags. The following **six annotated tags are still missing** and need to be created locally:
+| Tag | Commit |
+|---|---|
+| `v0.14.1` | `d98d677` |
+| `v0.14.2` | `aec758b` |
+| `v0.15.0` | `3974eb4` |
+| `v0.15.1` | `5927f82` |
+| `v0.16.0` | `5840ed1` |
+| `v0.17.0` | `d5bf4c2` |
 
-- `v0.14.1` → `d98d67704fe3312c2e682b5994040adace67013b` (commander tax chip fix and README badge).
-- `v0.14.2` → `aec758b139a394640008f43206719f07b3226b72` (active-player yellow outline and README badge update).
-- `v0.15.0` → `3974eb49453cbe55dedcac87f46fb720b07d0583` (automatic opening d20 roll).
-- `v0.15.1` → `5927f82caf2e6ff82a9e065535044f27c653294b` (life-total +/- hit-target fix).
-- `v0.16.0` → `5840ed166e1759fb249bfe0b855817640e23412e` (Library hotkeys, shuffle/mill effects, Hotkey list, Auto-Draw label, and tapped-play shortcut).
-- `v0.17.0` → `d5bf4c24c00e896e5189320f2798b6ad2e372042` (draw-card animation, [PR #12](https://github.com/ccall1212/commander-table/pull/12)).
+**Still true for ChatGPT:** the GitHub connection cannot create annotated tags. For every future release, list the exact commit the tag must point to here and ask Chris (or Claude Code) to create it; do not describe a release as complete until the tag exists.
 
-**v0.17.0 publication status:** [GitHub Pages deployment run `39001939968`](https://github.com/ccall1212/commander-table/actions/runs/39001939968) succeeded for main commit `df63ea30a3d225c0501ff5a446a025daafcc5aee`. That commit contains the release notes and GPT-CHANGES updates after the v0.17.0 app source was merged. The app source, HTML meta version, and all 14 asset cache-busting references are set to `0.17.0`. The annotated `v0.17.0` tag itself is still missing, so the changelog comparison link that depends on that tag will become meaningful after the tag is pushed.
+## Claude Code verification (2026-10-17)
 
-The current GitHub connection cannot create annotated Git tags. From a clean local checkout, first fetch tags and verify each target tag does not already exist. Then run:
+Real-browser checks (Chromium, 4 players over the relay: 1 host + 3 clients) of the features ChatGPT could only source-check:
 
-```bash
-git switch main
-git pull --ff-only
-git fetch --tags origin
+- **v0.15.0 opening d20 roll:** passes. Overlay shows ~6 s on clients, ignores the mouse, highest roll (20) went first and the log matches.
+- **v0.14.2 active-player outline:** passes in Sidebar and Grid; moves to the next player when the turn is passed.
+- **v0.15.1 life buttons:** your own +/- are 32x30 px, opponent miniature buttons 26x26 px.
+- **v0.16.0 hotkeys:** with the real mouse over the Library, `S` shuffles (order changes, same cards, animation class, log line) and `X` mills exactly one card; `L` opens Search Library; `T` from hand plays tapped and on the battlefield toggles tap; `G`, `E`, `B` move the hovered card. The Hotkey list opens and fits. "Auto-Draw" label present. Commander-tax chip is on the same row as CMD.
+- **v0.17.0 draw animation: FAILED, fixed in v0.17.1.** In Sidebar nothing played because `#myHand` has zero width (cards overflow it) and the animation required a non-zero box; opponents never saw it because their hand fan moved out of the header into the miniature tile. Fixed in `drawAnimationHand`/`drawAnimationPile` (PR-free fix branch, released as v0.17.1). Verified: own draw flies and flips in Sidebar and Grid; an opponent sees a flight with only a face-down card (no images, no identity); overlay ignores the pointer; no pending hidden cards left behind; no console errors. Not re-tested: Draw X over five, empty Library toast, reduced-motion.
 
-git tag -a v0.14.1 d98d67704fe3312c2e682b5994040adace67013b -m "v0.14.1 — commander tax beside CMD"
-git tag -a v0.14.2 aec758b139a394640008f43206719f07b3226b72 -m "v0.14.2 — restore active-player yellow outline"
-git tag -a v0.15.0 3974eb49453cbe55dedcac87f46fb720b07d0583 -m "v0.15.0 — opening turn-order d20 roll"
-git tag -a v0.15.1 5927f82caf2e6ff82a9e065535044f27c653294b -m "v0.15.1 — easier life-total button targets"
-git tag -a v0.16.0 5840ed166e1759fb249bfe0b855817640e23412e -m "v0.16.0 — library hotkeys and tapped-play shortcut"
-git tag -a v0.17.0 d5bf4c24c00e896e5189320f2798b6ad2e372042 -m "v0.17.0 — draw-card animation"
+**Lesson for future work:** layout changes (e.g. moving the hand/piles) silently break features that look up elements by selector. When changing layout, search for every `querySelector` of the moved element, and when adding an effect, test it in both Sidebar and Grid with a second player watching.
 
-git push origin v0.14.1 v0.14.2 v0.15.0 v0.15.1 v0.16.0 v0.17.0
-git ls-remote --tags origin refs/tags/v0.14.1 refs/tags/v0.14.2 refs/tags/v0.15.0 refs/tags/v0.15.1 refs/tags/v0.16.0 refs/tags/v0.17.0
-```
+### PR #11 (random deck / URL import) — findings from live data, still paused
 
-Only create and push tags that you have confirmed do not already exist; if any tag now exists, skip creating/pushing that tag and verify it points to the intended commit. After pushing, verify all six remote tag refs and their target commits. The v0.17.0 Pages run above succeeded; for future releases, add the latest successful deployment run here rather than leaving a prior version's deployment as the last example.
+- Public endpoints checked from a plain HTTP client with an honest User-Agent: Archidekt deck and search return 200; Moxfield `api2.moxfield.com/v2/decks/all/<id>` and `api.moxfield.com/v2/...` return 200 for the supplied deck. Neither provider sends a CORS header that allows `https://ccall1212.github.io` (Archidekt allows only `http://localhost:3000`), so the browser cannot call them directly and the relay approach is required.
+- The PR's converter (`deckTextFromProvider`) was run on the real responses: Moxfield deck gave name, 1 commander and 92 lines / 99 cards (matches the source); an Archidekt deck gave name, commander and main deck correctly.
+- **Bug found and fixed on the PR branch** (`fc4f12e`): Archidekt search results give the bracket as `edhBracket`; the parser only read `bracket`/`userBracket`/`autoBracket`/..., so every deck was "unknown bracket" and bracket filtering could never match. About 1 in 10 results actually carries a bracket (2 or 3 in the sample); many are null, so random-by-bracket will often have to fetch more decks or reject unknowns.
+- **Not tested:** whether Moxfield answers requests coming from Cloudflare Worker IPs (needs a deployed test worker, which needs the Cloudflare dashboard); the `/deck-api` route itself; Moxfield random search (deliberately unavailable). Do not enable the controls until those pass. Bump the PR to v0.18.0 before resuming (see its handoff).
+
+### Branch cleanup (2026-10-17)
+
+ChatGPT's pull requests are squash-merged, so GitHub keeps the head branch unless it is deleted and `git branch -r --merged` is not reliable; PR state is. Branches whose PR was merged were deleted: `fix/sidebar-commander-tax-chip` (dbf2eb5), `fix/active-turn-highlight` (7d9824b), `feat/animated-first-player-roll` (1a8381a), `docs/record-v0-15-0-publication` (19ed531), `fix/life-total-hit-target` (ae3a612), `docs/record-v0-15-1-publication` (3b7b049), `fix/auto-draw-label` (90a2623), `docs/record-v0-16-0-publish` (4a66975), `feat/draw-card-animation-preview` (ad8902e), plus `release/v0.17.0-draw-animation` (ad8902e, identical tip to the PR #12 branch) and `docs/prioritize-random-deck-and-draw-animation` (c93d8d4, PR #10, closed unmerged, docs superseded by OBJECTIVES.md). The tips are recorded so any branch can be recreated with `git push origin <sha>:refs/heads/<name>`.
+
+Kept: `main`; `feat/random-commander-deck-picker-preview` (open draft PR #11); `feat/random-commander-deck-picker` (older deck-picker attempt, not part of any PR, left for Chris to decide); `feature/relay-netcode` (Cloudflare Workers Builds still builds the relay from this branch, its relay code is identical to `main`; after Chris switches the Cloudflare production branch to `main` it can be deleted).
+
+**Rule going forward:** after a PR is merged and its tag created, delete its branch (GitHub: Settings > General > "Automatically delete head branches" does this automatically).
 
 ## Future publishing prompt
 

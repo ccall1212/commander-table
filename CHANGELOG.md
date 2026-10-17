@@ -9,6 +9,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - `AGENTS.md`: how changes are made, tested, versioned and released (for AI assistants and humans).
 
+## [0.17.1] - 2026-10-17
+
+### Fixed
+- The draw-card animation never played in the Sidebar layout (your hand's box has no width there, so it was skipped), and opponents never saw it at all (it looked for their hand in a header that no longer exists). Your own draws now fly from your Library and flip over in both Sidebar and Grid, and everyone else sees a face-down card fly from that player's Library to their hand fan.
+
 ## [0.17.0] - 2026-10-16
 
 ### Added
@@ -261,7 +266,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - First playable build: paste-import decks from Moxfield or Archidekt (via Scryfall), 2–4 player rooms over PeerJS with self-healing reconnects, a searchable zone viewer, commander damage tracking and automatic tokens.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.17.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.17.1...HEAD
+[0.17.1]: https://github.com/ccall1212/commander-table/compare/v0.17.0...v0.17.1
 [0.17.0]: https://github.com/ccall1212/commander-table/compare/v0.16.0...v0.17.0
 [0.16.0]: https://github.com/ccall1212/commander-table/compare/v0.15.1...v0.16.0
 [0.15.1]: https://github.com/ccall1212/commander-table/compare/v0.15.0...v0.15.1

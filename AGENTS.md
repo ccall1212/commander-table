@@ -128,6 +128,7 @@ So the normal flow is:
     git push --follow-tags
     git branch -d <branch> && git push origin --delete <branch>   # if the branch was pushed
     ```
+    Branches are not kept after release: once the work is merged and tagged, delete the branch (pull requests that are squash-merged leave their branch behind unless it is deleted, and GitHub's Settings > General > "Automatically delete head branches" can do this for you).
 11. **Verify the live site** about a minute later:
     - `https://ccall1212.github.io/commander-table/` shows `<meta name="app-version" content="X.Y.Z">`
       (and `js/app.js?v=X.Y.Z` loads).
