@@ -64,12 +64,6 @@ function deckApiTargets(site, action, id) {
         { url: "https://archidekt.com/api/decks/v3/?deckFormat=3&orderBy=-updatedAt&pageSize=100", ttl: 300, site },
       ];
     }
-    if (site === "moxfield") {
-      return [
-        { url: "https://api2.moxfield.com/v2/decks/search-sfw?fmt=commander&sortType=updated&sortDirection=descending&pageNumber=1&pageSize=100", ttl: 300, site },
-        { url: "https://api2.moxfield.com/v2/decks/search?fmt=commander&sortType=updated&sortDirection=descending&pageNumber=1&pageSize=100", ttl: 300, site },
-      ];
-    }
   }
   return null;
 }
