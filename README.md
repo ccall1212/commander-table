@@ -2,7 +2,7 @@
 
 A free, browser-based Magic: The Gathering Commander table for playing with friends online. It's a lot like the Tabletop Simulator setup many of us used to play on, but it runs right in your web browser.
 
-[![Version](https://img.shields.io/badge/version-0.15.0-blue)](CHANGELOG.md) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-0.17.0-blue)](CHANGELOG.md) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 **Play now:** https://ccall1212.github.io/commander-table/ — nothing to install. See [CHANGELOG.md](CHANGELOG.md) for what changed in each version.
 
@@ -173,7 +173,7 @@ Dropped connections and crashed tabs happen, and recovering from them is the mai
 
 **Library**
 
-- Click your library to draw.
+- Click your library to draw; the card briefly flies from the Library to your hand and flips over as it arrives. Other players see the card-back animation without seeing its face.
 - Right-click it for search, scry or look at the top X, mill, or **Reveal top card**. **Reveal top card** shows that card face up to everyone until it leaves the top of your library (draw, shuffle, etc.). **Play with top card revealed** is a separate, always-on option.
 
 **Graveyard and exile**
