@@ -1,6 +1,6 @@
 # Commander Table — Objectives Backlog
 
-This is the working list of the next UI and gameplay improvements requested by Chris. Keep the original numbering so we can work through them one at a time. Objective 1 is complete and published in source; the next priority is **Objective 2**. Objectives 7 and 8 remain queued.
+This is the working list of the next UI and gameplay improvements requested by Chris. Keep the original numbering so we can work through them one at a time. Objective 1 is complete; **Objective 2** is now in progress. Objectives 7 and 8 remain queued.
 
 ## Status key
 
@@ -18,15 +18,18 @@ Show a clear yellow/gold outline around the player whose turn it is. The existin
 - **Pull request:** [PR #3 — Restore yellow outline for the active player](https://github.com/ccall1212/commander-table/pull/3) — merged in [commit `78b6d5a`](https://github.com/ccall1212/commander-table/commit/78b6d5ae99e0ef95f0e5b644f1aa27f716211f84).
 - **Status:** Chris previewed the change locally, confirmed it looked good, and approved publication. The app source is now on `main` at version `0.14.2`. GitHub Pages deployment and the missing annotated release tags are tracked in `GPT-CHANGES/README.md`.
 
-## 2. Animate the opening turn-order dice roll — NEXT
+## 2. Animate the opening turn-order dice roll — IN PROGRESS (v0.15.0 branch)
 
 When players roll to choose who goes first, show a large, clear animated dice result rather than only recording the result in the game log.
 
 - Every player should see the animation/result on their own screen.
 - It must remain visible in Sidebar and Grid layouts, on both the user's and opponents' screens.
 - The result should clearly show the number rolled and then settle / disappear cleanly.
+- The shared turn-order event carries the exact final results that the existing host logic already uses, so the animation does not alter game rules.
+- The overlay is non-interactive, auto-dismisses, and respects reduced-motion preferences.
+- **Current branch:** `feat/animated-first-player-roll`. Browser verification is required before publication.
 
-## 3. Make life-total +/- controls easier to click — QUEUED
+## 3. Make life-total +/- controls easier to click — NEXT
 
 Fix the life total controls so clicking the minus or plus control anywhere within its intended button works reliably. Consider making the +/- controls unambiguous buttons rather than having a small clickable area.
 

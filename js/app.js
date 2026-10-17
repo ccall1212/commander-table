@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.14.2';
+const APP_VERSION = '0.15.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -371,6 +371,7 @@ function tableOp(op, from) {
         ties.forEach(group => group.forEach(p => rolls.set(p, rnd(20) + 1)));
       }
       T.order = live.slice().sort((a, b) => rolls.get(b) - rolls.get(a));
+      broadcast({ t: 'firstroll', rolls: live.map(pid => ({ pid, name: pname(pid), value: rolls.get(pid) })), winner: T.order[0] });
       sysLog(`Roll for first player (d20): ${T.order.map(p => `${pname(p)} rolled ${rolls.get(p)}`).join(' · ')}. ${pname(T.order[0])} goes first. Click Start game to begin.`);
       break;
     }
@@ -497,11 +498,105 @@ function cleanLog(msg, from) {
 }
 
 // ----- everyone -----
+function showFirstRoll(msg) {
+  const raw = Array.isArray(msg.rolls) ? msg.rolls.slice(0, 6) : [];
+  const seen = new Set();
+  const results = raw.filter(item => {
+    if (!isObj(item) || typeof item.pid !== 'string' || seen.has(item.pid)) return false;
+    const value = +item.value;
+    if (!Number.isInteger(value) || value < 1 || value > 20) return false;
+    seen.add(item.pid);
+    return true;
+  }).map(item => ({
+    pid: item.pid,
+    name: typeof item.name === 'string' && item.name ? item.name : pname(item.pid),
+    value: +item.value
+  }));
+  if (!results.length) return;
+
+  const previous = $('#firstRollOverlay');
+  if (previous) {
+    (previous._ctRollIntervals || []).forEach(clearInterval);
+    (previous._ctRollTimeouts || []).forEach(clearTimeout);
+    previous.remove();
+  }
+
+  const winner = typeof msg.winner === 'string' ? msg.winner : '';
+  const overlay = document.createElement('div');
+  overlay.id = 'firstRollOverlay';
+  overlay.className = 'first-roll-overlay';
+  overlay.setAttribute('role', 'group');
+  overlay.setAttribute('aria-label', 'Roll for first player results');
+  overlay._ctRollIntervals = [];
+  overlay._ctRollTimeouts = [];
+  overlay.innerHTML = `
+    <section class="first-roll-panel">
+      <div class="first-roll-eyebrow">TURN ORDER</div>
+      <h2 class="first-roll-title">Roll for first player</h2>
+      <div class="first-roll-subtitle">Everyone rolls a d20 · highest goes first</div>
+      <div class="first-roll-grid">
+        ${results.map(result => `
+          <div class="first-roll-tile" style="--first-roll-color:${esc(colorOf(result.pid))}"
+               data-roll="${result.value}" data-winner="${result.pid === winner ? 'true' : 'false'}"
+               aria-label="${esc(result.name)} d20 result">
+            <div class="first-roll-name">${esc(result.name)}</div>
+            <div class="first-roll-die" aria-hidden="true"><span class="first-roll-number">20</span></div>
+            <div class="first-roll-die-caption">D20</div>
+            <div class="first-roll-winner">GOES FIRST</div>
+          </div>`).join('')}
+      </div>
+      <div class="first-roll-foot">Tied high rolls re-roll automatically</div>
+    </section>`;
+  document.body.appendChild(overlay);
+
+  const tiles = [...overlay.querySelectorAll('.first-roll-tile')];
+  const reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  let lastRevealAt = 0;
+
+  tiles.forEach((tile, index) => {
+    const result = clamp(num(tile.dataset.roll, 1), 1, 20);
+    const number = tile.querySelector('.first-roll-number');
+    if (reduceMotion) {
+      number.textContent = String(result);
+      tile.classList.add('revealed');
+      if (tile.dataset.winner === 'true') tile.classList.add('winner');
+      return;
+    }
+
+    tile.classList.add('rolling');
+    const stopAfter = 850 + index * 125;
+    lastRevealAt = Math.max(lastRevealAt, stopAfter);
+    const startedAt = Date.now();
+    const interval = setInterval(() => {
+      if (!overlay.isConnected) { clearInterval(interval); return; }
+      if (Date.now() - startedAt >= stopAfter) {
+        clearInterval(interval);
+        number.textContent = String(result);
+        tile.classList.remove('rolling');
+        tile.classList.add('revealed');
+        if (tile.dataset.winner === 'true') tile.classList.add('winner');
+      } else {
+        number.textContent = String(rnd(20) + 1);
+      }
+    }, 55);
+    overlay._ctRollIntervals.push(interval);
+  });
+
+  const dismiss = setTimeout(() => {
+    if (!overlay.isConnected) return;
+    overlay.classList.add('is-leaving');
+    const remove = setTimeout(() => overlay.remove(), 240);
+    overlay._ctRollTimeouts.push(remove);
+  }, (reduceMotion ? 0 : lastRevealAt) + 1750);
+  overlay._ctRollTimeouts.push(dismiss);
+}
+
 function onBroadcast(msg) {
   switch (msg.t) {
     case 'pub': if (msg.p && msg.p.pid) { S.players[msg.p.pid] = msg.p; if (msg.p.pid !== S.pid) checkOrphans(); } break;
     case 'log': S.log.push(msg.e); if (S.log.length > 300) S.log.splice(0, S.log.length - 300); break;
     case 'table': S.table = msg.table; afterTable(); break;
+    case 'firstroll': showFirstRoll(msg); break;
     case 'online': S.online = msg.online || {}; break;
     case 'newgame': resetForNewGame(); break;
     default: return;
