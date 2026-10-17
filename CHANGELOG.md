@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.20.0] - 2026-10-17
+
+### Added
+- Add a brief color-identity slam and glow when a Commander enters the battlefield from the command zone, visible to the table and skipped for reduced-motion preferences.
+
+
 ## [0.19.1] - 2026-10-17
 
 ### Changed
@@ -293,7 +299,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - First playable build: paste-import decks from Moxfield or Archidekt (via Scryfall), 2–4 player rooms over PeerJS with self-healing reconnects, a searchable zone viewer, commander damage tracking and automatic tokens.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.19.1...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.20.0...HEAD
+[0.20.0]: https://github.com/ccall1212/commander-table/compare/v0.19.1...v0.20.0
 [0.19.1]: https://github.com/ccall1212/commander-table/compare/v0.19.0...v0.19.1
 [0.19.0]: https://github.com/ccall1212/commander-table/compare/v0.18.2...v0.19.0
 [0.18.2]: https://github.com/ccall1212/commander-table/compare/v0.18.1...v0.18.2
