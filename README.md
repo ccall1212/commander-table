@@ -27,12 +27,18 @@ Before starting a game, use **Your look** on the opening screen to choose from 1
 
 ## Importing your deck
 
+You have two options:
+
+**Website URL import and random deck search**
+
+These two options are temporarily turned off while they are being fixed. Their code has been kept for later. They are not needed for normal deck import.
+
+**Import with plain text (available now)**
 1. Export your deck:
-   - **Moxfield:** More, then Export, then "Copy Plain Text" (or "Copy for MTGA")
-   - **Archidekt:** Export, then "Copy to clipboard"
-2. Paste it into "Import a deck" in Commander Table.
-3. Click **Load cards**, then **Save**.
-4. If the export doesn't mark your commander, pick it from the dropdown. You can also set an optional partner or background.
+   - **Moxfield:** More, then Export, then **Copy Plain Text** (or **Copy for MTGA**).
+   - **Archidekt:** Export, then **Copy to clipboard**.
+2. Click **+ Import a deck**, paste the list, then click **Load cards**.
+3. Review the results and click **Save**. If the export doesn't mark your commander, pick it from the dropdown. You can also set an optional partner or background.
 
 Decks are saved in your browser.
 

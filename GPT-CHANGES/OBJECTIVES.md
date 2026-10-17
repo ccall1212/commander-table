@@ -1,6 +1,13 @@
 # Commander Table — Objectives Backlog
 
-This is the working list of the next UI and gameplay improvements requested by Chris. Keep the original numbering so we can work through them one at a time. Objectives 1–3, 8, 10, and 13 are complete and deployed. Objective 4 (larger cards) is intentionally deferred for now. Objectives 5–7, 9, 11, and 12 remain queued.
+This is the working list of the next UI and gameplay improvements requested by Chris. Keep the original numbering so we can work through them one at a time. Objectives 1–3, 8, 10, and 13 are complete and deployed. Objective 4 (larger cards) is intentionally deferred for now. Objective #9 is temporarily paused with its random-deck and website URL controls disabled; Objective #6 is next once the paused work is settled. Objectives 5, 7, 11, and 12 remain queued.
+
+## Current priorities
+
+1. **Objective #9 — Choose a random deck from Archidekt or Moxfield.** Temporarily paused. The random-deck and website URL controls are disabled for now, but the code is retained for a later fix. Normal plain-text import remains available.
+2. **Objective #6 — Animate drawing a card.** Next: design a short Library-to-hand motion that is visible to the player and their opponents without blocking interactions or animating unrelated card movements.
+
+These are priority order, not renumbering. Objective numbers remain stable for references and tracking.
 
 ## Status key
 
@@ -57,7 +64,7 @@ When a Commander is moved from the Command Zone onto the battlefield, play a sat
 - Trigger on the play event only, not when the card is subsequently dragged or repositioned.
 - Keep the effect brief and avoid distracting from gameplay; respect reduced-motion preferences if practical.
 
-## 6. Animate drawing a card — QUEUED
+## 6. Animate drawing a card — PRIORITY 2 (queued)
 
 Whenever a player draws a card, animate the card moving from the Library toward their hand and flipping over as it arrives.
 
@@ -86,14 +93,26 @@ When hovering over your own Library:
 - **Browser testing:** ChatGPT checked source only; hands-on testing of audio, animations, and shortcuts in Sidebar/Grid is still recommended.
 
 
-## 9. Choose a random deck from Archidekt or Moxfield — QUEUED
+## 9. Choose a random deck from Archidekt or Moxfield — TEMPORARILY PAUSED (v0.17.0 preview)
 
 Add a **Choose Random Deck** option on the opening/join screen for quick testing and fun random games.
 
 - Let the player choose Archidekt or Moxfield as the source.
 - Let the player choose deck bracket **1, 2, 3, or 4** before selecting a random deck.
 - Load the chosen deck into the lobby using the existing deck import flow wherever source access allows.
-- Investigate what public search/API support each source provides; keep manual import available if random discovery is restricted.
+- The feature code is present, but the random-deck controls are temporarily disabled in the preview while the feature is being fixed.
+- Website URL import is also temporarily disabled. Its code is retained for a later fix.
+- **Investigation findings:** the original browser code called provider endpoints directly, so browser CORS rules could block the result before the app could read it. The preview now routes requests through an allowlisted `/deck-api` endpoint in `relay/worker.js`. This helper route must be deployed before it can be tested live; it is not deployed from this draft branch.
+- **Archidekt:** server-side retrieval through the relay is a plausible fix for browser CORS, but still needs a live test of deck JSON, card categories/quantities, and the random-search response.
+- **Moxfield:** current unofficial API docs mark deck reads and search as requiring Bearer authorization, and public tools report intermittent automated-request blocks. We must not pretend a proxy bypasses that restriction. Moxfield random search now returns an explicit unavailable message; direct URL import is best-effort and must fall back to plain text if denied.
+- **New reference found in Card-Forge/forge:** [`MoxfieldDeckUrlProvider.java`](https://github.com/Card-Forge/forge/blob/master/forge-gui/src/main/java/forge/deck/MoxfieldDeckUrlProvider.java) reads public deck URLs from `https://api.moxfield.com/v2/decks/all/{deckId}` using its ordinary HTTP loader in [`DeckUrlLoader.java`](https://github.com/Card-Forge/forge/blob/master/forge-gui/src/main/java/forge/deck/DeckUrlLoader.java). The preview relay now tries this legacy host/version after the two `api2.moxfield.com` endpoints. This is a promising fallback for direct URL import, but needs live testing and may still be blocked or change. Do not collect or hard-code personal tokens.
+- **Not verified:** live calls to either provider could not be made from this environment, and the deployed Cloudflare relay has not been changed. The provider controls remain hidden/disabled until Claude Code can test after a deliberate relay deployment.
+- These providers have unofficial / changing public interfaces; browser CORS, anti-bot checks, private decks, or missing bracket metadata may prevent direct retrieval. The UI explains the plain-text export fallback, and a deck with an unknown bracket is not selected as a random match.
+- **Source research:** Moxfield's public endpoints are undocumented and recent community reports indicate that unauthenticated fetches may be blocked; see the [unofficial API notes](https://github.com/wildfire111/moxfield_api_docs/blob/main/docs.json) and [recent report](https://www.reddit.com/r/Moxfield/comments/1ubbry2/deck_api_no_longer_works/). Archidekt's public deck detail endpoint has been used by other community integrations, but it is not a guaranteed, stable public API.
+- **Source-level tests completed:** JavaScript parses; URL parsing accepts the supplied Moxfield URL and a sample Archidekt URL; synthetic Moxfield/Archidekt response fixtures preserve the deck name, commander, quantities, and exclude sideboard/maybeboard cards; numeric and named bracket values are recognized. These fixtures do not prove the live provider endpoints work.
+- **Next step:** fix and test these provider features before turning their controls back on. Do not mark Objective #9 complete until live browser tests pass.
+- **Current preview:** [Draft PR #11](https://github.com/ccall1212/commander-table/pull/11) on branch `feat/random-commander-deck-picker-preview`; it is not merged or published.
+- The earlier docs-only [PR #10](https://github.com/ccall1212/commander-table/pull/10) was closed as superseded; its priority notes are included here and in PR #11.
 
 ## 10. Spell out the Auto-Draw label — COMPLETE (v0.16.0 merged and deployed)
 

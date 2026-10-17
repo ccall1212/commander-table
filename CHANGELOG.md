@@ -9,6 +9,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - `AGENTS.md`: how changes are made, tested, versioned and released (for AI assistants and humans).
 
+## [0.17.0] - 2026-10-16
+
+### Added
+- Added the random-deck picker and website URL import code for a future release.
+
+### Changed
+- Temporarily disabled the random-deck picker and website URL import controls while they are being fixed. The code is retained; normal plain-text deck import remains available.
+
+### Notes
+- Archidekt and Moxfield endpoints used for public deck discovery/import are not guaranteed public APIs. Random selection requires a discoverable public deck and recognizable bracket metadata; unsupported requests should fail with a helpful fallback rather than selecting an unknown bracket.
+
 ## [0.16.0] - 2026-10-16
 
 ### Added
@@ -252,7 +263,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - First playable build: paste-import decks from Moxfield or Archidekt (via Scryfall), 2–4 player rooms over PeerJS with self-healing reconnects, a searchable zone viewer, commander damage tracking and automatic tokens.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.16.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.17.0...HEAD
+[0.17.0]: https://github.com/ccall1212/commander-table/compare/v0.16.0...v0.17.0
 [0.16.0]: https://github.com/ccall1212/commander-table/compare/v0.15.1...v0.16.0
 [0.15.1]: https://github.com/ccall1212/commander-table/compare/v0.15.0...v0.15.1
 [0.15.0]: https://github.com/ccall1212/commander-table/compare/v0.14.2...v0.15.0

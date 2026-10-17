@@ -36,9 +36,135 @@ function corsHeaders(origin) {
   };
 }
 
+function deckApiJson(body, status, origin, maxAge = 0) {
+  const headers = {
+    "Content-Type": "application/json; charset=utf-8",
+    "Cache-Control": maxAge ? `public, max-age=${maxAge}` : "no-store",
+  };
+  if (originAllowed(origin)) Object.assign(headers, corsHeaders(origin));
+  return new Response(JSON.stringify(body), { status, headers });
+}
+
+function deckApiTargets(site, action, id) {
+  if (action === "deck") {
+    if (site === "archidekt" && /^\\d{1,12}$/.test(id || "")) {
+      return [{ url: `https://archidekt.com/api/decks/${id}/`, ttl: 1800, site }];
+    }
+    if (site === "moxfield" && /^[A-Za-z0-9_-]{1,64}$/.test(id || "")) {
+      return [
+        { url: `https://api2.moxfield.com/v3/decks/all/${encodeURIComponent(id)}`, ttl: 900, site },
+        { url: `https://api2.moxfield.com/v2/decks/all/${encodeURIComponent(id)}`, ttl: 900, site },
+        // Forge uses this older host/version for public deck URL imports.
+        { url: `https://api.moxfield.com/v2/decks/all/${encodeURIComponent(id)}`, ttl: 900, site },
+      ];
+    }
+  }
+  if (action === "search") {
+    if (site === "archidekt") {
+      return [
+        { url: "https://archidekt.com/api/decks/v3/?deckFormat=3&orderBy=-createdAt&pageSize=100", ttl: 300, site },
+        { url: "https://archidekt.com/api/decks/v3/?deckFormat=3&orderBy=-updatedAt&pageSize=100", ttl: 300, site },
+      ];
+    }
+  }
+  return null;
+}
+
+function deckApiHeaders() {
+  // Identify Commander Table honestly. Do not impersonate a browser or attempt
+  // to bypass provider authentication or anti-bot protections.
+  return {
+    "User-Agent": "CommanderTable/0.17 (+https://github.com/ccall1212/commander-table)",
+    Accept: "application/json",
+  };
+}
+
+async function handleDeckApi(request, origin, ctx) {
+  if (!originAllowed(origin)) {
+    return new Response("Origin not allowed", { status: 403 });
+  }
+  if (request.method !== "GET") return deckApiJson({ error: "Only GET requests are supported." }, 405, origin);
+  const params = new URL(request.url).searchParams;
+  const site = params.get("site") || "";
+  const action = params.get("action") || "";
+  const id = params.get("id") || "";
+  if (site === "moxfield" && action === "search") {
+    return deckApiJson({ error: "Moxfield automated deck search requires API access that this app does not currently have. Use Archidekt for random decks, or import a Moxfield plain-text list." }, 501, origin);
+  }
+  const targets = deckApiTargets(site, action, id);
+  if (!targets) return deckApiJson({ error: "Unsupported deck source or request." }, 400, origin);
+
+  let lastStatus = 502;
+  let sawBlocked = false;
+  for (const target of targets) {
+    const cache = caches.default;
+    const cacheKey = new Request(target.url, { method: "GET" });
+    let text = null;
+    let cached = false;
+    try {
+      const hit = await cache.match(cacheKey);
+      if (hit) {
+        text = await hit.text();
+        cached = true;
+      }
+    } catch (e) {
+      // Cache is only an optimization; continue to the provider.
+    }
+    if (text === null) {
+      let upstream;
+      try {
+        upstream = await fetch(target.url, {
+          method: "GET",
+          headers: deckApiHeaders(),
+          signal: AbortSignal.timeout(10000),
+        });
+      } catch (e) {
+        lastStatus = 502;
+        continue;
+      }
+      if (!upstream.ok) {
+        lastStatus = upstream.status;
+        if (upstream.status === 401 || upstream.status === 403) sawBlocked = true;
+        continue;
+      }
+      try {
+        text = await upstream.text();
+        if (text.length > 8 * 1024 * 1024) {
+          lastStatus = 502;
+          continue;
+        }
+        JSON.parse(text);
+      } catch (e) {
+        lastStatus = 502;
+        continue;
+      }
+      try {
+        const cachedResponse = new Response(text, {
+          status: 200,
+          headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": `public, max-age=${target.ttl}` },
+        });
+        ctx.waitUntil(cache.put(cacheKey, cachedResponse));
+      } catch (e) {
+        // Cache is only an optimization.
+      }
+    }
+    try {
+      return deckApiJson(JSON.parse(text), 200, origin, target.ttl);
+    } catch (e) {
+      lastStatus = 502;
+    }
+  }
+
+  const provider = site === "moxfield" ? "Moxfield" : "Archidekt";
+  const error = sawBlocked
+    ? provider + " blocked or requires authorization for automated access. Use its Copy Plain Text export and the normal deck import."
+    : provider + " could not return deck data right now. Try again later or use Copy Plain Text and the normal deck import.";
+  return deckApiJson({ error, status: lastStatus, blocked: sawBlocked }, 502, origin);
+}
+
 // ---- Worker entry ----------------------------------------------------------------------------
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const origin = request.headers.get("Origin");
     const okOrigin = originAllowed(origin);
@@ -52,6 +178,8 @@ export default {
       if (okOrigin) Object.assign(headers, corsHeaders(origin));
       return new Response(JSON.stringify({ ok: true, v: VERSION }), { status: 200, headers });
     }
+
+    if (url.pathname === "/deck-api") return handleDeckApi(request, origin, ctx);
 
     const m = /^\/room\/([^/]+)$/.exec(url.pathname);
     if (m && request.headers.get("Upgrade")?.toLowerCase() === "websocket") {
