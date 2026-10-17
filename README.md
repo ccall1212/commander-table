@@ -174,7 +174,7 @@ Dropped connections and crashed tabs happen, and recovering from them is the mai
 
 **Library**
 
-- Click your library to draw; the card briefly flies from the Library to your hand and flips over as it arrives. Other players see the card-back animation without seeing its face.
+- Click your Library to draw; the card lifts out in a smooth arc, flips during its flight, and settles into your hand. Other players see the card-back animation without seeing its face.
 - Right-click it for search, scry or look at the top X, mill, or **Reveal top card**. **Reveal top card** shows that card face up to everyone until it leaves the top of your library (draw, shuffle, etc.). **Play with top card revealed** is a separate, always-on option.
 
 **Graveyard and exile**
