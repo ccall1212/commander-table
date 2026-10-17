@@ -494,32 +494,35 @@
     return ((r.json && r.json.data) || []).slice(0, 30).map(toDef);
   }
 
-  // All printings of a card (by front face name), newest first. Empty array if none.
+  // All available printings of a card (by front face name), newest first.
+  // Scryfall paginates search results, so follow every page unless a caller requests a limit.
   async function fetchPrints(name, limit) {
     const front = frontFace(name);
     if (!front) return [];
-    const max = limit > 0 ? Math.floor(limit) : 10;
-    const url = API + '/cards/search?q=' + encodeURIComponent('!"' + front + '"') +
+    const max = limit > 0 ? Math.floor(limit) : Infinity;
+    let url = API + '/cards/search?q=' + encodeURIComponent('!"' + front + '"') +
       '&unique=prints&order=released&dir=desc&include_extras=true&include_variations=true';
-    let r;
-    try {
-      r = await request(url);
-    } catch (e) {
-      throw new Error('Could not load printings from Scryfall — check your connection.');
-    }
-    if (r.status === 404) return [];
-    if (!r.ok) throw new Error(apiErrorMessage(r));
     const seen = new Set();
     const out = [];
-    ((r.json && r.json.data) || []).filter(function (c) {
-      return ['art_series', 'token', 'double_faced_token', 'emblem'].indexOf(c.layout) === -1;
-    }).forEach(function (c) {
-      if (out.length >= max) return;
-      const d = toDef(c);
-      if (!d.img || seen.has(d.img)) return;
-      seen.add(d.img);
-      out.push(d);
-    });
+    while (url && out.length < max) {
+      let r;
+      try {
+        r = await request(url);
+      } catch (e) {
+        throw new Error('Could not load printings from Scryfall — check your connection.');
+      }
+      if (r.status === 404) return out;
+      if (!r.ok) throw new Error(apiErrorMessage(r));
+      ((r.json && r.json.data) || []).forEach(function (c) {
+        if (out.length >= max || ['art_series', 'token', 'double_faced_token', 'emblem'].indexOf(c.layout) !== -1) return;
+        const d = toDef(c);
+        // Distinct printings can reuse the same art; keep each unique card printing.
+        if (!d.img || seen.has(d.id)) return;
+        seen.add(d.id);
+        out.push(d);
+      });
+      url = r.json && r.json.has_more && r.json.next_page ? r.json.next_page : '';
+    }
     return out;
   }
 

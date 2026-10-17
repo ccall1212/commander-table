@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.18.2';
+const APP_VERSION = '0.19.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -1314,7 +1314,7 @@ async function switchPrinting(iid) {
   if (!d || !d.name) return;
   const t = UI.toast(`Finding printings of ${dname(d)}…`, { ms: 4000 });
   let prints;
-  try { prints = await Deck.fetchPrints(d.name, 10); } catch (e) { UI.toast(e.message || 'Could not load printings', { kind: 'error' }); return; }
+  try { prints = await Deck.fetchPrints(d.name); } catch (e) { UI.toast(e.message || 'Could not load printings', { kind: 'error' }); return; }
   finally { if (t && t.close) t.close(); }
   if (!prints.length) { UI.toast(`No other printings found for ${dname(d)}.`); return; }
   const copies = ZONES.reduce((n, z) => n + S.me.zones[z].filter(c => !c.tok && S.me.defs[c.id] && S.me.defs[c.id].name === d.name).length, 0);

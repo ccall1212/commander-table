@@ -421,6 +421,21 @@
 
 /* ---------- Print picker ---------- */
 .w-dialog.w-pp-dialog { width: min(640px, 100%); }
+.w-pp-content { min-width: 0; }
+.w-pp-search {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0 0 10px;
+  padding: 11px 12px;
+  border: 1px solid var(--border, #2b3142);
+  border-radius: 8px;
+  background: var(--panel, #161b24);
+  color: var(--text, #e8eaf0);
+  font: inherit;
+}
+.w-pp-search:focus { outline: 2px solid var(--accent, #d4a72c); outline-offset: 1px; }
+.w-pp-row[hidden] { display: none; }
 .w-pp-list { display: flex; flex-direction: column; gap: 10px; max-height: 70vh; overflow-y: auto; padding: 2px; }
 .w-pp-row {
   position: relative;
