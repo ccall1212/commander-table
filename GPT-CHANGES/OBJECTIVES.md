@@ -1,6 +1,6 @@
 # Commander Table — Objectives Backlog
 
-This is the working list of the next UI and gameplay improvements requested by Chris. Keep the original numbering so we can work through them one at a time. Objectives 1–3, 8, 10, and 13 are complete and deployed. Objective 4 (larger cards) is intentionally deferred. Objective #9 is paused in draft PR #11 and has not been merged or pushed to main; see [the import investigation handoff](PR-11-DECK-IMPORT-INVESTIGATION.md). Objective #6 (draw-card animation) is in progress in draft [PR #12](https://github.com/ccall1212/commander-table/pull/12); source changes have not been merged or pushed to main. Objectives 5, 7, 11, and 12 remain queued.
+This is the working list of the next UI and gameplay improvements requested by Chris. Keep the original numbering so we can work through them one at a time. Objectives 1–3, 6, 8, 10, and 13 are complete in main. Objective 4 (larger cards) is intentionally deferred. Objective #9 remains paused in draft PR #11 and has not been merged or published; see [the import investigation handoff](PR-11-DECK-IMPORT-INVESTIGATION.md). Objectives 5, 7, 11, and 12 remain queued.
 
 ## Status key
 
@@ -57,18 +57,18 @@ When a Commander is moved from the Command Zone onto the battlefield, play a sat
 - Trigger on the play event only, not when the card is subsequently dragged or repositioned.
 - Keep the effect brief and avoid distracting from gameplay; respect reduced-motion preferences if practical.
 
-## 6. Animate drawing a card — PRIORITY 1 (IN PROGRESS, draft PR #12)
+## 6. Animate drawing a card — COMPLETE (v0.17.0 merged to main)
 
 Whenever a player draws a card, animate the card moving from the Library toward their hand and flipping over as it arrives.
 
-- Other players should see an appropriate version of the draw animation too.
+- Other players see an appropriate version of the draw animation without learning the drawn card's identity.
 - Avoid playing the animation for unrelated card movement, such as rearranging a card already in hand.
-- Ensure the animation does not block clicks, dragging, or normal game play.
-- **Preview branch:** `feat/draw-card-animation-preview`, in [draft PR #12](https://github.com/ccall1212/commander-table/pull/12). The source changes have **not been merged or pushed to main or published**; live/main remains at v0.16.0.
-- The animation is attached to the manual draw action (clicking the Library or pressing D) and turn-start Auto-Draw. A small temporary event is relayed through the host; the event contains no card identity. The drawing player sees the actual card face as it arrives, while opponents see that player's card back on both sides.
-- The overlay uses `pointer-events: none` and is skipped if reduced motion is preferred. Following Chris's feedback, the flight was shortened to 360ms (flip 270ms), and the real card in the hand is kept transparent until the moving copy lands to avoid the hand card appearing early. A regression in the animation-helper edit accidentally removed `draw()`, breaking Library click / D key / Draw X; this was fixed in PR #12 commit [`4c05441`](https://github.com/ccall1212/commander-table/commit/4c05441df335108a29d86ea7c45885d137e37678). `draw()` is restored and only up to five cards are hidden/animated per Draw X action. A full-file JavaScript syntax parse passed, but real-browser and multiplayer behavior has not been tested by ChatGPT; Chris should retest the preview.
-- **Claude Code testing before merge:** solo click/D draws, multiplayer opponent view/privacy, Auto-Draw, 1v1 first-turn skip, empty library, moving cards already in hand, clicks/drags during animation, Top/Sidebar/Grid at 1920×1080 and 1366×768, reduced-motion preference, and browser console. Do not publish without Chris's explicit approval.
-
+- The animation does not block clicks or dragging and respects reduced-motion preferences.
+- **Pull request / merge:** [PR #12](https://github.com/ccall1212/commander-table/pull/12), merged in [commit d5bf4c2](https://github.com/ccall1212/commander-table/commit/d5bf4c24c00e896e5189320f2798b6ad2e372042).
+- The 360ms flight keeps the real card invisible until its animated copy lands. Manual draws (Library click / D), turn-start Auto-Draw, and Draw X up to five cards are covered; additional cards from Draw X remain visible.
+- **Regression fix:** restored the accidentally removed draw() function before merging. Source verification passed, including full JavaScript syntax, exactly one draw function, app/meta version 0.17.0, and all 14 matching CSS/JS version references.
+- **Verification limits:** Chris reviewed the preview. ChatGPT did not independently run the live browser or multiplayer tests. Still recommended: solo draw, multiplayer privacy, Auto-Draw, 1v1 first-turn skip, empty Library, Draw X over five cards, click/drag during animation, Top/Sidebar/Grid at 1920×1080 and 1366×768, reduced-motion setting, and browser console.
+- **Release housekeeping:** GitHub Pages deployment and the annotated v0.17.0 tag are tracked in GPT-CHANGES/README.md.
 ## 7. Keep opponent boards vibrant in Sidebar view — QUEUED
 
 Opponent board previews in Sidebar view currently look darker / greyer than the user's main board. Keep opponent board art and card colors as vibrant as the main board.
