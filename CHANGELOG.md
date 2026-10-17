@@ -8,28 +8,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [0.20.3] - 2026-10-17
 
-### Fixed
-- Fix the Commander slam never showing in online games: the host rejected every card as invalid.
-- Send the slam right after the card's new position instead of on a timer, so it can't arrive too early.
-- Make the impact sound louder and add a short noise "slam" so it can be heard on laptop speakers.
-
-## [0.20.2] - 2026-10-17
-
-### Fixed
-- Trigger the slam from command-zone moves without relying only on the card's commander flag surviving a move.
-- Start the cast sound directly from the initiating gesture, even when reduced motion is enabled.
-- Keep a static color flash for reduced-motion preferences; split two-color identities top/bottom and divide three-to-five colors into distinct radial segments.
-
-## [0.20.1] - 2026-10-17
-
-### Fixed
-- Make the Commander slam effect render above the table and target the battlefield card explicitly.
-- Add a short synthesized impact sound when a Commander is cast from the command zone.
-
-## [0.20.0] - 2026-10-17
-
 ### Added
-- Add a brief color-identity slam and glow when a Commander enters the battlefield from the command zone, visible to the table and skipped for reduced-motion preferences.
+- When a Commander is cast from the command zone, a brief slam-and-glow effect plays on the battlefield card in its color identity, with a short impact sound. Everyone at the table sees it, it never blocks clicking, and it only plays when the card is cast (not when it is moved around afterwards).
+- Two-color identities split the ring top and bottom; three to five colors use equal radial segments; colorless Commanders get a neutral glow. With reduced motion turned on you get a brief static flash instead of movement.
 
 
 ## [0.19.1] - 2026-10-17
@@ -320,10 +301,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - First playable build: paste-import decks from Moxfield or Archidekt (via Scryfall), 2–4 player rooms over PeerJS with self-healing reconnects, a searchable zone viewer, commander damage tracking and automatic tokens.
 
 [Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.20.3...HEAD
-[0.20.3]: https://github.com/ccall1212/commander-table/compare/v0.20.2...v0.20.3
-[0.20.2]: https://github.com/ccall1212/commander-table/compare/v0.20.1...v0.20.2
-[0.20.1]: https://github.com/ccall1212/commander-table/compare/v0.20.0...v0.20.1
-[0.20.0]: https://github.com/ccall1212/commander-table/compare/v0.19.1...v0.20.0
+[0.20.3]: https://github.com/ccall1212/commander-table/compare/v0.19.1...v0.20.3
 [0.19.1]: https://github.com/ccall1212/commander-table/compare/v0.19.0...v0.19.1
 [0.19.0]: https://github.com/ccall1212/commander-table/compare/v0.18.2...v0.19.0
 [0.18.2]: https://github.com/ccall1212/commander-table/compare/v0.18.1...v0.18.2

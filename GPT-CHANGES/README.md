@@ -23,7 +23,7 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 - **What was wrong:** the host's check on the `slamfx` message used `/^[\\w-]{1,40}$/`, which rejected every card id, so nobody saw the effect in an online game (Practice solo skips the host, so it looked fine there). The impact sound was also a 42 to 105 Hz tone that laptop speakers cannot play. Both were fixed in v0.20.3 (commit 664b1c8 on branch `claude/nifty-euler-rffzhv`; it must be brought into the PR branch).
 - **What Chris should try (2 tabs: host and joiner, Sidebar and Grid):** cast the Commander from the command zone by double-click and by drag; both players should see the colored ring and hear a short thud. Dragging it around afterwards, or moving a normal card, must do nothing. Check mono, multi-color and colorless Commanders, and the reduced-motion setting.
 - **Verified so far:** a headless-browser pass in Practice solo (double-click cast works) and a direct test of the host check. **Not verified:** a real two-player online game, loudness on real speakers, and the Grid layout.
-- **Changelog tidy-up at publish time:** versions 0.20.0, 0.20.1, 0.20.2 and 0.20.3 were never released. Collapse them into one `0.20.0` entry before publishing, and drop the compare links for tags that will not exist.
+- **Changelog:** the unreleased 0.20.0 to 0.20.2 test iterations are collapsed into one `0.20.3` entry (the number is kept, not reset to 0.20.0, so browsers that cached the earlier test files cannot serve stale code). The release tag will be `v0.20.3`, created after Chris says "publish".
 
 ## Remaining release housekeeping
 
