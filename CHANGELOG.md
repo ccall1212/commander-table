@@ -12,9 +12,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ## [0.17.0] - 2026-10-16
 
 ### Added
-- Added **🎲 Choose a random Commander deck** on the opening screen, with Archidekt/Moxfield source choices and bracket 1–4 matching when public search and bracket metadata are available.
-- Added **Import from website** for public Moxfield and Archidekt deck URLs. When a provider blocks browser access, the importer explains how to fall back to that site's plain-text export.
-- Imported website decks use the existing card lookup and save flow, including the option to choose a commander if the export does not clearly mark one.
+- Added the random-deck picker and website URL import code for a future release.
+
+### Changed
+- Temporarily disabled the random-deck picker and website URL import controls while they are being fixed. The code is retained; normal plain-text deck import remains available.
 
 ### Notes
 - Archidekt and Moxfield endpoints used for public deck discovery/import are not guaranteed public APIs. Random selection requires a discoverable public deck and recognizable bracket metadata; unsupported requests should fail with a helpful fallback rather than selecting an unknown bracket.
