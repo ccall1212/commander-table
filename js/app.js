@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.21.3';
+const APP_VERSION = '0.21.4';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -2918,6 +2918,10 @@ let drag = null; // a card being dragged with the pointer
 let selectionDrag = null; // a temporary selection rectangle
 function bindGame() {
   const g = $('#game');
+  // Native browser text/image dragging can steal pointer gestures from the tabletop's card drag logic.
+  g.addEventListener('dragstart', e => {
+    if (e.target.closest('.board, .card')) e.preventDefault();
+  });
   g.addEventListener('click', e => {
     if (Date.now() - S.dragEndAt < 250) return; // the click that ends a drag
     const t = e.target;
