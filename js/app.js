@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.20.5';
+const APP_VERSION = '0.20.6';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -1319,73 +1319,78 @@ function playCommanderSlamSound() {
     const play = () => {
       const now = ctx.currentTime;
 
-      // A sharp, bright crack right at impact gives the cast its MTG Arena-style punch.
-      const crackFrames = Math.floor(ctx.sampleRate * 0.055);
+      // The impact starts with a hard, broadband crack — not a soft musical note.
+      const crackFrames = Math.floor(ctx.sampleRate * 0.085);
       const crackBuffer = ctx.createBuffer(1, crackFrames, ctx.sampleRate);
       const crackSamples = crackBuffer.getChannelData(0);
       for (let i = 0; i < crackFrames; i++) {
-        const fade = 1 - i / crackFrames;
-        crackSamples[i] = (Math.random() * 2 - 1) * fade * fade;
+        const t = i / crackFrames;
+        crackSamples[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, 2.5);
       }
-      const crackNoise = ctx.createBufferSource(), crackFilter = ctx.createBiquadFilter(), crackGain = ctx.createGain();
-      crackNoise.buffer = crackBuffer;
+      const crack = ctx.createBufferSource(), crackFilter = ctx.createBiquadFilter(), crackGain = ctx.createGain();
+      crack.buffer = crackBuffer;
       crackFilter.type = 'highpass';
-      crackFilter.frequency.setValueAtTime(1500, now);
-      crackFilter.frequency.exponentialRampToValueAtTime(520, now + 0.05);
+      crackFilter.frequency.setValueAtTime(850, now);
+      crackFilter.Q.value = 0.7;
       crackGain.gain.setValueAtTime(0.0001, now);
-      crackGain.gain.exponentialRampToValueAtTime(0.8, now + 0.002);
-      crackGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.06);
-      crackNoise.connect(crackFilter); crackFilter.connect(crackGain); crackGain.connect(ctx.destination);
-      crackNoise.start(now); crackNoise.stop(now + 0.06);
+      crackGain.gain.exponentialRampToValueAtTime(1.0, now + 0.0015);
+      crackGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
+      crack.connect(crackFilter); crackFilter.connect(crackGain); crackGain.connect(ctx.destination);
+      crack.start(now); crack.stop(now + 0.09);
 
-      // A short, bright snap layered over the noise makes the impact read clearly on small speakers.
+      // A clipped, fast pitch-drop adds the sharp "KRAK" on top of the impact.
       const snap = ctx.createOscillator(), snapGain = ctx.createGain();
-      snap.type = 'triangle';
-      snap.frequency.setValueAtTime(1250, now);
-      snap.frequency.exponentialRampToValueAtTime(240, now + 0.055);
+      snap.type = 'sawtooth';
+      snap.frequency.setValueAtTime(780, now);
+      snap.frequency.exponentialRampToValueAtTime(90, now + 0.075);
       snapGain.gain.setValueAtTime(0.0001, now);
-      snapGain.gain.exponentialRampToValueAtTime(0.22, now + 0.002);
-      snapGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.065);
+      snapGain.gain.exponentialRampToValueAtTime(0.28, now + 0.001);
+      snapGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.08);
       snap.connect(snapGain); snapGain.connect(ctx.destination);
-      snap.start(now); snap.stop(now + 0.07);
+      snap.start(now); snap.stop(now + 0.085);
 
-      // The low impact supplies the boom underneath the crack.
-      const thud = ctx.createOscillator(), thudGain = ctx.createGain();
-      thud.type = 'sine';
-      thud.frequency.setValueAtTime(118, now);
-      thud.frequency.exponentialRampToValueAtTime(34, now + 0.36);
-      thudGain.gain.setValueAtTime(0.0001, now);
-      thudGain.gain.exponentialRampToValueAtTime(0.72, now + 0.012);
-      thudGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.4);
-      thud.connect(thudGain); thudGain.connect(ctx.destination);
-      thud.start(now); thud.stop(now + 0.41);
+      // Main body: a much louder low thump that drops rapidly in pitch like a heavy landing.
+      const body = ctx.createOscillator(), bodyGain = ctx.createGain();
+      body.type = 'sine';
+      body.frequency.setValueAtTime(105, now);
+      body.frequency.exponentialRampToValueAtTime(27, now + 0.42);
+      bodyGain.gain.setValueAtTime(0.0001, now);
+      bodyGain.gain.exponentialRampToValueAtTime(1.0, now + 0.009);
+      bodyGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.48);
+      body.connect(bodyGain); bodyGain.connect(ctx.destination);
+      body.start(now); body.stop(now + 0.49);
 
-      // A softer, delayed sub-boom makes the hit feel large without turning into a long rumble.
-      const boom = ctx.createOscillator(), boomGain = ctx.createGain();
-      boom.type = 'sine';
-      boom.frequency.setValueAtTime(68, now + 0.035);
-      boom.frequency.exponentialRampToValueAtTime(29, now + 0.34);
-      boomGain.gain.setValueAtTime(0.0001, now);
-      boomGain.gain.setValueAtTime(0.3, now + 0.035);
-      boomGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.39);
-      boom.connect(boomGain); boomGain.connect(ctx.destination);
-      boom.start(now + 0.035); boom.stop(now + 0.4);
+      // A delayed sub hit adds the chesty aftershock of a huge body hitting concrete.
+      const sub = ctx.createOscillator(), subGain = ctx.createGain();
+      sub.type = 'sine';
+      sub.frequency.setValueAtTime(58, now + 0.028);
+      sub.frequency.exponentialRampToValueAtTime(24, now + 0.48);
+      subGain.gain.setValueAtTime(0.0001, now);
+      subGain.gain.setValueAtTime(0.7, now + 0.028);
+      subGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.52);
+      sub.connect(subGain); subGain.connect(ctx.destination);
+      sub.start(now + 0.028); sub.stop(now + 0.53);
 
-      // A restrained filtered tail adds a little air after the hit.
-      const tailFrames = Math.floor(ctx.sampleRate * 0.12);
-      const tailBuffer = ctx.createBuffer(1, tailFrames, ctx.sampleRate);
-      const tailSamples = tailBuffer.getChannelData(0);
-      for (let i = 0; i < tailFrames; i++) tailSamples[i] = (Math.random() * 2 - 1) * (1 - i / tailFrames);
-      const tail = ctx.createBufferSource(), tailFilter = ctx.createBiquadFilter(), tailGain = ctx.createGain();
-      tail.buffer = tailBuffer;
-      tailFilter.type = 'lowpass';
-      tailFilter.frequency.value = 1000;
-      tailGain.gain.setValueAtTime(0.12, now + 0.025);
-      tailGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.15);
-      tail.connect(tailFilter); tailFilter.connect(tailGain); tailGain.connect(ctx.destination);
-      tail.start(now + 0.025); tail.stop(now + 0.16);
+      // Short, gritty concrete-debris burst after the initial crack.
+      const debrisFrames = Math.floor(ctx.sampleRate * 0.24);
+      const debrisBuffer = ctx.createBuffer(1, debrisFrames, ctx.sampleRate);
+      const debrisSamples = debrisBuffer.getChannelData(0);
+      for (let i = 0; i < debrisFrames; i++) {
+        const t = i / debrisFrames;
+        debrisSamples[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, 1.8);
+      }
+      const debris = ctx.createBufferSource(), debrisFilter = ctx.createBiquadFilter(), debrisGain = ctx.createGain();
+      debris.buffer = debrisBuffer;
+      debrisFilter.type = 'lowpass';
+      debrisFilter.frequency.setValueAtTime(1800, now + 0.018);
+      debrisFilter.frequency.exponentialRampToValueAtTime(280, now + 0.24);
+      debrisGain.gain.setValueAtTime(0.0001, now);
+      debrisGain.gain.setValueAtTime(0.42, now + 0.018);
+      debrisGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.26);
+      debris.connect(debrisFilter); debrisFilter.connect(debrisGain); debrisGain.connect(ctx.destination);
+      debris.start(now + 0.018); debris.stop(now + 0.27);
 
-      setTimeout(() => { if (ctx.state !== 'closed') ctx.close().catch(() => {}); }, 500);
+      setTimeout(() => { if (ctx.state !== 'closed') ctx.close().catch(() => {}); }, 600);
     };
     if (ctx.state === 'suspended') ctx.resume().then(play).catch(() => {});
     else play();
