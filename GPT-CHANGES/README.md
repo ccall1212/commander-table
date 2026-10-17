@@ -1,6 +1,6 @@
 # GPT-CHANGES
 
-Handoff folder between ChatGPT and Claude Code / Chris. It holds **only what is still open or in flight**. Finished work is not repeated here: the player-facing history is [CHANGELOG.md](../CHANGELOG.md), the technical history is `git log` and the release tags, and how to work on the project is in [AGENTS.md](../AGENTS.md). When something ships, delete its notes from this folder instead of leaving a "done" entry.
+Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **only what is still open or in flight**. Finished work is not repeated here: the player-facing history is [CHANGELOG.md](../CHANGELOG.md), the technical history is `git log` and the release tags, and how to work on the project is in [AGENTS.md](../AGENTS.md). When something ships, delete its notes from this folder instead of leaving a "done" entry.
 
 ## What is in this folder
 
@@ -18,15 +18,14 @@ Handoff folder between ChatGPT and Claude Code / Chris. It holds **only what is 
 
 ## How a change gets released (short version)
 
-1. ChatGPT works on a branch and opens a pull request. It cannot run a browser, so it lists exact things for a human to click (see "Writing the test list" in `AGENTS.md`).
-2. Chris asks Claude Code to test it. Claude Code runs it in a real browser (several players over the relay), fixes what breaks, and reports.
-3. Only when Chris says "publish": merge to `main`, tag, push, delete the branch, verify the live site.
+1. ChatGPT works on a branch and opens a pull request, with a short click list for Chris (see "Writing the test list" in `AGENTS.md`).
+2. **Chris tests it himself in his browser and tells ChatGPT how it went. That is the browser test.** Record it as "Tested by Chris: ..." and list as unverified only what he did not mention. Claude Code (a backup on Chris's work account) is only used if Chris asks.
+3. When Chris says "publish": merge to `main`, get the tag created, delete the branch, verify the live site.
 
 ### Things ChatGPT cannot do, so ask for them
 
-- **Create annotated tags.** The GitHub connection cannot. When a release is merged, write the exact commit the tag must point to and ask Chris or Claude Code to create it. Do not call a release finished until `git ls-remote --tags origin` shows the tag.
-- **Run a real browser or a multiplayer game.** Never write "tested" for something that was only read. Say "not browser-tested" and provide the click list.
-- **Hover, mouse and sound behaviour.** Some features only work with a real mouse (for example `S` and `X` over the Library use CSS `:hover`, which scripted events cannot fake). Mark them "needs a human".
+- **Create annotated tags.** The GitHub connection cannot. When a release is merged, write the exact commit the tag must point to and ask Chris (or Claude Code, if he chooses) to create it. Do not call a release finished until `git ls-remote --tags origin` shows the tag.
+- **Run a multi-player game or hear sound.** If Chris did not mention testing with a second player (or sound, or a real-mouse hover shortcut), say that one item is unverified and ask him whether he wants it checked.
 
 ### Keeping the repository tidy
 

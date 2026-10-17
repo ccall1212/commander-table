@@ -6,23 +6,31 @@ and **never push to `main` or publish without his explicit OK** ("publish" / "pu
 
 ## Who does what
 
-Two assistants work on this repo, and they have different abilities:
+This is Chris's personal project. **ChatGPT (his personal account) is the main assistant.** Claude Code runs on his work account, so it is only the **backup**: Chris will call on it when ChatGPT can't do something or gets stuck, not by default. Don't plan around Claude Code being available, and don't hand work to it that you can finish yourself.
 
-| | ChatGPT (via GitHub) | Claude Code (on Chris's laptop) |
+| | ChatGPT (via GitHub) | Claude Code (backup) |
 |---|---|---|
-| Writes code on a branch / PR | ✅ main job | ✅ |
-| Runs the game in a real browser, multiplayer tabs, test suites | ❌ assume not available | ✅ |
-| Publishes to `main` / tags / checks the live site | ❌ never | ✅ only when Chris says "publish" |
+| Writes code on a branch / PR | ✅ main job | ✅ if asked |
+| Merges a PR / publishes to `main` | ✅ only when Chris says "publish" | ✅ if asked |
+| Creates annotated release tags | ❌ the GitHub connection can't | ✅ |
+| Runs the game in a browser, multi-player tests | ❌ | ✅ |
+| Fixes hard bugs, anything needing a real shell | tries first | ✅ if ChatGPT is stuck |
 
-So the normal flow is:
-1. **ChatGPT** makes the change on a branch, following steps 1–3 and 5–8 of the routine below.
-   It can't browser-test, so it does the **checks without a browser** (below) and pushes the branch.
-   It writes the manual test list in the commit message or pull-request description.
-2. **Chris** tells Claude: *"Test and publish branch `<name>`"* (or just "test branch `<name>`").
-3. **Claude** pulls the branch, runs the browser tests, fixes anything broken, and reports. On Chris's
-   OK it publishes (steps 10–11).
+The normal flow is:
+1. **ChatGPT** makes the change on a branch and opens a PR, following the routine below. It can't run a
+   browser, so it does the checks it *can* do (below) and writes a short click list for Chris.
+2. **Chris tests it himself** in his own browser (usually the local or preview copy) and tells ChatGPT how it went.
+   **Chris's hands-on testing is the browser test.** Treat what he reports as tested:
+   - Record it as *"Tested by Chris: <what he said he tried / that it looked good>"*. Do not keep writing
+     that the feature is "not browser-tested" or add notes like "ChatGPT did not independently run a
+     browser": that is true of every change and only confuses the record.
+   - Only list things as unverified when Chris did not mention them (for example "multiplayer with a second
+     player was not mentioned"). If it is unclear what he tried, ask one short question instead of guessing.
+3. **Chris says "publish"** for a named version. ChatGPT merges, asks for the tag (it can't create it),
+   deletes the branch and updates the docs.
+4. **Only if Chris asks**, Claude Code tests with several players, creates the tag, or fixes what ChatGPT couldn't.
 
-### If you can't run a browser (ChatGPT)
+### Checks ChatGPT does itself (it can't run a browser)
 - Keep each branch **small and focused** on one feature or fix. Big rewrites can't be reviewed safely.
 - **Syntax:** if your environment has Node, run `node --check js/<file>.js` on every changed file.
   If not, re-read each changed function and check that braces, brackets, parentheses and template
@@ -39,7 +47,7 @@ So the normal flow is:
   and leave it for the browser test.
 - **Write the test list** in the PR or commit: the exact clicks and keys to try, how many players, which
   layout (Sidebar / Grid) and screen size, and what should happen.
-- **State clearly what you did NOT test.** Never write "tested" for something you only read.
+- **Be honest about what was checked by whom.** Never write "tested" for something only read in the code; do write "tested by Chris" for what he told you he tried.
 - Don't merge to `main`, tag, or bump past a version that's already tagged.
 
 ## What this is
@@ -133,7 +141,7 @@ Read this before changing layout or anything that finds elements on the page. Se
 8. **Commit** with [Conventional Commits](https://www.conventionalcommits.org/): `feat: …`, `fix: …`,
    `docs: …`, `chore: …`, `feat(ui): …`. Include the version in the subject for releases, e.g.
    `fix(ui): piles keep their own size (v0.7.1)`. Say in the body what changed and why.
-9. **Push the branch** and/or open a pull request. **Stop here.** (ChatGPT stops here every time; Claude tests and, on Chris's OK, publishes.)
+9. **Push the branch** and/or open a pull request. **Stop here.** (Stop here and wait: Chris tests it himself and reports back. Only after he says "publish" go on to step 10.)
 10. **Publish (only on Chris's OK):**
     ```bash
     git switch main && git pull --ff-only
