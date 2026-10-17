@@ -23,7 +23,7 @@ Want to play without the website? There's also a downloadable copy of the game f
 
 ## Your look: card backs and play-area backgrounds
 
-Before starting a game, use **Your look** on the opening screen to choose from 12 painted card backs (dragon, flame, arcane, ocean, frost, tree of life, necromancer, skull, shadow, sun, stained glass and more) and 10 illustrated play-area backgrounds (dragon's lair, knight's vigil, nature, arcane study, mage duel, necromancer's dominion, celestial realm, haunted ruins, tranquil shores, eldritch horizon). Your choices are saved in your browser and shared with the table, so other players see your card back on your cards and your background on your board. You can change them before your next game.
+Before starting a game, use **Your look** on the opening screen to choose from 12 painted card backs and 10 illustrated play-area backgrounds, or upload your own JPG, PNG, or WebP image. Card backs should be at least 250 × 350 pixels (5:7 portrait recommended); backgrounds should be at least 1280 × 720 pixels (16:9 recommended). Uploads up to 10 MB are optimized and saved only in your browser, so they are private to your view and are not sent to other players. Preset choices remain shared with the table. Backgrounds fill the play area and may crop at the edges; a dark overlay helps keep cards readable. Use **Use selected preset** to remove a custom image and return to your chosen preset.
 
 ## Importing your deck
 
