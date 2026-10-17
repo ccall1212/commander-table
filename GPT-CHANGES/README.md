@@ -4,9 +4,19 @@ This folder records changes prepared or committed by ChatGPT for Commander Table
 
 The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES.md). Keep that list current as Chris adds requests and mark each objective's status; Objective 1 (the yellow active-player outline) is the current priority.
 
-**Status checked:** 2026-10-16 local date / 2026-10-17 UTC repository timestamps  
-**App version in source:** `0.14.1`  
-**Current release tag status:** `v0.14.1` was not found during the last GitHub tag lookup.
+**Status checked:** 2026-10-17  
+**App version in source:** `0.14.2`  
+**Release tag status:** neither `v0.14.1` nor `v0.14.2` currently exists on GitHub.
+
+## Active-player yellow outline — v0.14.2 (merged to main)
+
+- **Pull request:** [#3 — Restore yellow outline for the active player](https://github.com/ccall1212/commander-table/pull/3) — merged.
+- **Merge commit:** [`78b6d5ae99e0ef95f0e5b644f1aa27f716211f84`](https://github.com/ccall1212/commander-table/commit/78b6d5ae99e0ef95f0e5b644f1aa27f716211f84).
+- Restores a clearly visible yellow/gold outline on the active player's board in Sidebar and Grid layouts using a positioned overlay border, with the overlay suppressed where it would outline the wrong surface.
+- App version and cache-busting references are set to `0.14.2`; `CHANGELOG.md` and the player-facing guide describe the behavior, and the README badge is being updated to `0.14.2`.
+- **Browser status:** Chris previewed the feature locally and confirmed that it looked good before explicitly authorizing publication. ChatGPT did not independently operate the browser.
+- **Deployment status:** GitHub Pages workflow was queued for merge commit `78b6d5a` at the last check; verify its final result after the documentation updates.
+- **Tag status:** GitHub lookups found neither `v0.14.1` nor `v0.14.2`. The connected GitHub actions available here cannot create annotated tags, so the release tags still need to be created and verified locally. See the commands under “Remaining release housekeeping” below.
 
 ## Changes made by ChatGPT
 
@@ -38,21 +48,25 @@ The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES
 - The live `github.io` page was not independently fetched by ChatGPT during the final verification, so a browser-visible live-version check should still be done if certainty is required.
 - GitHub's tag lookup returned no `v0.14.1` reference. The tag is the known remaining release task.
 
-## Remaining task for v0.14.1
+## Remaining release housekeeping
 
-Create and push an **annotated** tag named `v0.14.1` pointing to commit `d98d67704fe3312c2e682b5994040adace67013b`. This is the intended release commit because it includes the app fix and the README version-badge change. Do not point the release tag at a later documentation-only commit.
+Two annotated tags are still missing and need local creation:
 
-From a clean local checkout, after confirming that this tag does not already exist:
+- `v0.14.1` should point to `d98d67704fe3312c2e682b5994040adace67013b` (commander tax chip fix and its README badge).
+- `v0.14.2` should point to `78b6d5ae99e0ef95f0e5b644f1aa27f716211f84` (active-player yellow outline release commit). The separate README badge update is documentation-only.
+
+The current GitHub connection has read/write support for files, branches and PR merges, but does not expose creation of annotated Git tags. From a clean local checkout, run:
 
 ```bash
 git switch main
 git pull --ff-only
 git tag -a v0.14.1 d98d67704fe3312c2e682b5994040adace67013b -m "v0.14.1 — commander tax beside CMD"
-git push origin v0.14.1
-git ls-remote --tags origin refs/tags/v0.14.1
+git tag -a v0.14.2 78b6d5ae99e0ef95f0e5b644f1aa27f716211f84 -m "v0.14.2 — restore active-player yellow outline"
+git push origin v0.14.1 v0.14.2
+git ls-remote --tags origin refs/tags/v0.14.1 refs/tags/v0.14.2
 ```
 
-Confirm the tag exists on GitHub after pushing it. Then check the live site and the GitHub Pages deployment status; do not say all release checks are complete until those verifications pass.
+Only run the tag commands after confirming neither tag already exists. After pushing, verify the tag refs and GitHub Pages deployment. The live site should be checked after deployment completes; local preview approval is not the same as a live-site verification.
 
 ## Future publishing prompt
 
