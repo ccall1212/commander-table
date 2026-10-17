@@ -4,16 +4,16 @@ All notable changes to Commander Table are listed here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/). Each release is tagged `vX.Y.Z` in git.
 
-## [Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.21.2...HEAD
+## [Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.21.3...HEAD
 
-## [0.21.2] - 2026-10-17
+## [0.21.3] - 2026-10-17
 
 ### Added
 - Add custom card-back and play-area uploads behind a compact, collapsed control so the appearance picker stays uncluttered.
 - Show saved custom images as selectable tiles with a clear selected state; keep uploads in browser storage for later reuse even when switching back to a preset.
 - Validate formats, dimensions, and file sizes; optimize images to WebP and keep custom files local to the player's browser.
 
-[0.21.2]: https://github.com/ccall1212/commander-table/compare/v0.20.5...v0.21.2
+[0.21.3]: https://github.com/ccall1212/commander-table/compare/v0.20.5...v0.21.3
 
 ## [0.20.5] - 2026-10-17
 
