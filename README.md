@@ -170,7 +170,7 @@ Dropped connections and crashed tabs happen, and recovering from them is the mai
 - Right-click your Graveyard (or Exile) → **Pick at random** → choose Any card, Permanent, or a card type. It announces the pick in the log and lets you move it, or make a token copy (normal or tapped).
 - Right-click your Graveyard/Exile → **Top card** to move the newest card, or just drag the pile to pull its top card anywhere.
 - Commander tax is manual: 🪙 chip beside **CMD** — left-click +2, right-click −2. The commander's right-click menu also has **Add commander tax (+2)** / **Remove commander tax (−2)**.
-- Right-click any of your cards → **Switch printing…** to pick from up to 10 printings (shows set, number, year). **Use for all copies** changes every copy (great for basic lands). Everyone sees the new art, and your deck remembers the choice for future games.
+- Right-click any of your cards → **Switch printing…** to browse all printings available from Scryfall. Search by set or product name, set code, collector number, or year. **Use for all copies** changes every copy (great for basic lands). Everyone sees the new art, and your deck remembers the choice for future games.
 
 **Library**
 
