@@ -54,24 +54,24 @@
         </div>
         <div id="impResult"></div>
       </div>
-      <button id="randomDeckBtn">🎲 Choose a random Commander deck</button>
-      <div id="randomDeckBox" class="random-deck-box hidden">
-        <p class="muted small">You can import a public deck from a Moxfield or Archidekt link, or try a random public Commander deck at the bracket you choose. These sites do not offer a stable public API for every request, so a provider may ask you to use its plain-text export instead.</p>
+      <button id="randomDeckBtn" disabled title="Temporarily unavailable">🎲 Random deck / website import (temporarily unavailable)</button>
+      <div id="randomDeckBox" class="random-deck-box">
+        <p class="muted small">Random deck search and website-link import are temporarily turned off while they are being fixed. The code is being kept for later. To import a deck now, use <b>+ Import a deck</b> below and paste its plain-text list.</p>
         <label for="deckWebsiteUrl">Import from website
-          <input id="deckWebsiteUrl" type="url" placeholder="Paste a Moxfield or Archidekt deck URL">
+          <input id="deckWebsiteUrl" type="url" placeholder="Temporarily unavailable" disabled>
         </label>
         <div class="row wrap random-deck-actions">
-          <button id="importDeckUrlBtn" class="primary">Import this URL</button>
+          <button id="importDeckUrlBtn" class="primary" disabled>Import this URL (unavailable)</button>
         </div>
         <div class="random-deck-controls">
           <label for="randomDeckSource">Deck source
-            <select id="randomDeckSource">
+            <select id="randomDeckSource" disabled>
               <option value="archidekt">Archidekt</option>
               <option value="moxfield">Moxfield</option>
             </select>
           </label>
           <label for="randomDeckBracket">Commander bracket
-            <select id="randomDeckBracket">
+            <select id="randomDeckBracket" disabled>
               <option value="1">1 — Exhibition</option>
               <option value="2" selected>2 — Core</option>
               <option value="3">3 — Upgraded</option>
@@ -80,8 +80,8 @@
           </label>
         </div>
         <div class="row wrap random-deck-actions">
-          <button id="findRandomDeck" class="primary">Find random deck</button>
-          <button id="cancelRandomDeck">Cancel</button>
+          <button id="findRandomDeck" class="primary" disabled>Find random deck (unavailable)</button>
+          <button id="cancelRandomDeck" disabled>Cancel</button>
           <button id="randomDeckManual">Import manually instead</button>
         </div>
         <p id="randomDeckStatus" class="muted small" aria-live="polite"></p>
