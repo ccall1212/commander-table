@@ -2,11 +2,11 @@
 
 This folder records changes prepared or committed by ChatGPT for Commander Table, along with release steps that remain incomplete. It is a handoff log, not a replacement for `CHANGELOG.md` (which is the player-facing release history) or `AGENTS.md` (which documents the project's development and release workflow).
 
-The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES.md). Keep that list current as Chris adds requests and mark each objective's status; Objective 2 (the opening turn-order dice animation) is in progress on a feature branch.
+The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES.md). Objective 2 (the opening turn-order dice animation) is complete and merged to `main`; Objective 3 is next.
 
 **Status checked:** 2026-10-17  
-**App version on this branch:** `0.15.0` (published `main` remains `0.14.2` until approval)  
-**Release tag status:** neither `v0.14.1` nor `v0.14.2` currently exists on GitHub.
+**App version on main:** `0.15.0` (merged and deployed)  
+**Release tag status:** annotated tags `v0.14.1`, `v0.14.2`, and `v0.15.0` still need to be created and verified locally; see “Remaining release housekeeping” below.
 
 ## Active-player yellow outline — v0.14.2 (merged to main)
 
@@ -18,17 +18,16 @@ The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES
 - **Deployment status:** GitHub Pages deployment succeeded for the merge commit and again for the latest main tree at handoff commit [`33acd59`](https://github.com/ccall1212/commander-table/actions/runs/38991021652). That run completed successfully. The final live HTML was not independently fetched, so treat workflow success as deployment confirmation but not a separate browser-visible version check.
 - **Tag status:** GitHub lookups found neither `v0.14.1` nor `v0.14.2`. The connected GitHub actions available here cannot create annotated tags, so the release tags still need to be created and verified locally. See the commands under “Remaining release housekeeping” below.
 
-## Opening turn-order dice animation — v0.15.0 (in progress)
+## Opening turn-order dice animation — v0.15.0 (merged and deployed)
 
-- **Pull request:** [#4 — Animate opening first-player dice roll](https://github.com/ccall1212/commander-table/pull/4) — open for review.
-- **Branch:** `feat/animated-first-player-roll`.
-- Pressing **Start game** automatically rolls a d20 for every seated player. Each player's result changes inside a clean, circular badge for about 2.4 seconds, then settles on the synchronized final value.
-- After the last result is revealed, keep the winner highlighted for 3 full seconds before fading the overlay away. The winner's `GOES FIRST` label is larger and more prominent.
-- The same existing tie-reroll logic determines `T.order`; the highest roll starts the game. The separate Dice-menu action was removed so no extra step is needed. The overlay ignores pointer input and respects reduced-motion preferences.
-- **Preview bug found and fixed:** the staggered tile markup referenced an undeclared `index`, which could throw while drawing the overlay and abort the Start game operation. The mapping callback now declares `(result, index)`.
-- Updated the app/cache version to `0.15.0`, added the player-facing help and Changelog notes, and moved Objective 2 to in progress / Objective 3 to next.
-- **Browser status:** not tested by ChatGPT. Press Start game with two to six players, confirm every player sees all final results and the winner marker, then verify the highest roller is the starting player. Test Sidebar and Grid and ensure the overlay dismisses without blocking clicks. Also verify reduced-motion mode.
-
+- **Pull request:** [#4 — Start game with readable animated D20 roll](https://github.com/ccall1212/commander-table/pull/4) — merged.
+- **Merge commit:** [`3974eb4`](https://github.com/ccall1212/commander-table/commit/3974eb49453cbe55dedcac87f46fb720b07d0583).
+- Pressing **Start game** automatically rolls a d20 for every seated player. Each player's number changes inside a clean circular badge for about 2.4 seconds before settling on the synchronized final value.
+- The winner's **GOES FIRST** label remains prominent for 3 full seconds after the last roll settles, then the overlay fades away. Existing tie-reroll logic is preserved and the highest roller starts the game.
+- The overlay ignores pointer input and respects reduced-motion preferences. The redundant Dice-menu first-player roll item was removed; ordinary dice, coin flip, and random-player selection remain.
+- **Deployment:** GitHub Pages workflow run [`38993645238`](https://github.com/ccall1212/commander-table/actions/runs/38993645238) completed successfully for merge commit `3974eb4`.
+- **Browser status:** Chris approved the final preview appearance before publication. ChatGPT cannot run the real browser/multiplayer checks; these were not independently performed by ChatGPT after the merge.
+- **Release tag:** `v0.15.0` is still pending. Create the annotated tag at merge commit `3974eb49453cbe55dedcac87f46fb720b07d0583` using the instructions below.
 ## Changes made by ChatGPT
 
 ### Commander tax chip layout — v0.14.1
@@ -61,23 +60,25 @@ The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES
 
 ## Remaining release housekeeping
 
-Two annotated tags are still missing and need local creation:
+Three annotated release tags are still pending and need local creation:
 
 - `v0.14.1` should point to `d98d67704fe3312c2e682b5994040adace67013b` (commander tax chip fix and its README badge).
-- `v0.14.2` should point to `aec758b139a394640008f43206719f07b3226b72` (the active-player yellow outline code merge plus README badge update). This mirrors the v0.14.1 convention of tagging after the version badge was set.
+- `v0.14.2` should point to `aec758b139a394640008f43206719f07b3226b72` (the active-player yellow outline code merge plus README badge update).
+- `v0.15.0` should point to `3974eb49453cbe55dedcac87f46fb720b07d0583` (automatic opening d20 roll, circular number animation, and 3-second winner reveal; this is the PR #4 merge commit deployed to Pages).
 
-The current GitHub connection has read/write support for files, branches and PR merges, but does not expose creation of annotated Git tags. From a clean local checkout, run:
+The current GitHub connection has read/write support for files, branches and PR merges, but does not expose creation of annotated Git tags. From a clean local checkout, first confirm none of these tags already exist, then run:
 
 ```bash
 git switch main
 git pull --ff-only
 git tag -a v0.14.1 d98d67704fe3312c2e682b5994040adace67013b -m "v0.14.1 — commander tax beside CMD"
 git tag -a v0.14.2 aec758b139a394640008f43206719f07b3226b72 -m "v0.14.2 — restore active-player yellow outline"
-git push origin v0.14.1 v0.14.2
-git ls-remote --tags origin refs/tags/v0.14.1 refs/tags/v0.14.2
+git tag -a v0.15.0 3974eb49453cbe55dedcac87f46fb720b07d0583 -m "v0.15.0 — opening turn-order d20 roll"
+git push origin v0.14.1 v0.14.2 v0.15.0
+git ls-remote --tags origin refs/tags/v0.14.1 refs/tags/v0.14.2 refs/tags/v0.15.0
 ```
 
-Only run the tag commands after confirming neither tag already exists. After pushing, verify the tag refs and GitHub Pages deployment. The live site should be checked after deployment completes; local preview approval is not the same as a live-site verification.
+Only push tags that you have confirmed do not already exist. After pushing, verify the tag refs. GitHub Pages deployment for v0.15.0 already completed successfully at [run `38993645238`](https://github.com/ccall1212/commander-table/actions/runs/38993645238).
 
 ## Future publishing prompt
 
