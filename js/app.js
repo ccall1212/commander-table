@@ -352,6 +352,21 @@ function cleanTable(t) {
   };
 }
 function sysLog(text) { broadcast({ t: 'log', e: { ts: Date.now(), pid: null, name: '', text, cards: [] } }); }
+function rollFirstPlayer(T, live) {
+  const rolls = new Map(live.map(p => [p, rnd(20) + 1]));
+  // Tied high rolls re-roll until each player has a distinct result.
+  for (let attempt = 0; attempt < 100; attempt++) {
+    const groups = new Map();
+    for (const p of live) { const v = rolls.get(p); if (!groups.has(v)) groups.set(v, []); groups.get(v).push(p); }
+    const ties = [...groups.values()].filter(g => g.length > 1);
+    if (!ties.length) break;
+    ties.forEach(group => group.forEach(p => rolls.set(p, rnd(20) + 1)));
+  }
+  T.order = live.slice().sort((a, b) => rolls.get(b) - rolls.get(a));
+  broadcast({ t: 'firstroll', rolls: live.map(pid => ({ pid, name: pname(pid), value: rolls.get(pid) })), winner: T.order[0] });
+  sysLog(`Roll for first player (d20): ${T.order.map(p => `${pname(p)} rolled ${rolls.get(p)}`).join(' · ')}. ${pname(T.order[0])} goes first.`);
+}
+
 function tableOp(op, from) {
   const T = S.table;
   if (!isObj(op) || typeof op.k !== 'string') return;
@@ -361,25 +376,15 @@ function tableOp(op, from) {
       if (T.started) return;
       const live = T.seats.filter(p => !T.out[p]);
       if (!live.length) return;
-      const rolls = new Map(live.map(p => [p, rnd(20) + 1]));
-      // Tied high rolls re-roll until each player has a distinct result.
-      for (let attempt = 0; attempt < 100; attempt++) {
-        const groups = new Map();
-        for (const p of live) { const v = rolls.get(p); if (!groups.has(v)) groups.set(v, []); groups.get(v).push(p); }
-        const ties = [...groups.values()].filter(g => g.length > 1);
-        if (!ties.length) break;
-        ties.forEach(group => group.forEach(p => rolls.set(p, rnd(20) + 1)));
-      }
-      T.order = live.slice().sort((a, b) => rolls.get(b) - rolls.get(a));
-      broadcast({ t: 'firstroll', rolls: live.map(pid => ({ pid, name: pname(pid), value: rolls.get(pid) })), winner: T.order[0] });
-      sysLog(`Roll for first player (d20): ${T.order.map(p => `${pname(p)} rolled ${rolls.get(p)}`).join(' · ')}. ${pname(T.order[0])} goes first. Click Start game to begin.`);
+      rollFirstPlayer(T, live);
       break;
     }
     case 'start': {
       if (!isHost) return;
       const live = T.seats.filter(p => !T.out[p]);
-      const validRollOrder = T.order.length === live.length && new Set(T.order).size === live.length && T.order.every(p => live.includes(p));
-      if (!validRollOrder) T.order = shuffle(live);
+      if (!live.length) return;
+      // Starting a game always chooses the turn order with the animated d20 roll.
+      rollFirstPlayer(T, live);
       T.active = T.order[0] || null; T.turn = 1; T.turnSeq = 1; T.phase = 3; T.started = true;
       sysLog(`Game started! Turn order: ${T.order.map(pname).join(' → ')}. ${T.active ? pname(T.active) + ' goes first.' : 'No players are seated.'}`);
       break;
@@ -1487,7 +1492,6 @@ function diceMenu(x, y) {
     { label: 'Flip a coin', onClick: () => say(`flipped a coin: ${rnd(2) ? 'heads' : 'tails'}`) },
     { label: 'Roll d6', onClick: () => roll(6) }, { label: 'Roll d20', onClick: () => roll(20) },
     { label: 'Other dice', sub: [4, 8, 10, 12, 100].map(s => ({ label: `d${s}`, onClick: () => roll(s) })) },
-    { label: 'Roll for first player (d20)', disabled: !!(S.table && S.table.started) || !(S.table && S.table.seats.length), onClick: () => toHost({ t: 'op', op: { k: 'rollfirst' } }) },
     { sep: true },
     { label: 'Pick a random player', onClick: () => {
       const seats = ((S.table && S.table.seats) || [S.pid]).filter(p => !(S.table && S.table.out[p]));

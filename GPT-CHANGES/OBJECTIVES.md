@@ -20,13 +20,14 @@ Show a clear yellow/gold outline around the player whose turn it is. The existin
 
 ## 2. Animate the opening turn-order dice roll — IN PROGRESS (v0.15.0 branch)
 
-When players roll to choose who goes first, show a large, clear animated dice result rather than only recording the result in the game log.
+When the host presses **Start game**, automatically roll a d20 for each seated player and show a large, clear animated result on everyone's screen before the game board is revealed.
 
 - Every player should see the animation/result on their own screen.
 - It must remain visible in Sidebar and Grid layouts, on both the user's and opponents' screens.
 - The result should clearly show the number rolled and then settle / disappear cleanly.
-- The shared turn-order event carries the exact final results that the existing host logic already uses, so the animation does not alter game rules.
-- The overlay is non-interactive, auto-dismisses, and respects reduced-motion preferences.
+- The roll happens automatically as part of Start game; players do not need to open the Dice menu first.
+- The shared event carries the exact results used for `T.order`, and the highest roll becomes the first active player.
+- Ties still reroll automatically. The overlay is non-interactive, auto-dismisses, and respects reduced-motion preferences.
 - **Pull request:** [PR #4 — Animate opening first-player dice roll](https://github.com/ccall1212/commander-table/pull/4).
 - **Current branch:** `feat/animated-first-player-roll`. Browser verification is required before publication.
 

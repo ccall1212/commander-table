@@ -12,8 +12,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ## [0.15.0] - 2026-10-16
 
 ### Added
-- The opening turn-order d20 roll now animates on every player's screen, showing each player's result and highlighting who goes first.
-- Tied high rolls still reroll automatically; the existing turn-order and Start game behavior is unchanged.
+- Pressing **Start game** now automatically runs the opening turn-order d20 roll, animating every player's result on all connected screens and highlighting who goes first.
+- Tied high rolls still reroll automatically; the selected highest roller starts the game.
 
 ## [0.14.2] - 2026-10-16
 
