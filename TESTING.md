@@ -1,23 +1,23 @@
-# Manual test checklist — newest-first game log (v0.19.1 candidate)
+# Manual test checklist — Commander slam animation (v0.20.0 candidate)
 
 ## Start the app
 
 1. Extract this ZIP.
 2. In the extracted project folder, run `python -m http.server 8099 --bind 127.0.0.1`.
 3. Open `http://127.0.0.1:8099/index.html`.
-4. Import a deck and start a Practice game. For shared-log checks, open a second browser tab and join the same room.
-5. Stop the local server with Ctrl+C when finished.
+4. Import a deck with a Commander and start a Practice game. For shared-table checks, use two browser tabs and join the same room.
+5. Stop the server with Ctrl+C when finished.
 
 ## Click-by-click checks
 
-1. **Newest first:** open the 📜 Log. Confirm the most recent action is at the top and older actions appear below it.
-2. **Live updates:** perform several actions (draw, tap a card, move a card). Confirm each new entry appears at the top.
-3. **Read history:** scroll down to older entries, then perform another action. Confirm the log does not yank you back to the top while you are reading older entries.
-4. **Reopen log:** scroll down, close the log, then open it again. Confirm it returns to the newest entry at the top.
-5. **No printing spam:** right-click a card → **Switch printing…** → choose a different printing. Confirm the art changes but no printing-change entry appears in the log.
-6. **Saved deck still works:** reload/reopen the deck or start a new Practice game and confirm the chosen printing is remembered.
-7. **Multiplayer:** with a second tab/player, change a printing and confirm the card art still synchronizes, but neither player's game log records the printing change. Confirm normal game actions still appear for both players.
-8. **Layouts and sizes:** check Sidebar and Grid at approximately 1920×1080 and 1366×768.
-9. **Console:** check the browser console for errors.
+1. **Commander slam:** move your Commander from the command zone onto the battlefield. Expect a brief lift-and-impact animation with a glow matching its color identity.
+2. **Color identities:** if possible, test a mono-color Commander, a multicolor Commander, and a colorless Commander. The colorless card should get a neutral glow.
+3. **Only on play:** drag/reposition the Commander after it is on the battlefield. No slam should play.
+4. **Other cards:** move a normal card from your hand onto the battlefield. It should not get the Commander slam.
+5. **Other moves:** move a Commander from graveyard or exile to the battlefield. It should not get the command-zone slam.
+6. **Multiplayer:** with a second player, play a Commander from the command zone. Both players should see the same brief effect, and the card must remain clickable during the animation.
+7. **Layouts/sizes:** test Sidebar and Grid at approximately 1920×1080 and 1366×768.
+8. **Reduced motion:** enable your operating system/browser reduced-motion preference and reload. The slam animation should be skipped.
+9. **Console:** check for errors.
 
-Expected: the newest action is always the first visible entry when the log is opened, older actions remain scrollable below, and printing changes never add a log entry.
+Expected: a short, click-through slam effect only when a Commander is played from the command zone; no effect on later repositioning or ordinary card moves.
