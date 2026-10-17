@@ -1817,6 +1817,7 @@ function mainMenu(x, y) {
 }
 function toggleArrange() {
   S.arrange = !S.arrange;
+  if (S.arrange) S.selected.clear(); // arranging zones should not leave a group selected
   if (S.arrange) UI.toast('Drag a zone by its name to move it (its cards come along). Drag the corner to resize. Everyone sees your layout.', { ms: 7000 });
   render();
 }
