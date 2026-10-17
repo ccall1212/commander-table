@@ -19,10 +19,10 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 
 ## Remaining release housekeeping
 
-- **Release commit:** [5548ba67826c1a10b2db6bc53256fd4ae438d799](https://github.com/ccall1212/commander-table/commit/5548ba67826c1a10b2db6bc53256fd4ae438d799) is the exact v0.18.1 release commit.
-- **Deployment:** GitHub Pages run [39008364719](https://github.com/ccall1212/commander-table/actions/runs/39008364719) completed successfully for that commit. The Pages workflow passed; I could not independently retrieve the live page HTML through the available fetcher.
-- **Annotated tag:** `v0.18.1` did not exist when checked. Create it pointing at the exact release commit above, then push it. The available GitHub connection cannot create annotated tags.
-- **Branch cleanup:** `feat/multi-card-selection` remains on GitHub after merge. Delete it with the **Delete branch** button on [PR #13](https://github.com/ccall1212/commander-table/pull/13); this connection cannot delete branches.
+- **Release commit:** [5548ba67826c1a10b2db6bc53256fd4ae438d799](https://github.com/ccall1212/commander-table/commit/5548ba67826c1a10b2db6bc53256fd4ae438d799) is the exact v0.18.1 feature-release commit. Later commits only update release housekeeping and `TESTING.md`.
+- **Deployment:** GitHub Pages run [39008364719](https://github.com/ccall1212/commander-table/actions/runs/39008364719) succeeded for the feature release, and run [39008580228](https://github.com/ccall1212/commander-table/actions/runs/39008580228) succeeded for the later documentation update. The live app is already on GitHub Pages; no local checkout is needed to use the released feature.
+- **Annotated tag:** `v0.18.1` did not exist when checked. This is release metadata only; it does not upload or change the app code. The project specifically requires an *annotated* tag pointing at `5548ba67826c1a10b2db6bc53256fd4ae438d799`. GitHub's web Releases form creates a lightweight tag, so do not use it as a substitute unless Chris explicitly relaxes the annotated-tag rule. The GitHub connector cannot create an annotated tag. If tag completion is still desired, ask Chris whether to use GitHub Desktop (no Command Prompt required, but it needs a local clone) or have Claude Code create the annotated tag. Do not assume any local clone exists or ask Chris to run commands in an unknown folder.
+- **Branch cleanup:** `feat/multi-card-selection` remains on GitHub after merge. This can be deleted entirely in the browser: open [PR #13](https://github.com/ccall1212/commander-table/pull/13) and click **Delete branch**. This housekeeping does not affect the live app.
 ## How a change gets released (short version)
 
 1. ChatGPT works on a branch and opens a pull request, with a short click list for Chris (see "Writing the test list" in `AGENTS.md`).
