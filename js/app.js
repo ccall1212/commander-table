@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.14.0';
+const APP_VERSION = '0.14.1';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -1780,8 +1780,10 @@ function myZonesHTML() {
   const auto = (key, on, what) => `<label class="tgl" title="Auto: ${what} at the start of your turn (${on ? 'on' : 'off'})"><input type="checkbox" data-a="${key}"${on ? ' checked' : ''}><span></span></label>`;
   return box('library', 'LIB') + box('graveyard', 'GY', pi.graveyard.n ? `${pi.graveyard.tc.perm}P` : '') + box('exile', 'EXILE') +
     `<div class="zbox cmdbox" data-drop="command">
-      ${taxIid ? `<div class="taxchip" data-a="tax" data-iid="${esc(taxIid)}" title="Commander tax — left-click +2, right-click −2">🪙 <b>${tax}</b></div>` : ''}
-      <div class="zlabel">CMD</div>
+      <div class="cmdhead">
+        <div class="zlabel">CMD</div>
+        ${taxIid ? `<div class="taxchip" data-a="tax" data-iid="${esc(taxIid)}" title="Commander tax — left-click +2, right-click −2">🪙 <b>${tax}</b></div>` : ''}
+      </div>
       <div class="zcard cmdcards">${cmd.map(c => cardHTML(c, defOf(c), { mine: true, pid: S.pid, zone: 'command' })).join('')}</div></div>`;
 }
 // Life box + expandable counters panel (EDHPlay style). Mine is editable; opponents' life +/- sends a request.
