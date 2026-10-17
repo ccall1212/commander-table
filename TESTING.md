@@ -38,4 +38,4 @@ Please note whether the card starts from the top of the Library, whether the upw
 
 Try both 1920×1080 and 1366×768 if convenient. Record which steps were repeated and anything that behaved unexpectedly.
 
-The feature was merged to main in v0.18.1. The published game is https://ccall1212.github.io/commander-table/. For code regression tests, use a local checkout of main and follow this checklist.
+The selection rectangle was released in v0.18.1. The draw-animation fix in this ZIP is still a candidate and has not been published; the live game remains https://ccall1212.github.io/commander-table/ (v0.18.1).
