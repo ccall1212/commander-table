@@ -3068,6 +3068,7 @@ function bindGame() {
     if (!btn || !S.touchMode || !S.touchPreview) return;
     e.preventDefault(); e.stopPropagation();
     const r = btn.getBoundingClientRect(), target = S.touchPreview;
+    hidePreview();
     if (target.pid === S.pid) cardMenu(r.left, r.top, target.iid);
     else oppCardMenu(r.left, r.top, target.pid, target.iid);
   });
