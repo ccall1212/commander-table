@@ -15,6 +15,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Press **S** while hovering over your Library to shuffle it with a small card-riffle animation and a synthesized shuffle sound.
 - Press **X** while hovering over your Library to mill the top card into the Graveyard, with a short visual cue.
 - Added an in-game **Hotkey list…** reference under the ☰ Options menu.
+- Press **T** while hovering over a card in your hand to play it onto the battlefield tapped; it lands in the battlefield area appropriate for its card type. On the battlefield, **T** still taps or untaps.
 
 ### Changed
 - Replaced the abbreviated **AD** top-bar label with **Auto-Draw**.
