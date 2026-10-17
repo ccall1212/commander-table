@@ -4,7 +4,15 @@ All notable changes to Commander Table are listed here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/). Each release is tagged `vX.Y.Z` in git.
 
-## [Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.20.5...HEAD
+## [Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.21.0...HEAD
+
+## [0.21.0] - 2026-10-17
+
+### Added
+- Upload a personal card back and play-area background from the opening screen. Images are optimized and saved only in your browser; preset appearances remain shared with the table.
+- Show recommended image dimensions and file limits, preview custom images, and restore the selected preset at any time.
+
+[0.21.0]: https://github.com/ccall1212/commander-table/compare/v0.20.5...v0.21.0
 
 ## [0.20.5] - 2026-10-17
 
