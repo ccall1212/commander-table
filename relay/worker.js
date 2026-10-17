@@ -74,18 +74,9 @@ function deckApiTargets(site, action, id) {
   return null;
 }
 
-function deckApiHeaders(site) {
-  if (site === "moxfield") {
-    return {
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-      Accept: "application/json, text/plain, */*",
-      "Accept-Language": "en-US,en;q=0.9",
-      Referer: "https://moxfield.com/",
-      Origin: "https://moxfield.com",
-      "Sec-Fetch-Mode": "cors",
-      "Sec-Fetch-Site": "same-site",
-    };
-  }
+function deckApiHeaders() {
+  // Identify Commander Table honestly. Do not impersonate a browser or attempt
+  // to bypass provider authentication or anti-bot protections.
   return {
     "User-Agent": "CommanderTable/0.17 (+https://github.com/ccall1212/commander-table)",
     Accept: "application/json",
@@ -101,6 +92,9 @@ async function handleDeckApi(request, origin, ctx) {
   const site = params.get("site") || "";
   const action = params.get("action") || "";
   const id = params.get("id") || "";
+  if (site === "moxfield" && action === "search") {
+    return deckApiJson({ error: "Moxfield automated deck search requires API access that this app does not currently have. Use Archidekt for random decks, or import a Moxfield plain-text list." }, 501, origin);
+  }
   const targets = deckApiTargets(site, action, id);
   if (!targets) return deckApiJson({ error: "Unsupported deck source or request." }, 400, origin);
 
@@ -125,7 +119,7 @@ async function handleDeckApi(request, origin, ctx) {
       try {
         upstream = await fetch(target.url, {
           method: "GET",
-          headers: deckApiHeaders(target.site),
+          headers: deckApiHeaders(),
           signal: AbortSignal.timeout(10000),
         });
       } catch (e) {
