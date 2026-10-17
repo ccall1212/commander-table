@@ -12,8 +12,8 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 
 ## Current state
 
-- **Released on main:** v0.18.2. GitHub Pages run [39009977087](https://github.com/ccall1212/commander-table/actions/runs/39009977087) succeeded for main commit [897b645](https://github.com/ccall1212/commander-table/commit/897b645bec23316344d140a5e8265a9319713027).
-- **Release tags verified:** v0.14.1, v0.14.2, v0.15.0, v0.15.1, v0.16.0, v0.17.0, and v0.17.1 exist. Tags v0.18.1 and v0.18.2 are still pending (see below).
+- **Merged to main:** v0.19.0 card-printing picker, commit [c85ddc8](https://github.com/ccall1212/commander-table/commit/c85ddc8cfb7b56502f5f71dd69860db77331dee1), via [PR #24](https://github.com/ccall1212/commander-table/pull/24). GitHub Pages run [39044849443](https://github.com/ccall1212/commander-table/actions/runs/39044849443) succeeded.
+- **Release tags verified:** v0.14.1, v0.14.2, v0.15.0, v0.15.1, v0.16.0, v0.17.0, and v0.17.1 exist. Tags v0.18.1, v0.18.2, and v0.19.0 are still pending (see below).
 - **Layouts:** only **Sidebar** and **Grid** exist. The Top and Focus layouts were removed.
 - **In flight:** draft PR #11 only (paused deck import).
 
@@ -21,9 +21,9 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 
 - **v0.18.1 release commit:** [5548ba67826c1a10b2db6bc53256fd4ae438d799](https://github.com/ccall1212/commander-table/commit/5548ba67826c1a10b2db6bc53256fd4ae438d799).
 - **v0.18.2 release commit:** [897b645bec23316344d140a5e8265a9319713027](https://github.com/ccall1212/commander-table/commit/897b645bec23316344d140a5e8265a9319713027).
-- **Deployment:** GitHub Pages run [39009977087](https://github.com/ccall1212/commander-table/actions/runs/39009977087) succeeded for the v0.18.2 release commit.
-- **Annotated tags still required:** create `v0.18.1` pointing to `5548ba67826c1a10b2db6bc53256fd4ae438d799` and `v0.18.2` pointing to `897b645bec23316344d140a5e8265a9319713027`. Both tags were checked and are absent. The GitHub connector cannot create annotated tags; do not substitute lightweight tags from GitHub's Releases UI. If Chris asks Claude Code to finish repository housekeeping, these exact tag targets are the required instructions.
-- **Merged branch cleanup:** branches remain on GitHub because this connector cannot delete them. Delete them via the **Delete branch** button on each merged PR: [#13](https://github.com/ccall1212/commander-table/pull/13) `feat/multi-card-selection`, [#14](https://github.com/ccall1212/commander-table/pull/14) `docs/release-housekeeping-v0.18.1`, [#15](https://github.com/ccall1212/commander-table/pull/15) `docs/testing-checklist-v0181`, [#16](https://github.com/ccall1212/commander-table/pull/16) `docs/no-local-release-commands`, and [#17](https://github.com/ccall1212/commander-table/pull/17) `fix/smooth-draw-animation`. Delete this PR's branch, `docs/release-housekeeping-v0.18.2`, as well once its PR is merged.
+- **Deployment:** GitHub Pages run [39044849443](https://github.com/ccall1212/commander-table/actions/runs/39044849443) succeeded for the v0.19.0 merge commit [c85ddc8](https://github.com/ccall1212/commander-table/commit/c85ddc8cfb7b56502f5f71dd69860db77331dee1).
+- **Annotated tags still required:** create `v0.18.1` pointing to `5548ba67826c1a10b2db6bc53256fd4ae438d799` and `v0.18.2` pointing to `897b645bec23316344d140a5e8265a9319713027`. All three tags were checked and are absent. The GitHub connector cannot create annotated tags; do not substitute lightweight tags from GitHub's Releases UI. **v0.19.0 release commit:** [c85ddc8cfb7b56502f5f71dd69860db77331dee1](https://github.com/ccall1212/commander-table/commit/c85ddc8cfb7b56502f5f71dd69860db77331dee1). Create annotated tag `v0.19.0` pointing to this commit. Claude Code should create all three pending annotated tags.
+- **Merged branch cleanup:** branches remain on GitHub because this connector cannot delete them. Delete them via the **Delete branch** button on each merged PR: [#13](https://github.com/ccall1212/commander-table/pull/13) `feat/multi-card-selection`, [#14](https://github.com/ccall1212/commander-table/pull/14) `docs/release-housekeeping-v0.18.1`, [#15](https://github.com/ccall1212/commander-table/pull/15) `docs/testing-checklist-v0181`, [#16](https://github.com/ccall1212/commander-table/pull/16) `docs/no-local-release-commands`, and [#17](https://github.com/ccall1212/commander-table/pull/17) `fix/smooth-draw-animation`. Also clean up `feat/all-card-printings-search-v2` after PR #24 was merged; PR #23 is a closed duplicate and PR #22 is a superseded closed attempt.
 
 ## How a change gets released (short version)
 
