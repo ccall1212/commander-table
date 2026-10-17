@@ -2083,13 +2083,34 @@ function diceMenu(x, y) {
     } }
   ]);
 }
+let touchOrientationHintDismissed = false;
+function refreshTouchOrientationHint() {
+  const old = $('#ct-touch-orientation-hint');
+  const portraitPhone = S.touchMode && window.innerWidth <= 700 && window.innerHeight > window.innerWidth;
+  if (!portraitPhone) {
+    if (old) old.remove();
+    if (window.innerWidth > 700 || window.innerWidth > window.innerHeight) touchOrientationHintDismissed = false;
+    return;
+  }
+  if (old || touchOrientationHintDismissed) return;
+  const hint = document.createElement('div');
+  hint.id = 'ct-touch-orientation-hint';
+  hint.setAttribute('role', 'status');
+  hint.innerHTML = '<span><b>Playing on a phone?</b> Landscape gives your hand and battlefield more room. You can keep playing upright if you prefer.</span><button type="button">Got it</button>';
+  hint.querySelector('button').addEventListener('click', () => {
+    touchOrientationHintDismissed = true;
+    hint.remove();
+  });
+  document.body.appendChild(hint);
+}
 function setTouchMode(enabled) {
   S.touchMode = !!enabled;
   LS.set('ct.touchMode', S.touchMode);
   document.body.classList.toggle('touch-mode', S.touchMode);
   S.touchPreview = null;
   hidePreview();
-  UI.toast(S.touchMode ? 'Touch mode on: tap cards to inspect; tap Actions or press and hold for options.' : 'Touch mode off: standard desktop controls restored.', { ms: 3500 });
+  refreshTouchOrientationHint();
+  UI.toast(S.touchMode ? 'Touch mode on: page scrolling is disabled; drag cards to move them. Landscape is recommended on phones.' : 'Touch mode off: standard desktop controls restored.', { ms: 4000 });
 }
 function mainMenu(x, y) {
   const m = S.me;
@@ -4051,6 +4072,9 @@ function begin(role) {
 // =====================================================================
 function boot() {
   document.body.classList.toggle('touch-mode', S.touchMode);
+  refreshTouchOrientationHint();
+  window.addEventListener('resize', refreshTouchOrientationHint, { passive: true });
+  window.addEventListener('orientationchange', refreshTouchOrientationHint, { passive: true });
   let pid = SS.get('ct.pid', null);
   if (!pid) { pid = 'p' + uid(); SS.set('ct.pid', pid); }
   S.pid = pid;
