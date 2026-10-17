@@ -58,13 +58,6 @@ Allow players to upload their own image for a table background and/or card back,
 - Define whether uploads are local to that player's browser or shared with other players before implementation. Do not upload user images to a server unless that is explicitly designed and explained.
 - Keep default backgrounds and card backs available, with an easy way to restore them.
 
-## 16. Put newest actions at the top of the game log — IN PROGRESS
-
-- Show the latest action at the top and older actions below it.
-- Keep the log at the top when new actions arrive if the player is already viewing the newest entries; do not jump them back up while they scroll down to read history.
-- Do not add card-printing changes to the game log. They are visual preferences, not meaningful game actions.
-- Check Sidebar and Grid layouts, both 1920×1080 and 1366×768, and confirm a second player sees the same meaningful game log.
-
 ## 17. Separate floating chat notifications — QUEUED
 
 Add a lightweight chat experience that is separate from the action log. New messages should briefly appear as an unobtrusive floating overlay and then fade away.
