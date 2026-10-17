@@ -51,11 +51,13 @@ Add a lightweight chat experience that is separate from the action log. New mess
 
 ## 18. iPad and touch-friendly browser support — QUEUED
 
-Make Commander Table comfortable to use in Safari on an iPad, without relying on a mouse, right-click, or hover. This is responsive touch support for the existing website, not a separate native iPad app.
+Add an optional **Touch mode** for iPad Safari, launched from the top-right hamburger menu (☰ → **Touch mode**). Keep the existing desktop board and mouse interaction path as intact as possible: touch-specific controls and behavior should live behind this opt-in mode rather than forcing a broad redesign of the main battlefield. This is a mode for the existing website, not a separate native iPad app.
 
+- **Entry and scope:** provide a clear on/off **Touch mode** item in the hamburger menu. Make the preference local to that player's browser/device (do not broadcast it to opponents). Consider remembering the choice on that device. Do not alter the default desktop UI when the mode is off.
+- **Separate implementation:** keep touch-only UI, styles, and interaction handlers scoped to the mode—for example, using a mode class/state and small isolated helpers—rather than spreading iPad-specific exceptions through the standard board code. Reuse existing game actions and state so touch controls invoke the same behavior as desktop actions.
 - Replace hover-only card inspection with a clear tap-to-inspect/zoom interaction that works for touch and does not accidentally move a card.
-- Provide an obvious touch-friendly **Actions** menu for the selected card, with the same useful actions currently reachable by right-click. Keep right-click available on desktop; long-press may be an optional shortcut, but must not be the only route.
+- Provide an obvious touch-friendly **Actions** menu for the selected card, with the useful actions currently reachable by right-click. Right-click remains available on desktop; long-press may be an optional shortcut, but must not be the only route.
 - Make card dragging reliable with touch, avoid accidental text/image selection, and make controls comfortably tappable. Explore explicit selection mode or tap-to-select for multi-card operations if drag-select is awkward on touch.
 - Ensure menus and previews can be dismissed by tapping elsewhere and don't depend on hover states. Avoid browser-native callouts or selection handles interfering with game actions.
-- Preserve desktop mouse behaviour and existing Sidebar/Grid layouts wherever possible. Do not break scrolling, zooming, rotation, stylus input, or card interactions while adding touch support.
-- Test in real iPad Safari in portrait and landscape, including host and joiner sessions, card inspection, card actions, moving one card, intentional group selection/movement, context-menu dismissal, and both Sidebar and Grid layouts. Desktop emulation alone is not sufficient for marking this complete.
+- Preserve the existing Sidebar/Grid layouts and desktop mouse behavior wherever possible. Do not break scrolling, zooming, rotation, stylus input, or existing card interactions while adding touch support.
+- Test in real iPad Safari in portrait and landscape, including enabling/disabling Touch mode, host and joiner sessions, card inspection, card actions, moving one card, intentional group selection/movement, menu dismissal, and both Sidebar and Grid layouts. Desktop emulation alone is not sufficient for marking this complete.
