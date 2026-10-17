@@ -59,6 +59,9 @@ Use the reusable instructions in [PUBLISH-PROMPT.md](PUBLISH-PROMPT.md). Replace
 
 ## Active-player yellow outline — v0.14.2 (prepared for review)
 
+- **Pull request:** [#3 — Restore yellow outline for the active player](https://github.com/ccall1212/commander-table/pull/3)
+- **Commits:** initial implementation `14098d1cf17a76cff7f49e98e8670a7841ca7160`; positioning-context refinement `0afd64d4312f9daad2f2ad8c6a9702b127564ead`.
+
 - Restores an easy-to-see yellow/gold border around the player whose turn is active.
 - Uses a positioned overlay border instead of an inset box-shadow, because the board contents could cover the old shadow.
 - Applies to the main board and opponent/miniature tiles, while suppressing the overlay in focus/grid-overlay cases where it would outline the wrong board.
