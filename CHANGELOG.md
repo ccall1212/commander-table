@@ -6,6 +6,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.19.1] - 2026-10-17
+
+### Changed
+- Show the newest game-log entries at the top, with older actions below.
+
+### Fixed
+- Stop recording card-printing changes in the game log; changing art still updates the table and saved deck.
+
+
 ## [0.19.0] - 2026-10-17
 
 ### Added
@@ -284,7 +293,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - First playable build: paste-import decks from Moxfield or Archidekt (via Scryfall), 2–4 player rooms over PeerJS with self-healing reconnects, a searchable zone viewer, commander damage tracking and automatic tokens.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.19.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.19.1...HEAD
+[0.19.1]: https://github.com/ccall1212/commander-table/compare/v0.19.0...v0.19.1
 [0.19.0]: https://github.com/ccall1212/commander-table/compare/v0.18.2...v0.19.0
 [0.18.2]: https://github.com/ccall1212/commander-table/compare/v0.18.1...v0.18.2
 [0.18.1]: https://github.com/ccall1212/commander-table/compare/v0.17.1...v0.18.1
