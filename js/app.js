@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.20.6';
+const APP_VERSION = '0.21.4';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -2254,11 +2254,13 @@ function renderBody() {
 }
 
 function appearanceBackFor(pid) {
-  const owner = pid === S.pid ? S.me : (S.players[pid] || null);
+  const owner = pid === S.pid ? S.me : (S.players[pid] || null), custom = CTAppearance.getCustom();
+  if (pid === S.pid && custom.cardBack && custom.cardBackActive) return 'custom-local';
   return CTAppearance.normalizePrefs(owner && owner.appearance).cardBack;
 }
 function appearanceBoardStyleFor(pid) {
-  const owner = pid === S.pid ? S.me : (S.players[pid] || null);
+  const owner = pid === S.pid ? S.me : (S.players[pid] || null), custom = CTAppearance.getCustom();
+  if (pid === S.pid && custom.background && custom.backgroundActive) return CTAppearance.boardBackgroundStyle('custom-local');
   return CTAppearance.boardBackgroundStyle(CTAppearance.normalizePrefs(owner && owner.appearance).background);
 }
 function cardHTML(c, def, o) {
@@ -2916,6 +2918,10 @@ let drag = null; // a card being dragged with the pointer
 let selectionDrag = null; // a temporary selection rectangle
 function bindGame() {
   const g = $('#game');
+  // Native browser text/image dragging can steal pointer gestures from the tabletop's card drag logic.
+  g.addEventListener('dragstart', e => {
+    if (e.target.closest('.board, .card')) e.preventDefault();
+  });
   g.addEventListener('click', e => {
     if (Date.now() - S.dragEndAt < 250) return; // the click that ends a drag
     const t = e.target;
@@ -3814,6 +3820,10 @@ function bindLobby() {
   $('#ver').textContent = APP_VERSION;
   $('#cardBackPicker').addEventListener('click', e => chooseAppearance(e, 'cardBack'));
   $('#backgroundPicker').addEventListener('click', e => chooseAppearance(e, 'background'));
+  $('#customBackFile').addEventListener('change', e => readCustomImage(e.target.files && e.target.files[0], 'cardBack'));
+  $('#customBackgroundFile').addEventListener('change', e => readCustomImage(e.target.files && e.target.files[0], 'background'));
+  $('#resetCustomBack').addEventListener('click', () => resetCustomImage('cardBack'));
+  $('#resetCustomBackground').addEventListener('click', () => resetCustomImage('background'));
   $('#deckList').addEventListener('click', async e => {
     const del = e.target.closest('[data-del]');
     if (del) {
@@ -3836,19 +3846,66 @@ function bindLobby() {
   $('#joinIn').addEventListener('keydown', e => { if (e.key === 'Enter') begin('client'); });
 }
 function renderAppearancePickers() {
-  const prefs = CTAppearance.getPrefs();
-  $('#cardBackPicker').innerHTML = CTAppearance.renderCardBacks(prefs.cardBack);
-  $('#backgroundPicker').innerHTML = CTAppearance.renderBackgrounds(prefs.background);
+  const prefs = CTAppearance.getPrefs(), custom = CTAppearance.getCustom();
+  $('#cardBackPicker').innerHTML = CTAppearance.renderCardBacks(custom.cardBack && custom.cardBackActive ? 'custom-local' : prefs.cardBack);
+  $('#backgroundPicker').innerHTML = CTAppearance.renderBackgrounds(custom.background && custom.backgroundActive ? 'custom-local' : prefs.background);
+  const rb = $('#resetCustomBack'), rg = $('#resetCustomBackground');
+  if (rb) rb.disabled = !custom.cardBack;
+  if (rg) rg.disabled = !custom.background;
+  const bs = $('#customBackStatus'), gs = $('#customBackgroundStatus');
+  if (bs) bs.textContent = custom.cardBack ? (custom.cardBackActive ? 'Saved in this browser · currently in use.' : 'Saved in this browser · not currently selected.') : 'No saved card-back image.';
+  if (gs) gs.textContent = custom.background ? (custom.backgroundActive ? 'Saved in this browser · currently in use.' : 'Saved in this browser · not currently selected.') : 'No saved background image.';
+}
+function readCustomImage(file, kind) {
+  const status = $(kind === 'cardBack' ? '#customBackStatus' : '#customBackgroundStatus');
+  if (!file) return;
+  status.textContent = '';
+  if (!['image/jpeg','image/png','image/webp'].includes(file.type)) { status.textContent = 'Choose a JPG, PNG, or WebP image.'; return; }
+  if (file.size > 10 * 1024 * 1024) { status.textContent = 'That file is over 10 MB. Choose a smaller image.'; return; }
+  const url = URL.createObjectURL(file), img = new Image();
+  img.onload = () => {
+    URL.revokeObjectURL(url);
+    const back = kind === 'cardBack', minW = back ? 250 : 1280, minH = back ? 350 : 720;
+    if (img.naturalWidth < minW || img.naturalHeight < minH) { status.textContent = 'Image is ' + img.naturalWidth + ' × ' + img.naturalHeight + 'px; minimum is ' + minW + ' × ' + minH + 'px.'; return; }
+    const maxW = back ? 900 : 1600, maxH = back ? 1260 : 900;
+    const scale = Math.min(1, maxW / img.naturalWidth, maxH / img.naturalHeight);
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(img.naturalWidth * scale)); canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+    const ctx = canvas.getContext('2d');
+    if (!ctx) { status.textContent = 'Your browser could not process that image.'; return; }
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    let quality = 0.82, data = canvas.toDataURL('image/webp', quality);
+    while (data.length > 800000 && quality > 0.4) { quality = Math.max(0.4, quality - 0.1); data = canvas.toDataURL('image/webp', quality); }
+    if (data.length > 800000) { status.textContent = 'That image is still too large after optimization. Try a simpler or smaller image.'; return; }
+    if (!CTAppearance.saveCustom(kind, data)) { status.textContent = 'Browser storage is full. Clear site storage or try a smaller image.'; return; }
+    renderAppearancePickers();
+    if (!$('#game').classList.contains('hidden')) render();
+  };
+  img.onerror = () => { URL.revokeObjectURL(url); status.textContent = 'The image could not be opened. Try another file.'; };
+  img.src = url;
+}
+function resetCustomImage(kind) {
+  CTAppearance.clearCustom(kind);
+  const input = $(kind === 'cardBack' ? '#customBackFile' : '#customBackgroundFile');
+  if (input) input.value = '';
+  renderAppearancePickers();
+  if (!$('#game').classList.contains('hidden')) render();
 }
 function chooseAppearance(e, kind) {
   const choice = e.target.closest('[data-appearance-id]');
   if (!choice) return;
   const prefs = CTAppearance.getPrefs(), id = choice.dataset.appearanceId;
-  if (kind === 'cardBack' && !CTAppearance.backOptions.some(x => x.id === id)) return;
-  if (kind === 'background' && !CTAppearance.backgroundOptions.some(x => x.id === id)) return;
-  prefs[kind] = id;
-  CTAppearance.savePrefs(prefs);
+  if (id === 'custom-local') {
+    if (!CTAppearance.setCustomActive(kind, true)) return;
+  } else {
+    if (kind === 'cardBack' && !CTAppearance.backOptions.some(x => x.id === id)) return;
+    if (kind === 'background' && !CTAppearance.backgroundOptions.some(x => x.id === id)) return;
+    CTAppearance.setCustomActive(kind, false);
+    prefs[kind] = id;
+    CTAppearance.savePrefs(prefs);
+  }
   renderAppearancePickers();
+  if (!$('#game').classList.contains('hidden')) render();
 }
 function closeImport() {
   $('#importBox').classList.add('hidden'); $('#importBtn').classList.remove('hidden');

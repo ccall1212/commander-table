@@ -1,6 +1,6 @@
 # Commander Table — Objectives backlog
 
-Features Chris has asked for that are **not built yet or remain open**. The numbers are Chris's original numbering; finished ones (1, 2, 3, 6, 8, 10, 13, 14, 16) were removed, and #7 (opponent boards looking dim) was dropped: the dimming only applies to players who are reconnecting or out, on purpose. Objective #15 is in progress; see [GPT-CHANGES/README.md](README.md). Work on one at a time on its own branch and pull request, and read `AGENTS.md` first.
+Features Chris has asked for that are **not built yet or remain open**. The numbers are Chris's original numbering; finished ones (1, 2, 3, 6, 8, 10, 13, 14, 16) were removed, and #7 (opponent boards looking dim) was dropped: the dimming only applies to players who are reconnecting or out, on purpose. Objective #15 is in progress on a feature branch; see [GPT-CHANGES/README.md](README.md). Work on one at a time on its own branch and pull request, and read `AGENTS.md` first.
 
 Status key: **Queued** = requested, not started. **In progress** = a branch / PR exists (see `README.md`). **Paused** = started, waiting on something. **Deferred** = on purpose not now.
 
@@ -35,6 +35,7 @@ Let a player draw an arrow from one card (or player) to another so the table can
 
 - Right-click a card → **Send arrow to…**, then click the target (any player's battlefield). Everyone sees the same arrow. Make cancelling and clearing easy.
 - Arrows are visual only: they must never move cards or change game state. Keep the existing right-click menus, dragging and touch behaviour working.
+- Provide an equivalent touch-accessible action flow (see objective #18); right-click must not be the only way to start targeting.
 - **Where to look:** cross-player actions are messages relayed by the host, which validates the sender (see how `drawfx` is validated in `hostRecv`). Arrows need the same treatment, and must survive layout changes and board scaling, so anchor them to card ids (`data-iid`), not pixel positions, and redraw after each render (`setHTML()` patches the DOM in place and cards are matched by `data-iid`).
 - Start with one simple arrow at a time; decide colours/labels and exact menu wording during implementation.
 
@@ -47,3 +48,14 @@ Add a lightweight chat experience that is separate from the action log. New mess
 - Synchronize messages with the other players in the room using the existing host-validated networking approach; chat must not change game state or reveal hidden information.
 - Keep the overlay out of the way of cards and controls, support different screen sizes, and respect `prefers-reduced-motion`.
 - Decide whether players can mute/hide the overlay and how long chat history lasts during implementation.
+
+## 18. iPad and touch-friendly browser support — QUEUED
+
+Make Commander Table comfortable to use in Safari on an iPad, without relying on a mouse, right-click, or hover. This is responsive touch support for the existing website, not a separate native iPad app.
+
+- Replace hover-only card inspection with a clear tap-to-inspect/zoom interaction that works for touch and does not accidentally move a card.
+- Provide an obvious touch-friendly **Actions** menu for the selected card, with the same useful actions currently reachable by right-click. Keep right-click available on desktop; long-press may be an optional shortcut, but must not be the only route.
+- Make card dragging reliable with touch, avoid accidental text/image selection, and make controls comfortably tappable. Explore explicit selection mode or tap-to-select for multi-card operations if drag-select is awkward on touch.
+- Ensure menus and previews can be dismissed by tapping elsewhere and don't depend on hover states. Avoid browser-native callouts or selection handles interfering with game actions.
+- Preserve desktop mouse behaviour and existing Sidebar/Grid layouts wherever possible. Do not break scrolling, zooming, rotation, stylus input, or card interactions while adding touch support.
+- Test in real iPad Safari in portrait and landscape, including host and joiner sessions, card inspection, card actions, moving one card, intentional group selection/movement, context-menu dismissal, and both Sidebar and Grid layouts. Desktop emulation alone is not sufficient for marking this complete.

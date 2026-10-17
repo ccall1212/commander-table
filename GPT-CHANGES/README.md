@@ -14,7 +14,8 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 
 - **Main version:** v0.20.6, restored and merged through [PR #28](https://github.com/ccall1212/commander-table/pull/28), merge commit [9d42d06](https://github.com/ccall1212/commander-table/commit/9d42d06673831c54cbd759e3e44621c9cd299b41).
 - **Commander slam:** the animation and synthesized impact sound are back to the v0.20.6 implementation. Chris wants to keep refining the sound; do that on a separate branch, not by changing the published version in place.
-- **In progress:** objective #15, custom-uploaded table backgrounds and card backs. Branch: `feat/custom-appearance-uploads`. Keep uploads local to the player's browser unless Chris explicitly approves a different sharing design. The current preset choices must continue to work.
+- **In progress:** objective #15, custom-uploaded table backgrounds and card backs. Working branch and review PR: [PR #30](https://github.com/ccall1212/commander-table/pull/30). Uploads are local to the player's browser and never sent to other players; preset choices remain shared.
+- **Queued:** objective #18, iPad/touch-friendly browser support. The goal is to make card inspection and card actions discoverable without hover or right-click, while preserving desktop behaviour; details and test requirements are in [OBJECTIVES.md](OBJECTIVES.md).
 - **Paused:** draft [PR #11](https://github.com/ccall1212/commander-table/pull/11), random deck selection / website import. Do not merge until its listed live tests pass.
 - **Layouts:** Sidebar and Grid only.
 - **Release tags:** the annotated tags below are still required; the GitHub connector cannot create annotated tags:
@@ -27,11 +28,11 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 
 ## In progress: objective #15 — custom backgrounds and card backs
 
-- **Branch:** `feat/custom-appearance-uploads`, based on current `main`.
+- **Branch:** `feat/custom-appearance-uploads`, based on current `main`; documentation corrections merged via [PR #29](https://github.com/ccall1212/commander-table/pull/29).
 - **Goal:** allow a player to choose a local image for their own table background and/or card back, with clear format/dimension guidance, preview, validation, and a way to restore presets.
 - **Storage/sharing decision:** local browser storage only; don't upload user images to a server. Check practical storage limits and handle oversized images gracefully.
 - **Existing code:** appearance presets and preference handling are in `js/appearance.js`; lobby picker markup is in `index.html`; styling is in `css/style.css`; app state carries appearance preferences in `js/app.js`.
-- **Still to do:** implement the feature; check both Sidebar and Grid at 1920×1080 and 1366×768; check a second player sees the intended public appearance without exposing any other local data; document exact testing steps and provide a ZIP of the PR branch.
+- **Implemented on branch / PR #30:** compact collapsed upload controls; saved custom images shown as selectable tiles; selecting a preset keeps the custom image saved for later; explicit remove controls; local-only optimized WebP storage; validation/dimension guidance; version 0.21.4; updated player README, changelog, and `TESTING.md`. Also fixed outside-click context-menu dismissal and disabled native text/image dragging on the tabletop to prevent accidental multi-card selection during card drags. The PR links the exact branch ZIP. Chris should test the context menu and single/group dragging in Sidebar and Grid at 1920×1080 and 1366×768, plus a second player to verify custom images do not leak.
 
 ## How a change gets released
 

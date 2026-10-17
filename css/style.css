@@ -264,6 +264,9 @@ body.side-open #side { display: grid; }
 /* ---------- Free-form boards (logical 1400x430, scaled to fit) ---------- */
 .boardwrap { position: relative; width: 100%; height: 100%; overflow: hidden; }
 .board { position: absolute; left: 0; top: 0; width: 1400px; height: 430px; transform-origin: 0 0; --cw: 80px; }
+/* Cards are manipulated with pointer gestures; prevent accidental browser text/image selection while dragging. */
+.board, .board * { -webkit-user-select: none; user-select: none; }
+.board img { -webkit-user-drag: none; }
 /* Zones: quiet outlines + small labels. --inv (set by JS = 1/scale) keeps label text ~12px on screen at any zoom. */
 .region { position: absolute; border: 1px solid rgba(255,255,255,.12); border-radius: 12px; background: rgba(255,255,255,.025);
   pointer-events: none; }
@@ -739,11 +742,27 @@ body.lens-on #pv { display: none; }
 .appearance-choice .cardback-thumb { aspect-ratio: 5 / 7; }
 .appearance-choice .background-thumb { aspect-ratio: 16 / 9; }
 .appearance-choice .appearance-name { font-size: 11px; line-height: 1.2; min-height: 26px; display: flex; align-items: center; justify-content: center; text-align: center; }
+.custom-appearance-panel { margin: 10px 0 14px; }
+.custom-appearance-panel summary { display: inline-flex; align-items: center; gap: 7px; width: fit-content; padding: 6px 10px; border: 1px solid var(--border); border-radius: 7px; background: rgba(0,0,0,.2); color: var(--text); cursor: pointer; font-size: 12px; font-weight: 600; list-style-position: inside; }
+.custom-appearance-panel summary:hover { border-color: var(--accent); }
+.custom-appearance-panel[open] { padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: rgba(0,0,0,.12); }
+.custom-appearance-panel > p { margin: 9px 0 12px; }
+.custom-appearance-controls { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 7px; margin: 0 0 16px; }
+.custom-appearance-controls:last-child { margin-bottom: 0; }
+.custom-appearance-controls label { font-weight: 600; }
+.custom-appearance-controls p { margin: 0; }
+.custom-appearance-controls input[type="file"] { max-width: 100%; font-size: 12px; }
+.custom-appearance-controls button { padding: 5px 9px; font-size: 12px; }
+.custom-appearance-controls button:disabled { opacity: .45; cursor: not-allowed; }
+.appearance-choice .custom-saved-label { display: block; margin-top: -3px; color: var(--muted); font-size: 10px; line-height: 1.1; text-align: center; }
+.custom-upload-choice .appearance-thumb { border-color: var(--accent); }
+.custom-upload-choice.selected .custom-saved-label { color: var(--text); }
 .boardwrap { background-color: #0b1018; background-repeat: no-repeat; background-size: cover; background-position: center; }
 @media (max-width: 620px) {
   .cardback-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .background-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .appearance-choice .appearance-name { font-size: 10px; }
+
 }
 
 /* ---- Opponent miniature tiles (Sidebar / Grid): slim title, board + life + hand/piles drawn inside the scaled board ---- */
