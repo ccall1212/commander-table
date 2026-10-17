@@ -44,8 +44,8 @@ The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES
 
 - **Objectives:** #8 (Library shortcuts, animation and sound) and #10 (spell out Auto-Draw).
 - **Branch / PR:** `fix/auto-draw-label` / [PR #8 — combined UI and Library shortcut improvements](https://github.com/ccall1212/commander-table/pull/8).
-- Pressing **S** with the cursor over your Library shuffles it and plays a small CSS card-riffle animation plus a short original sound synthesized with Web Audio. No external sound file is needed; unsupported or blocked audio fails quietly.
-- Pressing **X** with the cursor over your Library mills one card into the Graveyard and plays a short visual cue. **G = Graveyard**, **E = Exile**, and **B = Battlefield**. Pressing **S** away from the Library still opens Search Library.
+- Pressing **S** with the cursor over your Library shuffles it and wiggles the Library pile itself with a short original sound synthesized with Web Audio. The extra dark-card fan overlays were removed. No external sound file is needed; unsupported or blocked audio fails quietly.
+- Pressing **X** with the cursor over your Library mills one card into the Graveyard and plays a short visual cue. **G = Graveyard**, **E = Exile**, and **B = Battlefield**. Press **L** anywhere to open Search Library; Ctrl+F remains the browser's own Find-on-page shortcut.
 - The ☰ menu includes **Hotkey list…**, a scrollable shortcut reference.
 - Top-bar **AD** now reads **Auto-Draw**.
 - App/meta and the 14 local CSS/JS cache-busting references are set to `0.16.0`.

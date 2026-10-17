@@ -849,19 +849,6 @@ body.lens-on #pv { display: none; }
 [data-pile="graveyard"].mill-receive { position: relative; }
 .zbox[data-pile="library"].shuffling .zcard,
 .tpile[data-pile="library"].shuffling .tpcard { animation: ct-library-riffle .78s ease-in-out; transform-origin: bottom center; }
-[data-pile="library"].shuffling::before,
-[data-pile="library"].shuffling::after {
-  content: ""; position: absolute; z-index: 8; pointer-events: none; width: 64%; aspect-ratio: 63 / 88;
-  border: 1px solid rgba(220,230,255,.72); border-radius: 4px;
-  background: linear-gradient(145deg, #3b4d6b, #1a2233 65%, #111722);
-  box-shadow: 0 3px 8px rgba(0,0,0,.45); opacity: 0;
-}
-.zbox[data-pile="library"].shuffling::before,
-.zbox[data-pile="library"].shuffling::after { top: 25px; left: 17%; }
-.tpile[data-pile="library"].shuffling::before,
-.tpile[data-pile="library"].shuffling::after { top: 0; left: 17%; }
-[data-pile="library"].shuffling::before { animation: ct-library-fan-left .78s ease-in-out; }
-[data-pile="library"].shuffling::after { animation: ct-library-fan-right .78s ease-in-out .04s; }
 .zbox[data-pile="library"].milling::before,
 .tpile[data-pile="library"].milling::before {
   content: ""; position: absolute; z-index: 8; pointer-events: none; width: 64%; aspect-ratio: 63 / 88;
@@ -878,18 +865,6 @@ body.lens-on #pv { display: none; }
   38% { transform: translate(4px,-4px) rotate(4deg); }
   58% { transform: translate(-3px,0) rotate(-2deg); }
   78% { transform: translate(2px,-1px) rotate(2deg); }
-}
-@keyframes ct-library-fan-left {
-  0%, 100% { opacity: 0; transform: translate(0,0) rotate(0); }
-  18% { opacity: .94; transform: translate(-14px,-4px) rotate(-9deg); }
-  45% { opacity: .76; transform: translate(-8px,2px) rotate(-5deg); }
-  72% { opacity: .34; transform: translate(-3px,0) rotate(-2deg); }
-}
-@keyframes ct-library-fan-right {
-  0%, 100% { opacity: 0; transform: translate(0,0) rotate(0); }
-  20% { opacity: .92; transform: translate(13px,-3px) rotate(8deg); }
-  48% { opacity: .68; transform: translate(7px,2px) rotate(4deg); }
-  74% { opacity: .3; transform: translate(2px,0) rotate(1deg); }
 }
 @keyframes ct-mill-flick {
   0% { opacity: .95; transform: translate(0,0) rotate(-1deg) scale(1); }
@@ -914,8 +889,6 @@ body.lens-on #pv { display: none; }
 @media (prefers-reduced-motion: reduce) {
   [data-pile="library"].shuffling .zcard,
   [data-pile="library"].shuffling .tpcard,
-  [data-pile="library"].shuffling::before,
-  [data-pile="library"].shuffling::after,
   [data-pile="library"].milling::before,
   [data-pile="graveyard"].mill-receive .zcard,
   [data-pile="graveyard"].mill-receive .tpcard { animation: none !important; }

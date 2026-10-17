@@ -19,7 +19,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Changed
 - Replaced the abbreviated **AD** top-bar label with **Auto-Draw**.
 - Changed the card-to-Exile shortcut from **X** to **E**; **G** remains Graveyard and **B** remains Battlefield.
-- Kept **S** opening Search Library when the cursor is not over the Library.
+- Use **L** to open Search Library from anywhere; **S** is reserved for shuffling when the Library is hovered. Ctrl+F remains the browser's Find-on-page shortcut.
 
 ## [0.15.1] - 2026-10-17
 

@@ -79,7 +79,7 @@ When hovering over your own Library:
 
 - **S** shuffles the Library and plays a small card-riffle animation plus a short synthesized sound; no external sound file is required.
 - **X** mills exactly one card from the top of the Library into the Graveyard and plays a short visual cue.
-- **S** continues to open Search Library when the cursor is not over the Library, preserving the existing search shortcut.
+- **L** opens Search Library from anywhere; **S** only shuffles while hovering the Library. Ctrl+F is left to the browser's Find-on-page feature.
 - The ☰ Options menu includes a **Hotkey list…** modal with the game's current shortcuts.
 - **Exile moves to E** so X is free for milling. **G remains Graveyard** and **B remains Battlefield**.
 - Browser/visual testing remains pending; check audio playback, animations, and shortcuts in both Sidebar and Grid layouts.

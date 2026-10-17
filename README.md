@@ -186,7 +186,7 @@ Open **☰ → Hotkey list…** during a game to see the full reference.
 
 Hover over one of your cards and press **T** to tap, **F** to flip, **Z** to turn face down/up, **G** to move to Graveyard, **E** to move to Exile, **H** to move to Hand, **B** to move to Battlefield, **A** to attach, **J** to add a counter, or **I** to view card information.
 
-Hover over your **Library** and press **S** to shuffle (with a small card animation and sound), or **X** to mill the top card into your Graveyard. Press **S** away from the Library to open Search Library. You can also draw with **D**, untap all with **U**, pass the turn with **Space**, and undo with **Ctrl+Z** (or **⌘Z** on Mac).
+Hover over your **Library** and press **S** to shuffle (the Library itself wiggles with a short sound), or **X** to mill the top card into your Graveyard. Press **L** anywhere during a game to open Search Library. **Ctrl+F** remains the browser's Find-on-page shortcut. You can also draw with **D**, untap all with **U**, pass the turn with **Space**, and undo with **Ctrl+Z** (or **⌘Z** on Mac).
 
 For a hovered card, **+ / =** adds a +1/+1 counter and **− / _** adds a −1/−1 counter. **Shift+1 / Shift+2 / Shift+3** increments, doubles, or decrements all counters; **Alt+1 / Alt+2 / Alt+3 / Alt+4** adjusts power/toughness up or down. Hold **V** over the table for the magnifier.
 

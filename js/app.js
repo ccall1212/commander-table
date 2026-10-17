@@ -1471,7 +1471,7 @@ function libraryMenu(x, y) {
     { label: 'Draw X…', onClick: async () => { const n = await UI.prompt({ title: 'Draw cards', type: 'number', value: 2, min: 1, max: 30 }); if (n) draw(n); } },
     { label: 'Shuffle', hint: 'S', onClick: shuffleLib },
     { sep: true },
-    { label: 'Search library…', onClick: () => viewZone(S.pid, 'library') },
+    { label: 'Search library…', hint: 'L', onClick: () => viewZone(S.pid, 'library') },
     { label: 'Look at top X (scry)…', onClick: () => lookTop() },
     { label: 'Reveal top card', onClick: revealTop },
     { label: 'Play with top card revealed', checked: S.me.revealTop, onClick: () => act(() => { S.me.revealTop = !S.me.revealTop; return [S.me.revealTop ? 'is playing with the top card revealed' : 'stopped revealing the top card']; }) },
@@ -1636,7 +1636,7 @@ function showHotkeyList() {
       ['X', 'Mill the top card into your Graveyard']
     ] },
     { title: 'General', rows: [
-      ['D', 'Draw one card'], ['U', 'Untap all'], ['S elsewhere', 'Open Search Library'],
+      ['D', 'Draw one card'], ['U', 'Untap all'], ['L', 'Open Search Library from anywhere'],
       ['Space', 'Pass the turn'], ['Ctrl+Z / ⌘Z', 'Undo'], ['Hold V', 'Use the magnifier']
     ] }
   ];
@@ -2882,10 +2882,10 @@ function onKey(e) {
   if ((k === 's' || k === 'x') && e.repeat) return; // avoid repeated shuffle/mill while a key is held
   if (k === 's') {
     if (ownLibraryHovered()) { e.preventDefault(); shuffleLib(); }
-    else viewZone(S.pid, 'library');
     return;
   }
   if (k === 'x' && ownLibraryHovered()) { e.preventDefault(); millTopCard(); return; }
+  if (k === 'l') { e.preventDefault(); viewZone(S.pid, 'library'); return; }
   if (k === 'd') { draw(1); return; }
   if (k === 'u') { untapAll(); return; }
   if (k === 'i' && h) { // info works on anyone's card
