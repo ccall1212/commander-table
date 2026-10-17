@@ -31,6 +31,7 @@ The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES
 - **Release tag:** `v0.15.0` is still pending. Create the annotated tag at merge commit `3974eb49453cbe55dedcac87f46fb720b07d0583` using the instructions below.
 ## Life-total button hit targets — v0.15.1 (in progress)
 
+- **Pull request:** [PR #6 — Make life-total +/- buttons easier to click](https://github.com/ccall1212/commander-table/pull/6).
 - **Branch:** `fix/life-total-hit-target`.
 - Adds an explicit `life-adjust` class to the life total −/+ buttons, gives both buttons a consistent 30–32px clickable target, and makes hover/focus states clearer.
 - Preserves the separate ▾ counters button sizing and existing Shift-click ±5 behavior. Adds descriptive accessible labels.

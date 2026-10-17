@@ -37,6 +37,7 @@ Fix the life total controls so clicking the minus or plus control anywhere withi
 
 - Verify in Sidebar and Grid views, at common desktop resolutions.
 - Ensure clicks do not accidentally open the player's board or counter panel.
+- **Pull request:** [PR #6 — Make life-total +/- buttons easier to click](https://github.com/ccall1212/commander-table/pull/6).
 
 ## 4. Increase battlefield card size on larger displays — NEXT
 
