@@ -18,7 +18,7 @@ Cards feel a little small when the browser is maximized on a 2K display (the siz
 
 ## 5. One-time "slam" animation when a card is played — IN PROGRESS
 
-When a Commander moves from the command zone to the battlefield, play a brief slam animation with a glow in the card's colour identity. Optionally do the same the first time a card with mana value 8 or more enters the battlefield.
+When a Commander moves from the command zone to the battlefield, play a brief, clearly visible slam animation with a glow in the card's colour identity and a short impact sound. Optionally do the same the first time a card with mana value 8 or more enters the battlefield.
 
 - Trigger on the play event only, never on later dragging or repositioning.
 - Keep it short, make it click-through, and respect `prefers-reduced-motion`.
