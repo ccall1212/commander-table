@@ -147,7 +147,7 @@ Read this before changing layout or anything that finds elements on the page. Se
    [Unreleased]: https://github.com/ccall1212/commander-table/compare/vX.Y.Z...HEAD
    [X.Y.Z]: https://github.com/ccall1212/commander-table/compare/vPREVIOUS...vX.Y.Z
    ```
-7. **Update `README.md`** for anything a player would notice (controls, menus, layouts, shortcuts), and keep the explicit **Current app version** at the top synchronized with `<meta name="app-version">` in `index.html` for every version bump. Read the version from `index.html`; never guess it or rely on the GitHub tag badge, because release tags may lag behind the deployed app. When a release is prepared, update the README version in the same branch/PR as the version bump.
+7. **Update `README.md`** for anything a player would notice (controls, menus, layouts, shortcuts), and keep the compact version badge at the top synchronized with `<meta name="app-version">` in `index.html` for every version bump. Read the version from `index.html`; never guess it or rely on Git tags for the badge, because release tags may lag behind the deployed app. Keep the version badge visually aligned beside the license badge and update it in the same branch/PR as the version bump.
 8. **Commit** with [Conventional Commits](https://www.conventionalcommits.org/): `feat: …`, `fix: …`,
    `docs: …`, `chore: …`, `feat(ui): …`. Include the version in the subject for releases, e.g.
    `fix(ui): piles keep their own size (v0.7.1)`. Say in the body what changed and why.
