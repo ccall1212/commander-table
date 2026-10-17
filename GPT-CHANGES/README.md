@@ -13,10 +13,10 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 ## Current state
 
 - **Main version:** v0.21.4; [PR #30](https://github.com/ccall1212/commander-table/pull/30) merged to `main` at commit [99afe59](https://github.com/ccall1212/commander-table/commit/99afe59d865adb6f19de684eb798b0b617346d67). This release includes custom local appearance uploads and the pointer/context-menu fixes.
-- **In progress:** [PR #32](https://github.com/ccall1212/commander-table/pull/32) adds optional iPad Touch mode and press-and-hold context menus on branch `feat/ipad-touch-mode`; proposed test version is v0.22.0. It is not merged or live.
+- **In progress:** [PR #32](https://github.com/ccall1212/commander-table/pull/32) adds optional phone/iPad Touch mode, page-scroll prevention during card drags, a portrait-to-landscape hint, and press-and-hold context menus on branch `feat/ipad-touch-mode`; proposed test version is v0.22.0. It is not merged or live.
 - **Browser testing:** Chris confirmed he tested the pointer/clicking fix in a real browser before publication. ChatGPT did not independently run the browser or automated browser tests.
 - **Commander slam:** the animation and synthesized impact sound are back to the v0.20.6 implementation. Chris wants to keep refining the sound; do that on a separate branch, not by changing the published version in place.
-- **In progress:** objective #18, iPad/touch-friendly browser support. The opt-in **Touch mode** is being implemented in [PR #32](https://github.com/ccall1212/commander-table/pull/32); details and real-iPad test requirements are in [OBJECTIVES.md](OBJECTIVES.md).
+- **In progress:** objective #18, phone/iPad touch-friendly browser support. The opt-in **Touch mode** is being implemented in [PR #32](https://github.com/ccall1212/commander-table/pull/32); details and real-iPad test requirements are in [OBJECTIVES.md](OBJECTIVES.md).
 - **Paused:** draft [PR #11](https://github.com/ccall1212/commander-table/pull/11), random deck selection / website import. Do not merge until its listed live tests pass.
 - **Layouts:** Sidebar and Grid only.
 - **Release tags:** the annotated tags below are still required; the GitHub connector cannot create annotated tags:
