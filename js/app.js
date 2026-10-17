@@ -3871,8 +3871,8 @@ function readCustomImage(file, kind) {
     if (!ctx) { status.textContent = 'Your browser could not process that image.'; return; }
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
     let quality = 0.82, data = canvas.toDataURL('image/webp', quality);
-    while (data.length > 1450000 && quality > 0.5) { quality -= 0.1; data = canvas.toDataURL('image/webp', quality); }
-    if (data.length > 1450000) { status.textContent = 'That image is still too large after optimization. Try a simpler or smaller image.'; return; }
+    while (data.length > 800000 && quality > 0.4) { quality = Math.max(0.4, quality - 0.1); data = canvas.toDataURL('image/webp', quality); }
+    if (data.length > 800000) { status.textContent = 'That image is still too large after optimization. Try a simpler or smaller image.'; return; }
     if (!CTAppearance.saveCustom(kind, data)) { status.textContent = 'Browser storage is full. Clear site storage or try a smaller image.'; return; }
     renderAppearancePickers();
     if (!$('#game').classList.contains('hidden')) render();
