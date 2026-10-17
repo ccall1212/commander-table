@@ -321,6 +321,14 @@ function hostRecv(msg, from) {
       broadcast({ t: 'slamfx', pid: from, iid: msg.iid, ci });
       break;
     }
+    case 'placefx': {
+      if (!S.table.seats.includes(from) || typeof msg.iid !== 'string' || !/^[\w-]{1,40}$/.test(msg.iid)) return;
+      const player = S.players[from];
+      const card = player && player.zones && Array.isArray(player.zones.battlefield) && player.zones.battlefield.find(c => c.iid === msg.iid);
+      if (!card) return;
+      broadcast({ t: 'placefx', pid: from, iid: msg.iid });
+      break;
+    }
     case 'op': tableOp(msg.op, from); break;
     case 'req': {
       if (typeof msg.to !== 'string') return;
@@ -632,6 +640,9 @@ function onBroadcast(msg) {
         animateCommanderSlam(msg.pid, msg.iid, ci);
       }
       break;
+    case 'placefx':
+      if (typeof msg.pid === 'string' && typeof msg.iid === 'string' && msg.pid !== S.pid) playCardPlaceSound();
+      break;
     case 'table': S.table = msg.table; afterTable(); break;
     case 'firstroll': showFirstRoll(msg); break;
     case 'online': S.online = msg.online || {}; break;
@@ -848,14 +859,14 @@ function doMove(iid, to, opts = {}) {
   });
   if (!res) return;
   if (res.repos) {
-    playCardPlaceSound();
+    emitCardPlaceSound(res.card.iid);
     return;
   }
   const { card, def } = res;
   if (res.from === 'command' && to === 'battlefield' && !card.fd && !res.gone && def) {
     emitCommanderSlam(card.iid, def.ci);
   } else if (to === 'battlefield' && !res.gone) {
-    playCardPlaceSound();
+    emitCardPlaceSound(card.iid);
   }
   if (res.orphans && res.orphans.length) orphanToast(res.orphans);
   if (card.cmd && !res.gone && to !== 'command' && to !== 'battlefield' && card.own === S.pid) {
@@ -1256,6 +1267,13 @@ function animateCommanderSlam(pid, iid, ci) {
   };
   requestAnimationFrame(() => requestAnimationFrame(start));
 }
+function emitCardPlaceSound(iid) {
+  playCardPlaceSound();
+  if (S.role === 'solo') return;
+  clearTimeout(pubTimer); doPublish();
+  toHost({ t: 'placefx', iid });
+}
+
 function playCardPlaceSound() {
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
   if (!AudioContextClass) return;
@@ -3301,7 +3319,7 @@ function moveGroupToZone(group, to, opts = {}) {
     return ['moved ' + results.length + ' cards to ' + (ZL[to] || to)];
   });
   finishGroupZoneMove(results, to);
-  if (to === 'battlefield' && results.length) playCardPlaceSound();
+  if (to === 'battlefield' && results.length) emitCardPlaceSound(results[0].card.iid);
 }
 function giveControlGroup(group, to, at, anchorIid) {
   if (!group.length) return;
