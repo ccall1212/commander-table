@@ -6,8 +6,8 @@
 
 - **Draft PR:** [#11 — Random Commander deck picker and website URL import](https://github.com/ccall1212/commander-table/pull/11)
 - **Branch:** `feat/random-commander-deck-picker-preview`
-- **Current release on main/live site:** v0.16.0
-- **Important:** The v0.17.0 feature code has **not been merged or pushed to main and has not been published**. The feature work remains on the separate PR branch. This document is a handoff note in `GPT-CHANGES`; it does not enable the controls or deploy the helper service.
+- **Current release on main/live site:** v0.17.0 (draw-card animation; PR #12)
+- **Important:** The deck-import feature code in PR #11 has **not been merged or published**. v0.17.0 has shipped separately for the draw-card animation in PR #12. This document does not enable the controls or deploy the helper service.
 - Random deck and website URL import controls remain disabled/hidden in the preview; plain-text deck import remains available.
 
 ## Findings
@@ -50,8 +50,7 @@ This led to adding `https://api.moxfield.com/v2/decks/all/{deckId}` as a third f
 
 ## Release/version coordination
 
-Draft PR #12 (draw-card animation) is now active separately from this paused PR. Both preview branches currently use version `0.17.0` because neither change has shipped. If PR #12 is merged first, update PR #11's app version, all cache-busting refs, changelog and compare links to the next unused version before considering #11 for merge. Do not merge both unchanged as two different v0.17.0 releases.
-
+The draw-card animation has shipped as v0.17.0 in [PR #12](https://github.com/ccall1212/commander-table/pull/12). This PR #11 branch still carries an unreleased v0.17.0 version; **before resuming it, bump the deck-import preview to v0.18.0** across index.html, js/app.js, every CSS/JS cache-busting reference, CHANGELOG.md, and compare links. Keep this PR paused until live browser/provider testing is available. Do not publish the deck-import controls or relay changes as part of v0.17.0.
 ## Instructions for Claude Code
 
 1. Review PR #11 and this handoff. Keep it as a draft; do not merge it or publish v0.17.0.
