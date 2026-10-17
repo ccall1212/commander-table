@@ -15,7 +15,7 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 - **Released on main:** v0.18.1; GitHub Pages run [39008364719](https://github.com/ccall1212/commander-table/actions/runs/39008364719) succeeded for release commit [5548ba6](https://github.com/ccall1212/commander-table/commit/5548ba67826c1a10b2db6bc53256fd4ae438d799).
 - **Release tags verified:** v0.14.1, v0.14.2, v0.15.0, v0.15.1, v0.16.0, v0.17.0, and v0.17.1 exist and point to their intended commits. The v0.18.1 tag is still pending (see below).
 - **Layouts:** only **Sidebar** and **Grid** exist. The Top and Focus layouts were removed.
-- **In flight:** draft PR #11 only (paused deck import).
+- **In flight:** draft PR #11 (paused deck import) and `fix/smooth-draw-animation` (v0.18.2 candidate): smooth the draw arc and cross-fade each card into its own hand slot. The draw animation is not merged or published; its browser test list is in `TESTING.md`.
 
 ## Remaining release housekeeping
 
