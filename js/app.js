@@ -1623,7 +1623,7 @@ function toggleFocus(pid) { S.focus = S.focus === pid ? null : pid; render(); }
 function showHotkeyList() {
   const groups = [
     { title: 'With a card hovered', rows: [
-      ['T', 'Tap or untap'], ['F', 'Transform / flip'], ['Z', 'Turn face down or up'],
+      ['T', 'Tap / untap; from hand, play onto the battlefield tapped'], ['F', 'Transform / flip'], ['Z', 'Turn face down or up'],
       ['G', 'Move to Graveyard'], ['E', 'Move to Exile'], ['H', 'Move to Hand'], ['B', 'Move to Battlefield'],
       ['A', 'Attach / equip / enchant'], ['J', 'Add a named counter'], ['I', 'View card information'],
       ['+ or =', 'Add a +1/+1 counter'], ['− or _', 'Add a −1/−1 counter'],
@@ -2894,7 +2894,7 @@ function onKey(e) {
     return;
   }
   if (!mine) return;
-  const map = { t: () => toggleTap(h.iid), f: () => flip(h.iid), g: () => doMove(h.iid, 'graveyard'),
+  const map = { t: () => mine.zone === 'hand' ? doMove(h.iid, 'battlefield', { tapped: true }) : toggleTap(h.iid), f: () => flip(h.iid), g: () => doMove(h.iid, 'graveyard'),
     e: () => doMove(h.iid, 'exile'), h: () => doMove(h.iid, 'hand'), b: () => doMove(h.iid, 'battlefield'), a: () => startAttach(h.iid),
     z: () => toggleFaceDown(h.iid), j: () => customCounter(h.iid),
     '+': () => addCounter(h.iid, '+1/+1', 1), '=': () => addCounter(h.iid, '+1/+1', 1),
