@@ -4,7 +4,12 @@ All notable changes to Commander Table are listed here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/). Each release is tagged `vX.Y.Z` in git.
 
-## [Unreleased]
+## [Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.20.5...HEAD
+
+## [0.20.5] - 2026-10-17
+
+### Changed
+- Sharpen the Commander cast sound into a punchier boom-crack, with a bright initial snap over a deeper impact.
 
 ## [0.20.4] - 2026-10-17
 
@@ -306,7 +311,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - First playable build: paste-import decks from Moxfield or Archidekt (via Scryfall), 2–4 player rooms over PeerJS with self-healing reconnects, a searchable zone viewer, commander damage tracking and automatic tokens.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.20.4...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.20.5...HEAD
+[0.20.5]: https://github.com/ccall1212/commander-table/compare/v0.20.4...v0.20.5
 [0.20.4]: https://github.com/ccall1212/commander-table/compare/v0.20.3...v0.20.4
 [0.20.3]: https://github.com/ccall1212/commander-table/compare/v0.19.1...v0.20.3
 [0.19.1]: https://github.com/ccall1212/commander-table/compare/v0.19.0...v0.19.1
