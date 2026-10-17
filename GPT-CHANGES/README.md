@@ -1,148 +1,39 @@
 # GPT-CHANGES
 
-This folder records changes prepared or committed by ChatGPT for Commander Table, along with release steps that remain incomplete. It is a handoff log, not a replacement for `CHANGELOG.md` (which is the player-facing release history) or `AGENTS.md` (which documents the project's development and release workflow).
+Handoff folder between ChatGPT and Claude Code / Chris. It holds **only what is still open or in flight**. Finished work is not repeated here: the player-facing history is [CHANGELOG.md](../CHANGELOG.md), the technical history is `git log` and the release tags, and how to work on the project is in [AGENTS.md](../AGENTS.md). When something ships, delete its notes from this folder instead of leaving a "done" entry.
 
-The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES.md). Objectives 1–3, 6, 8, 10, and 13 are complete in main; v0.17.0 draw-animation publication is being verified. Objective 4 (larger battlefield cards) is intentionally deferred. Objective #9 (random deck / website URL import) remains paused in draft [PR #11](https://github.com/ccall1212/commander-table/pull/11); its source has not been merged or published. See the [PR #11 investigation handoff](PR-11-DECK-IMPORT-INVESTIGATION.md). Objectives 5, 7, 11, and 12 remain queued.
+## What is in this folder
 
-**Status checked:** 2026-10-17 (by Claude Code, see "Claude Code verification" below)  
-**App version on main/live:** `0.17.1` (0.17.0 draw animation plus a fix so it actually plays).  
-**Latest release commit:** [`d5bf4c2`](https://github.com/ccall1212/commander-table/commit/d5bf4c24c00e896e5189320f2798b6ad2e372042), via [PR #12](https://github.com/ccall1212/commander-table/pull/12).  
-**GitHub Pages:** [deployment run `39001886198`](https://github.com/ccall1212/commander-table/actions/runs/39001886198) succeeded for main commit `c611981` after the v0.17.0 app source and release docs were in place.  
-**Browser testing:** ChatGPT verified source-level checks only; real-browser/multiplayer checks remain for Chris to run.  
-**Release tag status:** all release tags now exist on GitHub: `v0.14.1`, `v0.14.2`, `v0.15.0`, `v0.15.1`, `v0.16.0`, `v0.17.0` (created by Claude Code on 2026-10-17 at the commits listed below) and `v0.17.1`.
-
-## PR #11 — random deck picker / website URL import (draft, not in main)
-
-- **Status:** [Draft PR #11](https://github.com/ccall1212/commander-table/pull/11) remains open on `feat/random-commander-deck-picker-preview`. Its deck-import source changes have **not been merged or published**; main/live is now v0.17.0 for the separate draw-card animation. Only this investigation note and backlog updates are in main from this investigation.
-- **Controls:** random selection and website URL import remain hidden/disabled in the PR preview; normal plain-text import stays available.
-- **Findings and Claude Code test steps:** see [PR-11-DECK-IMPORT-INVESTIGATION.md](PR-11-DECK-IMPORT-INVESTIGATION.md).
-
-## v0.17.0 — draw-card animation (merged to main)
-
-- **Pull request:** [PR #12](https://github.com/ccall1212/commander-table/pull/12), merged in [commit d5bf4c2](https://github.com/ccall1212/commander-table/commit/d5bf4c24c00e896e5189320f2798b6ad2e372042).
-- Animates a card from the Library toward its owner's hand and flips it as it arrives. The flight is 360ms; the actual card stays hidden in its hand slot until the animated copy lands, avoiding a duplicate-card flash.
-- Supports click-to-draw, the D shortcut, and turn-start Auto-Draw. Opponents see the card-back animation only; the relayed event does not contain card identity. Draw X animates at most five cards while any extras still enter the hand normally.
-- The overlay is click-through and the animation is skipped when reduced motion is preferred.
-- **Regression fix:** the initial animation edit accidentally removed the draw() function; it was restored before publishing. Source checks confirmed a single draw() definition, a valid full-file JavaScript syntax parse, matching app/meta versions, and 14 matching asset cache references.
-- Chris reviewed the preview; ChatGPT did not independently run a real-browser or multiplayer test. Manual checks still recommended: multiplayer hidden-card privacy, Auto-Draw, first-turn draw skip, empty Library, Draw X over five cards, all three layouts/sizes, reduced motion, and browser console.
-- **Deployment/tag:** GitHub Pages deployment is being checked. The annotated v0.17.0 tag remains a local release-housekeeping step because the current GitHub connection cannot create annotated tags.
-- **Version coordination:** PR #11 remains paused and still contains an unreleased v0.17.0 preview version. Before resuming that work, bump its version/cache refs/changelog to v0.18.0 and test the provider behavior. None of PR #11's source code is part of this release.
-## Active-player yellow outline — v0.14.2 (merged to main)
-
-- **Pull request:** [#3 — Restore yellow outline for the active player](https://github.com/ccall1212/commander-table/pull/3) — merged.
-- **Merge commit:** [`78b6d5ae99e0ef95f0e5b644f1aa27f716211f84`](https://github.com/ccall1212/commander-table/commit/78b6d5ae99e0ef95f0e5b644f1aa27f716211f84).
-- Restores a clearly visible yellow/gold outline on the active player's board in Sidebar and Grid layouts using a positioned overlay border, with the overlay suppressed where it would outline the wrong surface.
-- App version and all 14 local CSS/JS cache-busting references are set to `0.14.2`; `CHANGELOG.md` and the player-facing guide describe the behavior, and the README badge was updated to `0.14.2` in [commit `aec758b`](https://github.com/ccall1212/commander-table/commit/aec758b139a394640008f43206719f07b3226b72).
-- **Browser status:** Chris previewed the feature locally and confirmed that it looked good before explicitly authorizing publication. ChatGPT did not independently operate the browser.
-- **Deployment status:** GitHub Pages deployment succeeded for the merge commit and again for the latest main tree at handoff commit [`33acd59`](https://github.com/ccall1212/commander-table/actions/runs/38991021652). That run completed successfully. The final live HTML was not independently fetched, so treat workflow success as deployment confirmation but not a separate browser-visible version check.
-- **Tag status:** GitHub lookups found neither `v0.14.1` nor `v0.14.2`. The connected GitHub actions available here cannot create annotated tags, so the release tags still need to be created and verified locally. See the commands under “Remaining release housekeeping” below.
-
-## Opening turn-order dice animation — v0.15.0 (merged and deployed)
-
-- **Pull request:** [#4 — Start game with readable animated D20 roll](https://github.com/ccall1212/commander-table/pull/4) — merged.
-- **Merge commit:** [`3974eb4`](https://github.com/ccall1212/commander-table/commit/3974eb49453cbe55dedcac87f46fb720b07d0583).
-- Pressing **Start game** automatically rolls a d20 for every seated player. Each player's number changes inside a clean circular badge for about 2.4 seconds before settling on the synchronized final value.
-- The winner's **GOES FIRST** label remains prominent for 3 full seconds after the last roll settles, then the overlay fades away. Existing tie-reroll logic is preserved and the highest roller starts the game.
-- The overlay ignores pointer input and respects reduced-motion preferences. The redundant Dice-menu first-player roll item was removed; ordinary dice, coin flip, and random-player selection remain.
-- **Deployment:** GitHub Pages workflow run [`38993645238`](https://github.com/ccall1212/commander-table/actions/runs/38993645238) completed successfully for merge commit `3974eb4`.
-- **Browser status:** Chris approved the final preview appearance before publication. ChatGPT cannot run the real browser/multiplayer checks; these were not independently performed by ChatGPT after the merge.
-- **Release tag:** `v0.15.0` is still pending. Create the annotated tag at merge commit `3974eb49453cbe55dedcac87f46fb720b07d0583` using the instructions below.
-## Life-total button hit targets — v0.15.1 (merged and deployed)
-
-- **Pull request:** [PR #6 — Make life-total +/- buttons easier to click](https://github.com/ccall1212/commander-table/pull/6) — merged.
-- **Merge commit:** [`5927f82`](https://github.com/ccall1212/commander-table/commit/5927f82caf2e6ff82a9e065535044f27c653294b).
-- The life-total minus/plus controls now use consistent 30–32px hit targets with clearer hover/focus feedback and descriptive accessible labels. The smaller opponent-board controls remain reasonably sized, while the ▾ counters button and Shift-click ±5 behavior are preserved.
-- App/meta and cache-busting references are set to `0.15.1`; the player guide and `CHANGELOG.md` include the change.
-- **Deployment:** GitHub Pages run [`38994671583`](https://github.com/ccall1212/commander-table/actions/runs/38994671583) succeeded for merge commit `5927f82`.
-- **Browser status:** Chris reviewed the preview and authorized publication. ChatGPT did not independently run real-browser hit testing or the multiplayer life-request checks. The PR lists the recommended checks for Sidebar/Grid at 1920×1080 and 1366×768.
-- **Release tag:** `v0.15.1` should point to merge commit `5927f82caf2e6ff82a9e065535044f27c653294b`; annotated tag creation remains a local step.
-- Objective #12 (Forge-inspired targeting arrows) is queued and is not part of this life-control change.
-
-## Library shuffle / mill, hotkey list, and tapped-play shortcut — v0.16.0 (merged and deployed)
-
-- **Objectives:** #8 (Library shortcuts, animation and sound), #10 (spell out Auto-Draw), and #13 (play a hand card tapped with T) — all complete in this release.
-- **Branch / PR:** `fix/auto-draw-label` / [PR #8 — combined UI and Library shortcut improvements](https://github.com/ccall1212/commander-table/pull/8), merged in commit [`5840ed1`](https://github.com/ccall1212/commander-table/commit/5840ed166e1759fb249bfe0b855817640e23412e).
-- Pressing **S** with the cursor over your Library shuffles it and wiggles the Library pile itself with a short original sound synthesized with Web Audio. The extra dark-card fan overlays were removed. No external sound file is needed; unsupported or blocked audio fails quietly.
-- Pressing **X** with the cursor over your Library mills one card into the Graveyard and plays a short visual cue. **G = Graveyard**, **E = Exile**, and **B = Battlefield**. Press **L** anywhere to open Search Library; Ctrl+F remains the browser's own Find-on-page shortcut.
-- The ☰ menu includes **Hotkey list…**, a scrollable shortcut reference.
-- Top-bar **AD** now reads **Auto-Draw**.
-- Pressing **T** while hovering a card in hand plays it onto the battlefield tapped, using the existing card-type-based zone placement. For cards already on the battlefield, **T** still taps/untaps.
-- App/meta and the 14 local CSS/JS cache-busting references are set to `0.16.0`.
-- **Browser status:** ChatGPT ran syntax/source checks only. Manual checks should confirm the hotkeys work only in their intended context, including T playing a hand card tapped into the correct battlefield area and T still tapping/untapping battlefield cards; the mill action should move exactly one top card, animation and sound should be brief, and the Hotkey list should fit the modal. Check at 1920×1080 and 1366×768 in Sidebar and Grid.
-- **Release tag:** `v0.16.0` should point to merge commit `5840ed166e1759fb249bfe0b855817640e23412e`; creating and pushing the annotated tag is still a local step.
-
-## Changes made by ChatGPT
-
-### Commander tax chip layout — v0.14.1
-
-- Moved the commander-tax chip from a separate row above the command-zone commander card to the same header row as the `CMD` label. This avoids pushing the commander card down.
-- Added the `.cmdhead` flex-row styling and adjusted the tax chip styling in `css/style.css`.
-- Preserved the existing interaction: left-click adds 2 commander tax; right-click removes 2.
-- Updated app version references to `0.14.1` in `js/app.js` and `index.html`, including local asset cache-busting query strings.
-- Added the player-facing fix note and comparison links to `CHANGELOG.md`.
-- Updated the README instructions to say the chip is beside CMD.
-
-**Code change:** [PR #2](https://github.com/ccall1212/commander-table/pull/2)  
-**Merge commit:** [`a8e1c7a0b1dcca5e686d6afc780b92a9819baaa0`](https://github.com/ccall1212/commander-table/commit/a8e1c7a0b1dcca5e686d6afc780b92a9819baaa0)
-
-### README version badge
-
-- Changed the README's version badge to explicitly show `0.14.1`. This avoids the badge continuing to show the previous version until a new Git tag exists.
-
-**Commit:** [`d98d67704fe3312c2e682b5994040adace67013b`](https://github.com/ccall1212/commander-table/commit/d98d67704fe3312c2e682b5994040adace67013b)
-
-## Checks and what has / hasn't been verified
-
-- Chris previewed the v0.14.2 active-player outline locally and confirmed it looked good. ChatGPT did not independently operate a browser.
-- GitHub Pages' workflow completed successfully for the app-code merge commit and again for the README-version commit:
-  - [App-code deployment workflow](https://github.com/ccall1212/commander-table/actions/runs/38988306096)
-  - [README deployment workflow](https://github.com/ccall1212/commander-table/actions/runs/38988499062)
-- Source checks confirmed `index.html` and `js/app.js` both report `0.14.2`, and all 14 CSS/JS cache-busting references match.
-- The live `github.io` page was not independently fetched by ChatGPT during the final verification, so a browser-visible live-version check should still be done if certainty is required.
-- GitHub's tag lookups found neither `v0.14.1` nor `v0.14.2`. Both annotated tags remain outstanding; see the commands under “Remaining release housekeeping.”
-
-## Release housekeeping — tags (completed 2026-10-17)
-
-Claude Code created and pushed the missing annotated tags, after checking each target commit exists, is an ancestor of `main`, and carries the matching app version. Verified with `git ls-remote --tags origin`:
-
-| Tag | Commit |
+| File | What it is |
 |---|---|
-| `v0.14.1` | `d98d677` |
-| `v0.14.2` | `aec758b` |
-| `v0.15.0` | `3974eb4` |
-| `v0.15.1` | `5927f82` |
-| `v0.16.0` | `5840ed1` |
-| `v0.17.0` | `d5bf4c2` |
+| [OBJECTIVES.md](OBJECTIVES.md) | Chris's backlog of features still to build, with hints about where the code is |
+| [PR-11-DECK-IMPORT-INVESTIGATION.md](PR-11-DECK-IMPORT-INVESTIGATION.md) | The paused random-deck / website-import work (draft PR #11) and what has been learned |
+| [PUBLISH-PROMPT.md](PUBLISH-PROMPT.md) | The reusable "prepare, test and publish a release" prompt and checklist |
 
-**Still true for ChatGPT:** the GitHub connection cannot create annotated tags. For every future release, list the exact commit the tag must point to here and ask Chris (or Claude Code) to create it; do not describe a release as complete until the tag exists.
+## Current state
 
-## Claude Code verification (2026-10-17)
+- **Released:** everything up to the newest version in `CHANGELOG.md`, each with an annotated git tag. Check `git tag` / the changelog rather than trusting a number written here.
+- **Layouts:** only **Sidebar** and **Grid** exist. The Top and Focus layouts were removed.
+- **In flight:** draft PR #11 only (paused, see its file). Nothing else is waiting.
 
-Real-browser checks (Chromium, 4 players over the relay: 1 host + 3 clients) of the features ChatGPT could only source-check:
+## How a change gets released (short version)
 
-- **v0.15.0 opening d20 roll:** passes. Overlay shows ~6 s on clients, ignores the mouse, highest roll (20) went first and the log matches.
-- **v0.14.2 active-player outline:** passes in Sidebar and Grid; moves to the next player when the turn is passed.
-- **v0.15.1 life buttons:** your own +/- are 32x30 px, opponent miniature buttons 26x26 px.
-- **v0.16.0 hotkeys:** with the real mouse over the Library, `S` shuffles (order changes, same cards, animation class, log line) and `X` mills exactly one card; `L` opens Search Library; `T` from hand plays tapped and on the battlefield toggles tap; `G`, `E`, `B` move the hovered card. The Hotkey list opens and fits. "Auto-Draw" label present. Commander-tax chip is on the same row as CMD.
-- **v0.17.0 draw animation: FAILED, fixed in v0.17.1.** In Sidebar nothing played because `#myHand` has zero width (cards overflow it) and the animation required a non-zero box; opponents never saw it because their hand fan moved out of the header into the miniature tile. Fixed in `drawAnimationHand`/`drawAnimationPile` (PR-free fix branch, released as v0.17.1). Verified: own draw flies and flips in Sidebar and Grid; an opponent sees a flight with only a face-down card (no images, no identity); overlay ignores the pointer; no pending hidden cards left behind; no console errors. Not re-tested: Draw X over five, empty Library toast, reduced-motion.
+1. ChatGPT works on a branch and opens a pull request. It cannot run a browser, so it lists exact things for a human to click (see "Writing the test list" in `AGENTS.md`).
+2. Chris asks Claude Code to test it. Claude Code runs it in a real browser (several players over the relay), fixes what breaks, and reports.
+3. Only when Chris says "publish": merge to `main`, tag, push, delete the branch, verify the live site.
 
-**Lesson for future work:** layout changes (e.g. moving the hand/piles) silently break features that look up elements by selector. When changing layout, search for every `querySelector` of the moved element, and when adding an effect, test it in both Sidebar and Grid with a second player watching.
+### Things ChatGPT cannot do, so ask for them
 
-### PR #11 (random deck / URL import) — findings from live data, still paused
+- **Create annotated tags.** The GitHub connection cannot. When a release is merged, write the exact commit the tag must point to and ask Chris or Claude Code to create it. Do not call a release finished until `git ls-remote --tags origin` shows the tag.
+- **Run a real browser or a multiplayer game.** Never write "tested" for something that was only read. Say "not browser-tested" and provide the click list.
+- **Hover, mouse and sound behaviour.** Some features only work with a real mouse (for example `S` and `X` over the Library use CSS `:hover`, which scripted events cannot fake). Mark them "needs a human".
 
-- Public endpoints checked from a plain HTTP client with an honest User-Agent: Archidekt deck and search return 200; Moxfield `api2.moxfield.com/v2/decks/all/<id>` and `api.moxfield.com/v2/...` return 200 for the supplied deck. Neither provider sends a CORS header that allows `https://ccall1212.github.io` (Archidekt allows only `http://localhost:3000`), so the browser cannot call them directly and the relay approach is required.
-- The PR's converter (`deckTextFromProvider`) was run on the real responses: Moxfield deck gave name, 1 commander and 92 lines / 99 cards (matches the source); an Archidekt deck gave name, commander and main deck correctly.
-- **Bug found and fixed on the PR branch** (`fc4f12e`): Archidekt search results give the bracket as `edhBracket`; the parser only read `bracket`/`userBracket`/`autoBracket`/..., so every deck was "unknown bracket" and bracket filtering could never match. About 1 in 10 results actually carries a bracket (2 or 3 in the sample); many are null, so random-by-bracket will often have to fetch more decks or reject unknowns.
-- **Not tested:** whether Moxfield answers requests coming from Cloudflare Worker IPs (needs a deployed test worker, which needs the Cloudflare dashboard); the `/deck-api` route itself; Moxfield random search (deliberately unavailable). Do not enable the controls until those pass. Bump the PR to v0.18.0 before resuming (see its handoff).
+### Keeping the repository tidy
 
-### Branch cleanup (2026-10-17)
+- Delete the branch when its pull request is merged (the PR keeps the history). Stale branches pile up otherwise.
+- Do not leave notes about released work in this folder.
+- Keep `README.md` (player guide) and `CHANGELOG.md` (what players will notice) accurate in the same change.
 
-ChatGPT's pull requests are squash-merged, so GitHub keeps the head branch unless it is deleted and `git branch -r --merged` is not reliable; PR state is. Branches whose PR was merged were deleted: `fix/sidebar-commander-tax-chip` (dbf2eb5), `fix/active-turn-highlight` (7d9824b), `feat/animated-first-player-roll` (1a8381a), `docs/record-v0-15-0-publication` (19ed531), `fix/life-total-hit-target` (ae3a612), `docs/record-v0-15-1-publication` (3b7b049), `fix/auto-draw-label` (90a2623), `docs/record-v0-16-0-publish` (4a66975), `feat/draw-card-animation-preview` (ad8902e), plus `release/v0.17.0-draw-animation` (ad8902e, identical tip to the PR #12 branch) and `docs/prioritize-random-deck-and-draw-animation` (c93d8d4, PR #10, closed unmerged, docs superseded by OBJECTIVES.md). The tips are recorded so any branch can be recreated with `git push origin <sha>:refs/heads/<name>`.
+## Where to put notes about new work
 
-Kept: `main`; `feat/random-commander-deck-picker-preview` (open draft PR #11); `feat/random-commander-deck-picker` (older deck-picker attempt, not part of any PR, left for Chris to decide); `feature/relay-netcode` (Cloudflare Workers Builds still builds the relay from this branch, its relay code is identical to `main`; after Chris switches the Cloudflare production branch to `main` it can be deleted).
-
-**Rule going forward:** after a PR is merged and its tag created, delete its branch (GitHub: Settings > General > "Automatically delete head branches" does this automatically).
-
-## Future publishing prompt
-
-Use the reusable instructions in [PUBLISH-PROMPT.md](PUBLISH-PROMPT.md). Replace the version, branch / pull request, and test status for each release.
+If you start something that cannot be finished in one go, add a short section here: the branch / PR link, what is done, what is not, and exactly what a tester should try. Remove the section when the work is released or abandoned.

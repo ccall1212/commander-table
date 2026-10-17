@@ -1,46 +1,41 @@
-# Reusable prompt: prepare, test, and publish a Commander Table release
+# Reusable prompt: prepare, test and publish a Commander Table release
 
-Copy the prompt below into ChatGPT whenever I want a release completed. Replace the bracketed details first if they are known.
+Copy the prompt below into ChatGPT whenever a release is wanted. Replace the bracketed parts.
 
 ---
 
 ## Prompt to reuse
 
-I'm the owner of `ccall1212/commander-table`. Please carry this change all the way through the release process:
+I'm the owner of `ccall1212/commander-table`. Please carry this change through the release process:
 
-- **Change / PR / branch:** [describe the change, paste the PR link, or name the branch]
+- **Change / PR / branch:** [describe it, paste the PR link, or name the branch]
 - **Target version:** [X.Y.Z]
 - **Browser-test status:** [not tested yet / passed, with details]
 
-Read `AGENTS.md`, `GPT-CHANGES/README.md`, and the latest `GPT-CHANGES/PUBLISH-PROMPT.md` first. Inspect the actual current repository state before acting; do not assume prior notes are still current.
+Read `AGENTS.md` and `GPT-CHANGES/README.md` first. Inspect the real repository state before acting; do not assume any note is still current (check `git log`, the tags and `CHANGELOG.md`).
 
-### Work through the full release checklist
+### Steps
 
-1. **Inspect and protect the repository.** Confirm the current default branch, working change, branch/PR status, current app version, latest release tag, and relevant CI/deployment status. Do not overwrite unrelated work. Work on a focused branch, not directly on `main`, for code changes.
-2. **Implement the requested change.** Keep the code change small and consistent with the project's plain HTML/CSS/JS architecture. Update the appropriate source, player-facing `README.md`, `CHANGELOG.md`, and version references. Use `python tools/bump-version.py X.Y.Z` for version changes instead of editing version references manually.
-3. **Check what can be checked here.** Inspect the diff, confirm referenced IDs/classes/actions exist, and run syntax checks where the available tools support them. Never describe source review as browser testing. If browser testing is possible only on my computer, provide an exact test checklist and wait for me to report results before saying it passed.
-4. **Prepare the change for review.** Commit with a Conventional Commit message; open or update a focused pull request with a summary, exact browser checks, and anything not tested. Preserve the existing game architecture and don't make unrelated changes.
-5. **Publish when I have explicitly asked you to publish.** Treat my explicit “publish” instruction as authorization to complete the release steps for this approved change. Follow the current project's documented versioning process: make sure the checks have passed; fast-forward merge the approved branch/PR into `main`; create the annotated `vX.Y.Z` tag on the intended release commit; push the tag/commit if the connected GitHub tools support it; clean up the feature branch when safe; and verify the resulting commit, tag, and deployment status.
-6. **Be honest about tool limitations.** If an available GitHub action cannot create tags, push a ref, run browser tests, or verify the live site, do not imply that step was completed. Finish every other step that is supported, tell me precisely what remains, and provide the shortest safe command or action to complete the blocked step. Do not invent successful checks, commit SHAs, tag existence, or deployment state.
-7. **Record the handoff.** Update `GPT-CHANGES/README.md` with the change, important commit/PR links, what was checked, and any remaining work. Update this folder's reusable prompt only if the process itself changes. Keep `CHANGELOG.md` player-focused and `GPT-CHANGES` as the technical handoff log.
-8. **Final report.** Give me the version, change summary, PR/commit links, tag status, deployment status, tests actually performed, and any remaining steps. Separate confirmed facts from anything I need to do.
+1. **Inspect and protect.** Confirm the default branch, the working branch/PR, the current app version and latest tag. Work on a focused branch, never directly on `main`. Do not overwrite unrelated work.
+2. **Implement.** Keep it small and in the project's plain HTML/CSS/JS style. Update `README.md` (player guide), `CHANGELOG.md` (what players will notice) and the version with `python tools/bump-version.py X.Y.Z`; never edit version references by hand.
+3. **Check what you can.** Read the diff; confirm every function, CSS class, id and `data-a` action you use exists and that nothing you removed is still referenced. Run syntax checks if your tools allow. Search for every place that looks up an element you moved or renamed. Never call source review "browser testing".
+4. **Open or update the pull request** with a Conventional Commit title, a summary, and an exact **click list** for a human tester: how many players, which layout (Sidebar / Grid), screen size, what to click or press, and what should happen. State clearly what was not tested.
+5. **Stop and wait.** Chris asks Claude Code to browser-test the PR. Do not merge or publish before that and before Chris says "publish" for this specific version.
+6. **After "publish":** merge the approved PR into `main`; tell Chris the exact commit the annotated tag `vX.Y.Z` must point to (you cannot create tags; Chris or Claude Code will); delete the merged branch; update `GPT-CHANGES/` (remove notes about work that is now released, add nothing about it).
+7. **Final report.** Version, summary, PR and commit links, tag status, deployment status, tests actually performed, and what remains. Separate confirmed facts from anything Chris must do. Do not invent commit IDs, tag existence or deployment results.
 
-Do not publish without my explicit authorization for that release. My authorization applies only to the named change/version, not unrelated work.
+Chris's authorization applies only to the named change and version.
 
 ---
 
-## Release completion checklist
+## Release checklist
 
-- [ ] Requested change is implemented and reviewed
-- [ ] Browser tests passed or clearly marked as not run
-- [ ] App version in `index.html` and `js/app.js` agrees
-- [ ] All local CSS/JS cache-busting references match the version
-- [ ] `CHANGELOG.md` entry and comparison links are correct
-- [ ] Player-facing `README.md` is accurate
-- [ ] `GPT-CHANGES/README.md` handoff is current
-- [ ] Approved change is merged into `main`
-- [ ] Annotated `vX.Y.Z` tag points to the intended release commit and exists on GitHub
-- [ ] Push/merge status is verified
-- [ ] GitHub Pages deployment succeeded for the expected commit
-- [ ] Live site version is independently verified, when access allows
-- [ ] No remaining steps are hidden behind a generic “done” statement
+- [ ] Change implemented and reviewed
+- [ ] Browser tests passed (by Claude Code or Chris) or clearly marked not run
+- [ ] `index.html` and `js/app.js` versions agree; all 14 `?v=` references match
+- [ ] `CHANGELOG.md` entry and compare links correct; `README.md` accurate
+- [ ] Merged into `main`
+- [ ] Annotated `vX.Y.Z` tag exists on GitHub and points at the release commit
+- [ ] GitHub Pages deployment succeeded and the live page shows the new version
+- [ ] Branch deleted
+- [ ] `GPT-CHANGES/` holds only open work

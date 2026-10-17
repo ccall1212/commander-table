@@ -2,7 +2,7 @@
 
 Read this before changing anything. It describes how every change has been made and released so far.
 The owner is Chris (GitHub `ccall1212`). He is not a programmer: explain things in plain language,
-and **never push to `main` or publish without his explicit OK** ("publish" / "push").
+and **never push to `main` or publish without his explicit OK** ("publish" / "push"). Also read [GPT-CHANGES/README.md](GPT-CHANGES/README.md): it lists the open work (feature backlog, the paused deck-import PR) and nothing else.
 
 ## Who does what
 
@@ -77,6 +77,20 @@ So the normal flow is:
 - Keyboard shortcuts already in use (don't reuse these letters without checking the in-game Hotkey list): T taps/untaps a battlefield card or plays a hovered hand card onto the battlefield tapped, F flip, Z face-down, G graveyard, E exile, H hand, B battlefield, A attach, J counter, D draw, U untap all, S shuffles when hovering your Library, X mills one card when hovering your Library, L opens Search Library, I info, V magnifier, Space pass turn, Ctrl+Z undo.
 - UI preferences Chris has stated: subdued, readable, nothing that scrolls on the table, no card-specific
   buttons, EDHPlay is the reference look.
+
+## How the table is built (things that commonly break)
+
+Read this before changing layout or anything that finds elements on the page. Several shipped features broke only because a layout change moved an element another feature was looking for.
+
+- **Layouts:** only **Sidebar** and **Grid** exist. (A table with nobody else at it, such as Practice solo, uses an internal full-width layout.) Check both, plus a player watching from a second tab.
+- **Opponents are miniature tiles** (`.opp.tile`). Their hand fan, Library, Graveyard, Exile and Command are drawn *inside* the scaled board (`.tstrip`, `.thand`, `.tpile`), not in a header. In Grid your own quadrant is also a tile (`.opp.mytile`, real interactive cards); the normal hand/piles strip (`#myRow`, `#myHand`, `#myZones`) is hidden there. Viewing another player swaps *their* hand and piles into that same bottom strip, hiding yours.
+- **`#myHand` is zero-width by design** (its cards overflow it), so never decide an element is "hidden" from its own size; look at its cards or its computed `visibility`/`display`.
+- **Boards are drawn in a scaled, sometimes auto-fitted display space.** Positions are stored in a fixed 1000-wide board (`BW`, height `bh`) but Grid and miniatures draw the board in a different size (`computeFit()`, `boardHTML(... mode)`). Convert pointer positions with `boardPoint()` then `storedPos()`; never treat screen pixels as board units.
+- **Rendering patches the DOM in place** (`setHTML()`): elements are reused and cards are matched by `data-iid`. Do not assign `innerHTML` on those containers, do not keep references to card elements across renders, and expect `render()` to run often.
+- **Hover shortcuts** (`S`/`X` over the Library, card hotkeys) rely on real mouse position (`:hover`, `S.hover`); scripted events cannot test them. Mark such features "needs a human with a mouse".
+- **Cross-player actions are messages relayed by the host**, which validates the sender (see the `drawfx` message and the `give`, `take`, `life` requests in `onReq`/`hostRecv`). A new message must be validated on the host, must never carry hidden information (card identities), and must be tolerated by older clients.
+- **Cache-busting:** after any CSS/JS change run `tools/bump-version.py`; the browser (and the live site, for about 10 minutes) otherwise serves old files.
+- **Tags and branches:** you cannot create tags (ask for them with the exact commit); delete a branch once its PR is merged.
 
 ## The routine for every change
 
