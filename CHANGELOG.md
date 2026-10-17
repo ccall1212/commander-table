@@ -9,6 +9,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - `AGENTS.md`: how changes are made, tested, versioned and released (for AI assistants and humans).
 
+## [0.14.2] - 2026-10-16
+
+### Fixed
+- Restored a clearly visible yellow outline around the active player's board in Sidebar and Grid layouts.
+
 ## [0.14.1] - 2026-10-16
 
 ### Fixed
@@ -223,7 +228,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - First playable build: paste-import decks from Moxfield or Archidekt (via Scryfall), 2–4 player rooms over PeerJS with self-healing reconnects, a searchable zone viewer, commander damage tracking and automatic tokens.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.14.1...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.14.2...HEAD
+[0.14.2]: https://github.com/ccall1212/commander-table/compare/v0.14.1...v0.14.2
 [0.14.1]: https://github.com/ccall1212/commander-table/compare/v0.14.0...v0.14.1
 [0.14.0]: https://github.com/ccall1212/commander-table/compare/v0.13.1...v0.14.0
 [0.13.1]: https://github.com/ccall1212/commander-table/compare/v0.13.0...v0.13.1
