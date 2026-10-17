@@ -2896,7 +2896,7 @@ function preview(def, hidden, tag) {
   if (!def || !pv) return;
   pv.classList.remove('hidden');
   setTimeout(placePv, 0);
-  if (hidden) { pv.innerHTML = `<div class="pv-imgs">${UI.cardBackHTML()}</div><div class="pv-tag">Face-down card</div>`; return; }
+  if (hidden) { pv.innerHTML = `<div class="pv-imgs">${UI.cardBackHTML()}</div><div class="pv-tag">Face-down card</div>` + (S.touchMode && S.touchPreview ? `<button class="ct-touch-actions" type="button" data-touch-actions="${esc(S.touchPreview.iid)}">Actions</button>` : ''); return; }
   const imgs = [def.img, def.imgBack].filter(IMG_OK);
   // The card image carries its own text; only show text when there's no image (or a COPY / attached tag).
   pv.innerHTML = (imgs.length
@@ -3131,7 +3131,10 @@ function bindGame() {
     clearTouchHold();
     if (S.regionDrag) { regionEnd(); return; }
     if (selectionDrag) { endSelectionDrag(e); return; }
-    if (!drag) return;
+    if (!drag) {
+      if (S.touchMode && e.pointerType === 'touch') { const card = e.target.closest && e.target.closest('.card'); if (card) previewFromEl(card); }
+      return;
+    }
     const d = drag; drag = null;
     if (!d.moved) {
       if (S.touchMode && e.pointerType === 'touch' && d.el && d.el.classList.contains('card')) previewFromEl(d.el);
