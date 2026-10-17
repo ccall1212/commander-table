@@ -1,10 +1,10 @@
 # Commander Table — Objectives Backlog
 
-This is the working list of the next UI and gameplay improvements requested by Chris. Keep the original numbering so we can work through them one at a time. Objectives 1–3, 8, 10, and 13 are complete and deployed. Objective 4 (larger cards) is intentionally deferred for now. Objective #9 is in progress as the top priority; Objective #6 is next. Objectives 5, 7, 11, and 12 remain queued.
+This is the working list of the next UI and gameplay improvements requested by Chris. Keep the original numbering so we can work through them one at a time. Objectives 1–3, 8, 10, and 13 are complete and deployed. Objective 4 (larger cards) is intentionally deferred for now. Objective #9 is temporarily paused with its random-deck and website URL controls disabled; Objective #6 is next once the paused work is settled. Objectives 5, 7, 11, and 12 remain queued.
 
 ## Current priorities
 
-1. **Objective #9 — Choose a random deck from Archidekt or Moxfield.** In progress: add a random public-deck picker by bracket plus direct import from a public deck URL. Check the limits of each provider and retain plain-text import as a fallback.
+1. **Objective #9 — Choose a random deck from Archidekt or Moxfield.** Temporarily paused. The random-deck and website URL controls are disabled for now, but the code is retained for a later fix. Normal plain-text import remains available.
 2. **Objective #6 — Animate drawing a card.** Next: design a short Library-to-hand motion that is visible to the player and their opponents without blocking interactions or animating unrelated card movements.
 
 These are priority order, not renumbering. Objective numbers remain stable for references and tracking.
@@ -93,19 +93,19 @@ When hovering over your own Library:
 - **Browser testing:** ChatGPT checked source only; hands-on testing of audio, animations, and shortcuts in Sidebar/Grid is still recommended.
 
 
-## 9. Choose a random deck from Archidekt or Moxfield — PRIORITY 1 (IN PROGRESS, v0.17.0 preview)
+## 9. Choose a random deck from Archidekt or Moxfield — TEMPORARILY PAUSED (v0.17.0 preview)
 
 Add a **Choose Random Deck** option on the opening/join screen for quick testing and fun random games.
 
 - Let the player choose Archidekt or Moxfield as the source.
 - Let the player choose deck bracket **1, 2, 3, or 4** before selecting a random deck.
 - Load the chosen deck into the lobby using the existing deck import flow wherever source access allows.
-- Added a **Choose a random Commander deck** panel with source selection and bracket choices 1–4. The picker samples public search results, then only accepts a deck whose exposed bracket metadata matches the requested bracket.
-- Added **Import from website** for public Moxfield and Archidekt deck URLs. Retrieved card lists use the existing card-resolution and save flow.
+- The feature code is present, but the random-deck controls are temporarily disabled in the preview while the feature is being fixed.
+- Website URL import is also temporarily disabled. Its code is retained for a later fix.
 - These providers have unofficial / changing public interfaces; browser CORS, anti-bot checks, private decks, or missing bracket metadata may prevent direct retrieval. The UI explains the plain-text export fallback, and a deck with an unknown bracket is not selected as a random match.
 - **Source research:** Moxfield's public endpoints are undocumented and recent community reports indicate that unauthenticated fetches may be blocked; see the [unofficial API notes](https://github.com/wildfire111/moxfield_api_docs/blob/main/docs.json) and [recent report](https://www.reddit.com/r/Moxfield/comments/1ubbry2/deck_api_no_longer_works/). Archidekt's public deck detail endpoint has been used by other community integrations, but it is not a guaranteed, stable public API.
 - **Source-level tests completed:** JavaScript parses; URL parsing accepts the supplied Moxfield URL and a sample Archidekt URL; synthetic Moxfield/Archidekt response fixtures preserve the deck name, commander, quantities, and exclude sideboard/maybeboard cards; numeric and named bracket values are recognized. These fixtures do not prove the live provider endpoints work.
-- **Manual browser tests still needed:** try the supplied Moxfield URL and a public Archidekt URL, all four bracket choices, provider-blocked/private/error fallbacks, card-resolution errors, and visual layout. Do not mark Objective #9 complete until checked.
+- **Next step:** fix and test these provider features before turning their controls back on. Do not mark Objective #9 complete until live browser tests pass.
 - **Current preview:** [Draft PR #11](https://github.com/ccall1212/commander-table/pull/11) on branch `feat/random-commander-deck-picker-preview`; it is not merged or published.
 - The earlier docs-only [PR #10](https://github.com/ccall1212/commander-table/pull/10) was closed as superseded; its priority notes are included here and in PR #11.
 
