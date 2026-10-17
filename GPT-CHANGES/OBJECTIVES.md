@@ -1,6 +1,6 @@
 # Commander Table — Objectives Backlog
 
-This is the working list of the next UI and gameplay improvements requested by Chris. Keep the original numbering so we can work through them one at a time. Objectives 1 and 2 are complete; **Objective 3** is in progress. Objectives 7–11 remain queued.
+This is the working list of the next UI and gameplay improvements requested by Chris. Keep the original numbering so we can work through them one at a time. Objectives 1–3 are complete; **Objective 4** is next. Objectives 7–12 remain queued.
 
 ## Status key
 
@@ -31,13 +31,15 @@ When the host presses **Start game**, automatically roll a d20 for each seated p
 - **Release housekeeping:** the annotated `v0.15.0` tag is still pending because tag creation is not available through the current GitHub connection; instructions are in `GPT-CHANGES/README.md`.
 - **Test status:** ChatGPT verified JavaScript syntax and source-level invariants, but did not run a real-browser multiplayer test.
 
-## 3. Make life-total +/- controls easier to click — IN PROGRESS (v0.15.1 branch)
+## 3. Make life-total +/- controls easier to click — COMPLETE (v0.15.1 merged and deployed)
 
-Fix the life total controls so clicking the minus or plus control anywhere within its intended button works reliably. Consider making the +/- controls unambiguous buttons rather than having a small clickable area.
+Make the minus/plus controls reliably clickable across their intended button areas without accidentally activating the board or counters menu.
 
-- Verify in Sidebar and Grid views, at common desktop resolutions.
-- Ensure clicks do not accidentally open the player's board or counter panel.
-- **Pull request:** [PR #6 — Make life-total +/- buttons easier to click](https://github.com/ccall1212/commander-table/pull/6).
+- Uses consistent 30–32px hit targets with clear hover/focus feedback and accessible labels.
+- Preserves the separate ▾ counters button sizing and Shift-click ±5 behavior.
+- **Pull request:** [PR #6 — Make life-total +/- buttons easier to click](https://github.com/ccall1212/commander-table/pull/6), merged as [`5927f82`](https://github.com/ccall1212/commander-table/commit/5927f82caf2e6ff82a9e065535044f27c653294b).
+- **Deployment:** GitHub Pages run [`38994671583`](https://github.com/ccall1212/commander-table/actions/runs/38994671583) succeeded.
+- **Browser checks:** Chris reviewed the preview and authorized publication. ChatGPT did not independently run real-browser hit testing or multiplayer opponent-life requests; see PR #6 for manual test cases.
 
 ## 4. Increase battlefield card size on larger displays — NEXT
 

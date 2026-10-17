@@ -2,12 +2,12 @@
 
 This folder records changes prepared or committed by ChatGPT for Commander Table, along with release steps that remain incomplete. It is a handoff log, not a replacement for `CHANGELOG.md` (which is the player-facing release history) or `AGENTS.md` (which documents the project's development and release workflow).
 
-The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES.md). Objective 2 is complete and deployed; Objective 3 (life-total +/- hit targets) is in progress on `fix/life-total-hit-target`. The four newer requests are recorded as Objectives 9–12, including the random-deck picker, Auto-Draw label, drag-selection, and Forge-inspired targeting arrows.
+The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES.md). Objectives 1–3 are complete and deployed; Objective 4 (larger battlefield cards on larger displays) is next. Objectives 9–12 remain queued, including the random-deck picker, Auto-Draw label, drag-selection, and Forge-inspired targeting arrows.
 
 **Status checked:** 2026-10-17  
-**App version on main:** `0.15.0` (merged and deployed)  
-**App version on active branch:** `0.15.1` (life-total control usability fix; not published)  
-**Release tag status:** annotated tags `v0.14.1`, `v0.14.2`, and `v0.15.0` still need to be created and verified locally; see “Remaining release housekeeping” below.
+**App version on main:** `0.15.1` (merged and deployed)  
+**App version on active feature branch:** none; PR #6 was merged.  
+**Release tag status:** annotated tags `v0.14.1`, `v0.14.2`, `v0.15.0`, and `v0.15.1` still need to be created and verified locally; see “Remaining release housekeeping” below.
 
 ## Active-player yellow outline — v0.14.2 (merged to main)
 
@@ -29,16 +29,16 @@ The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES
 - **Deployment:** GitHub Pages workflow run [`38993645238`](https://github.com/ccall1212/commander-table/actions/runs/38993645238) completed successfully for merge commit `3974eb4`.
 - **Browser status:** Chris approved the final preview appearance before publication. ChatGPT cannot run the real browser/multiplayer checks; these were not independently performed by ChatGPT after the merge.
 - **Release tag:** `v0.15.0` is still pending. Create the annotated tag at merge commit `3974eb49453cbe55dedcac87f46fb720b07d0583` using the instructions below.
-## Life-total button hit targets — v0.15.1 (in progress)
+## Life-total button hit targets — v0.15.1 (merged and deployed)
 
-- **Pull request:** [PR #6 — Make life-total +/- buttons easier to click](https://github.com/ccall1212/commander-table/pull/6).
-- **Branch:** `fix/life-total-hit-target`.
-- Adds an explicit `life-adjust` class to the life total −/+ buttons, gives both buttons a consistent 30–32px clickable target, and makes hover/focus states clearer.
-- Preserves the separate ▾ counters button sizing and existing Shift-click ±5 behavior. Adds descriptive accessible labels.
-- Bumps the branch's app/cache version to `0.15.1` and updates the player guide, Changelog and Objectives.
-- New user-requested objectives #9–11 (random source deck with bracket selection; spell out Auto-Draw; drag-selection for multiple cards) are recorded in `OBJECTIVES.md`.
-- **Browser status:** not tested by ChatGPT. Check both the player's own life box and opponent miniatures in Sidebar and Grid, at 1920×1080 and 1366×768; verify minus/plus work when clicking anywhere in their visible button area and don't open the tile/board or counters menu.
-- Objective #12 adds the requested Forge-inspired targeting arrows to the backlog; it is queued and is not part of this life-control change.
+- **Pull request:** [PR #6 — Make life-total +/- buttons easier to click](https://github.com/ccall1212/commander-table/pull/6) — merged.
+- **Merge commit:** [`5927f82`](https://github.com/ccall1212/commander-table/commit/5927f82caf2e6ff82a9e065535044f27c653294b).
+- The life-total minus/plus controls now use consistent 30–32px hit targets with clearer hover/focus feedback and descriptive accessible labels. The smaller opponent-board controls remain reasonably sized, while the ▾ counters button and Shift-click ±5 behavior are preserved.
+- App/meta and cache-busting references are set to `0.15.1`; the player guide and `CHANGELOG.md` include the change.
+- **Deployment:** GitHub Pages run [`38994671583`](https://github.com/ccall1212/commander-table/actions/runs/38994671583) succeeded for merge commit `5927f82`.
+- **Browser status:** Chris reviewed the preview and authorized publication. ChatGPT did not independently run real-browser hit testing or the multiplayer life-request checks. The PR lists the recommended checks for Sidebar/Grid at 1920×1080 and 1366×768.
+- **Release tag:** `v0.15.1` should point to merge commit `5927f82caf2e6ff82a9e065535044f27c653294b`; annotated tag creation remains a local step.
+- Objective #12 (Forge-inspired targeting arrows) is queued and is not part of this life-control change.
 
 ## Changes made by ChatGPT
 
@@ -72,13 +72,14 @@ The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES
 
 ## Remaining release housekeeping
 
-Three annotated release tags are still pending and need local creation:
+Four annotated release tags are still pending and need local creation:
 
 - `v0.14.1` should point to `d98d67704fe3312c2e682b5994040adace67013b` (commander tax chip fix and its README badge).
 - `v0.14.2` should point to `aec758b139a394640008f43206719f07b3226b72` (the active-player yellow outline code merge plus README badge update).
-- `v0.15.0` should point to `3974eb49453cbe55dedcac87f46fb720b07d0583` (automatic opening d20 roll, circular number animation, and 3-second winner reveal; this is the PR #4 merge commit deployed to Pages).
+- `v0.15.0` should point to `3974eb49453cbe55dedcac87f46fb720b07d0583` (automatic opening d20 roll).
+- `v0.15.1` should point to `5927f82caf2e6ff82a9e065535044f27c653294b` (life-total +/- hit-target fix; the PR #6 merge commit deployed to Pages).
 
-The current GitHub connection has read/write support for files, branches and PR merges, but does not expose creation of annotated Git tags. From a clean local checkout, first confirm none of these tags already exist, then run:
+The current GitHub connection cannot create annotated Git tags. From a clean local checkout, first confirm none of these tags already exist, then run:
 
 ```bash
 git switch main
@@ -86,11 +87,12 @@ git pull --ff-only
 git tag -a v0.14.1 d98d67704fe3312c2e682b5994040adace67013b -m "v0.14.1 — commander tax beside CMD"
 git tag -a v0.14.2 aec758b139a394640008f43206719f07b3226b72 -m "v0.14.2 — restore active-player yellow outline"
 git tag -a v0.15.0 3974eb49453cbe55dedcac87f46fb720b07d0583 -m "v0.15.0 — opening turn-order d20 roll"
-git push origin v0.14.1 v0.14.2 v0.15.0
-git ls-remote --tags origin refs/tags/v0.14.1 refs/tags/v0.14.2 refs/tags/v0.15.0
+git tag -a v0.15.1 5927f82caf2e6ff82a9e065535044f27c653294b -m "v0.15.1 — easier life-total button targets"
+git push origin v0.14.1 v0.14.2 v0.15.0 v0.15.1
+git ls-remote --tags origin refs/tags/v0.14.1 refs/tags/v0.14.2 refs/tags/v0.15.0 refs/tags/v0.15.1
 ```
 
-Only push tags that you have confirmed do not already exist. After pushing, verify the tag refs. GitHub Pages deployment for v0.15.0 already completed successfully at [run `38993645238`](https://github.com/ccall1212/commander-table/actions/runs/38993645238).
+Only push tags that you have confirmed do not already exist. After pushing, verify the tag refs. GitHub Pages deployment for v0.15.1 succeeded at [run `38994671583`](https://github.com/ccall1212/commander-table/actions/runs/38994671583).
 
 ## Future publishing prompt
 
