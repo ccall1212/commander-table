@@ -2,6 +2,8 @@
 
 This folder records changes prepared or committed by ChatGPT for Commander Table, along with release steps that remain incomplete. It is a handoff log, not a replacement for `CHANGELOG.md` (which is the player-facing release history) or `AGENTS.md` (which documents the project's development and release workflow).
 
+The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES.md). Keep that list current as Chris adds requests and mark each objective's status; Objective 1 (the yellow active-player outline) is the current priority.
+
 **Status checked:** 2026-10-16 local date / 2026-10-17 UTC repository timestamps  
 **App version in source:** `0.14.1`  
 **Current release tag status:** `v0.14.1` was not found during the last GitHub tag lookup.
