@@ -1,25 +1,23 @@
-# Manual test checklist — all card printings (v0.19.0 candidate)
+# Manual test checklist — newest-first game log (v0.19.1 candidate)
 
 ## Start the app
 
-1. Extract this ZIP to a folder.
-2. Open a terminal in that folder.
-3. Run `python -m http.server 8099 --bind 127.0.0.1`.
-4. Open http://127.0.0.1:8099/index.html.
-5. Import a deck and start a Practice game. An internet connection is needed to load printings from Scryfall.
-6. Stop the server with Ctrl+C when finished.
+1. Extract this ZIP.
+2. In the extracted project folder, run `python -m http.server 8099 --bind 127.0.0.1`.
+3. Open `http://127.0.0.1:8099/index.html`.
+4. Import a deck and start a Practice game. For shared-log checks, open a second browser tab and join the same room.
+5. Stop the local server with Ctrl+C when finished.
 
-## Card printing click list
+## Click-by-click checks
 
-1. **More than 10 results:** right-click a card with many reprints (for example, Sol Ring) → **Switch printing…**. Confirm the list contains more than 10 printings if Scryfall has more available.
-2. **Search by set/product:** search a set name (for example, a set/product name shown in the results) and confirm only matching printings remain.
-3. **Search by code and number:** search a set code and a collector number; confirm matching results remain.
-4. **Search by year:** enter a year shown in the list and confirm matching results remain.
-5. **Clear search:** clear the search field and confirm all fetched printings return.
-6. **Change one card:** choose **Use this printing** and confirm the art changes.
-7. **Change all copies:** with two or more copies of the same card, choose **Use for all copies** and confirm every copy changes.
-8. **Sidebar and Grid:** repeat the picker in both layouts at approximately 1920×1080 and 1366×768. The dialog should fit the screen and the list should scroll.
-9. **Keyboard and no-results:** Arrow Up/Down should navigate visible results when the search field is not focused. A search with no matches should show a clear empty message.
-10. **Console:** check the browser console for errors during loading, filtering, and selecting a printing.
+1. **Newest first:** open the 📜 Log. Confirm the most recent action is at the top and older actions appear below it.
+2. **Live updates:** perform several actions (draw, tap a card, move a card). Confirm each new entry appears at the top.
+3. **Read history:** scroll down to older entries, then perform another action. Confirm the log does not yank you back to the top while you are reading older entries.
+4. **Reopen log:** scroll down, close the log, then open it again. Confirm it returns to the newest entry at the top.
+5. **No printing spam:** right-click a card → **Switch printing…** → choose a different printing. Confirm the art changes but no printing-change entry appears in the log.
+6. **Saved deck still works:** reload/reopen the deck or start a new Practice game and confirm the chosen printing is remembered.
+7. **Multiplayer:** with a second tab/player, change a printing and confirm the card art still synchronizes, but neither player's game log records the printing change. Confirm normal game actions still appear for both players.
+8. **Layouts and sizes:** check Sidebar and Grid at approximately 1920×1080 and 1366×768.
+9. **Console:** check the browser console for errors.
 
-The app should still show the current printing, preserve the existing **Use for all copies** behavior, and never change any card until a printing is chosen.
+Expected: the newest action is always the first visible entry when the log is opened, older actions remain scrollable below, and printing changes never add a log entry.

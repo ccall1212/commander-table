@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.19.0';
+const APP_VERSION = '0.19.1';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -1324,15 +1324,12 @@ async function switchPrinting(iid) {
   });
 }
 function applyPrinting(iid, oldDef, nd, scope) {
-  let n = 0;
   act(() => {
     S.me.defs[nd.id] = Object.assign({}, nd, { tokens: (oldDef.tokens && oldDef.tokens.length ? oldDef.tokens : nd.tokens) || [] });
     for (const z of ZONES) for (const c of S.me.zones[z]) {
       const same = scope === 'all' && !c.tok && S.me.defs[c.id] && S.me.defs[c.id].name === oldDef.name;
-      if (c.iid === iid || same) { c.id = nd.id; n++; }
+      if (c.iid === iid || same) c.id = nd.id;
     }
-    const where = nd.setName ? ` (${nd.setName}${nd.cn ? ' #' + nd.cn : ''})` : '';
-    return [`switched ${n > 1 ? n + ' copies of ' : ''}{0} to another printing${where}`, [nd]];
   });
   // Remember it for future games: update the saved deck's copy of this card.
   try {
@@ -2594,9 +2591,9 @@ function renderLog() {
   const last = S.log[S.log.length - 1] || null;
   if (logLen === S.log.length && logLast === last && box.childElementCount) return;
   logLen = S.log.length; logLast = last;
-  const atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 40;
-  box.innerHTML = S.log.slice(-200).map((e, i, arr) => {
-    const li = S.log.length - arr.length + i;
+  const atTop = box.scrollTop < 40;
+  box.innerHTML = S.log.slice(-200).reverse().map((e, i) => {
+    const li = S.log.length - 1 - i;
     const time = new Date(e.ts).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
     const text = esc(e.text).replace(/\{(\d)\}/g, (m0, n) => {
       const c = e.cards && e.cards[+n];
@@ -2605,7 +2602,7 @@ function renderLog() {
     return e.pid ? `<div class="le"><span class="ts">${time}</span><b style="color:${colorOf(e.pid)}">${esc(e.name)}</b> ${text}</div>`
       : `<div class="le sys"><span class="ts">${time}</span>${text}</div>`;
   }).join('');
-  if (atBottom) box.scrollTop = box.scrollHeight;
+  if (atTop) box.scrollTop = 0;
 }
 
 // --- preview panel
@@ -3287,7 +3284,10 @@ function onButton(a, btn, e) {
     case 'focus':
       toggleFocus(btn.dataset.pid); break;
     case 'viewme': S.focus = null; render(); break;
-    case 'side': document.body.classList.toggle('side-open'); break;
+    case 'side':
+      document.body.classList.toggle('side-open');
+      if (document.body.classList.contains('side-open')) { const log = $('#log'); if (log) log.scrollTop = 0; }
+      break;
     case 'view': S.view = btn.dataset.v; LS.set('ct.view', S.view); S.focus = null; document.body.classList.remove('side-open'); render(); break;
     case 'displaysettings': displaySettings(); break;
   }
