@@ -1,8 +1,8 @@
 # Commander Table — Objectives backlog
 
-Features Chris has asked for that are **not built yet**. The numbers are Chris's original numbering; finished ones (1, 2, 3, 6, 8, 10, 13) were removed, and #7 (opponent boards looking dim) was dropped: the dimming only applies to players who are reconnecting or out, on purpose. Work on one at a time on its own branch and pull request, and read `AGENTS.md` first.
+Features Chris has asked for that are **not built yet**. The numbers are Chris's original numbering; finished ones (1, 2, 3, 6, 8, 10, 13, 14) were removed, and #7 (opponent boards looking dim) was dropped: the dimming only applies to players who are reconnecting or out, on purpose. Work on one at a time on its own branch and pull request, and read `AGENTS.md` first.
 
-Status key: **Queued** = requested, not started. **Paused** = started, waiting on something. **Deferred** = on purpose not now.
+Status key: **Queued** = requested, not started. **In progress** = a branch / PR exists (see `README.md`). **Paused** = started, waiting on something. **Deferred** = on purpose not now.
 
 Layouts that exist: **Sidebar** and **Grid** only. Every feature must be checked in both, at roughly 1920×1080 and 1366×768, with a second player watching if other players see it.
 
@@ -37,16 +37,6 @@ Let a player draw an arrow from one card (or player) to another so the table can
 - **Where to look:** cross-player actions are messages relayed by the host, which validates the sender (see how `drawfx` is validated in `hostRecv`). Arrows need the same treatment, and must survive layout changes and the board scaling, so anchor them to card ids (`data-iid`), not pixel positions, and redraw after each render (`setHTML()` patches the DOM in place and cards are matched by `data-iid`).
 - Start with one simple arrow at a time; decide colours/labels and the exact menu wording during implementation.
 
-
-## 14. Show and search all available card printings — MERGED (v0.19.0 tag pending)
-
-The card-printing switcher currently shows at most 10 versions, which is not enough for some heavily reprinted cards.
-
-- Show all printings available from the app's existing card-data source instead of arbitrarily limiting the list to 10.
-- Add a search/filter so players can find a printing by the set or product it came from; show the set name and set code/year where the data source provides them.
-- Keep the picker usable for cards with many printings. Search should filter the available results, not silently remove printings from the underlying list.
-- Selecting a printing must continue to change the displayed card without changing its identity or other game state.
-- During implementation, confirm the card-data source's actual limits and fields before promising that every historical printing can be retrieved.
 
 ## 15. Upload custom table backgrounds and card backs — QUEUED
 
