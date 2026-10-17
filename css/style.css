@@ -326,8 +326,10 @@ body.lens-on #pv { display: none; }
   border: none; overflow: visible; }
 .zcard.cmdcards .card { position: relative; }
 .zbox.cmdbox:hover .zcard.cmdcards { outline: none; }
-.taxchip { background: var(--accent); color: #1a1405; font-weight: 700; font-size: 12px; padding: 0 8px; border-radius: 10px;
-  cursor: pointer; user-select: none; margin-bottom: 3px; white-space: nowrap; }
+.cmdhead { display: flex; align-items: center; justify-content: center; gap: 4px; margin-bottom: 4px; }
+.cmdhead .zlabel { margin-bottom: 0; }
+.taxchip { display: inline-flex; align-items: center; box-sizing: border-box; min-height: 18px; background: var(--accent); color: #1a1405;
+  font-weight: 700; font-size: 12px; padding: 0 8px; border-radius: 10px; cursor: pointer; user-select: none; white-space: nowrap; }
 
 /* ---- Life box + counters popover ---- */
 .lifebox { display: inline-flex; align-items: center; background: var(--panel); border: 1px solid var(--border);

@@ -109,7 +109,7 @@ Dropped connections and crashed tabs happen, and recovering from them is the mai
 
 - Click a battlefield card to tap or untap it.
 - Double-click a card in your hand to play it.
-- Double-click your commander to cast it. Commander tax is manual: left-click the 🪙 chip above CMD for +2, right-click for −2 (or use the commander's right-click menu).
+- Double-click your commander to cast it. Commander tax is manual: left-click the 🪙 chip beside CMD for +2, right-click for −2 (or use the commander's right-click menu).
 - Right-click any of your cards for options: counters, transform, face down, **Copy this card**, give control, and move to any zone.
 - Right-click an opponent's card (or use the graveyard/exile viewer) to **Copy this card** onto your battlefield — handy for Clone effects. Copies show a purple **TOKEN COPY** label and vanish if they leave the battlefield.
 - Drag cards between hand, battlefield, graveyard, exile, library, and command zone. Shift-drop onto the library to put a card on the bottom. Drag cards within your hand to reorder it.
@@ -148,7 +148,7 @@ Dropped connections and crashed tabs happen, and recovering from them is the mai
 - If your life drops from above 0 to 0 or below, you're asked whether to concede. Choose **Cancel** to keep playing at 0 or negative life.
 - Commander damage is in that same ▾ menu: one row per opposing commander, with − and + buttons (it also adjusts your life). The ▾ shows ⚔ and the highest damage once there is any, and the number turns red at 21. You can also change the damage your own commander has dealt from an opponent's ▾ menu.
 - On an opponent's header, the tag in **your** color is the damage your commander has dealt them — click it to deal more (right-click to undo).
-- Commander tax: the 🪙 chip above **CMD** — **left-click +2, right-click −2**. It never goes up by itself.
+- Commander tax: the 🪙 chip beside **CMD** — **left-click +2, right-click −2**. It never goes up by itself.
 - Counters stack down the top-right corner of a card; the P/T badge stays in the bottom-right corner. On both, **left-click goes up, right-click goes down**.
 - Cards in your hand show their mana cost along the top edge; your hand count shows above your hand and every opponent's hand count is in their header.
 - Your hand size is set in ☰ → **Display settings…** (see **Display settings** above).
@@ -166,7 +166,7 @@ Dropped connections and crashed tabs happen, and recovering from them is the mai
 - Searching a graveyard/exile/library has tabs: **All · Permanents · Non-permanents** (Alt+1/2/3), on top of the search box and type filters.
 - Right-click your Graveyard (or Exile) → **Pick at random** → choose Any card, Permanent, or a card type. It announces the pick in the log and lets you move it, or make a token copy (normal or tapped).
 - Right-click your Graveyard/Exile → **Top card** to move the newest card, or just drag the pile to pull its top card anywhere.
-- Commander tax is manual: 🪙 chip above **CMD** — left-click +2, right-click −2. The commander's right-click menu also has **Add commander tax (+2)** / **Remove commander tax (−2)**.
+- Commander tax is manual: 🪙 chip beside **CMD** — left-click +2, right-click −2. The commander's right-click menu also has **Add commander tax (+2)** / **Remove commander tax (−2)**.
 - Right-click any of your cards → **Switch printing…** to pick from up to 10 printings (shows set, number, year). **Use for all copies** changes every copy (great for basic lands). Everyone sees the new art, and your deck remembers the choice for future games.
 
 **Library**
