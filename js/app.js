@@ -3137,7 +3137,7 @@ function deckTextFromProvider(data, info) {
       else if (!/\b(sideboard|maybeboard|considering|tokens?|companion)\b/.test(cn)) main.push(row);
     });
   }
-  const text = ['# Deck: ' + name, '# Source: ' + info.url, ''];
+  const text = ['About:', 'Name: ' + name, '# Source: ' + info.url, ''];
   if (commanders.length) {
     text.push('Commanders:');
     commanders.forEach(row => text.push(row.quantity + ' ' + row.name));
