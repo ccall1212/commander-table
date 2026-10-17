@@ -103,29 +103,38 @@ The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES
 
 ## Remaining release housekeeping
 
-Five annotated release tags are still pending and need local creation:
+**This section is required for every release.** After publishing, update this checklist with the current release tag, the exact commit it should point to, tag existence/verification, and the latest GitHub Pages deployment result.
 
-- `v0.14.1` should point to `d98d67704fe3312c2e682b5994040adace67013b` (commander tax chip fix and its README badge).
-- `v0.14.2` should point to `aec758b139a394640008f43206719f07b3226b72` (the active-player yellow outline code merge plus README badge update).
-- `v0.15.0` should point to `3974eb49453cbe55dedcac87f46fb720b07d0583` (automatic opening d20 roll).
-- `v0.15.1` should point to `5927f82caf2e6ff82a9e065535044f27c653294b` (life-total +/- hit-target fix; the PR #6 merge commit deployed to Pages).
-- `v0.16.0` should point to `5840ed166e1759fb249bfe0b855817640e23412e` (Library hotkeys, sound and animation, Hotkey list, Auto-Draw label, and tapped-play shortcut).
+GitHub's tag-reference lookup currently shows that only `v0.14.0` exists among these historical/current release tags. The following **six annotated tags are still missing** and need to be created locally:
 
-The current GitHub connection cannot create annotated Git tags. From a clean local checkout, first confirm none of these tags already exist, then run:
+- `v0.14.1` → `d98d67704fe3312c2e682b5994040adace67013b` (commander tax chip fix and README badge).
+- `v0.14.2` → `aec758b139a394640008f43206719f07b3226b72` (active-player yellow outline and README badge update).
+- `v0.15.0` → `3974eb49453cbe55dedcac87f46fb720b07d0583` (automatic opening d20 roll).
+- `v0.15.1` → `5927f82caf2e6ff82a9e065535044f27c653294b` (life-total +/- hit-target fix).
+- `v0.16.0` → `5840ed166e1759fb249bfe0b855817640e23412e` (Library hotkeys, shuffle/mill effects, Hotkey list, Auto-Draw label, and tapped-play shortcut).
+- `v0.17.0` → `d5bf4c24c00e896e5189320f2798b6ad2e372042` (draw-card animation, [PR #12](https://github.com/ccall1212/commander-table/pull/12)).
+
+**v0.17.0 publication status:** [GitHub Pages deployment run `39001939968`](https://github.com/ccall1212/commander-table/actions/runs/39001939968) succeeded for main commit `df63ea30a3d225c0501ff5a446a025daafcc5aee`. That commit contains the release notes and GPT-CHANGES updates after the v0.17.0 app source was merged. The app source, HTML meta version, and all 14 asset cache-busting references are set to `0.17.0`. The annotated `v0.17.0` tag itself is still missing, so the changelog comparison link that depends on that tag will become meaningful after the tag is pushed.
+
+The current GitHub connection cannot create annotated Git tags. From a clean local checkout, first fetch tags and verify each target tag does not already exist. Then run:
 
 ```bash
 git switch main
 git pull --ff-only
+git fetch --tags origin
+
 git tag -a v0.14.1 d98d67704fe3312c2e682b5994040adace67013b -m "v0.14.1 — commander tax beside CMD"
 git tag -a v0.14.2 aec758b139a394640008f43206719f07b3226b72 -m "v0.14.2 — restore active-player yellow outline"
 git tag -a v0.15.0 3974eb49453cbe55dedcac87f46fb720b07d0583 -m "v0.15.0 — opening turn-order d20 roll"
 git tag -a v0.15.1 5927f82caf2e6ff82a9e065535044f27c653294b -m "v0.15.1 — easier life-total button targets"
 git tag -a v0.16.0 5840ed166e1759fb249bfe0b855817640e23412e -m "v0.16.0 — library hotkeys and tapped-play shortcut"
-git push origin v0.14.1 v0.14.2 v0.15.0 v0.15.1 v0.16.0
-git ls-remote --tags origin refs/tags/v0.14.1 refs/tags/v0.14.2 refs/tags/v0.15.0 refs/tags/v0.15.1 refs/tags/v0.16.0
+git tag -a v0.17.0 d5bf4c24c00e896e5189320f2798b6ad2e372042 -m "v0.17.0 — draw-card animation"
+
+git push origin v0.14.1 v0.14.2 v0.15.0 v0.15.1 v0.16.0 v0.17.0
+git ls-remote --tags origin refs/tags/v0.14.1 refs/tags/v0.14.2 refs/tags/v0.15.0 refs/tags/v0.15.1 refs/tags/v0.16.0 refs/tags/v0.17.0
 ```
 
-Only push tags that you have confirmed do not already exist. After pushing, verify the tag refs. GitHub Pages deployment for v0.15.1 succeeded at [run `38994671583`](https://github.com/ccall1212/commander-table/actions/runs/38994671583).
+Only create and push tags that you have confirmed do not already exist; if any tag now exists, skip creating/pushing that tag and verify it points to the intended commit. After pushing, verify all six remote tag refs and their target commits. The v0.17.0 Pages run above succeeded; for future releases, add the latest successful deployment run here rather than leaving a prior version's deployment as the last example.
 
 ## Future publishing prompt
 
