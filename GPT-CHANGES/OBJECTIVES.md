@@ -107,6 +107,18 @@ Add a click-and-drag selection square, similar to EDHPlay or StarCraft, to selec
 - Keep normal single-card dragging, tapping, counters, and other click actions working as before.
 - Respect card ownership/permissions and test different zoom levels and board layouts.
 
+
+## 12. Draw targeting arrows between players' cards — QUEUED (Forge-inspired)
+
+Add a visual way to show which card or player an effect is targeting, inspired by [Forge](https://github.com/Card-Forge/forge).
+
+- Right-click a card on any player's battlefield to open its context menu, with an option such as **Connect arrow** / **Send arrow to…**; consider a separate **Attack** action when it fits the existing game model.
+- After choosing the arrow action, click a destination card (including cards on another player's battlefield) to draw a clear arrow connecting source to destination.
+- Everyone in the game should see the same arrow so a player can communicate, for example, which creature their removal spell is targeting.
+- Provide an easy way to cancel arrow placement and clear/remove arrows after the table has understood the intent.
+- Keep arrows visual-only: they should not move cards or automatically perform game actions. Preserve normal right-click menus, card dragging, and touch-friendly interactions.
+- Decide on multiple simultaneous arrows, colors/labels, and exact menu wording during implementation; start with the simplest reliable targeting arrow.
+
 ## Suggested workflow
 
 1. Work on one objective at a time, beginning with the next incomplete objective.

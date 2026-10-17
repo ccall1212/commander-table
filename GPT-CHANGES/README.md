@@ -2,7 +2,7 @@
 
 This folder records changes prepared or committed by ChatGPT for Commander Table, along with release steps that remain incomplete. It is a handoff log, not a replacement for `CHANGELOG.md` (which is the player-facing release history) or `AGENTS.md` (which documents the project's development and release workflow).
 
-The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES.md). Objective 2 is complete and deployed; Objective 3 (life-total +/- hit targets) is in progress on `fix/life-total-hit-target`. The three newly requested ideas are recorded as Objectives 9–11.
+The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES.md). Objective 2 is complete and deployed; Objective 3 (life-total +/- hit targets) is in progress on `fix/life-total-hit-target`. The four newer requests are recorded as Objectives 9–12, including the random-deck picker, Auto-Draw label, drag-selection, and Forge-inspired targeting arrows.
 
 **Status checked:** 2026-10-17  
 **App version on main:** `0.15.0` (merged and deployed)  
@@ -38,6 +38,7 @@ The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES
 - Bumps the branch's app/cache version to `0.15.1` and updates the player guide, Changelog and Objectives.
 - New user-requested objectives #9–11 (random source deck with bracket selection; spell out Auto-Draw; drag-selection for multiple cards) are recorded in `OBJECTIVES.md`.
 - **Browser status:** not tested by ChatGPT. Check both the player's own life box and opponent miniatures in Sidebar and Grid, at 1920×1080 and 1366×768; verify minus/plus work when clicking anywhere in their visible button area and don't open the tile/board or counters menu.
+- Objective #12 adds the requested Forge-inspired targeting arrows to the backlog; it is queued and is not part of this life-control change.
 
 ## Changes made by ChatGPT
 
