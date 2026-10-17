@@ -2,10 +2,10 @@
 
 This folder records changes prepared or committed by ChatGPT for Commander Table, along with release steps that remain incomplete. It is a handoff log, not a replacement for `CHANGELOG.md` (which is the player-facing release history) or `AGENTS.md` (which documents the project's development and release workflow).
 
-The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES.md). Keep that list current as Chris adds requests and mark each objective's status; Objective 2 (the opening turn-order dice animation) is the next priority.
+The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES.md). Keep that list current as Chris adds requests and mark each objective's status; Objective 2 (the opening turn-order dice animation) is in progress on a feature branch.
 
 **Status checked:** 2026-10-17  
-**App version in source:** `0.14.2`  
+**App version on this branch:** `0.15.0` (published `main` remains `0.14.2` until approval)  
 **Release tag status:** neither `v0.14.1` nor `v0.14.2` currently exists on GitHub.
 
 ## Active-player yellow outline — v0.14.2 (merged to main)
@@ -17,6 +17,17 @@ The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES
 - **Browser status:** Chris previewed the feature locally and confirmed that it looked good before explicitly authorizing publication. ChatGPT did not independently operate the browser.
 - **Deployment status:** GitHub Pages deployment succeeded for the merge commit and again for the latest main tree at handoff commit [`33acd59`](https://github.com/ccall1212/commander-table/actions/runs/38991021652). That run completed successfully. The final live HTML was not independently fetched, so treat workflow success as deployment confirmation but not a separate browser-visible version check.
 - **Tag status:** GitHub lookups found neither `v0.14.1` nor `v0.14.2`. The connected GitHub actions available here cannot create annotated tags, so the release tags still need to be created and verified locally. See the commands under “Remaining release housekeeping” below.
+
+## Opening turn-order dice animation — v0.15.0 (in progress)
+
+- **Pull request:** [#4 — Animate opening first-player dice roll](https://github.com/ccall1212/commander-table/pull/4) — open for review.
+- **Branch:** `feat/animated-first-player-roll`.
+- Pressing **Start game** automatically rolls a d20 for every seated player. Each player's result changes inside a clean, circular badge for about 2.4 seconds, then settles on the synchronized final value.
+- After the last result is revealed, keep the winner highlighted for 3 full seconds before fading the overlay away. The winner's `GOES FIRST` label is larger and more prominent.
+- The same existing tie-reroll logic determines `T.order`; the highest roll starts the game. The separate Dice-menu action was removed so no extra step is needed. The overlay ignores pointer input and respects reduced-motion preferences.
+- **Preview bug found and fixed:** the staggered tile markup referenced an undeclared `index`, which could throw while drawing the overlay and abort the Start game operation. The mapping callback now declares `(result, index)`.
+- Updated the app/cache version to `0.15.0`, added the player-facing help and Changelog notes, and moved Objective 2 to in progress / Objective 3 to next.
+- **Browser status:** not tested by ChatGPT. Press Start game with two to six players, confirm every player sees all final results and the winner marker, then verify the highest roller is the starting player. Test Sidebar and Grid and ensure the overlay dismisses without blocking clicks. Also verify reduced-motion mode.
 
 ## Changes made by ChatGPT
 

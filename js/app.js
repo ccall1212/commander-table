@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.14.2';
+const APP_VERSION = '0.15.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -352,6 +352,21 @@ function cleanTable(t) {
   };
 }
 function sysLog(text) { broadcast({ t: 'log', e: { ts: Date.now(), pid: null, name: '', text, cards: [] } }); }
+function rollFirstPlayer(T, live) {
+  const rolls = new Map(live.map(p => [p, rnd(20) + 1]));
+  // Tied high rolls re-roll until each player has a distinct result.
+  for (let attempt = 0; attempt < 100; attempt++) {
+    const groups = new Map();
+    for (const p of live) { const v = rolls.get(p); if (!groups.has(v)) groups.set(v, []); groups.get(v).push(p); }
+    const ties = [...groups.values()].filter(g => g.length > 1);
+    if (!ties.length) break;
+    ties.forEach(group => group.forEach(p => rolls.set(p, rnd(20) + 1)));
+  }
+  T.order = live.slice().sort((a, b) => rolls.get(b) - rolls.get(a));
+  broadcast({ t: 'firstroll', rolls: live.map(pid => ({ pid, name: pname(pid), value: rolls.get(pid) })), winner: T.order[0] });
+  sysLog(`Roll for first player (d20): ${T.order.map(p => `${pname(p)} rolled ${rolls.get(p)}`).join(' · ')}. ${pname(T.order[0])} goes first.`);
+}
+
 function tableOp(op, from) {
   const T = S.table;
   if (!isObj(op) || typeof op.k !== 'string') return;
@@ -361,24 +376,15 @@ function tableOp(op, from) {
       if (T.started) return;
       const live = T.seats.filter(p => !T.out[p]);
       if (!live.length) return;
-      const rolls = new Map(live.map(p => [p, rnd(20) + 1]));
-      // Tied high rolls re-roll until each player has a distinct result.
-      for (let attempt = 0; attempt < 100; attempt++) {
-        const groups = new Map();
-        for (const p of live) { const v = rolls.get(p); if (!groups.has(v)) groups.set(v, []); groups.get(v).push(p); }
-        const ties = [...groups.values()].filter(g => g.length > 1);
-        if (!ties.length) break;
-        ties.forEach(group => group.forEach(p => rolls.set(p, rnd(20) + 1)));
-      }
-      T.order = live.slice().sort((a, b) => rolls.get(b) - rolls.get(a));
-      sysLog(`Roll for first player (d20): ${T.order.map(p => `${pname(p)} rolled ${rolls.get(p)}`).join(' · ')}. ${pname(T.order[0])} goes first. Click Start game to begin.`);
+      rollFirstPlayer(T, live);
       break;
     }
     case 'start': {
       if (!isHost) return;
       const live = T.seats.filter(p => !T.out[p]);
-      const validRollOrder = T.order.length === live.length && new Set(T.order).size === live.length && T.order.every(p => live.includes(p));
-      if (!validRollOrder) T.order = shuffle(live);
+      if (!live.length) return;
+      // Starting a game always chooses the turn order with the animated d20 roll.
+      rollFirstPlayer(T, live);
       T.active = T.order[0] || null; T.turn = 1; T.turnSeq = 1; T.phase = 3; T.started = true;
       sysLog(`Game started! Turn order: ${T.order.map(pname).join(' → ')}. ${T.active ? pname(T.active) + ' goes first.' : 'No players are seated.'}`);
       break;
@@ -497,11 +503,113 @@ function cleanLog(msg, from) {
 }
 
 // ----- everyone -----
+function showFirstRoll(msg) {
+  const raw = Array.isArray(msg.rolls) ? msg.rolls.slice(0, 6) : [];
+  const seen = new Set();
+  const results = raw.filter(item => {
+    if (!isObj(item) || typeof item.pid !== 'string' || seen.has(item.pid)) return false;
+    const value = +item.value;
+    if (!Number.isInteger(value) || value < 1 || value > 20) return false;
+    seen.add(item.pid);
+    return true;
+  }).map(item => ({
+    pid: item.pid,
+    name: typeof item.name === 'string' && item.name ? item.name : pname(item.pid),
+    value: +item.value
+  }));
+  if (!results.length) return;
+
+  const previous = $('#firstRollOverlay');
+  if (previous) {
+    (previous._ctRollIntervals || []).forEach(clearInterval);
+    (previous._ctRollTimeouts || []).forEach(clearTimeout);
+    previous.remove();
+  }
+
+  const winner = typeof msg.winner === 'string' ? msg.winner : '';
+  const overlay = document.createElement('div');
+  overlay.id = 'firstRollOverlay';
+  overlay.className = 'first-roll-overlay';
+  overlay.setAttribute('role', 'group');
+  overlay.setAttribute('aria-label', 'Roll for first player results');
+  overlay._ctRollIntervals = [];
+  overlay._ctRollTimeouts = [];
+  overlay.innerHTML = `
+    <section class="first-roll-panel">
+      <div class="first-roll-eyebrow">TURN ORDER</div>
+      <h2 class="first-roll-title">Roll for first player</h2>
+      <div class="first-roll-subtitle">Everyone rolls a d20 · highest goes first</div>
+      <div class="first-roll-grid">
+        ${results.map((result, index) => `
+          <div class="first-roll-tile" style="--first-roll-color:${esc(colorOf(result.pid))}"
+               data-roll="${result.value}" data-winner="${result.pid === winner ? 'true' : 'false'}"
+               aria-label="${esc(result.name)} d20 result">
+            <div class="first-roll-name">${esc(result.name)}</div>
+            <div class="first-roll-die" aria-hidden="true">
+              <span class="first-roll-number">20</span>
+            </div>
+            <div class="first-roll-die-caption">D20</div>
+            <div class="first-roll-winner">GOES FIRST</div>
+          </div>`).join('')}
+      </div>
+      <div class="first-roll-foot">Tied high rolls re-roll automatically</div>
+    </section>`;
+  document.body.appendChild(overlay);
+
+  const tiles = [...overlay.querySelectorAll('.first-roll-tile')];
+  const reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  let lastRevealAt = 0;
+
+  tiles.forEach((tile, index) => {
+    const result = clamp(num(tile.dataset.roll, 1), 1, 20);
+    const number = tile.querySelector('.first-roll-number');
+    if (reduceMotion) {
+      number.textContent = String(result);
+      tile.classList.add('revealed');
+      if (tile.dataset.winner === 'true') tile.classList.add('winner');
+      return;
+    }
+
+    tile.classList.add('rolling');
+    const rollDelay = index * 140;
+    const stopAfter = 2400;
+    lastRevealAt = Math.max(lastRevealAt, rollDelay + stopAfter);
+    // Stagger when each d20 starts, then let it tumble for a full three rotations.
+    const startRoll = setTimeout(() => {
+      if (!overlay.isConnected) return;
+      const startedAt = Date.now();
+      const interval = setInterval(() => {
+        if (!overlay.isConnected) { clearInterval(interval); return; }
+        if (Date.now() - startedAt >= stopAfter) {
+          clearInterval(interval);
+          number.textContent = String(result);
+          tile.classList.remove('rolling');
+          tile.classList.add('revealed');
+          if (tile.dataset.winner === 'true') tile.classList.add('winner');
+        } else {
+          number.textContent = String(rnd(20) + 1);
+        }
+      }, 75);
+      overlay._ctRollIntervals.push(interval);
+    }, rollDelay);
+    overlay._ctRollTimeouts.push(startRoll);
+  });
+
+  const dismiss = setTimeout(() => {
+    if (!overlay.isConnected) return;
+    overlay.classList.add('is-leaving');
+    const remove = setTimeout(() => overlay.remove(), 240);
+    overlay._ctRollTimeouts.push(remove);
+  }, (reduceMotion ? 0 : lastRevealAt) + 3000);
+  overlay._ctRollTimeouts.push(dismiss);
+}
+
 function onBroadcast(msg) {
   switch (msg.t) {
     case 'pub': if (msg.p && msg.p.pid) { S.players[msg.p.pid] = msg.p; if (msg.p.pid !== S.pid) checkOrphans(); } break;
     case 'log': S.log.push(msg.e); if (S.log.length > 300) S.log.splice(0, S.log.length - 300); break;
     case 'table': S.table = msg.table; afterTable(); break;
+    case 'firstroll': showFirstRoll(msg); break;
     case 'online': S.online = msg.online || {}; break;
     case 'newgame': resetForNewGame(); break;
     default: return;
@@ -1392,7 +1500,6 @@ function diceMenu(x, y) {
     { label: 'Flip a coin', onClick: () => say(`flipped a coin: ${rnd(2) ? 'heads' : 'tails'}`) },
     { label: 'Roll d6', onClick: () => roll(6) }, { label: 'Roll d20', onClick: () => roll(20) },
     { label: 'Other dice', sub: [4, 8, 10, 12, 100].map(s => ({ label: `d${s}`, onClick: () => roll(s) })) },
-    { label: 'Roll for first player (d20)', disabled: !!(S.table && S.table.started) || !(S.table && S.table.seats.length), onClick: () => toHost({ t: 'op', op: { k: 'rollfirst' } }) },
     { sep: true },
     { label: 'Pick a random player', onClick: () => {
       const seats = ((S.table && S.table.seats) || [S.pid]).filter(p => !(S.table && S.table.out[p]));

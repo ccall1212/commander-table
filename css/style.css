@@ -76,6 +76,112 @@ kbd { background: var(--panel2); border: 1px solid var(--border); border-radius:
 #banner { position: fixed; top: 52px; left: 50%; transform: translateX(-50%); z-index: 800; background: #3a2a06;
   border: 1px solid var(--accent); padding: 8px 16px; border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,.5); }
 
+/* Shared opening turn-order roll overlay. It is purely visual and never blocks clicks. */
+.first-roll-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 850;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(5, 7, 12, .72);
+  color: var(--text);
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity .24s ease;
+}
+.first-roll-overlay.is-leaving { opacity: 0; }
+.first-roll-panel {
+  width: min(900px, 100%);
+  max-height: calc(100vh - 40px);
+  overflow: auto;
+  padding: clamp(18px, 3vw, 32px);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: linear-gradient(155deg, rgba(35, 41, 54, .98), rgba(17, 21, 29, .98));
+  box-shadow: 0 22px 70px rgba(0, 0, 0, .58);
+  text-align: center;
+}
+.first-roll-eyebrow {
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .2em;
+}
+.first-roll-title { margin: 5px 0 2px; font-size: clamp(22px, 3vw, 32px); line-height: 1.2; }
+.first-roll-subtitle { color: var(--muted); font-size: 13px; }
+.first-roll-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
+  max-width: 840px;
+  margin: 22px auto 16px;
+}
+.first-roll-tile {
+  min-width: 0;
+  padding: 14px 10px 10px;
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--first-roll-color, var(--accent));
+  border-radius: 10px;
+  background: rgba(7, 10, 16, .6);
+  transition: border-color .18s ease, background .18s ease, box-shadow .18s ease;
+}
+.first-roll-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+  font-weight: 700;
+  font-size: 13px;
+}
+.first-roll-die {
+  display: grid;
+  place-items: center;
+  width: clamp(68px, 7.5vw, 90px);
+  aspect-ratio: 1;
+  margin: 10px auto 2px;
+  border: 2px solid color-mix(in srgb, var(--first-roll-color, var(--accent)) 58%, #111722);
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 24%,
+    color-mix(in srgb, var(--first-roll-color, var(--accent)) 35%, white),
+    var(--first-roll-color, var(--accent)) 64%,
+    color-mix(in srgb, var(--first-roll-color, var(--accent)) 55%, #111722));
+  box-shadow: inset 0 3px 8px rgba(255,255,255,.2),
+              inset 0 -5px 8px rgba(0,0,0,.24),
+              0 5px 9px rgba(0,0,0,.36);
+}
+.first-roll-number {
+  color: #10141c;
+  font-size: clamp(36px, 5.1vw, 56px);
+  line-height: 1;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px rgba(255,255,255,.24);
+}
+.first-roll-tile.rolling .first-roll-die {
+  animation: first-roll-pulse .42s ease-in-out infinite alternate;
+}
+@keyframes first-roll-pulse {
+  from { transform: scale(.97); }
+  to { transform: scale(1.04); }
+}
+.first-roll-die-caption { color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: .16em; }
+.first-roll-winner { min-height: 24px; margin-top: 7px; padding: 4px 9px; border-radius: 999px; color: #17130a; background: var(--accent); font-size: 11px; font-weight: 900; letter-spacing: .08em; opacity: 0; display: inline-flex; align-items: center; justify-content: center; }
+.first-roll-tile.winner { border-color: var(--accent); background: rgba(212, 167, 44, .12); box-shadow: 0 0 22px rgba(212, 167, 44, .17); }
+.first-roll-tile.winner .first-roll-winner { opacity: 1; }
+.first-roll-foot { color: var(--muted); font-size: 12px; }
+@media (max-width: 600px) {
+  .first-roll-overlay { padding: 10px; }
+  .first-roll-panel { padding: 16px 12px; max-height: calc(100vh - 20px); }
+  .first-roll-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 16px; }
+  .first-roll-tile { padding: 10px 7px 8px; }
+  .first-roll-name { font-size: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .first-roll-overlay, .first-roll-tile { transition: none; }
+  .first-roll-tile.rolling .first-roll-die { animation: none; }
+}
+
 #table { grid-area: table; display: grid; grid-template-rows: minmax(0, var(--top, 42fr)) 6px minmax(0, var(--bot, 58fr)); min-height: 0; }
 #split { cursor: row-resize; background: var(--border); }
 #split:hover { background: var(--accent); }
