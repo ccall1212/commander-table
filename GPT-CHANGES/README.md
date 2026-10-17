@@ -2,29 +2,31 @@
 
 This folder records changes prepared or committed by ChatGPT for Commander Table, along with release steps that remain incomplete. It is a handoff log, not a replacement for `CHANGELOG.md` (which is the player-facing release history) or `AGENTS.md` (which documents the project's development and release workflow).
 
-The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES.md). Objectives 1–3, 8, 10, and 13 are complete and deployed. Objective 4 (larger battlefield cards) is intentionally deferred. Objective #9 (random deck / website URL import) is paused in draft [PR #11](https://github.com/ccall1212/commander-table/pull/11) and has **not been merged or pushed to main**; see the [PR #11 investigation handoff](PR-11-DECK-IMPORT-INVESTIGATION.md). Objective #6 (animate drawing a card) is in progress in draft [PR #12](https://github.com/ccall1212/commander-table/pull/12) on `feat/draw-card-animation-preview`; no source changes have been merged or published. Objectives 5, 7, 11, and 12 remain queued.
+The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES.md). Objectives 1–3, 6, 8, 10, and 13 are complete in main; v0.17.0 draw-animation publication is being verified. Objective 4 (larger battlefield cards) is intentionally deferred. Objective #9 (random deck / website URL import) remains paused in draft [PR #11](https://github.com/ccall1212/commander-table/pull/11); its source has not been merged or published. See the [PR #11 investigation handoff](PR-11-DECK-IMPORT-INVESTIGATION.md). Objectives 5, 7, 11, and 12 remain queued.
 
-**Status checked:** 2026-10-17  
-**App version on main:** `0.16.0` (merged and deployed).  
-**Published commit:** [`5840ed1`](https://github.com/ccall1212/commander-table/commit/5840ed166e1759fb249bfe0b855817640e23412e), via [PR #8](https://github.com/ccall1212/commander-table/pull/8).  
-**GitHub Pages:** [deployment run `38996909975`](https://github.com/ccall1212/commander-table/actions/runs/38996909975) succeeded.  
+**Status checked:** 2026-10-16  
+**App version on main:** `0.17.0` (draw-card animation merged; checking GitHub Pages deployment).  
+**Latest release commit:** [`d5bf4c2`](https://github.com/ccall1212/commander-table/commit/d5bf4c24c00e896e5189320f2798b6ad2e372042), via [PR #12](https://github.com/ccall1212/commander-table/pull/12).  
+**GitHub Pages:** v0.17.0 deployment status is being checked.  
 **Browser testing:** ChatGPT verified source-level checks only; real-browser/multiplayer checks remain for Chris to run.  
-**Release tag status:** annotated tags `v0.14.1`, `v0.14.2`, `v0.15.0`, `v0.15.1`, and `v0.16.0` still need to be created and verified locally; see “Remaining release housekeeping” below.
+**Release tag status:** annotated tags `v0.14.1`, `v0.14.2`, `v0.15.0`, `v0.15.1`, `v0.16.0`, and `v0.17.0` still need to be created and verified locally; the current GitHub connection cannot create annotated tags.
 
 ## PR #11 — random deck picker / website URL import (draft, not in main)
 
-- **Status:** [Draft PR #11](https://github.com/ccall1212/commander-table/pull/11) remains open on `feat/random-commander-deck-picker-preview`. The v0.17.0 source changes have **not been merged or pushed to main and have not been published**; live/main stays at v0.16.0. Only this investigation note and backlog updates are being committed to main so Claude Code can find them later.
+- **Status:** [Draft PR #11](https://github.com/ccall1212/commander-table/pull/11) remains open on `feat/random-commander-deck-picker-preview`. Its deck-import source changes have **not been merged or published**; main/live is now v0.17.0 for the separate draw-card animation. Only this investigation note and backlog updates are in main from this investigation.
 - **Controls:** random selection and website URL import remain hidden/disabled in the PR preview; normal plain-text import stays available.
 - **Findings and Claude Code test steps:** see [PR-11-DECK-IMPORT-INVESTIGATION.md](PR-11-DECK-IMPORT-INVESTIGATION.md).
 
-## PR #12 — draw-card animation (draft, not in main)
+## v0.17.0 — draw-card animation (merged to main)
 
-- **Status:** [Draft PR #12](https://github.com/ccall1212/commander-table/pull/12), branch `feat/draw-card-animation-preview`, version 0.17.0 preview. It is separate from paused import PR #11. The draw-animation source has **not been merged or pushed to main and has not been published**; live/main remains v0.16.0.
-- Adds a faster Library-to-hand flight and flip for click-to-draw / D-key draws and turn-start Auto-Draw. The flight is now 360ms (flip 270ms); the actual newly drawn card stays transparent in its hand slot until the flying copy lands, so the card does not appear early and double up. The draw event contains no card identity; only the drawer sees the face, while opponents see the card back.
-- A regression in the animation-helper edit accidentally removed `draw()`, breaking the Library click / D key / Draw X controls. Fixed in PR #12 commit [`4c05441`](https://github.com/ccall1212/commander-table/commit/4c05441df335108a29d86ea7c45885d137e37678) by restoring `draw()` and limiting pending/animated cards to five so Draw X cannot leave extra cards hidden. A full-file JavaScript syntax parse passed, and exactly one `draw()` definition is present. ChatGPT has not run real-browser or multiplayer tests; Chris should retest the preview.
-- **Required before merge:** follow the manual test list in [PR #12](https://github.com/ccall1212/commander-table/pull/12) and the detailed status/test checklist in the branch's [OBJECTIVES.md](https://github.com/ccall1212/commander-table/blob/feat/draw-card-animation-preview/GPT-CHANGES/OBJECTIVES.md). Do not publish without Chris's explicit OK.
-- **Version coordination:** PR #11 and PR #12 currently both label their separate preview branches as v0.17.0 because neither has shipped. If PR #12 is merged first, adjust PR #11's app version, cache-busting links, changelog and compare links to the next unused version before considering it for merge. Do not merge both as competing v0.17.0 releases.
-
+- **Pull request:** [PR #12](https://github.com/ccall1212/commander-table/pull/12), merged in [commit d5bf4c2](https://github.com/ccall1212/commander-table/commit/d5bf4c24c00e896e5189320f2798b6ad2e372042).
+- Animates a card from the Library toward its owner's hand and flips it as it arrives. The flight is 360ms; the actual card stays hidden in its hand slot until the animated copy lands, avoiding a duplicate-card flash.
+- Supports click-to-draw, the D shortcut, and turn-start Auto-Draw. Opponents see the card-back animation only; the relayed event does not contain card identity. Draw X animates at most five cards while any extras still enter the hand normally.
+- The overlay is click-through and the animation is skipped when reduced motion is preferred.
+- **Regression fix:** the initial animation edit accidentally removed the draw() function; it was restored before publishing. Source checks confirmed a single draw() definition, a valid full-file JavaScript syntax parse, matching app/meta versions, and 14 matching asset cache references.
+- Chris reviewed the preview; ChatGPT did not independently run a real-browser or multiplayer test. Manual checks still recommended: multiplayer hidden-card privacy, Auto-Draw, first-turn draw skip, empty Library, Draw X over five cards, all three layouts/sizes, reduced motion, and browser console.
+- **Deployment/tag:** GitHub Pages deployment is being checked. The annotated v0.17.0 tag remains a local release-housekeeping step because the current GitHub connection cannot create annotated tags.
+- **Version coordination:** PR #11 remains paused and still contains an unreleased v0.17.0 preview version. Before resuming that work, bump its version/cache refs/changelog to v0.18.0 and test the provider behavior. None of PR #11's source code is part of this release.
 ## Active-player yellow outline — v0.14.2 (merged to main)
 
 - **Pull request:** [#3 — Restore yellow outline for the active player](https://github.com/ccall1212/commander-table/pull/3) — merged.
