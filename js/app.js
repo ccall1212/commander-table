@@ -1384,7 +1384,7 @@ function cardMenu(x, y, iid) {
   if (z === 'hand') {
     items.push({ label: 'Play', hint: 'B', onClick: () => doMove(iid, 'battlefield') });
     if (attachable) items.push({ label: /Equipment/.test(d.type || '') ? 'Play & equip to…' : 'Cast & attach to…', onClick: () => startAttach(iid) });
-    items.push({ label: 'Play tapped', onClick: () => doMove(iid, 'battlefield', { tapped: true }) });
+    items.push({ label: 'Play tapped', hint: 'T', onClick: () => doMove(iid, 'battlefield', { tapped: true }) });
     items.push({ label: 'Play face down', onClick: () => doMove(iid, 'battlefield', { faceDown: true }) });
     items.push({ label: 'Reveal to everyone', onClick: () => say('revealed {0} from their hand', [d]) });
   }
