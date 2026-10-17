@@ -49,7 +49,7 @@ Decks are saved in your browser.
 
 ## iPad and touch controls
 
-On an iPad, open the top-right **☰** menu and turn on **Touch mode**. The setting is saved only in that browser on that device, and does not change what other players see. Tap a card to inspect its image and use **Actions** for its existing options; press and hold a card or pile to open its context menu. Turn Touch mode off from the same menu to restore the standard desktop behavior.
+On an iPad or phone, open the top-right **☰** menu and turn on **Touch mode**. The setting is saved only in that browser on that device, and does not change what other players see. Touch mode keeps the page fixed so dragging cards is less likely to scroll the webpage, while taps and holds open card controls. On a phone in portrait, a reminder recommends rotating to landscape for more room; you can dismiss it and keep playing upright. Turn Touch mode off from the same menu to restore standard page behavior.
 
 ## Display settings
 
