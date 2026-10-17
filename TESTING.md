@@ -1,6 +1,6 @@
-# Manual test checklist — Selection Rectangle (v0.18.1)
+# Manual test checklist — Draw Animation (v0.18.2 candidate)
 
-This checklist covers regression-testing the selection-rectangle feature after release. Chris manually tested the selection/group behavior and the full-group drag preview before v0.18.1 was published.
+This ZIP contains the v0.18.2 candidate for the card-draw animation. Please focus on the draw-flight tests first; the selection-rectangle regression checklist is retained below.
 
 ## Start the app
 
@@ -16,7 +16,17 @@ This checklist covers regression-testing the selection-rectangle feature after r
 5. Start a Practice game with a deck that has several battlefield cards. To test online group control, host a game and join from a second tab as described in AGENTS.md.
 6. Stop the server with Ctrl+C when finished.
 
-## Click list
+## Draw animation click list
+
+1. **Single draw, Sidebar:** start Practice solo at 1920×1080 and click your Library once. The card should lift out of the stack, travel along a shallow arc, flip during the flight, and ease into its hand slot without a pause, gap, or last-frame jump.
+2. **Draw several cards:** right-click your Library → **Draw X…** → enter 3. Each card should fly and become visible in the hand as its own animation finishes; they should not all pop into view after the last flight.
+3. **Grid:** switch to Grid and repeat the single draw and Draw X tests in your own quadrant.
+4. **Second player:** if convenient, repeat a draw in an online game. The other player should see a card-back-only flight and never see the drawn card's face.
+5. **Smaller screen:** repeat in Sidebar or Grid at 1366×768 if convenient.
+
+Please note whether the card starts from the top of the Library, whether the upward arc feels natural, and whether it settles cleanly into the hand.
+
+## Selection rectangle regression checks (v0.18.1)
 
 1. **Sidebar:** drag from an empty area of your battlefield around three cards across Creatures and Lands. Release, then drag a selected card. The drag preview should show every selected card in the same relative arrangement—not only the card you grabbed. The cards should move together and keep their spacing.
 2. **Grid:** repeat the test in your own quadrant.
