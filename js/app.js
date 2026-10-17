@@ -2086,7 +2086,8 @@ function diceMenu(x, y) {
 let touchOrientationHintDismissed = false;
 function refreshTouchOrientationHint() {
   const old = $('#ct-touch-orientation-hint');
-  const portraitPhone = S.touchMode && window.innerWidth <= 700 && window.innerHeight > window.innerWidth;
+  const gameActive = $('#game') && !$('#game').classList.contains('hidden');
+  const portraitPhone = gameActive && S.touchMode && window.innerWidth <= 700 && window.innerHeight > window.innerWidth;
   if (!portraitPhone) {
     if (old) old.remove();
     if (window.innerWidth > 700 || window.innerWidth > window.innerHeight) touchOrientationHintDismissed = false;
@@ -3841,6 +3842,7 @@ function leaveGame() {
 let selDeck = null;
 function showLobby() {
   $('#game').classList.add('hidden'); $('#lobby').classList.remove('hidden');
+  refreshTouchOrientationHint();
   document.title = 'Commander Table';
   $('#nameIn').value = LS.get('ct.name', '') || '';
   renderAppearancePickers();
@@ -3872,6 +3874,7 @@ function showLobby() {
 }
 function showGame() {
   $('#lobby').classList.add('hidden'); $('#game').classList.remove('hidden');
+  refreshTouchOrientationHint();
   document.title = S.role === 'solo' ? 'Practice — Commander Table' : `${S.room} — Commander Table`;
   logLen = -1;
   render();
