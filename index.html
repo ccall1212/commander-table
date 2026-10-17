@@ -56,7 +56,13 @@
       </div>
       <button id="randomDeckBtn">🎲 Choose a random Commander deck</button>
       <div id="randomDeckBox" class="random-deck-box hidden">
-        <p class="muted small">Choose a source and bracket. Only public Commander decks with a matching, identifiable bracket are eligible. These providers use unofficial interfaces, so manual import is still available if a request is blocked.</p>
+        <p class="muted small">You can import a public deck from a Moxfield or Archidekt link, or try a random public Commander deck at the bracket you choose. These sites do not offer a stable public API for every request, so a provider may ask you to use its plain-text export instead.</p>
+        <label for="deckWebsiteUrl">Import from website
+          <input id="deckWebsiteUrl" type="url" placeholder="Paste a Moxfield or Archidekt deck URL">
+        </label>
+        <div class="row wrap random-deck-actions">
+          <button id="importDeckUrlBtn" class="primary">Import this URL</button>
+        </div>
         <div class="random-deck-controls">
           <label for="randomDeckSource">Deck source
             <select id="randomDeckSource">
