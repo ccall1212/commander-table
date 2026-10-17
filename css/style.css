@@ -908,7 +908,7 @@ body.lens-on #pv { display: none; }
   pointer-events: none;
   perspective: 900px;
   transform-origin: center center;
-  will-change: transform;
+  will-change: transform, opacity;
   filter: drop-shadow(0 5px 8px rgba(0, 0, 0, .42));
 }
 .ct-draw-flip {
