@@ -1,6 +1,6 @@
 # Commander Table — Objectives Backlog
 
-This is the working list of the next UI and gameplay improvements requested by Chris. Keep the original numbering so we can work through them one at a time. Objectives 1–3, 8, 10, and 13 are complete and deployed. Objective 4 (larger cards) is intentionally deferred for now. Objectives 5–7, 9, 11, and 12 remain queued.
+This is the working list of the next UI and gameplay improvements requested by Chris. Keep the original numbering so we can work through them one at a time. Objectives 1–3, 8, 10, and 13 are complete and deployed. Objective 4 (larger cards) is intentionally deferred. Objective #9 is paused in draft PR #11 and has not been merged or pushed to main; see [the import investigation handoff](PR-11-DECK-IMPORT-INVESTIGATION.md). Objective #6 (draw-card animation) is now the next priority. Objectives 5, 7, 11, and 12 remain queued.
 
 ## Status key
 
@@ -57,7 +57,7 @@ When a Commander is moved from the Command Zone onto the battlefield, play a sat
 - Trigger on the play event only, not when the card is subsequently dragged or repositioned.
 - Keep the effect brief and avoid distracting from gameplay; respect reduced-motion preferences if practical.
 
-## 6. Animate drawing a card — QUEUED
+## 6. Animate drawing a card — PRIORITY 1 (next implementation)
 
 Whenever a player draws a card, animate the card moving from the Library toward their hand and flipping over as it arrives.
 
@@ -86,7 +86,7 @@ When hovering over your own Library:
 - **Browser testing:** ChatGPT checked source only; hands-on testing of audio, animations, and shortcuts in Sidebar/Grid is still recommended.
 
 
-## 9. Choose a random deck from Archidekt or Moxfield — QUEUED
+## 9. Choose a random deck from Archidekt or Moxfield — TEMPORARILY PAUSED (draft PR #11; not in main)
 
 Add a **Choose Random Deck** option on the opening/join screen for quick testing and fun random games.
 
@@ -94,6 +94,9 @@ Add a **Choose Random Deck** option on the opening/join screen for quick testing
 - Let the player choose deck bracket **1, 2, 3, or 4** before selecting a random deck.
 - Load the chosen deck into the lobby using the existing deck import flow wherever source access allows.
 - Investigate what public search/API support each source provides; keep manual import available if random discovery is restricted.
+- The attempted v0.17.0 implementation is kept in [draft PR #11](https://github.com/ccall1212/commander-table/pull/11), branch `feat/random-commander-deck-picker-preview`. Its source changes have **not been merged or pushed to main or published**. The working controls remain disabled/hidden while code is investigated; normal plain-text import remains available.
+- Read [PR-11-DECK-IMPORT-INVESTIGATION.md](PR-11-DECK-IMPORT-INVESTIGATION.md) before revisiting this work. It records the Forge Moxfield importer reference, the proposed relay, what was syntax/fixture-checked, and the required live-browser tests.
+- Resume only after Objective #6 is addressed and live provider tests can be run. Do not enable the controls unless imports and bracket filtering are verified.
 
 ## 10. Spell out the Auto-Draw label — COMPLETE (v0.16.0 merged and deployed)
 
