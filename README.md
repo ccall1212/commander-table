@@ -145,7 +145,7 @@ Dropped connections and crashed tabs happen, and recovering from them is the mai
 
 **Life, counters & commander damage**
 
-- Your life box is in the small floating box at the top-right of your battlefield, with your name, counters and commander damage: − **40** +. Click **▾** to open the menu: commander damage on top (grouped by player, in their colour) and Poison, Energy, Experience, Rad and Tickets below. Opponents have the same box (click ▾ to see their counters; − / + on their life asks their game to change it).
+- Your life box is in the small floating box at the top-right of your battlefield, with your name, counters and commander damage: − **40** +. The **− / + buttons have generous click targets**, including on smaller opponent boards. Click **▾** to open the menu: commander damage on top (grouped by player, in their colour) and Poison, Energy, Experience, Rad and Tickets below. Opponents have the same box (click ▾ to see their counters; − / + on their life asks their game to change it).
 - If your life drops from above 0 to 0 or below, you're asked whether to concede. Choose **Cancel** to keep playing at 0 or negative life.
 - Commander damage is in that same ▾ menu: one row per opposing commander, with − and + buttons (it also adjusts your life). The ▾ shows ⚔ and the highest damage once there is any, and the number turns red at 21. You can also change the damage your own commander has dealt from an opponent's ▾ menu.
 - On an opponent's header, the tag in **your** color is the damage your commander has dealt them — click it to deal more (right-click to undo).
@@ -194,7 +194,7 @@ Other shortcuts:
 
 ## Life, damage, and counters
 
-- Use the **−** and **+** buttons to change life. Shift-click for 5 at a time.
+- Use the **−** and **+** buttons to change life. The buttons have larger hit areas; Shift-click for 5 at a time.
 - **Commander damage:** there's a tracker for each opposing commander. Adding commander damage also removes life, and the tracker turns red at 21.
 - **Poison and player counters:** energy, experience, rad, and tickets.
 - You can change an opponent's life from their panel. The change is logged.

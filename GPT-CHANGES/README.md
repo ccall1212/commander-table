@@ -2,10 +2,11 @@
 
 This folder records changes prepared or committed by ChatGPT for Commander Table, along with release steps that remain incomplete. It is a handoff log, not a replacement for `CHANGELOG.md` (which is the player-facing release history) or `AGENTS.md` (which documents the project's development and release workflow).
 
-The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES.md). Objective 2 (the opening turn-order dice animation) is complete and merged to `main`; Objective 3 is next.
+The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES.md). Objective 2 is complete and deployed; Objective 3 (life-total +/- hit targets) is in progress on `fix/life-total-hit-target`. The three newly requested ideas are recorded as Objectives 9–11.
 
 **Status checked:** 2026-10-17  
 **App version on main:** `0.15.0` (merged and deployed)  
+**App version on active branch:** `0.15.1` (life-total control usability fix; not published)  
 **Release tag status:** annotated tags `v0.14.1`, `v0.14.2`, and `v0.15.0` still need to be created and verified locally; see “Remaining release housekeeping” below.
 
 ## Active-player yellow outline — v0.14.2 (merged to main)
@@ -28,6 +29,15 @@ The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES
 - **Deployment:** GitHub Pages workflow run [`38993645238`](https://github.com/ccall1212/commander-table/actions/runs/38993645238) completed successfully for merge commit `3974eb4`.
 - **Browser status:** Chris approved the final preview appearance before publication. ChatGPT cannot run the real browser/multiplayer checks; these were not independently performed by ChatGPT after the merge.
 - **Release tag:** `v0.15.0` is still pending. Create the annotated tag at merge commit `3974eb49453cbe55dedcac87f46fb720b07d0583` using the instructions below.
+## Life-total button hit targets — v0.15.1 (in progress)
+
+- **Branch:** `fix/life-total-hit-target`.
+- Adds an explicit `life-adjust` class to the life total −/+ buttons, gives both buttons a consistent 30–32px clickable target, and makes hover/focus states clearer.
+- Preserves the separate ▾ counters button sizing and existing Shift-click ±5 behavior. Adds descriptive accessible labels.
+- Bumps the branch's app/cache version to `0.15.1` and updates the player guide, Changelog and Objectives.
+- New user-requested objectives #9–11 (random source deck with bracket selection; spell out Auto-Draw; drag-selection for multiple cards) are recorded in `OBJECTIVES.md`.
+- **Browser status:** not tested by ChatGPT. Check both the player's own life box and opponent miniatures in Sidebar and Grid, at 1920×1080 and 1366×768; verify minus/plus work when clicking anywhere in their visible button area and don't open the tile/board or counters menu.
+
 ## Changes made by ChatGPT
 
 ### Commander tax chip layout — v0.14.1

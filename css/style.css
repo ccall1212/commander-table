@@ -450,6 +450,32 @@ body.lens-on #pv { display: none; }
 .lifebox button { background: transparent; border: none; font-size: 16px; padding: 0 6px; line-height: 22px; }
 .lifebox button:hover:not(:disabled) { color: var(--accent); }
 .lifebox button.more { color: var(--muted); font-size: 12px; }
+.lifebox button.life-adjust {
+  box-sizing: border-box;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 32px;
+  width: 32px;
+  min-width: 32px;
+  height: 30px;
+  min-height: 30px;
+  padding: 0;
+  border-radius: 6px;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+}
+.lifebox button.life-adjust:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent);
+}
+.lifebox button.life-adjust:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
 .lifeN { font-size: 22px; font-weight: 700; min-width: 42px; text-align: center; }
 .ohead .lifeN { font-size: 18px; }
 .ctrpanel { position: absolute; z-index: 60; top: 100%; left: 8px; margin-top: 4px; min-width: 240px; background: var(--panel);
@@ -724,6 +750,16 @@ body.lens-on #pv { display: none; }
 .tlife .lifebox { display: inline-flex; align-items: center; gap: 2px; background: rgba(11,14,19,.8); border: 1px solid var(--border); border-radius: 8px; padding: 1px 3px; }
 .tlife .lifeN { min-width: 24px; text-align: center; font-size: 15px; }
 .tlife button { padding: 0 5px; line-height: 16px; font-size: 12px; }
+.tlife .lifebox button.life-adjust {
+  flex-basis: 30px;
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+  min-height: 30px;
+  padding: 0;
+  font-size: 18px;
+  line-height: 1;
+}
 .tstrip { position: absolute; left: 0; height: 120px; z-index: 5; display: flex; align-items: flex-start; justify-content: space-between;
   padding: 4px 8px 0; background: none; pointer-events: none; }
 .tstrip .card { pointer-events: auto; }

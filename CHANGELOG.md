@@ -9,6 +9,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - `AGENTS.md`: how changes are made, tested, versioned and released (for AI assistants and humans).
 
+## [0.15.1] - 2026-10-17
+
+### Fixed
+- Made the life-total minus/plus controls easier to click, including in smaller opponent-board tiles, without enlarging the counters dropdown button.
+
 ## [0.15.0] - 2026-10-16
 
 ### Added
@@ -234,7 +239,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - First playable build: paste-import decks from Moxfield or Archidekt (via Scryfall), 2–4 player rooms over PeerJS with self-healing reconnects, a searchable zone viewer, commander damage tracking and automatic tokens.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.15.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.15.1...HEAD
+[0.15.1]: https://github.com/ccall1212/commander-table/compare/v0.15.0...v0.15.1
 [0.15.0]: https://github.com/ccall1212/commander-table/compare/v0.14.2...v0.15.0
 [0.14.2]: https://github.com/ccall1212/commander-table/compare/v0.14.1...v0.14.2
 [0.14.1]: https://github.com/ccall1212/commander-table/compare/v0.14.0...v0.14.1
