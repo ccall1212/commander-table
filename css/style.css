@@ -907,3 +907,7 @@ body.lens-on #pv { display: none; }
   [data-pile="graveyard"].mill-receive .zcard,
   [data-pile="graveyard"].mill-receive .tpcard { animation: none !important; }
 }
+
+/* Temporarily unavailable deck-provider controls remain visible but disabled. */
+#randomDeckBtn:disabled, .random-deck-box button:disabled, .random-deck-box input:disabled, .random-deck-box select:disabled { opacity: .45; cursor: not-allowed; }
+.random-deck-box { border-color: var(--border); }
