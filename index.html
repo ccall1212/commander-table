@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="app-version" content="0.16.0">
+<meta name="app-version" content="0.17.0">
 <title>Commander Table</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='14' y='6' width='36' height='52' rx='5' fill='%23d4a72c'/%3E%3Crect x='19' y='11' width='26' height='42' rx='3' fill='%2312161e'/%3E%3C/svg%3E">
-<link rel="stylesheet" href="css/style.css?v=0.16.0">
-<link rel="stylesheet" href="css/widgets.css?v=0.16.0">
+<link rel="stylesheet" href="css/style.css?v=0.17.0">
+<link rel="stylesheet" href="css/widgets.css?v=0.17.0">
 </head>
 <body>
 
@@ -53,6 +53,33 @@
           <span id="impStatus" class="muted"></span>
         </div>
         <div id="impResult"></div>
+      </div>
+      <button id="randomDeckBtn">🎲 Choose a random Commander deck</button>
+      <div id="randomDeckBox" class="random-deck-box hidden">
+        <p class="muted small">Choose a source and bracket. Only public Commander decks with a matching, identifiable bracket are eligible. These providers use unofficial interfaces, so manual import is still available if a request is blocked.</p>
+        <div class="random-deck-controls">
+          <label for="randomDeckSource">Deck source
+            <select id="randomDeckSource">
+              <option value="archidekt">Archidekt</option>
+              <option value="moxfield">Moxfield</option>
+            </select>
+          </label>
+          <label for="randomDeckBracket">Commander bracket
+            <select id="randomDeckBracket">
+              <option value="1">1 — Exhibition</option>
+              <option value="2" selected>2 — Core</option>
+              <option value="3">3 — Upgraded</option>
+              <option value="4">4 — Optimized</option>
+            </select>
+          </label>
+        </div>
+        <div class="row wrap random-deck-actions">
+          <button id="findRandomDeck" class="primary">Find random deck</button>
+          <button id="cancelRandomDeck">Cancel</button>
+          <button id="randomDeckManual">Import manually instead</button>
+        </div>
+        <p id="randomDeckStatus" class="muted small" aria-live="polite"></p>
+        <div id="randomDeckResult"></div>
       </div>
     </section>
 
@@ -129,17 +156,17 @@
 <div id="pv" class="floatpv hidden"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
-<script src="js/lan-mode.js?v=0.16.0"></script>
-<script src="js/relay-peer.js?v=0.16.0"></script>
-<script src="js/lan.js?v=0.16.0"></script>
-<script src="js/widgets.js?v=0.16.0"></script>
-<script src="js/appearance.js?v=0.16.0"></script>
-<script src="js/deck.js?v=0.16.0"></script>
-<script src="js/turn-config.js?v=0.16.0"></script>
-<script src="js/net-config.js?v=0.16.0"></script>
-<script src="js/net.js?v=0.16.0"></script>
-<script src="js/app.js?v=0.16.0"></script>
-<script src="js/updates.js?v=0.16.0"></script>
-<script src="js/lens.js?v=0.16.0"></script>
+<script src="js/lan-mode.js?v=0.17.0"></script>
+<script src="js/relay-peer.js?v=0.17.0"></script>
+<script src="js/lan.js?v=0.17.0"></script>
+<script src="js/widgets.js?v=0.17.0"></script>
+<script src="js/appearance.js?v=0.17.0"></script>
+<script src="js/deck.js?v=0.17.0"></script>
+<script src="js/turn-config.js?v=0.17.0"></script>
+<script src="js/net-config.js?v=0.17.0"></script>
+<script src="js/net.js?v=0.17.0"></script>
+<script src="js/app.js?v=0.17.0"></script>
+<script src="js/updates.js?v=0.17.0"></script>
+<script src="js/lens.js?v=0.17.0"></script>
 </body>
 </html>
