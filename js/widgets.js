@@ -999,9 +999,20 @@
     let hi = Math.max(0, prints.findIndex((d) => d.id === opts.currentId));
     const rows = [];
 
+    const content = h('div', 'w-pp-content');
+    const search = document.createElement('input');
+    search.type = 'search';
+    search.className = 'w-pp-search';
+    search.placeholder = 'Search sets, products, collector numbers, or years…';
+    search.setAttribute('aria-label', 'Search card printings by set, product, collector number, or year');
+    search.autocomplete = 'off';
+    if (prints.length) content.appendChild(search);
+
     const list = h('div', 'w-pp-list');
     list.setAttribute('role', 'list');
-    if (!prints.length) list.appendChild(h('div', 'w-v-empty', 'No other printings found'));
+    const empty = h('div', 'w-v-empty', prints.length ? 'No printings match that search.' : 'No other printings found');
+    empty.hidden = !!prints.length;
+    list.appendChild(empty);
 
     function pick(def, scope) {
       try { if (typeof opts.onPick === 'function') opts.onPick(def, scope); }
@@ -1013,6 +1024,10 @@
       const name = d.name || 'Unknown card';
       const row = h('div', 'w-pp-row' + (isCur ? ' w-pp-cur' : ''));
       row.setAttribute('role', 'listitem');
+      row.dataset.search = [
+        d.name, d.setName, d.set, d.cn, d.year, d.rarity,
+        Array.isArray(d.finishes) ? d.finishes.join(' ') : ''
+      ].filter(Boolean).join(' ').toLowerCase();
 
       const art = h('div', 'w-pp-art');
       const hasImg = typeof d.img === 'string' && d.img.indexOf(IMG_PREFIX) === 0;
@@ -1056,19 +1071,35 @@
 
       if (d.year) row.appendChild(h('span', 'w-pp-year', d.year));
       row.append(art, info);
-      row.addEventListener('mouseenter', () => { hi = i; sync(false); });
+      row.addEventListener('mouseenter', () => { if (!row.hidden) { hi = i; sync(false); } });
       list.appendChild(row);
       rows.push(row);
     });
 
-    function sync(scroll) {
-      rows.forEach((r, i) => r.classList.toggle('w-pp-hi', i === hi));
-      if (scroll && rows[hi]) rows[hi].scrollIntoView({ block: 'nearest' });
+    function visibleIndexes() {
+      return rows.map((r, i) => r.hidden ? -1 : i).filter((i) => i >= 0);
     }
 
+    function sync(scroll) {
+      rows.forEach((r, i) => r.classList.toggle('w-pp-hi', !r.hidden && i === hi));
+      const visible = visibleIndexes();
+      empty.hidden = visible.length > 0;
+      if (scroll && rows[hi] && !rows[hi].hidden) rows[hi].scrollIntoView({ block: 'nearest' });
+    }
+
+    function filterPrints() {
+      const query = search.value.trim().toLowerCase();
+      rows.forEach((row) => { row.hidden = !!query && !row.dataset.search.includes(query); });
+      const visible = visibleIndexes();
+      if (visible.length && !visible.includes(hi)) hi = visible[0];
+      sync(false);
+    }
+    search.addEventListener('input', filterPrints);
+
+    content.appendChild(list);
     const modal = makeModal({
       title: opts.title || 'Switch printing',
-      el: list,
+      el: content,
       wide: true,
       className: 'w-pp-dialog',
       onClose() { document.removeEventListener('keydown', onKey); },
@@ -1076,9 +1107,12 @@
 
     function onKey(e) {
       if (modalStack[modalStack.length - 1] !== modal || e.defaultPrevented) return;
-      if (e.ctrlKey || e.metaKey || e.altKey || !rows.length) return;
-      if (e.key === 'ArrowDown') { e.preventDefault(); hi = Math.min(rows.length - 1, hi + 1); sync(true); }
-      else if (e.key === 'ArrowUp') { e.preventDefault(); hi = Math.max(0, hi - 1); sync(true); }
+      if (e.ctrlKey || e.metaKey || e.altKey || !rows.length || e.target === search) return;
+      const visible = visibleIndexes();
+      if (!visible.length) return;
+      const current = visible.indexOf(hi);
+      if (e.key === 'ArrowDown') { e.preventDefault(); hi = visible[Math.min(visible.length - 1, Math.max(0, current) + 1)]; sync(true); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); hi = visible[Math.max(0, current < 0 ? 0 : current - 1)]; sync(true); }
       else if (e.key === 'Enter') {
         const t = e.target;
         if (t && t.tagName === 'BUTTON') return; // a focused button handles Enter itself
@@ -1091,7 +1125,6 @@
     sync(true);
     return { close() { modal.close(); } };
   };
-
   /* ------------------------------------------------------------------ */
   /* Card info                                                           */
   /* ------------------------------------------------------------------ */
