@@ -1,6 +1,6 @@
 # Commander Table — Objectives Backlog
 
-This is the working list of the next UI and gameplay improvements requested by Chris. Keep the original numbering so we can work through them one at a time. Objectives 1 and 2 are complete; **Objective 3** is next. Objectives 7 and 8 remain queued.
+This is the working list of the next UI and gameplay improvements requested by Chris. Keep the original numbering so we can work through them one at a time. Objectives 1 and 2 are complete; **Objective 3** is in progress. Objectives 7–11 remain queued.
 
 ## Status key
 
@@ -31,14 +31,15 @@ When the host presses **Start game**, automatically roll a d20 for each seated p
 - **Release housekeeping:** the annotated `v0.15.0` tag is still pending because tag creation is not available through the current GitHub connection; instructions are in `GPT-CHANGES/README.md`.
 - **Test status:** ChatGPT verified JavaScript syntax and source-level invariants, but did not run a real-browser multiplayer test.
 
-## 3. Make life-total +/- controls easier to click — NEXT
+## 3. Make life-total +/- controls easier to click — IN PROGRESS (v0.15.1 branch)
 
 Fix the life total controls so clicking the minus or plus control anywhere within its intended button works reliably. Consider making the +/- controls unambiguous buttons rather than having a small clickable area.
 
 - Verify in Sidebar and Grid views, at common desktop resolutions.
 - Ensure clicks do not accidentally open the player's board or counter panel.
+- **Pull request:** [PR #6 — Make life-total +/- buttons easier to click](https://github.com/ccall1212/commander-table/pull/6).
 
-## 4. Increase battlefield card size on larger displays — QUEUED
+## 4. Increase battlefield card size on larger displays — NEXT
 
 Cards feel a little too small when the browser is maximized on a 2K display, although the current size is acceptable at 1920×1080.
 
@@ -80,9 +81,47 @@ When the mouse is hovering over the Library pile:
 
 **Existing shortcuts conflict:** `AGENTS.md` and the current controls use **S** for Search Library and **X** for Exile. Before implementing Objective 8, choose the intended behavior for these conflicts (for example, explicitly reassign the old shortcuts or choose different keys). Do not silently break Search Library or Exile.
 
+
+## 9. Choose a random deck from Archidekt or Moxfield — QUEUED
+
+Add a **Choose Random Deck** option on the opening/join screen for quick testing and fun random games.
+
+- Let the player choose Archidekt or Moxfield as the source.
+- Let the player choose deck bracket **1, 2, 3, or 4** before selecting a random deck.
+- Load the chosen deck into the lobby using the existing deck import flow wherever source access allows.
+- Investigate what public search/API support each source provides; keep manual import available if random discovery is restricted.
+
+## 10. Spell out the Auto-Draw label — QUEUED
+
+Replace the tiny **AD** label in the top controls with **Auto-Draw** so it is clear what the toggle does.
+
+- Keep the control readable without pushing other top-bar actions out of place.
+- Check at 1920×1080 and 1366×768, and in both Sidebar and Grid layouts.
+
+## 11. Drag a selection rectangle to move multiple cards — QUEUED
+
+Add a click-and-drag selection square, similar to EDHPlay or StarCraft, to select multiple cards and move them together.
+
+- Draw a visible selection rectangle while dragging across the battlefield.
+- Select cards intersecting the rectangle and allow the selected group to be moved as one operation.
+- Keep normal single-card dragging, tapping, counters, and other click actions working as before.
+- Respect card ownership/permissions and test different zoom levels and board layouts.
+
+
+## 12. Draw targeting arrows between players' cards — QUEUED (Forge-inspired)
+
+Add a visual way to show which card or player an effect is targeting, inspired by [Forge](https://github.com/Card-Forge/forge).
+
+- Right-click a card on any player's battlefield to open its context menu, with an option such as **Connect arrow** / **Send arrow to…**; consider a separate **Attack** action when it fits the existing game model.
+- After choosing the arrow action, click a destination card (including cards on another player's battlefield) to draw a clear arrow connecting source to destination.
+- Everyone in the game should see the same arrow so a player can communicate, for example, which creature their removal spell is targeting.
+- Provide an easy way to cancel arrow placement and clear/remove arrows after the table has understood the intent.
+- Keep arrows visual-only: they should not move cards or automatically perform game actions. Preserve normal right-click menus, card dragging, and touch-friendly interactions.
+- Decide on multiple simultaneous arrows, colors/labels, and exact menu wording during implementation; start with the simplest reliable targeting arrow.
+
 ## Suggested workflow
 
-1. Work on one objective at a time, beginning with #1.
+1. Work on one objective at a time, beginning with the next incomplete objective.
 2. Make a small feature/fix branch and pull request.
 3. Run source-level checks, then browser-test Sidebar and Grid at 1920×1080 and 1366×768 where applicable.
 4. Update `README.md`, `CHANGELOG.md`, app version/cache references and this folder's handoff notes as appropriate.

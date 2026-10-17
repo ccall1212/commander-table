@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.15.0';
+const APP_VERSION = '0.15.1';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -1915,7 +1915,7 @@ function lifeBoxHTML(pid, noPanel) {
   const cd = cmdDmgInfo(pid);
   const cdBadge = cd.max ? `<span class="cdbadge${cd.max >= 21 ? ' lethal' : ''}" title="Highest commander damage taken">⚔${cd.max}</span> ` : '';
   return `<span class="lifebox" title="Life${mine ? ' (Shift-click: ±5)' : ` — changing it asks ${esc(p.name)}'s game to apply it`}">
-      <button data-a="${a}" data-pid="${esc(pid)}" data-d="-1">−</button><b class="lifeN">${life}</b><button data-a="${a}" data-pid="${esc(pid)}" data-d="1">+</button>
+      <button class="life-adjust" type="button" data-a="${a}" data-pid="${esc(pid)}" data-d="-1" aria-label="Decrease life total">−</button><b class="lifeN">${life}</b><button class="life-adjust" type="button" data-a="${a}" data-pid="${esc(pid)}" data-d="1" aria-label="Increase life total">+</button>
       <button class="more" data-a="ctrs" data-pid="${esc(pid)}" title="Commander damage, poison, energy, experience, rad, tickets">${cdBadge}${any ? esc(any) + ' ' : ''}▾</button></span>` +
     (open && !noPanel ? ctrPanelHTML(pid) : '');
 }
