@@ -15,6 +15,7 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 - **Main version:** v0.20.6, restored and merged through [PR #28](https://github.com/ccall1212/commander-table/pull/28), merge commit [9d42d06](https://github.com/ccall1212/commander-table/commit/9d42d06673831c54cbd759e3e44621c9cd299b41).
 - **Commander slam:** the animation and synthesized impact sound are back to the v0.20.6 implementation. Chris wants to keep refining the sound; do that on a separate branch, not by changing the published version in place.
 - **In progress:** objective #15, custom-uploaded table backgrounds and card backs. Working branch and review PR: [PR #30](https://github.com/ccall1212/commander-table/pull/30). Uploads are local to the player's browser and never sent to other players; preset choices remain shared.
+- **Queued:** objective #18, iPad/touch-friendly browser support. The goal is to make card inspection and card actions discoverable without hover or right-click, while preserving desktop behaviour; details and test requirements are in [OBJECTIVES.md](OBJECTIVES.md).
 - **Paused:** draft [PR #11](https://github.com/ccall1212/commander-table/pull/11), random deck selection / website import. Do not merge until its listed live tests pass.
 - **Layouts:** Sidebar and Grid only.
 - **Release tags:** the annotated tags below are still required; the GitHub connector cannot create annotated tags:
