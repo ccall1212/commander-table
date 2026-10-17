@@ -2,11 +2,11 @@
 
 This folder records changes prepared or committed by ChatGPT for Commander Table, along with release steps that remain incomplete. It is a handoff log, not a replacement for `CHANGELOG.md` (which is the player-facing release history) or `AGENTS.md` (which documents the project's development and release workflow).
 
-The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES.md). Objectives 1–3 are complete and deployed; Objectives 8 and 10 are being combined into a small preview for v0.16.0. Objective 4 (larger battlefield cards) is intentionally deferred for now. Objectives 5–7, 9, and 11–12 remain queued.
+The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES.md). Objectives 1–3 are complete and deployed; Objectives 8, 10, and 13 are combined in the v0.16.0 preview. Objective 4 (larger battlefield cards) is intentionally deferred for now. Objectives 5–7, 9, 11, and 12 remain queued.
 
 **Status checked:** 2026-10-16  
 **App version on main:** `0.15.1` (merged and deployed)  
-**App version on active feature branch:** `0.16.0` (Library shuffle/mill shortcuts, synthesized shuffle sound, hotkey list, and Auto-Draw label; awaiting preview and approval).  
+**App version on active feature branch:** `0.16.0` (Library shuffle/mill shortcuts, synthesized shuffle sound, hotkey list, Auto-Draw label, and T-to-play-tapped shortcut; awaiting preview and approval).  
 **Release tag status:** annotated tags `v0.14.1`, `v0.14.2`, `v0.15.0`, and `v0.15.1` still need to be created and verified locally; see “Remaining release housekeeping” below.
 
 ## Active-player yellow outline — v0.14.2 (merged to main)
@@ -40,7 +40,7 @@ The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES
 - **Release tag:** `v0.15.1` should point to merge commit `5927f82caf2e6ff82a9e065535044f27c653294b`; annotated tag creation remains a local step.
 - Objective #12 (Forge-inspired targeting arrows) is queued and is not part of this life-control change.
 
-## Library shuffle / mill and hotkey list — v0.16.0 in progress
+## Library shuffle / mill, hotkey list, and tapped-play shortcut — v0.16.0 in progress
 
 - **Objectives:** #8 (Library shortcuts, animation and sound) and #10 (spell out Auto-Draw).
 - **Branch / PR:** `fix/auto-draw-label` / [PR #8 — combined UI and Library shortcut improvements](https://github.com/ccall1212/commander-table/pull/8).
@@ -48,8 +48,9 @@ The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES
 - Pressing **X** with the cursor over your Library mills one card into the Graveyard and plays a short visual cue. **G = Graveyard**, **E = Exile**, and **B = Battlefield**. Press **L** anywhere to open Search Library; Ctrl+F remains the browser's own Find-on-page shortcut.
 - The ☰ menu includes **Hotkey list…**, a scrollable shortcut reference.
 - Top-bar **AD** now reads **Auto-Draw**.
+- Pressing **T** while hovering a card in hand plays it onto the battlefield tapped, using the existing card-type-based zone placement. For cards already on the battlefield, **T** still taps/untaps.
 - App/meta and the 14 local CSS/JS cache-busting references are set to `0.16.0`.
-- **Browser status:** ChatGPT ran syntax/source checks only. Manual checks should confirm the hotkeys work only in their intended context, the mill action moves exactly one top card, animation and sound are brief, and the Hotkey list fits the modal. Check at 1920×1080 and 1366×768 in Sidebar and Grid.
+- **Browser status:** ChatGPT ran syntax/source checks only. Manual checks should confirm the hotkeys work only in their intended context, including T playing a hand card tapped into the correct battlefield area and T still tapping/untapping battlefield cards; the mill action should move exactly one top card, animation and sound should be brief, and the Hotkey list should fit the modal. Check at 1920×1080 and 1366×768 in Sidebar and Grid.
 - **Release tag:** the final v0.16.0 target should be the eventual published release commit, to be recorded after merge.
 
 ## Changes made by ChatGPT
