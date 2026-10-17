@@ -1,6 +1,6 @@
 # Commander Table — Objectives Backlog
 
-This is the working list of the next UI and gameplay improvements requested by Chris. Keep the original numbering so we can work through them one at a time. Objective 1 is complete; **Objective 2** is now in progress. Objectives 7 and 8 remain queued.
+This is the working list of the next UI and gameplay improvements requested by Chris. Keep the original numbering so we can work through them one at a time. Objectives 1 and 2 are complete; **Objective 3** is next. Objectives 7 and 8 remain queued.
 
 ## Status key
 
@@ -18,18 +18,18 @@ Show a clear yellow/gold outline around the player whose turn it is. The existin
 - **Pull request:** [PR #3 — Restore yellow outline for the active player](https://github.com/ccall1212/commander-table/pull/3) — merged in [commit `78b6d5a`](https://github.com/ccall1212/commander-table/commit/78b6d5ae99e0ef95f0e5b644f1aa27f716211f84).
 - **Status:** Chris previewed the change locally, confirmed it looked good, and approved publication. The app source is now on `main` at version `0.14.2`. GitHub Pages deployment and the missing annotated release tags are tracked in `GPT-CHANGES/README.md`.
 
-## 2. Animate the opening turn-order dice roll — IN PROGRESS (v0.15.0 branch)
+## 2. Animate the opening turn-order dice roll — COMPLETE (v0.15.0 merged and deployed)
 
-When the host presses **Start game**, automatically roll a d20 for each seated player and show a large, clear animated result on everyone's screen before the game board is revealed.
+When the host presses **Start game**, automatically roll a d20 for each seated player and show a clear animated result on everyone's screen before the game board is revealed.
 
-- Every player should see the animation/result on their own screen.
-- It must remain visible in Sidebar and Grid layouts, on both the user's and opponents' screens.
-- The result should clearly show the number rolled and then settle / disappear cleanly.
-- The roll happens automatically as part of Start game; players do not need to open the Dice menu first.
-- The shared event carries the exact results used for `T.order`, and the highest roll becomes the first active player.
-- Ties still reroll automatically. The overlay is non-interactive, auto-dismisses, and respects reduced-motion preferences.
-- **Pull request:** [PR #4 — Animate opening first-player dice roll](https://github.com/ccall1212/commander-table/pull/4).
-- **Current branch:** `feat/animated-first-player-roll`. Browser verification is required before publication.
+- Each player's number changes inside a circular badge for about 2.4 seconds, then settles on the synchronized final roll.
+- The highest roll is highlighted with a prominent **GOES FIRST** label that remains visible for 3 full seconds after the last result settles.
+- Ties reroll automatically, and the highest roller becomes the first active player. The separate Dice-menu roll option was removed.
+- The overlay does not block clicks and respects reduced-motion preferences.
+- **Pull request:** [PR #4 — Start game with readable animated D20 roll](https://github.com/ccall1212/commander-table/pull/4), merged as [`3974eb4`](https://github.com/ccall1212/commander-table/commit/3974eb49453cbe55dedcac87f46fb720b07d0583).
+- **Deployment:** GitHub Pages run [`38993645238`](https://github.com/ccall1212/commander-table/actions/runs/38993645238) succeeded.
+- **Release housekeeping:** the annotated `v0.15.0` tag is still pending because tag creation is not available through the current GitHub connection; instructions are in `GPT-CHANGES/README.md`.
+- **Test status:** ChatGPT verified JavaScript syntax and source-level invariants, but did not run a real-browser multiplayer test.
 
 ## 3. Make life-total +/- controls easier to click — NEXT
 
