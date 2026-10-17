@@ -28,7 +28,7 @@ When a Commander moves from the command zone to the battlefield, play a brief sl
 
 See [PR-11-DECK-IMPORT-INVESTIGATION.md](PR-11-DECK-IMPORT-INVESTIGATION.md). Draft PR #11. Do not merge or publish it until the live tests listed there pass.
 
-## 11. Drag a selection rectangle to select and move several cards — IN PROGRESS (v0.18.0 candidate)
+## 11. Drag a selection rectangle to select and move several cards — IN PROGRESS (v0.18.1 candidate)
 
 **Branch/PR:** `feat/multi-card-selection` / [PR #13](https://github.com/ccall1212/commander-table/pull/13) — not merged or published.
 
@@ -38,6 +38,7 @@ How it should behave:
 
 - **Draw:** pressing on empty battlefield (not on a card, zone label or button) and dragging draws a translucent rectangle with a thin border. Cards it overlaps get a clear highlight while you drag (use the existing yellow/gold accent), and stay selected when you let go.
 - **Move:** dragging any selected card moves all selected cards together, keeping their positions relative to each other. Dropping onto your battlefield places them; dropping onto your graveyard/exile/hand/command pile, or onto another player's board (give control), should behave the same as dropping a single card does today (decide whether the whole group goes; keep it simple and tell Chris what you chose).
+- **Drag preview:** the floating ghost should show every selected card in its original relative arrangement, not just the one grabbed.
 - **Clear / change:** a click on empty space, or Esc, clears the selection. Holding Shift while drawing adds to the selection; Shift-clicking a card toggles it.
 - **Group actions (nice to have, only if simple):** `T` taps/untaps the selection and `G` / `E` sends it to the graveyard / exile.
 - **Only your own cards** can be selected. Normal single-card dragging, tapping by click, counters, menus and hotkeys must work exactly as now when nothing is selected.
