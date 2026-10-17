@@ -3216,7 +3216,17 @@ function deckBracket(data) {
   const candidates = [data && data.bracket, data && data.userBracket, data && data.autoBracket, data && data.deckBracket,
     data && data.deck && data.deck.bracket, data && data.settings && data.settings.bracket];
   for (let v of candidates) {
-    if (v && typeof v === 'object') v = v.value != null ? v.value : (v.id != null ? v.id : v.bracket);
+    if (v && typeof v === 'object') v = v.value != null ? v.value : (v.name != null ? v.name : (v.label != null ? v.label : (v.id != null ? v.id : v.bracket)));
+    if (typeof v === 'string') {
+      const label = v.toLowerCase();
+      const named = label.match(/(?:bracket\s*)?([1-5])\b/);
+      if (named) return Number(named[1]);
+      if (/\bexhibition\b/.test(label)) return 1;
+      if (/\bcore\b/.test(label)) return 2;
+      if (/\bupgraded\b/.test(label)) return 3;
+      if (/\boptimized\b|\boptimised\b/.test(label)) return 4;
+      if (/\bcedh\b|competitive/.test(label)) return 5;
+    }
     const n = Number(v);
     if (v != null && v !== '' && Number.isFinite(n) && n >= 1 && n <= 5) return n;
   }
