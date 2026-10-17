@@ -3261,11 +3261,12 @@ async function findRandomCommanderDeck() {
     let summaries = [], lastError = null;
     const urls = source === 'archidekt'
       ? [
-          'https://archidekt.com/api/decks/v3/?formats=3&orderBy=-updatedAt&pageSize=100',
-          'https://archidekt.com/api/decks/v3/?format=3&orderBy=-updatedAt&pageSize=100'
+          'https://archidekt.com/api/decks/v3/?deckFormat=3&orderBy=-createdAt&pageSize=100',
+          'https://archidekt.com/api/decks/v3/?deckFormat=3&orderBy=-updatedAt&pageSize=100'
         ]
       : [
-          'https://api2.moxfield.com/v2/decks/search?q=&fmt=commander&sortType=updated&sortDirection=Descending&pageNumber=1&pageSize=100'
+          'https://api2.moxfield.com/v2/decks/search-sfw?fmt=commander&sortType=updated&sortDirection=descending&pageNumber=1&pageSize=100',
+          'https://api2.moxfield.com/v2/decks/search?fmt=commander&sortType=updated&sortDirection=descending&pageNumber=1&pageSize=100'
         ];
     for (const url of urls) {
       try {
