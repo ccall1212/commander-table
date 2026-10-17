@@ -738,12 +738,23 @@ body.lens-on #pv { display: none; }
 .appearance-choice .appearance-thumb { display: block; width: 100%; border-radius: 4px; background-repeat: no-repeat; border: 1px solid rgba(255,255,255,.15); }
 .appearance-choice .cardback-thumb { aspect-ratio: 5 / 7; }
 .appearance-choice .background-thumb { aspect-ratio: 16 / 9; }
-.appearance-choice .appearance-name { font-size: 11px; line-height: 1.2; min-height: 26px; display: flex; align-items: center; justify-content: center; text-align: center; }
+ .appearance-choice .appearance-name { font-size: 11px; line-height: 1.2; min-height: 26px; display: flex; align-items: center; justify-content: center; text-align: center; }
+.custom-appearance { display: grid; grid-template-columns: minmax(78px, 110px) minmax(0, 1fr); gap: 12px; align-items: start; margin: 10px 0 18px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: rgba(0,0,0,.16); }
+.custom-appearance-preview { width: 100%; min-height: 70px; border-radius: 5px; background-color: #111722; background-position: center; background-size: cover; border: 1px solid rgba(255,255,255,.18); }
+.custom-appearance-preview.cardback-thumb { aspect-ratio: 5 / 7; }
+.custom-appearance-preview.background-thumb { aspect-ratio: 16 / 9; }
+.custom-appearance-controls { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 7px; }
+.custom-appearance-controls label { font-weight: 600; }
+.custom-appearance-controls p { margin: 0; }
+.custom-appearance-controls input[type="file"] { max-width: 100%; font-size: 12px; }
+.custom-appearance-controls button { padding: 5px 9px; font-size: 12px; }
+.custom-appearance-controls button:disabled { opacity: .45; cursor: not-allowed; }
 .boardwrap { background-color: #0b1018; background-repeat: no-repeat; background-size: cover; background-position: center; }
 @media (max-width: 620px) {
   .cardback-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .background-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .appearance-choice .appearance-name { font-size: 10px; }
+  .custom-appearance { grid-template-columns: 74px minmax(0, 1fr); gap: 9px; padding: 9px; }
 }
 
 /* ---- Opponent miniature tiles (Sidebar / Grid): slim title, board + life + hand/piles drawn inside the scaled board ---- */
