@@ -38,7 +38,7 @@ Let a player draw an arrow from one card (or player) to another so the table can
 - Start with one simple arrow at a time; decide colours/labels and the exact menu wording during implementation.
 
 
-## 14. Show and search all available card printings — QUEUED
+## 14. Show and search all available card printings — MERGED (v0.19.0 tag pending)
 
 The card-printing switcher currently shows at most 10 versions, which is not enough for some heavily reprinted cards.
 
