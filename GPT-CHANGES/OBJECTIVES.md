@@ -16,7 +16,7 @@ Cards feel a little small when the browser is maximized on a 2K display (the siz
 - **Where to look:** in Sidebar your own board is drawn at its natural scale (limited by width). In Grid and in the opponent miniatures the board is auto-fitted: `computeFit()` in `js/app.js` picks the card size, and its `capPx` caps card width (56 px in miniatures, 150 px for a big board). Changing those numbers is the likely lever, but check that crowded boards still fit.
 - Avoid clipping or overlapping cards more than today.
 
-## 5. One-time "slam" animation when a card is played — QUEUED
+## 5. One-time "slam" animation when a card is played — IN PROGRESS
 
 When a Commander moves from the command zone to the battlefield, play a brief slam animation with a glow in the card's colour identity. Optionally do the same the first time a card with mana value 8 or more enters the battlefield.
 
