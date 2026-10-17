@@ -1,6 +1,6 @@
-# Test Commander Table — Selection Rectangle (v0.18.1 candidate)
+# Manual test checklist — Selection Rectangle (v0.18.1)
 
-This is a test copy of the unmerged selection-rectangle feature.
+This checklist covers regression-testing the selection-rectangle feature after release. Chris manually tested the selection/group behavior and the full-group drag preview before v0.18.1 was published.
 
 ## Start the app
 
@@ -26,6 +26,6 @@ This is a test copy of the unmerged selection-rectangle feature.
 6. **Multiplayer:** drag a selected group onto another player's battlefield; the whole group should transfer control.
 7. **Arrange Zones:** open Arrange Zones; any selection should clear, and starting a rectangle should be disabled while arranging.
 
-Try both 1920×1080 and 1366×768 if convenient. Tell Chris which steps you tested and anything that behaved unexpectedly.
+Try both 1920×1080 and 1366×768 if convenient. Record which steps were repeated and anything that behaved unexpectedly.
 
-This test build has not been merged or published. Do not use it as the live version.
+The feature was merged to main in v0.18.1. The published game is https://ccall1212.github.io/commander-table/. For code regression tests, use a local checkout of main and follow this checklist.
