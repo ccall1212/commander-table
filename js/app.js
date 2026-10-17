@@ -3189,6 +3189,7 @@ async function loadDeckTextInExistingFlow(text, label) {
   $('#impStatus').textContent = label || '';
   $('#importBox').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   await loadDeck();
+  return !!$('#impResult').querySelector('#saveDeck');
 }
 async function importDeckWebsite() {
   const raw = $('#deckWebsiteUrl').value.trim();
@@ -3198,7 +3199,8 @@ async function importDeckWebsite() {
   try {
     const result = await fetchWebsiteDeck(raw);
     $('#deckWebsiteUrl').value = result.info.url;
-    await loadDeckTextInExistingFlow(result.text, 'Resolving cards from ' + (result.info.source === 'moxfield' ? 'Moxfield' : 'Archidekt') + '…');
+    const loaded = await loadDeckTextInExistingFlow(result.text, 'Resolving cards from ' + (result.info.source === 'moxfield' ? 'Moxfield' : 'Archidekt') + '…');
+    if (!loaded) { deckImportStatus('The website returned a deck, but card resolution did not finish. Try the plain-text export instead.', 'error'); return; }
     deckImportStatus('Deck fetched. Review the cards below, choose a commander if needed, then Save deck.', 'success');
   } catch (e) {
     deckImportStatus(e.message || 'Could not import that website deck.', 'error');
@@ -3273,7 +3275,7 @@ async function findRandomCommanderDeck() {
       } catch (e) { lastError = e; }
     }
     if (!summaries.length) throw lastError || new Error('The provider did not return a public deck list. You can import a specific deck URL above, or use plain-text import.');
-    for (const summary of shuffledCopy(summaries).slice(0, 24)) {
+    for (const summary of shuffledCopy(summaries).slice(0, 12)) {
       const b = deckBracket(summary);
       if (b != null && b !== bracket) continue;
       let rawUrl = summary.publicUrl || summary.url || summary.link || '';
@@ -3290,7 +3292,8 @@ async function findRandomCommanderDeck() {
       const parsed = Deck.parse(result.text);
       if (!parsed.main.length && !parsed.commanders.length) continue;
       $('#randomDeckResult').innerHTML = '<div class="random-deck-result"><b>Random match:</b> ' + esc(result.data.name || result.info.url) + ' · Bracket ' + bracket + ' · <a href="' + esc(result.info.url) + '" target="_blank" rel="noopener">Open source deck</a></div>';
-      await loadDeckTextInExistingFlow(result.text, 'Random deck selected; resolving its cards…');
+      const loaded = await loadDeckTextInExistingFlow(result.text, 'Random deck selected; resolving its cards…');
+      if (!loaded) { deckImportStatus('A matching public deck was found, but card resolution did not finish. Try another deck or use website/plain-text import.', 'error'); return; }
       deckImportStatus('Found a public Commander deck for bracket ' + bracket + '. Review the card list and save it below.', 'success');
       return;
     }
