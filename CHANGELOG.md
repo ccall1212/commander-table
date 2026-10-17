@@ -9,6 +9,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - `AGENTS.md`: how changes are made, tested, versioned and released (for AI assistants and humans).
 
+### Fixed
+- When dragging a selected group, show a layered preview of every selected card and keep their relative positions visible.
+
 ## [0.18.0] - 2026-10-16
 
 ### Added
