@@ -27,6 +27,7 @@ When players roll to choose who goes first, show a large, clear animated dice re
 - The result should clearly show the number rolled and then settle / disappear cleanly.
 - The shared turn-order event carries the exact final results that the existing host logic already uses, so the animation does not alter game rules.
 - The overlay is non-interactive, auto-dismisses, and respects reduced-motion preferences.
+- **Pull request:** [PR #4 — Animate opening first-player dice roll](https://github.com/ccall1212/commander-table/pull/4).
 - **Current branch:** `feat/animated-first-player-roll`. Browser verification is required before publication.
 
 ## 3. Make life-total +/- controls easier to click — NEXT
