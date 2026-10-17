@@ -43,3 +43,8 @@ Custom images are optimized to WebP and stored in that browser's local storage. 
 3. Select one card (gold outline), then drag an unselected card. Only the card grabbed should move. Drag the selected card to move the selected group intentionally.
 4. Draw a selection rectangle from empty battlefield space around multiple cards. The cards inside should be outlined; moving one of those selected cards should move the group. Click empty space or press Escape to clear the selection.
 5. Repeat in Practice solo, Sidebar and Grid at 1920 × 1080 and 1366 × 768. Test a second player in another tab if available, and check the browser console.
+
+
+## Browser test status — pointer/clicking fix (v0.21.4)
+
+Chris confirmed that he tested the pointer/clicking fix in a real browser before publication. This is user-performed browser testing; ChatGPT did not independently run the app in a browser or run an automated browser test. Use the checklist above for future regression checks.
