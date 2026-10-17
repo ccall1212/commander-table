@@ -2861,15 +2861,6 @@ function beginCardDrag(e) {
   const board = el.closest('.board');
   const s = board ? (+board.dataset.s || 1) : 1;
   const w = el.offsetWidth * s, h = el.offsetHeight * s;
-  const gh = el.cloneNode(true);
-  gh.classList.add('card', 'ghost'); // 'card' too: a pile being dragged ghosts as a card
-  gh.removeAttribute('style');
-  gh.style.cssText = `width:${w}px;height:${h}px;--cw:${w}px;left:0;top:0;`;
-  document.body.appendChild(gh);
-  // keep the grab point: pointer offset from the card's visual centre
-  drag.offC = { dx: e.clientX - (r.left + r.width / 2), dy: e.clientY - (r.top + r.height / 2) };
-  drag.gx = drag.offC.dx + w / 2; drag.gy = drag.offC.dy + h / 2;
-  drag.ghost = gh; drag.moved = true;
   const f = findCard(drag.iid);
   const requested = S.selected.has(drag.iid) ? [...S.selected] : [drag.iid];
   drag.groupPositions = requested.map(iid => {
@@ -2879,6 +2870,55 @@ function beginCardDrag(e) {
   }).filter(Boolean);
   if (!drag.groupPositions.some(p => p.iid === drag.iid) && f)
     drag.groupPositions = [{ iid: drag.iid, x: num(f.card.x, 10), y: num(f.card.y, 20) }];
+
+  // When moving a selection, preview every card at its current relative position.
+  // Keep the normal single-card/pile ghost for one-card drags.
+  let gh = null;
+  const groupEls = board && drag.groupPositions.length > 1
+    ? drag.groupPositions.map(p => [...board.querySelectorAll('.card[data-iid]')].find(node => node.dataset.iid === p.iid)).filter(Boolean)
+    : [];
+  if (drag.groupPositions.length > 1 && groupEls.length > 1) {
+    const entries = groupEls.map(node => ({ node, rect: node.getBoundingClientRect() }));
+    const left = Math.min(...entries.map(x => x.rect.left));
+    const top = Math.min(...entries.map(x => x.rect.top));
+    const right = Math.max(...entries.map(x => x.rect.right));
+    const bottom = Math.max(...entries.map(x => x.rect.bottom));
+    gh = document.createElement('div');
+    gh.className = 'ct-group-ghost';
+    gh.style.cssText = `position:fixed;left:0;top:0;width:${right-left}px;height:${bottom-top}px;`;
+    entries.forEach(({ node, rect }, index) => {
+      const clone = node.cloneNode(true);
+      clone.classList.remove('dragging');
+      clone.removeAttribute('style');
+      clone.classList.add('drag-preview-card');
+      clone.style.setProperty('position', 'absolute', 'important');
+      clone.style.setProperty('left', (rect.left - left) + 'px', 'important');
+      clone.style.setProperty('top', (rect.top - top) + 'px', 'important');
+      clone.style.setProperty('width', rect.width + 'px', 'important');
+      clone.style.setProperty('height', rect.height + 'px', 'important');
+      clone.style.setProperty('--cw', rect.width + 'px');
+      clone.style.setProperty('margin', '0', 'important');
+      clone.style.setProperty('transform', 'none', 'important');
+      clone.style.setProperty('transition', 'none', 'important');
+      clone.style.setProperty('z-index', String(index + 1), 'important');
+      clone.style.setProperty('pointer-events', 'none', 'important');
+      gh.appendChild(clone);
+    });
+    document.body.appendChild(gh);
+    // Anchor the whole preview at the exact point where the grabbed card was picked up.
+    drag.gx = e.clientX - left;
+    drag.gy = e.clientY - top;
+  } else {
+    gh = el.cloneNode(true);
+    gh.classList.add('card', 'ghost'); // 'card' too: a pile being dragged ghosts as a card
+    gh.removeAttribute('style');
+    gh.style.cssText = `width:${w}px;height:${h}px;--cw:${w}px;left:0;top:0;`;
+    document.body.appendChild(gh);
+    // keep the grab point: pointer offset from the card's visual centre
+    drag.offC = { dx: e.clientX - (r.left + r.width / 2), dy: e.clientY - (r.top + r.height / 2) };
+    drag.gx = drag.offC.dx + w / 2; drag.gy = drag.offC.dy + h / 2;
+  }
+  drag.ghost = gh; drag.moved = true;
   drag.attachable = drag.groupPositions.length === 1 && !!(f && isAttachable(defOf(f.card)));
   el.classList.add('dragging');
   S.dragging = true; uiEpoch++;
