@@ -102,6 +102,17 @@ Read this before changing layout or anything that finds elements on the page. Se
 
 ## The routine for every change
 
+## Required test ZIP for Chris
+
+**Every feature or fix pull request must include a downloadable ZIP of the exact pull-request branch so Chris can test it locally.** Do this every time; do not wait for him to ask.
+
+- Build the ZIP from the branch/commit being proposed in the PR, not from `main` and not from an older commit.
+- Include the complete runnable project source needed to test the change. Exclude `.git` history and local secrets.
+- Include a short `TESTING.md` in the ZIP with simple instructions to extract the archive, start the local server with `python -m http.server 8099 --bind 127.0.0.1`, and open `http://127.0.0.1:8099/index.html`.
+- Check the archive contains the intended files and matches the PR head commit before sharing it. Link the ZIP directly in the PR description and in the message to Chris.
+- Keep the ZIP as a test copy only; do not publish it or merge the PR. Wait for Chris's explicit approval before publishing.
+- If a ZIP cannot be generated, explain the blocker and do not claim that one was provided.
+
 1. **Start clean from the latest `main`**
    ```bash
    git switch main && git pull --ff-only
