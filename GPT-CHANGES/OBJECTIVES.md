@@ -104,7 +104,8 @@ Add a **Choose Random Deck** option on the opening/join screen for quick testing
 - Added **Import from website** for public Moxfield and Archidekt deck URLs. Retrieved card lists use the existing card-resolution and save flow.
 - These providers have unofficial / changing public interfaces; browser CORS, anti-bot checks, private decks, or missing bracket metadata may prevent direct retrieval. The UI explains the plain-text export fallback, and a deck with an unknown bracket is not selected as a random match.
 - **Source research:** Moxfield's public endpoints are undocumented and recent community reports indicate that unauthenticated fetches may be blocked; see the [unofficial API notes](https://github.com/wildfire111/moxfield_api_docs/blob/main/docs.json) and [recent report](https://www.reddit.com/r/Moxfield/comments/1ubbry2/deck_api_no_longer_works/). Archidekt's public deck detail endpoint has been used by other community integrations, but it is not a guaranteed, stable public API.
-- **Testing status:** source-level checks only so far. Verify the supplied Moxfield example URL, a public Archidekt URL, all four bracket choices, and both providers’ blocked/private/error fallbacks in a real browser before considering this complete.
+- **Source-level tests completed:** JavaScript parses; URL parsing accepts the supplied Moxfield URL and a sample Archidekt URL; synthetic Moxfield/Archidekt response fixtures preserve the deck name, commander, quantities, and exclude sideboard/maybeboard cards; numeric and named bracket values are recognized. These fixtures do not prove the live provider endpoints work.
+- **Manual browser tests still needed:** try the supplied Moxfield URL and a public Archidekt URL, all four bracket choices, provider-blocked/private/error fallbacks, card-resolution errors, and visual layout. Do not mark Objective #9 complete until checked.
 
 ## 10. Spell out the Auto-Draw label — COMPLETE (v0.16.0 merged and deployed)
 
