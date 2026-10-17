@@ -12,10 +12,10 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 
 ## Current state
 
-- **Released:** everything up to the newest version in `CHANGELOG.md`, each with an annotated git tag. Check `git tag` / the changelog rather than trusting a number written here.
+- **Released on main:** v0.17.1; GitHub Pages run [39006634748](https://github.com/ccall1212/commander-table/actions/runs/39006634748) succeeded for main commit [8b6b351](https://github.com/ccall1212/commander-table/commit/8b6b351e2c180ff2320b20b9c2e92087dc07ae14).
+- **Release tags verified:** v0.14.1, v0.14.2, v0.15.0, v0.15.1, v0.16.0, v0.17.0, and v0.17.1 exist and point to their intended commits. Some older release notes below may describe their status before they were created.
 - **Layouts:** only **Sidebar** and **Grid** exist. The Top and Focus layouts were removed.
-- **In flight:** draft PR #11 only (paused, see its file). Nothing else is waiting.
-
+- **In flight:** draft PR #11 (paused deck import) and PR #13 (objective #11 selection rectangle), awaiting Chris's test. PR #13 is not merged or published.
 ## How a change gets released (short version)
 
 1. ChatGPT works on a branch and opens a pull request, with a short click list for Chris (see "Writing the test list" in `AGENTS.md`).
