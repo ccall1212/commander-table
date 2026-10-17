@@ -1044,9 +1044,9 @@ function animateDrawCard(pid, count) {
     const unusedIds = pendingIds.filter(id => !animatedIds.has(id));
     if (unusedIds.length) finishPendingDraw(unusedIds);
 
-    const FLIGHT_MS = 520;
-    const HANDOFF_MS = 110;
-    const FLIP_MS = 335;
+    const FLIGHT_MS = 460;
+    const HANDOFF_MS = 65;
+    const FLIP_MS = 310;
     const STEP_COUNT = 24;
 
     for (let i = 0; i < n; i++) {
@@ -1105,7 +1105,7 @@ function animateDrawCard(pid, count) {
         });
       }
 
-      const delay = i * 55;
+      const delay = i * 48;
       let handedOff = false;
       let handoffTimer = null;
       const handoff = () => {
