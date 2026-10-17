@@ -1086,12 +1086,12 @@ function animateDrawCard(pid, count) {
       flyer.appendChild(flip);
       document.body.appendChild(flyer);
 
-      // Sample a single ease-out curve along a quadratic arc. Linear interpolation between
+      // Sample a smooth ease-in/ease-out curve along a quadratic arc. Linear interpolation between
       // closely-spaced samples avoids a visible pause at intermediate points or at the endpoint.
       const flightFrames = [];
       for (let step = 0; step <= STEP_COUNT; step++) {
         const time = step / STEP_COUNT;
-        const progress = 1 - Math.pow(1 - time, 2.2);
+        const progress = time < 0.5 ? 4 * time * time * time : 1 - Math.pow(-2 * time + 2, 3) / 2;
         const x = dx * progress;
         const y = dy * progress - 4 * lift * progress * (1 - progress);
         const scale = 1 + (endScale - 1) * progress;
