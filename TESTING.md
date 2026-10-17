@@ -23,7 +23,7 @@
 Expected: a visible, click-through slam effect and short impact sound only when a Commander is played from the command zone; no Commander slam on later repositioning or ordinary card moves; ordinary battlefield placements/repositioning use only the softer tap.
 
 
-# Manual test checklist — custom appearance uploads (v0.21.2 candidate)
+# Manual test checklist — custom appearance uploads (v0.21.3 candidate)
 
 1. Extract the test ZIP and run `python -m http.server 8099 --bind 127.0.0.1` from its folder.
 2. Open `http://127.0.0.1:8099/index.html` in Chrome, Edge, or Firefox.
