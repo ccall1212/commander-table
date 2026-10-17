@@ -10,7 +10,7 @@ The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES
 **GitHub Pages:** [deployment run `38996909975`](https://github.com/ccall1212/commander-table/actions/runs/38996909975) succeeded.  
 **Browser testing:** ChatGPT verified source-level checks only; real-browser/multiplayer checks remain for Chris to run.  
 **Release tag status:** annotated tags `v0.14.1`, `v0.14.2`, `v0.15.0`, `v0.15.1`, and `v0.16.0` still need to be created and verified locally; see “Remaining release housekeeping” below.
-**Active feature branch:** `feat/random-commander-deck-picker` — v0.17.0 preview for Objective #9, not merged or published.
+**Active feature branch:** `feat/random-commander-deck-picker-preview` — v0.17.0 preview for Objective #9, not merged or published.
 
 ## Next feature priorities
 
@@ -66,7 +66,7 @@ The numbered objective IDs remain unchanged; these are execution priorities only
 ## Random Commander deck picker and website URL import — v0.17.0 in progress
 
 - **Priority:** Objective #9 is being implemented first; Objective #6 (draw-card animation) remains the next feature after this one.
-- **Branch:** `feat/random-commander-deck-picker`; the app/meta version and 14 CSS/JS cache-busting references are being advanced to `0.17.0` on the preview branch only.
+- **Branch:** `feat/random-commander-deck-picker-preview`; the app/meta version and 14 CSS/JS cache-busting references are being advanced to `0.17.0` on the preview branch only.
 - Added a lobby panel to choose Archidekt or Moxfield and bracket 1–4 for random public Commander deck discovery.
 - Added **Import from website** for public Moxfield and Archidekt deck URLs, including the example Moxfield URL supplied by Chris. Fetched card lists go through the existing Scryfall resolution, commander selection, and Save deck flow.
 - The providers' deck endpoints are not guaranteed stable public APIs. Moxfield may block unauthenticated/automated requests and browser-origin access; Archidekt can also change its undocumented endpoints. The interface surfaces errors and keeps plain-text export/import as a fallback. Random picks require a clear matching bracket; unknown-bracket decks are not treated as a match.
