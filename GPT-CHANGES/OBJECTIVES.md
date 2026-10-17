@@ -2,6 +2,13 @@
 
 This is the working list of the next UI and gameplay improvements requested by Chris. Keep the original numbering so we can work through them one at a time. Objectives 1–3, 8, 10, and 13 are complete and deployed. Objective 4 (larger cards) is intentionally deferred for now. Objectives 5–7, 9, 11, and 12 remain queued.
 
+## Current priorities
+
+1. **Objective #9 — Choose a random deck from Archidekt or Moxfield.** Start here: first investigate source search/import capabilities and how deck bracket information is exposed so the feature design matches what the services actually support.
+2. **Objective #6 — Animate drawing a card.** Next: design a short Library-to-hand motion that is visible to the player and their opponents without blocking interactions or animating unrelated card movements.
+
+These are priority order, not renumbering. Objective numbers remain stable for references and tracking.
+
 ## Status key
 
 - **In progress** — active implementation / PR.
@@ -57,7 +64,7 @@ When a Commander is moved from the Command Zone onto the battlefield, play a sat
 - Trigger on the play event only, not when the card is subsequently dragged or repositioned.
 - Keep the effect brief and avoid distracting from gameplay; respect reduced-motion preferences if practical.
 
-## 6. Animate drawing a card — QUEUED
+## 6. Animate drawing a card — PRIORITY 2 (queued)
 
 Whenever a player draws a card, animate the card moving from the Library toward their hand and flipping over as it arrives.
 
@@ -86,7 +93,7 @@ When hovering over your own Library:
 - **Browser testing:** ChatGPT checked source only; hands-on testing of audio, animations, and shortcuts in Sidebar/Grid is still recommended.
 
 
-## 9. Choose a random deck from Archidekt or Moxfield — QUEUED
+## 9. Choose a random deck from Archidekt or Moxfield — PRIORITY 1 (queued)
 
 Add a **Choose Random Deck** option on the opening/join screen for quick testing and fun random games.
 
@@ -94,6 +101,7 @@ Add a **Choose Random Deck** option on the opening/join screen for quick testing
 - Let the player choose deck bracket **1, 2, 3, or 4** before selecting a random deck.
 - Load the chosen deck into the lobby using the existing deck import flow wherever source access allows.
 - Investigate what public search/API support each source provides; keep manual import available if random discovery is restricted.
+- **Priority note:** research the available search and bracket metadata before deciding on the picker flow; do not assume either source supports random public discovery or bracket filtering until verified.
 
 ## 10. Spell out the Auto-Draw label — COMPLETE (v0.16.0 merged and deployed)
 
