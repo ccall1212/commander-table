@@ -1030,33 +1030,49 @@ function animateDrawCard(pid, count) {
     const source = drawAnimationPile(pid);
     const target = drawAnimationHand(pid);
     if (!source || !target) { release(); return; }
+    if (typeof document.body.animate !== 'function') { release(); return; }
+
     const src = source.rect;
-    // Include the locally hidden card so its true slot can be measured even while invisible.
+    // Include hidden local cards so their real hand slots can be measured without revealing them.
     const targetCards = [...target.querySelectorAll('.card')].filter(el =>
       drawAnimationVisible(el) || el.classList.contains('ct-draw-pending'));
     const localCards = pid === S.pid ? pendingIds.map(id => S.me.zones.hand.find(c => c.iid === id)).filter(Boolean) : [];
     const n = pid === S.pid ? localCards.length : requested;
     if (!n) { release(); return; }
+    // If a queued card no longer exists in hand, don't leave its real card hidden.
+    const animatedIds = new Set(localCards.map(card => card.iid));
+    const unusedIds = pendingIds.filter(id => !animatedIds.has(id));
+    if (unusedIds.length) finishPendingDraw(unusedIds);
 
-    const motions = [];
-    const flyers = [];
+    const FLIGHT_MS = 520;
+    const HANDOFF_MS = 110;
+    const FLIP_MS = 335;
+    const STEP_COUNT = 24;
+
     for (let i = 0; i < n; i++) {
       const card = pid === S.pid ? localCards[i] : null;
       const cardEl = card && targetCards.find(el => el.dataset.iid === card.iid);
       const fallbackEl = targetCards[targetCards.length - 1];
       const dstEl = cardEl || fallbackEl;
       const dst = (dstEl || target).getBoundingClientRect();
-      // If an opponent's hand is empty, aim for the hand area using a normal card ratio.
-      const width = dstEl
-        ? Math.max(24, Math.min(src.width, dst.width || src.width))
+      // Start at the Library's actual card size, then scale down/up to the hand slot.
+      const width = Math.max(1, src.width);
+      const height = Math.max(1, src.height);
+      const targetWidth = dstEl
+        ? Math.max(1, dst.width)
         : (pid === S.pid ? Math.max(24, Math.min(src.width, 63)) : 24);
-      const height = dstEl
-        ? Math.max(34, Math.min(src.height, dst.height || src.height))
-        : (pid === S.pid ? Math.max(34, Math.min(src.height, 88)) : Math.round(width * 88 / 63));
-      const sx = src.left + (src.width - width) / 2;
-      const sy = src.top + (src.height - height) / 2;
-      const tx = dst.left + dst.width / 2 - width / 2;
-      const ty = dst.top + dst.height / 2 - height / 2;
+      const sx = src.left;
+      const sy = src.top;
+      const startCx = sx + width / 2;
+      const startCy = sy + height / 2;
+      const endCx = dst.left + dst.width / 2;
+      const endCy = dst.top + dst.height / 2;
+      const dx = endCx - startCx;
+      const dy = endCy - startCy;
+      const endScale = targetWidth / width;
+      // A shallow, rounded arc gives the card a little lift without making the flight feel floaty.
+      const lift = clamp(Math.hypot(dx, dy) * 0.12, 34, 88);
+      const fadeStart = 1 - HANDOFF_MS / FLIGHT_MS;
       const flyer = document.createElement('div');
       flyer.className = 'ct-draw-flight';
       flyer.setAttribute('aria-hidden', 'true');
@@ -1068,29 +1084,60 @@ function animateDrawCard(pid, count) {
       flip.className = 'ct-draw-flip';
       flip.innerHTML = drawAnimationCardFaces(pid, card);
       flyer.appendChild(flip);
-      if (typeof flyer.animate !== 'function' || typeof flip.animate !== 'function') {
-        flyers.forEach(f => f.remove());
-        flyer.remove();
-        release();
-        return;
-      }
       document.body.appendChild(flyer);
-      flyers.push(flyer);
-      const delay = i * 45;
-      motions.push(flyer.animate([
-        { transform: 'translate3d(0,0,0) scale(1) rotate(-3deg)' },
-        { transform: 'translate3d(' + (tx - sx) + 'px,' + (ty - sy) + 'px,0) scale(' + Math.max(.55, Math.min(1.15, (dst.width || width) / width)) + ') rotate(2deg)' }
-      ], { duration: 360, delay, easing: 'cubic-bezier(.22,.72,.25,1)', fill: 'forwards' }));
+
+      // Sample a single ease-out curve along a quadratic arc. Linear interpolation between
+      // closely-spaced samples avoids a visible pause at intermediate points or at the endpoint.
+      const flightFrames = [];
+      for (let step = 0; step <= STEP_COUNT; step++) {
+        const time = step / STEP_COUNT;
+        const progress = 1 - Math.pow(1 - time, 3);
+        const x = dx * progress;
+        const y = dy * progress - 4 * lift * progress * (1 - progress);
+        const scale = 1 + (endScale - 1) * progress;
+        const rotation = -3 * (1 - progress);
+        const opacity = time < fadeStart ? 1 : Math.max(0, 1 - (time - fadeStart) / (1 - fadeStart));
+        flightFrames.push({
+          offset: time,
+          transform: 'translate3d(' + x + 'px,' + y + 'px,0) scale(' + scale + ') rotate(' + rotation + 'deg)',
+          opacity,
+          easing: 'linear'
+        });
+      }
+
+      const delay = i * 55;
+      let handedOff = false;
+      let handoffTimer = null;
+      const handoff = () => {
+        if (handedOff) return;
+        handedOff = true;
+        if (handoffTimer) clearTimeout(handoffTimer);
+        // Reveal this real card as its flyer begins fading, not after every card has landed.
+        if (card) finishPendingDraw([card.iid]);
+      };
+      const motion = flyer.animate(flightFrames, {
+        duration: FLIGHT_MS,
+        delay,
+        easing: 'linear',
+        fill: 'forwards'
+      });
       flip.animate([
         { transform: 'rotateY(0deg)' },
         { transform: 'rotateY(180deg)' }
-      ], { duration: 270, delay: delay + 55, easing: 'ease-in-out', fill: 'forwards' });
+      ], {
+        duration: FLIP_MS,
+        delay: delay + 45,
+        easing: 'cubic-bezier(.45,0,.55,1)',
+        fill: 'forwards'
+      });
+      handoffTimer = setTimeout(handoff, delay + FLIGHT_MS - HANDOFF_MS);
+      const cleanup = () => {
+        if (handoffTimer) clearTimeout(handoffTimer);
+        handoff();
+        flyer.remove();
+      };
+      motion.finished.then(cleanup, cleanup);
     }
-    Promise.all(motions.map(m => m.finished.catch(() => {}))).then(() => {
-      flyers.forEach(flyer => flyer.remove());
-      // Reveal the real hand card only after the flight has landed.
-      setTimeout(release, 20);
-    });
   };
   // Start promptly after the scheduled hand render; timeout fallback avoids leaving a card hidden
   // in a throttled/background tab where requestAnimationFrame may be paused.
