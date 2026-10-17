@@ -180,6 +180,7 @@ kbd { background: var(--panel2); border: 1px solid var(--border); border-radius:
 }
 .first-roll-tile.rolling .first-roll-die {
   animation: first-roll-tumble .8s cubic-bezier(.45, .04, .55, .96) infinite;
+  animation-delay: var(--first-roll-delay, 0ms);
 }
 @keyframes first-roll-tumble {
   0% { transform: perspective(500px) rotateX(0deg) rotateY(0deg) rotateZ(-4deg) scale(.9); }
