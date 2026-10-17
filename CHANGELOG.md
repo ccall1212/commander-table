@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.20.4] - 2026-10-17
+
+### Changed
+- Add a subtle card-placement sound when cards enter the battlefield or are repositioned on it.
+- Give Commander casts a heavier, layered boom and keep the color-identity ring visible longer.
+
 ## [0.20.3] - 2026-10-17
 
 ### Added
@@ -300,7 +306,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - First playable build: paste-import decks from Moxfield or Archidekt (via Scryfall), 2–4 player rooms over PeerJS with self-healing reconnects, a searchable zone viewer, commander damage tracking and automatic tokens.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.20.3...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.20.4...HEAD
+[0.20.4]: https://github.com/ccall1212/commander-table/compare/v0.20.3...v0.20.4
 [0.20.3]: https://github.com/ccall1212/commander-table/compare/v0.19.1...v0.20.3
 [0.19.1]: https://github.com/ccall1212/commander-table/compare/v0.19.0...v0.19.1
 [0.19.0]: https://github.com/ccall1212/commander-table/compare/v0.18.2...v0.19.0
