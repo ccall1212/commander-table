@@ -9,6 +9,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - `AGENTS.md`: how changes are made, tested, versioned and released (for AI assistants and humans).
 
+## [0.16.0] - 2026-10-16
+
+### Added
+- Press **S** while hovering over your Library to shuffle it with a small card-riffle animation and a synthesized shuffle sound.
+- Press **X** while hovering over your Library to mill the top card into the Graveyard, with a short visual cue.
+- Added an in-game **Hotkey list…** reference under the ☰ Options menu.
+- Press **T** while hovering over a card in your hand to play it onto the battlefield tapped; it lands in the battlefield area appropriate for its card type. On the battlefield, **T** still taps or untaps.
+
+### Changed
+- Replaced the abbreviated **AD** top-bar label with **Auto-Draw**.
+- Changed the card-to-Exile shortcut from **X** to **E**; **G** remains Graveyard and **B** remains Battlefield.
+- Use **L** to open Search Library from anywhere; **S** is reserved for shuffling when the Library is hovered. Ctrl+F remains the browser's Find-on-page shortcut.
+
 ## [0.15.1] - 2026-10-17
 
 ### Fixed
@@ -239,7 +252,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - First playable build: paste-import decks from Moxfield or Archidekt (via Scryfall), 2–4 player rooms over PeerJS with self-healing reconnects, a searchable zone viewer, commander damage tracking and automatic tokens.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.15.1...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.16.0...HEAD
+[0.16.0]: https://github.com/ccall1212/commander-table/compare/v0.15.1...v0.16.0
 [0.15.1]: https://github.com/ccall1212/commander-table/compare/v0.15.0...v0.15.1
 [0.15.0]: https://github.com/ccall1212/commander-table/compare/v0.14.2...v0.15.0
 [0.14.2]: https://github.com/ccall1212/commander-table/compare/v0.14.1...v0.14.2

@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.15.1';
+const APP_VERSION = '0.16.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -892,7 +892,76 @@ function draw(n = 1) {
   if (k < n) UI.toast('Your library is empty!', { kind: 'warn' });
 }
 function untapAll() { act(() => { S.me.zones.battlefield.forEach(c => { c.t = false; }); return ['untapped everything']; }); }
-function shuffleLib() { act(() => { S.me.revealTopOnce = null; shuffle(S.me.zones.library); return ['shuffled their library']; }); }
+let shuffleAudioContext = null;
+function playShuffleSound() {
+  // Make a short, original card-riffle sound with Web Audio; no external file is needed.
+  try {
+    const AudioContextType = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextType) return;
+    if (!shuffleAudioContext) shuffleAudioContext = new AudioContextType();
+    const ctx = shuffleAudioContext;
+    if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+    const duration = 0.19;
+    const buffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * duration), ctx.sampleRate);
+    const samples = buffer.getChannelData(0);
+    for (let i = 0; i < samples.length; i++) {
+      const fade = Math.min(1, i / (ctx.sampleRate * 0.015), (samples.length - i) / (ctx.sampleRate * 0.02));
+      samples[i] = (Math.random() * 2 - 1) * Math.max(0, fade);
+    }
+    [0, 0.13, 0.27, 0.42].forEach((offset, i) => {
+      const source = ctx.createBufferSource();
+      const filter = ctx.createBiquadFilter();
+      const gain = ctx.createGain();
+      const start = ctx.currentTime + offset;
+      const burst = [0.13, 0.16, 0.12, 0.17][i];
+      source.buffer = buffer;
+      filter.type = 'bandpass';
+      filter.frequency.value = [1450, 1850, 1250, 2150][i];
+      filter.Q.value = 0.85;
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.linearRampToValueAtTime(0.055, start + 0.018);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + burst);
+      source.connect(filter); filter.connect(gain); gain.connect(ctx.destination);
+      source.start(start); source.stop(start + burst);
+    });
+  } catch (e) { /* Optional audio can fail silently in restricted browsers. */ }
+}
+function animateOwnPile(zone, effect, duration = 820) {
+  requestAnimationFrame(() => {
+    const selector = '[data-pile="' + zone + '"][data-pid]';
+    const piles = [...document.querySelectorAll(selector)].filter(el => el.dataset.pid === S.pid);
+    piles.forEach(el => {
+      el.classList.remove(effect);
+      void el.offsetWidth;
+      el.classList.add(effect);
+    });
+    setTimeout(() => piles.forEach(el => el.classList.remove(effect)), duration);
+  });
+}
+function ownLibraryHovered() {
+  return [...document.querySelectorAll('[data-pile="library"][data-pid]')]
+    .some(el => el.dataset.pid === S.pid && el.matches(':hover'));
+}
+function shuffleLib() {
+  if (!S.me.zones.library.length) { UI.toast('Your library is empty!', { kind: 'warn' }); return; }
+  act(() => { S.me.revealTopOnce = null; shuffle(S.me.zones.library); return ['shuffled their library']; });
+  animateOwnPile('library', 'shuffling');
+  playShuffleSound();
+}
+function millTopCard() {
+  const top = S.me.zones.library[0];
+  if (!top) { UI.toast('Your library is empty!', { kind: 'warn' }); return; }
+  const def = defOf(top);
+  act(() => {
+    const c = S.me.zones.library.shift();
+    c.fd = false;
+    S.me.zones.graveyard.push(c);
+    S.me.revealTopOnce = null;
+    return ['milled {0}', [def]];
+  });
+  animateOwnPile('library', 'milling', 620);
+  animateOwnPile('graveyard', 'mill-receive', 620);
+}
 function toggleTap(iid) { const f = findCard(iid); if (f && f.zone === 'battlefield') act(() => { f.card.t = !f.card.t; }); }
 function flip(iid) {
   const f = findCard(iid); const d = f && defOf(f.card);
@@ -1147,7 +1216,7 @@ function keepHand() {
 const MOVE_ACTIONS = [
   { key: 'hand', label: 'To hand', hint: 'H' }, { key: 'battlefield', label: 'To battlefield', hint: 'B' },
   { key: 'bftapped', label: 'To battlefield tapped' }, { key: 'graveyard', label: 'To graveyard', hint: 'G' },
-  { key: 'exile', label: 'Exile', hint: 'X' }, { key: 'top', label: 'Library — top' }, { key: 'bottom', label: 'Library — bottom' },
+  { key: 'exile', label: 'Exile', hint: 'E' }, { key: 'top', label: 'Library — top' }, { key: 'bottom', label: 'Library — bottom' },
   { key: 'command', label: 'Command zone' }
 ];
 function runMove(key, iid) {
@@ -1315,7 +1384,7 @@ function cardMenu(x, y, iid) {
   if (z === 'hand') {
     items.push({ label: 'Play', hint: 'B', onClick: () => doMove(iid, 'battlefield') });
     if (attachable) items.push({ label: /Equipment/.test(d.type || '') ? 'Play & equip to…' : 'Cast & attach to…', onClick: () => startAttach(iid) });
-    items.push({ label: 'Play tapped', onClick: () => doMove(iid, 'battlefield', { tapped: true }) });
+    items.push({ label: 'Play tapped', hint: 'T', onClick: () => doMove(iid, 'battlefield', { tapped: true }) });
     items.push({ label: 'Play face down', onClick: () => doMove(iid, 'battlefield', { faceDown: true }) });
     items.push({ label: 'Reveal to everyone', onClick: () => say('revealed {0} from their hand', [d]) });
   }
@@ -1400,13 +1469,14 @@ function libraryMenu(x, y) {
   UI.menu(x, y, [
     { label: 'Draw', hint: 'D', onClick: () => draw(1) },
     { label: 'Draw X…', onClick: async () => { const n = await UI.prompt({ title: 'Draw cards', type: 'number', value: 2, min: 1, max: 30 }); if (n) draw(n); } },
-    { label: 'Shuffle', onClick: shuffleLib },
+    { label: 'Shuffle', hint: 'S', onClick: shuffleLib },
     { sep: true },
-    { label: 'Search library…', hint: 'S', onClick: () => viewZone(S.pid, 'library') },
+    { label: 'Search library…', hint: 'L', onClick: () => viewZone(S.pid, 'library') },
     { label: 'Look at top X (scry)…', onClick: () => lookTop() },
     { label: 'Reveal top card', onClick: revealTop },
     { label: 'Play with top card revealed', checked: S.me.revealTop, onClick: () => act(() => { S.me.revealTop = !S.me.revealTop; return [S.me.revealTop ? 'is playing with the top card revealed' : 'stopped revealing the top card']; }) },
     { sep: true },
+    { label: 'Mill top card to Graveyard', hint: 'X', onClick: millTopCard },
     { label: 'Mill X…', onClick: () => millN('graveyard') },
     { label: 'Exile top X…', onClick: () => millN('exile') },
     { label: 'Exile top X face down…', onClick: () => millN('exile', true) }
@@ -1517,6 +1587,7 @@ function mainMenu(x, y) {
     { label: S.arrange ? 'Done arranging zones' : 'Arrange my zones', onClick: toggleArrange },
     { label: 'Tidy up my cards', onClick: () => act(() => { tidyBoard(); return ['tidied up their battlefield']; }) },
     { label: 'Display settings…', onClick: displaySettings },
+    { label: 'Hotkey list…', onClick: showHotkeyList },
     { sep: true },
     { label: 'Auto-untap on my turn', checked: m.autoUntap, onClick: () => act(() => { m.autoUntap = !m.autoUntap; }, { noUndo: true }) },
     { label: 'Auto-draw on my turn', checked: m.autoDraw, onClick: () => act(() => { m.autoDraw = !m.autoDraw; }, { noUndo: true }) },
@@ -1549,6 +1620,34 @@ function passBtn() {
   return `<div class="ztool"><button data-a="pass" class="${mine ? 'primary' : ''}"${started ? '' : ' disabled'} title="Pass the turn to the next player">Pass turn ▶</button></div>`;
 }
 function toggleFocus(pid) { S.focus = S.focus === pid ? null : pid; render(); }
+function showHotkeyList() {
+  const groups = [
+    { title: 'With a card hovered', rows: [
+      ['T', 'Tap / untap; from hand, play onto the battlefield tapped'], ['F', 'Transform / flip'], ['Z', 'Turn face down or up'],
+      ['G', 'Move to Graveyard'], ['E', 'Move to Exile'], ['H', 'Move to Hand'], ['B', 'Move to Battlefield'],
+      ['A', 'Attach / equip / enchant'], ['J', 'Add a named counter'], ['I', 'View card information'],
+      ['+ or =', 'Add a +1/+1 counter'], ['− or _', 'Add a −1/−1 counter'],
+      ['Shift+1', 'Increment every counter on the card'], ['Shift+2', 'Double every counter on the card'],
+      ['Shift+3', 'Decrement every counter on the card'],
+      ['Alt+1', 'Power +1'], ['Alt+2', 'Toughness +1'], ['Alt+3', 'Power −1'], ['Alt+4', 'Toughness −1']
+    ] },
+    { title: 'With your Library hovered', rows: [
+      ['S', 'Shuffle Library (small card animation and sound)'],
+      ['X', 'Mill the top card into your Graveyard']
+    ] },
+    { title: 'General', rows: [
+      ['D', 'Draw one card'], ['U', 'Untap all'], ['L', 'Open Search Library from anywhere'],
+      ['Space', 'Pass the turn'], ['Ctrl+Z / ⌘Z', 'Undo'], ['Hold V', 'Use the magnifier']
+    ] }
+  ];
+  const html = '<div class="ct-hotkey-list">' +
+    '<p class="muted small">Hotkeys are active during a game. Card-specific actions use the card currently under your cursor.</p>' +
+    groups.map(group => '<section class="ct-hotkey-group"><h3>' + esc(group.title) + '</h3><table><tbody>' +
+      group.rows.map(([key, action]) => '<tr><td><kbd>' + esc(key) + '</kbd></td><td>' + esc(action) + '</td></tr>').join('') +
+      '</tbody></table></section>').join('') +
+    '</div>';
+  UI.modal({ title: 'Hotkey list', className: 'w-hotkey-list-dialog', html });
+}
 function displaySettings() {
   const r0 = window.Lens ? Lens.getRadius() : 90;
   const m = UI.modal({ title: 'Display settings', className: 'w-display-dialog', html: `
@@ -1995,7 +2094,7 @@ function renderTop() {
   const turnActions = $('#turnActions');
   if (turnActions) {
     const autoUntap = `<label class="tgl" title="Auto: Untap everything at the start of your turn (${S.me.autoUntap ? 'on' : 'off'})"><input type="checkbox" data-a="autountap"${S.me.autoUntap ? ' checked' : ''}><span></span></label>`;
-    const autoDraw = `<span class="ad-label" title="AD means Auto-Draw: automatically draws a card at the start of your turn">AD</span><label class="tgl" title="Auto: Draw a card at the start of your turn (${S.me.autoDraw ? 'on' : 'off'})"><input type="checkbox" data-a="autodraw"${S.me.autoDraw ? ' checked' : ''}><span></span></label>`;
+    const autoDraw = `<span class="ad-label" title="Auto-Draw: automatically draws a card at the start of your turn">Auto-Draw</span><label class="tgl" title="Auto: Draw a card at the start of your turn (${S.me.autoDraw ? 'on' : 'off'})"><input type="checkbox" data-a="autodraw"${S.me.autoDraw ? ' checked' : ''}><span></span></label>`;
     turnActions.innerHTML = `<div class="turn-actions"><div class="ztool"><button data-a="untapall" title="Untap all (U)">Untap All</button>${autoUntap}${autoDraw}</div>${passBtn()}</div>`;
   }
   const banner = $('#banner');
@@ -2780,17 +2879,23 @@ function onKey(e) {
   }
   const k = e.key.toLowerCase();
   if (k === 'escape' && S.arrange) { toggleArrange(); return; }
+  if ((k === 's' || k === 'x') && e.repeat) return; // avoid repeated shuffle/mill while a key is held
+  if (k === 's') {
+    if (ownLibraryHovered()) { e.preventDefault(); shuffleLib(); }
+    return;
+  }
+  if (k === 'x' && ownLibraryHovered()) { e.preventDefault(); millTopCard(); return; }
+  if (k === 'l') { e.preventDefault(); viewZone(S.pid, 'library'); return; }
   if (k === 'd') { draw(1); return; }
   if (k === 'u') { untapAll(); return; }
-  if (k === 's') { viewZone(S.pid, 'library'); return; }
   if (k === 'i' && h) { // info works on anyone's card
     const f = mine ? { def: defOf(mine.card) } : oppCard(h.pid, h.iid);
     if (f && f.def) { e.preventDefault(); viewInfo(f.def); }
     return;
   }
   if (!mine) return;
-  const map = { t: () => toggleTap(h.iid), f: () => flip(h.iid), g: () => doMove(h.iid, 'graveyard'),
-    x: () => doMove(h.iid, 'exile'), h: () => doMove(h.iid, 'hand'), b: () => doMove(h.iid, 'battlefield'), a: () => startAttach(h.iid),
+  const map = { t: () => mine.zone === 'hand' ? doMove(h.iid, 'battlefield', { tapped: true }) : toggleTap(h.iid), f: () => flip(h.iid), g: () => doMove(h.iid, 'graveyard'),
+    e: () => doMove(h.iid, 'exile'), h: () => doMove(h.iid, 'hand'), b: () => doMove(h.iid, 'battlefield'), a: () => startAttach(h.iid),
     z: () => toggleFaceDown(h.iid), j: () => customCounter(h.iid),
     '+': () => addCounter(h.iid, '+1/+1', 1), '=': () => addCounter(h.iid, '+1/+1', 1),
     '-': () => addCounter(h.iid, '-1/-1', 1), '_': () => addCounter(h.iid, '-1/-1', 1) };

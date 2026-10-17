@@ -110,6 +110,7 @@ Dropped connections and crashed tabs happen, and recovering from them is the mai
 
 - Click a battlefield card to tap or untap it.
 - Double-click a card in your hand to play it.
+- Hover over a card in your hand and press **T** to play it onto the battlefield **tapped**; it is placed in the battlefield area that matches its card type. On the battlefield, **T** still taps or untaps it.
 - Double-click your commander to cast it. Commander tax is manual: left-click the 🪙 chip beside CMD for +2, right-click for −2 (or use the commander's right-click menu).
 - Right-click any of your cards for options: counters, transform, face down, **Copy this card**, give control, and move to any zone.
 - Right-click an opponent's card (or use the graveyard/exile viewer) to **Copy this card** onto your battlefield — handy for Clone effects. Copies show a purple **TOKEN COPY** label and vanish if they leave the battlefield.
@@ -182,15 +183,13 @@ Dropped connections and crashed tabs happen, and recovering from them is the mai
 
 **Keyboard shortcuts**
 
-Hover over a card and press:
+Open **☰ → Hotkey list…** during a game to see the full reference.
 
-- **T** tap, **F** flip, **G** graveyard, **X** exile, **H** hand, **B** battlefield
+Hover over one of your cards and press **T** to tap or untap it; if the hovered card is in your hand, **T** instead plays it onto the battlefield tapped. Press **F** to flip, **Z** to turn face down/up, **G** to move to Graveyard, **E** to move to Exile, **H** to move to Hand, **B** to move to Battlefield, **A** to attach, **J** to add a counter, or **I** to view card information.
 
-Other shortcuts:
+Hover over your **Library** and press **S** to shuffle (the Library itself wiggles with a short sound), or **X** to mill the top card into your Graveyard. Press **L** anywhere during a game to open Search Library. **Ctrl+F** remains the browser's Find-on-page shortcut. You can also draw with **D**, untap all with **U**, pass the turn with **Space**, and undo with **Ctrl+Z** (or **⌘Z** on Mac).
 
-- **Space** pass turn (it doesn't tap the hovered card; use **T** to tap)
-- **D** draw, **U** untap all, **S** search library, **Ctrl+Z** undo
-- **Hold V** over the table to open the magnifier (see **Cards on the table**). Release to close.
+For a hovered card, **+ / =** adds a +1/+1 counter and **− / _** adds a −1/−1 counter. **Shift+1 / Shift+2 / Shift+3** increments, doubles, or decrements all counters; **Alt+1 / Alt+2 / Alt+3 / Alt+4** adjusts power/toughness up or down. Hold **V** over the table for the magnifier.
 
 ## Life, damage, and counters
 
@@ -209,7 +208,7 @@ Other shortcuts:
 
 ## Turn helpers
 
-- **Auto-untap and auto-draw** at the start of your turn are toggled with switches (green = on): auto-untap is the switch next to **Untap All** in the top bar, and auto-draw is the small **AD** switch right beside it. They're also still in the ☰ menu. Both start off in every game. In 1v1, the first player skips the first draw.
+- **Auto-untap and Auto-Draw** at the start of your turn are toggled with switches (green = on): Auto-untap is the switch next to **Untap All** in the top bar, and **Auto-Draw** is labeled clearly beside it. They're also still in the ☰ menu. Both start off in every game. In 1v1, the first player skips the first draw.
 - A **Pass turn** button in the top bar, next to **Round N**. The round goes up only after every player has had a turn. It's safe to click: if two players press it at the same moment, only one pass counts.
 - **Start game / turn order:** pressing **Start game** automatically rolls a d20 for every seated player. Everyone sees the animated results, ties re-roll automatically, and the highest roll goes first. 🎲 **Dice** remains available for other dice, a coin flip, and a random player picker.
 - London mulligan, with the first mulligan free.

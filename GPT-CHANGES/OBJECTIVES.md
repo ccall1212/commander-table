@@ -1,6 +1,6 @@
 # Commander Table — Objectives Backlog
 
-This is the working list of the next UI and gameplay improvements requested by Chris. Keep the original numbering so we can work through them one at a time. Objectives 1–3 are complete; **Objective 4** is next. Objectives 7–12 remain queued.
+This is the working list of the next UI and gameplay improvements requested by Chris. Keep the original numbering so we can work through them one at a time. Objectives 1–3 are complete; **Objectives 8, 10, and 13** are in progress together for v0.16.0. Objective 4 (larger cards) is intentionally deferred for now. Objectives 5–7, 9, 11, and 12 remain queued.
 
 ## Status key
 
@@ -41,7 +41,7 @@ Make the minus/plus controls reliably clickable across their intended button are
 - **Deployment:** GitHub Pages run [`38994671583`](https://github.com/ccall1212/commander-table/actions/runs/38994671583) succeeded.
 - **Browser checks:** Chris reviewed the preview and authorized publication. ChatGPT did not independently run real-browser hit testing or multiplayer opponent-life requests; see PR #6 for manual test cases.
 
-## 4. Increase battlefield card size on larger displays — NEXT
+## 4. Increase battlefield card size on larger displays — QUEUED (deferred for now)
 
 Cards feel a little too small when the browser is maximized on a 2K display, although the current size is acceptable at 1920×1080.
 
@@ -73,15 +73,16 @@ Opponent board previews in Sidebar view currently look darker / greyer than the 
 - Retain clear layout boundaries and any intentional status indications (for example, genuinely offline or conceded players) without dimming a normal opponent board.
 - Verify the effect on both large/focused boards and the miniature opponent tiles, if they use different styling.
 
-## 8. Add Library-hover shortcuts and animations for shuffle / mill — QUEUED; SHORTCUT CONFLICT TO RESOLVE
+## 8. Add Library-hover shortcuts and animations for shuffle / mill — IN PROGRESS (v0.16.0 branch)
 
-When the mouse is hovering over the Library pile:
+When hovering over your own Library:
 
-- Press **S** to shuffle the Library and play a small visual shuffle animation, with one or two cards peeking/sliding out and then returning into the deck.
-- Press **X** to mill exactly one card, moving the top card into the Graveyard with a fitting visual animation.
-- The animation should provide clear feedback without disrupting drag-and-drop or normal Library interactions.
-
-**Existing shortcuts conflict:** `AGENTS.md` and the current controls use **S** for Search Library and **X** for Exile. Before implementing Objective 8, choose the intended behavior for these conflicts (for example, explicitly reassign the old shortcuts or choose different keys). Do not silently break Search Library or Exile.
+- **S** shuffles the Library and plays a small card-riffle animation plus a short synthesized sound; no external sound file is required.
+- **X** mills exactly one card from the top of the Library into the Graveyard and plays a short visual cue.
+- **L** opens Search Library from anywhere; **S** only shuffles while hovering the Library. Ctrl+F is left to the browser's Find-on-page feature.
+- The ☰ Options menu includes a **Hotkey list…** modal with the game's current shortcuts.
+- **Exile moves to E** so X is free for milling. **G remains Graveyard** and **B remains Battlefield**.
+- Browser/visual testing remains pending; check audio playback, animations, and shortcuts in both Sidebar and Grid layouts.
 
 
 ## 9. Choose a random deck from Archidekt or Moxfield — QUEUED
@@ -93,11 +94,11 @@ Add a **Choose Random Deck** option on the opening/join screen for quick testing
 - Load the chosen deck into the lobby using the existing deck import flow wherever source access allows.
 - Investigate what public search/API support each source provides; keep manual import available if random discovery is restricted.
 
-## 10. Spell out the Auto-Draw label — QUEUED
+## 10. Spell out the Auto-Draw label — IN PROGRESS (v0.16.0 branch)
 
 Replace the tiny **AD** label in the top controls with **Auto-Draw** so it is clear what the toggle does.
 
-- Keep the control readable without pushing other top-bar actions out of place.
+- The branch now uses the full **Auto-Draw** label, keeps the text on one line, and trims a little extra letter spacing to help it fit.
 - Check at 1920×1080 and 1366×768, and in both Sidebar and Grid layouts.
 
 ## 11. Drag a selection rectangle to move multiple cards — QUEUED
@@ -120,6 +121,12 @@ Add a visual way to show which card or player an effect is targeting, inspired b
 - Provide an easy way to cancel arrow placement and clear/remove arrows after the table has understood the intent.
 - Keep arrows visual-only: they should not move cards or automatically perform game actions. Preserve normal right-click menus, card dragging, and touch-friendly interactions.
 - Decide on multiple simultaneous arrows, colors/labels, and exact menu wording during implementation; start with the simplest reliable targeting arrow.
+
+## 13. Play a hovered hand card onto the battlefield tapped — IN PROGRESS (v0.16.0 PR #8)
+
+- When the cursor is over one of your cards in hand, pressing **T** moves it onto the battlefield with its tapped state set. It should land in the battlefield area that matches the card's type, using the existing automatic placement logic.
+- When a card already on the battlefield is hovered, **T** keeps its existing tap/untap behavior.
+- Add the shortcut to the in-game Hotkey list and player guide. Check a creature, land, and artifact/enchantment card; also confirm T still taps and untaps battlefield cards.
 
 ## Suggested workflow
 

@@ -840,4 +840,56 @@ body.lens-on #pv { display: none; }
 #table.view-top.has-focus .opp.focus .obf { padding-bottom: 4px; }
 #table.view-top #myHand .card.hov { transform: translateY(-9%) rotate(0deg) scale(1.04); }
 
-.turn-actions .ad-label { color: var(--good); font-size: 11px; font-weight: 800; letter-spacing: .4px; cursor: help; user-select: none; margin-left: 4px; }
+.turn-actions .ad-label { color: var(--good); font-size: 11px; font-weight: 800; letter-spacing: 0; cursor: help; user-select: none; margin-left: 2px; flex: none; }
+
+
+/* Library feedback: a light card riffle when shuffling and a one-card flick when milling. */
+[data-pile="library"].shuffling,
+[data-pile="library"].milling,
+[data-pile="graveyard"].mill-receive { position: relative; }
+.zbox[data-pile="library"].shuffling .zcard,
+.tpile[data-pile="library"].shuffling .tpcard { animation: ct-library-riffle .78s ease-in-out; transform-origin: bottom center; }
+.zbox[data-pile="library"].milling::before,
+.tpile[data-pile="library"].milling::before {
+  content: ""; position: absolute; z-index: 8; pointer-events: none; width: 64%; aspect-ratio: 63 / 88;
+  border: 1px solid rgba(220,230,255,.72); border-radius: 4px;
+  background: linear-gradient(145deg, #3b4d6b, #1a2233 65%, #111722);
+  top: 25px; left: 17%; opacity: .95; animation: ct-mill-flick .58s ease-in forwards;
+}
+.tpile[data-pile="library"].milling::before { top: 0; }
+.zbox[data-pile="graveyard"].mill-receive .zcard,
+.tpile[data-pile="graveyard"].mill-receive .tpcard { animation: ct-mill-receive .58s ease-out; }
+@keyframes ct-library-riffle {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  18% { transform: translate(-4px,-2px) rotate(-3deg); }
+  38% { transform: translate(4px,-4px) rotate(4deg); }
+  58% { transform: translate(-3px,0) rotate(-2deg); }
+  78% { transform: translate(2px,-1px) rotate(2deg); }
+}
+@keyframes ct-mill-flick {
+  0% { opacity: .95; transform: translate(0,0) rotate(-1deg) scale(1); }
+  100% { opacity: 0; transform: translate(30px,38px) rotate(22deg) scale(.66); }
+}
+@keyframes ct-mill-receive {
+  0% { filter: brightness(1); }
+  38% { filter: brightness(1.5); box-shadow: 0 0 0 2px var(--accent), 0 0 12px rgba(212,167,44,.42); }
+  100% { filter: brightness(1); }
+}
+
+/* A short, scrollable hotkey reference inside the main Options menu. */
+.w-dialog.w-hotkey-list-dialog { width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 32px); }
+.w-hotkey-list-dialog .w-modal-body { overflow-y: auto; }
+.ct-hotkey-list { display: grid; gap: 12px; }
+.ct-hotkey-list > p { margin: 0; }
+.ct-hotkey-group h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 2px 0 5px; }
+.ct-hotkey-group table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.ct-hotkey-group td { padding: 5px 4px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.ct-hotkey-group td:first-child { width: 1%; white-space: nowrap; padding-right: 12px; }
+.ct-hotkey-group kbd { display: inline-block; min-width: 1.6em; padding: 1px 5px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text); text-align: center; font: 600 11px/1.7 ui-monospace, monospace; }
+@media (prefers-reduced-motion: reduce) {
+  [data-pile="library"].shuffling .zcard,
+  [data-pile="library"].shuffling .tpcard,
+  [data-pile="library"].milling::before,
+  [data-pile="graveyard"].mill-receive .zcard,
+  [data-pile="graveyard"].mill-receive .tpcard { animation: none !important; }
+}
