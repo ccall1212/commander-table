@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.19.1';
+const APP_VERSION = '0.20.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -309,6 +309,15 @@ function hostRecv(msg, from) {
       if (!S.table.seats.includes(from)) return;
       const count = clamp(Math.floor(num(msg.count, 1)), 1, 5);
       broadcast({ t: 'drawfx', pid: from, count });
+      break;
+    }
+    case 'slamfx': {
+      if (!S.table.seats.includes(from) || typeof msg.iid !== 'string' || !/^[\\w-]{1,40}$/.test(msg.iid)) return;
+      const player = S.players[from];
+      const card = player && player.zones && player.zones.battlefield.find(c => c.iid === msg.iid && c.cmd);
+      if (!card) return;
+      const ci = Array.isArray(msg.ci) ? [...new Set(msg.ci.filter(c => ['W', 'U', 'B', 'R', 'G'].includes(c)))] : [];
+      broadcast({ t: 'slamfx', pid: from, iid: msg.iid, ci });
       break;
     }
     case 'op': tableOp(msg.op, from); break;
@@ -616,6 +625,12 @@ function onBroadcast(msg) {
     case 'pub': if (msg.p && msg.p.pid) { S.players[msg.p.pid] = msg.p; if (msg.p.pid !== S.pid) checkOrphans(); } break;
     case 'log': S.log.push(msg.e); if (S.log.length > 300) S.log.splice(0, S.log.length - 300); break;
     case 'drawfx': if (typeof msg.pid === 'string') animateDrawCard(msg.pid, clamp(Math.floor(num(msg.count, 1)), 1, 5)); break;
+    case 'slamfx':
+      if (typeof msg.pid === 'string' && typeof msg.iid === 'string') {
+        const ci = Array.isArray(msg.ci) ? [...new Set(msg.ci.filter(c => ['W', 'U', 'B', 'R', 'G'].includes(c)))] : [];
+        animateCommanderSlam(msg.pid, msg.iid, ci);
+      }
+      break;
     case 'table': S.table = msg.table; afterTable(); break;
     case 'firstroll': showFirstRoll(msg); break;
     case 'online': S.online = msg.online || {}; break;
@@ -832,6 +847,9 @@ function doMove(iid, to, opts = {}) {
   });
   if (!res || res.repos) return;
   const { card, def } = res;
+  if (res.from === 'command' && to === 'battlefield' && card.cmd && !card.fd && !res.gone && def) {
+    emitCommanderSlam(card.iid, def.ci);
+  }
   if (res.orphans && res.orphans.length) orphanToast(res.orphans);
   if (card.cmd && !res.gone && to !== 'command' && to !== 'battlefield' && card.own === S.pid) {
     UI.toast(`${dname(def)} went to your ${ZL[to]}.`, { ms: 8000, action: { label: 'Move to command zone', onClick: () => doMove(iid, 'command') } });
@@ -1143,6 +1161,68 @@ function animateDrawCard(pid, count) {
   // in a throttled/background tab where requestAnimationFrame may be paused.
   requestAnimationFrame(() => requestAnimationFrame(startAnimation));
   setTimeout(startAnimation, 175);
+}
+
+// Send only a public card instance ID and color identity; no hidden card information is included.
+// The short delay lets the public battlefield update reach the host before it validates the event.
+function emitCommanderSlam(iid, ci) {
+  const colors = Array.isArray(ci) ? [...new Set(ci.filter(c => ['W', 'U', 'B', 'R', 'G'].includes(c)))] : [];
+  if (S.role === 'solo') {
+    onBroadcast({ t: 'slamfx', pid: S.pid, iid, ci: colors });
+    return;
+  }
+  setTimeout(() => toHost({ t: 'slamfx', iid, ci: colors }), 180);
+}
+
+function animateCommanderSlam(pid, iid, ci) {
+  if (!pid || !iid || $('#game').classList.contains('hidden') ||
+      (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+  const palette = { W: '#f2e4b5', U: '#62c5f2', B: '#a38bd2', R: '#ff705f', G: '#76cf91' };
+  const colors = [...new Set((ci || []).filter(c => palette[c]).map(c => palette[c]))];
+  if (!colors.length) colors.push('#e6d8a5'); // a neutral glow for colorless commanders
+  const glow = colors.map(c => '0 0 20px 4px ' + c + '99').join(', ');
+  const border = colors.length === 1 ? colors[0] : 'transparent';
+  let attempts = 0;
+
+  const start = () => {
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const candidates = [...document.querySelectorAll('.card[data-iid]')]
+      .filter(el => el.dataset.iid === iid && drawAnimationVisible(el))
+      .map(el => ({ el, rect: el.getBoundingClientRect() }))
+      .filter(x => x.rect.width > 4 && x.rect.height > 8)
+      .sort((a, b) => b.rect.width * b.rect.height - a.rect.width * a.rect.height);
+    const found = candidates[0];
+    if (!found && attempts++ < 8) { requestAnimationFrame(start); return; }
+    if (!found || typeof found.el.animate !== 'function') return;
+
+    const card = found.el, rect = found.rect;
+    const ring = document.createElement('div');
+    ring.className = 'ct-slam-ring';
+    ring.setAttribute('aria-hidden', 'true');
+    Object.assign(ring.style, {
+      left: rect.left + 'px', top: rect.top + 'px',
+      width: rect.width + 'px', height: rect.height + 'px',
+      borderRadius: getComputedStyle(card).borderRadius || '5px',
+      borderColor: border,
+      background: 'linear-gradient(transparent, transparent) padding-box, conic-gradient(' + colors.join(', ') + ') border-box',
+      boxShadow: glow
+    });
+    document.body.appendChild(ring);
+
+    card.animate([
+      { transform: 'translateY(-18px) scale(1.055) rotate(-1.4deg)', filter: 'brightness(1.28)', boxShadow: glow, offset: 0 },
+      { transform: 'translateY(2px) scale(.985) rotate(.25deg)', filter: 'brightness(1.15)', boxShadow: glow, offset: .58 },
+      { transform: 'translateY(0) scale(1) rotate(0)', filter: 'brightness(1)', boxShadow: 'none', offset: 1 }
+    ], { duration: 430, easing: 'cubic-bezier(.2,.75,.25,1)' });
+    const motion = ring.animate([
+      { opacity: 0, transform: 'translateY(-10px) scale(.9)' },
+      { opacity: .95, transform: 'translateY(0) scale(1.02)', offset: .36 },
+      { opacity: .65, transform: 'translateY(0) scale(1.09)', offset: .65 },
+      { opacity: 0, transform: 'translateY(0) scale(1.16)' }
+    ], { duration: 540, easing: 'cubic-bezier(.2,.75,.25,1)' });
+    motion.finished.then(() => ring.remove(), () => ring.remove());
+  };
+  requestAnimationFrame(() => requestAnimationFrame(start));
 }
 function untapAll() { act(() => { S.me.zones.battlefield.forEach(c => { c.t = false; }); return ['untapped everything']; }); }
 let shuffleAudioContext = null;
