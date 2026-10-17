@@ -2,7 +2,7 @@
 
 A free, browser-based Magic: The Gathering Commander table for playing with friends online. It's a lot like the Tabletop Simulator setup many of us used to play on, but it runs right in your web browser.
 
-**Current app version: 0.18.2** · [Version history](CHANGELOG.md) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-0.18.2-blue)](CHANGELOG.md) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 **Play now:** https://ccall1212.github.io/commander-table/ — nothing to install. See [CHANGELOG.md](CHANGELOG.md) for what changed in each version.
 
