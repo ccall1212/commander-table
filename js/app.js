@@ -540,7 +540,7 @@ function showFirstRoll(msg) {
       <h2 class="first-roll-title">Roll for first player</h2>
       <div class="first-roll-subtitle">Everyone rolls a d20 · highest goes first</div>
       <div class="first-roll-grid">
-        ${results.map(result => `
+        ${results.map((result, index) => `
           <div class="first-roll-tile" style="--first-roll-color:${esc(colorOf(result.pid))};--first-roll-delay:${index * 140}ms"
                data-roll="${result.value}" data-winner="${result.pid === winner ? 'true' : 'false'}"
                aria-label="${esc(result.name)} d20 result">
