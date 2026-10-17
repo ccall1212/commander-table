@@ -2,7 +2,7 @@
 
 This folder records changes prepared or committed by ChatGPT for Commander Table, along with release steps that remain incomplete. It is a handoff log, not a replacement for `CHANGELOG.md` (which is the player-facing release history) or `AGENTS.md` (which documents the project's development and release workflow).
 
-The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES.md). Objectives 1–3, 8, 10, and 13 are complete and deployed. Objective 4 (larger battlefield cards) is intentionally deferred. Objective #9 (random deck / website URL import) is paused in draft [PR #11](https://github.com/ccall1212/commander-table/pull/11) and has **not been merged or pushed to main**; see the [PR #11 investigation handoff](PR-11-DECK-IMPORT-INVESTIGATION.md). Objective #6 (animate drawing a card) is now the next priority. Objectives 5, 7, 11, and 12 remain queued.
+The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES.md). Objectives 1–3, 8, 10, and 13 are complete and deployed. Objective 4 (larger battlefield cards) is intentionally deferred. Objective #9 (random deck / website URL import) is paused in draft [PR #11](https://github.com/ccall1212/commander-table/pull/11) and has **not been merged or pushed to main**; see the [PR #11 investigation handoff](PR-11-DECK-IMPORT-INVESTIGATION.md). Objective #6 (animate drawing a card) is in progress in draft [PR #12](https://github.com/ccall1212/commander-table/pull/12) on `feat/draw-card-animation-preview`; no source changes have been merged or published. Objectives 5, 7, 11, and 12 remain queued.
 
 **Status checked:** 2026-10-17  
 **App version on main:** `0.16.0` (merged and deployed).  
@@ -16,6 +16,13 @@ The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES
 - **Status:** [Draft PR #11](https://github.com/ccall1212/commander-table/pull/11) remains open on `feat/random-commander-deck-picker-preview`. The v0.17.0 source changes have **not been merged or pushed to main and have not been published**; live/main stays at v0.16.0. Only this investigation note and backlog updates are being committed to main so Claude Code can find them later.
 - **Controls:** random selection and website URL import remain hidden/disabled in the PR preview; normal plain-text import stays available.
 - **Findings and Claude Code test steps:** see [PR-11-DECK-IMPORT-INVESTIGATION.md](PR-11-DECK-IMPORT-INVESTIGATION.md).
+
+## PR #12 — draw-card animation (draft, not in main)
+
+- **Status:** [Draft PR #12](https://github.com/ccall1212/commander-table/pull/12), branch `feat/draw-card-animation-preview`, version 0.17.0 preview. It is separate from paused import PR #11. The draw-animation source has **not been merged or pushed to main and has not been published**; live/main remains v0.16.0.
+- Adds a brief Library-to-hand flight and flip for click-to-draw / D-key draws and turn-start Auto-Draw. The draw event contains no card identity; only the drawer sees the face, while opponents see the card back.
+- Source-level syntax and reference checks passed. ChatGPT has not run the real browser or multiplayer tests.
+- **Required before merge:** follow the manual test list in [PR #12](https://github.com/ccall1212/commander-table/pull/12) and the detailed status/test checklist in the branch's [OBJECTIVES.md](https://github.com/ccall1212/commander-table/blob/feat/draw-card-animation-preview/GPT-CHANGES/OBJECTIVES.md). Do not publish without Chris's explicit OK.
 
 ## Active-player yellow outline — v0.14.2 (merged to main)
 
