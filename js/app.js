@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.20.1';
+const APP_VERSION = '0.20.2';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -314,8 +314,9 @@ function hostRecv(msg, from) {
     case 'slamfx': {
       if (!S.table.seats.includes(from) || typeof msg.iid !== 'string' || !/^[\\w-]{1,40}$/.test(msg.iid)) return;
       const player = S.players[from];
-      const card = player && player.zones && player.zones.battlefield.find(c => c.iid === msg.iid && c.cmd);
-      if (!card) return;
+      const card = player && player.zones && Array.isArray(player.zones.battlefield) && player.zones.battlefield.find(c => c.iid === msg.iid);
+      const knownCommander = player && Array.isArray(player.cmdrs) && player.cmdrs.some(c => c.iid === msg.iid);
+      if (!card || !(card.cmd || knownCommander)) return;
       const ci = Array.isArray(msg.ci) ? [...new Set(msg.ci.filter(c => ['W', 'U', 'B', 'R', 'G'].includes(c)))] : [];
       broadcast({ t: 'slamfx', pid: from, iid: msg.iid, ci });
       break;
@@ -847,7 +848,7 @@ function doMove(iid, to, opts = {}) {
   });
   if (!res || res.repos) return;
   const { card, def } = res;
-  if (res.from === 'command' && to === 'battlefield' && card.cmd && !card.fd && !res.gone && def) {
+  if (res.from === 'command' && to === 'battlefield' && !card.fd && !res.gone && def) {
     emitCommanderSlam(card.iid, def.ci);
   }
   if (res.orphans && res.orphans.length) orphanToast(res.orphans);
@@ -1167,6 +1168,8 @@ function animateDrawCard(pid, count) {
 // The short delay lets the public battlefield update reach the host before it validates the event.
 function emitCommanderSlam(iid, ci) {
   const colors = Array.isArray(ci) ? [...new Set(ci.filter(c => ['W', 'U', 'B', 'R', 'G'].includes(c)))] : [];
+  // Play during the initiating click/drag gesture so browser autoplay rules don't swallow it.
+  playCommanderSlamSound();
   if (S.role === 'solo') {
     // Run locally instead of routing through the multiplayer broadcast handler.
     animateCommanderSlam(S.pid, iid, colors);
@@ -1176,18 +1179,28 @@ function emitCommanderSlam(iid, ci) {
 }
 
 function animateCommanderSlam(pid, iid, ci) {
-  if (!pid || !iid ||
-      (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
-  playCommanderSlamSound();
+  if (!pid || !iid) return;
+  const reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  // The player who cast it already heard the gesture-triggered sound in emitCommanderSlam.
+  if (pid !== S.pid) playCommanderSlamSound();
   const palette = { W: '#f2e4b5', U: '#62c5f2', B: '#a38bd2', R: '#ff705f', G: '#76cf91' };
   const colors = [...new Set((ci || []).filter(c => palette[c]).map(c => palette[c]))];
   if (!colors.length) colors.push('#e6d8a5'); // a neutral glow for colorless commanders
-  const glow = colors.map(c => '0 0 20px 4px ' + c + '99').join(', ');
+  const glow = colors.map(c => '0 0 24px 6px ' + c + 'bb').join(', ');
   const border = colors.length === 1 ? colors[0] : 'transparent';
+  const identityGradient = colors.length === 1
+    ? 'linear-gradient(180deg, ' + colors[0] + ' 0 100%)'
+    : colors.length === 2
+      ? 'linear-gradient(180deg, ' + colors[0] + ' 0 50%, ' + colors[1] + ' 50% 100%)'
+      : (() => {
+          const step = 360 / colors.length;
+          const stops = colors.map((color, i) => color + ' ' + (i * step) + 'deg ' + ((i + 1) * step) + 'deg');
+          return 'conic-gradient(from -90deg, ' + stops.join(', ') + ')';
+        })();
   let attempts = 0;
 
   const start = () => {
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (!reduceMotion && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const candidates = [...document.querySelectorAll('.card[data-iid][data-zone="battlefield"]')]
       .filter(el => el.dataset.iid === iid && (!el.dataset.pid || el.dataset.pid === pid) && drawAnimationVisible(el))
       .map(el => ({ el, rect: el.getBoundingClientRect() }))
@@ -1207,12 +1220,19 @@ function animateCommanderSlam(pid, iid, ci) {
       borderRadius: getComputedStyle(card).borderRadius || '5px',
       border: '4px solid transparent',
       borderColor: border,
-      background: 'linear-gradient(rgba(255,255,255,.06), rgba(255,255,255,.06)) padding-box, conic-gradient(' + colors.join(', ') + ') border-box',
+      background: 'linear-gradient(rgba(255,255,255,.06), rgba(255,255,255,.06)) padding-box, ' + identityGradient + ' border-box',
       boxShadow: glow + ', 0 0 0 3px rgba(255,255,255,.5)',
       zIndex: '2147483647',
       mixBlendMode: 'screen'
     });
     document.body.appendChild(ring);
+
+    if (reduceMotion) {
+      // Respect reduced-motion preferences with a static color flash instead of movement.
+      ring.style.opacity = '1';
+      setTimeout(() => ring.remove(), 460);
+      return;
+    }
 
     card.animate([
       { transform: 'translateY(-18px) scale(1.055) rotate(-1.4deg)', filter: 'brightness(1.28)', boxShadow: glow, offset: 0 },
@@ -1230,7 +1250,6 @@ function animateCommanderSlam(pid, iid, ci) {
   requestAnimationFrame(() => requestAnimationFrame(start));
 }
 function playCommanderSlamSound() {
-  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
   if (!AudioContextClass) return;
   let ctx;
