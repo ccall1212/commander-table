@@ -1,4 +1,4 @@
-# Manual test checklist — Commander slam animation (v0.20.4 candidate)
+# Manual test checklist — Commander slam animation (v0.20.5 candidate)
 
 ## Start the app
 
@@ -10,12 +10,12 @@
 
 ## Click-by-click checks
 
-1. **Commander slam:** move your Commander from the command zone onto the battlefield. Expect a visible lift-and-impact animation with a bright, split-color identity ring, a heavier boom, and a ring that lasts longer. Two colors split top/bottom; three to five colors appear as separate radial segments.
+1. **Commander slam:** move your Commander from the command zone onto the battlefield. Expect a visible lift-and-impact animation with a bright, split-color identity ring, a punchy boom-crack sound, and a ring that lasts longer. Two colors split top/bottom; three to five colors appear as separate radial segments.
 2. **Color identities:** if possible, test a mono-color Commander, a multicolor Commander, and a colorless Commander. The colorless card should get a neutral glow.
 3. **Ordinary movement sound:** move a normal card onto the battlefield and reposition a card already there. Each should make a softer card-tap sound, not the Commander boom.
 4. **Other cards:** move a normal card from your hand onto the battlefield. It should make only the softer card-tap sound, not the Commander slam.
 5. **Other moves:** move a Commander from graveyard or exile to the battlefield. It should not get the command-zone slam.
-6. **Online (the case that was broken):** click **Host a game** in the first tab, copy the room code, and in a second tab open `http://127.0.0.1:8099/index.html?join=<ROOM>` with another name and deck. In the first tab, cast your Commander from the command zone by double-clicking it, then again (after returning it) by dragging it onto your battlefield. **Both tabs** should show the colored ring and hear the heavier Commander boom. Also place and reposition an ordinary card; both tabs should hear only the softer tap. Try the tests from the second tab too. Cards must stay clickable during effects.
+6. **Online (the case that was broken):** click **Host a game** in the first tab, copy the room code, and in a second tab open `http://127.0.0.1:8099/index.html?join=<ROOM>` with another name and deck. In the first tab, cast your Commander from the command zone by double-clicking it, then again (after returning it) by dragging it onto your battlefield. **Both tabs** should show the colored ring and hear the boom-crack Commander sound. Also place and reposition an ordinary card; both tabs should hear only the softer tap. Try the tests from the second tab too. Cards must stay clickable during effects.
 7. **Layouts/sizes:** test Sidebar and Grid at approximately 1920×1080 and 1366×768.
 8. **Reduced motion:** enable your operating system/browser reduced-motion preference and reload. The effect should show a brief static color flash (no movement); the impact sound should still play.
 9. **Console:** check for errors.
