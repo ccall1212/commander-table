@@ -264,6 +264,9 @@ body.side-open #side { display: grid; }
 /* ---------- Free-form boards (logical 1400x430, scaled to fit) ---------- */
 .boardwrap { position: relative; width: 100%; height: 100%; overflow: hidden; }
 .board { position: absolute; left: 0; top: 0; width: 1400px; height: 430px; transform-origin: 0 0; --cw: 80px; }
+/* Cards are manipulated with pointer gestures; prevent accidental browser text/image selection while dragging. */
+.board, .board * { -webkit-user-select: none; user-select: none; }
+.board img { -webkit-user-drag: none; }
 /* Zones: quiet outlines + small labels. --inv (set by JS = 1/scale) keeps label text ~12px on screen at any zoom. */
 .region { position: absolute; border: 1px solid rgba(255,255,255,.12); border-radius: 12px; background: rgba(255,255,255,.025);
   pointer-events: none; }
