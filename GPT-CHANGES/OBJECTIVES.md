@@ -1,6 +1,6 @@
 # Commander Table — Objectives Backlog
 
-This is the working list of the next UI and gameplay improvements requested by Chris. Keep the original numbering so we can work through them one at a time. Objectives 1–3 are complete; **Objectives 8 and 10** are in progress together for v0.16.0. Objective 4 (larger cards) is intentionally deferred for now. Objectives 5–7, 9, and 11–12 remain queued.
+This is the working list of the next UI and gameplay improvements requested by Chris. Keep the original numbering so we can work through them one at a time. Objectives 1–3 are complete; **Objectives 8, 10, and 13** are in progress together for v0.16.0. Objective 4 (larger cards) is intentionally deferred for now. Objectives 5–7, 9, 11, and 12 remain queued.
 
 ## Status key
 
@@ -121,6 +121,12 @@ Add a visual way to show which card or player an effect is targeting, inspired b
 - Provide an easy way to cancel arrow placement and clear/remove arrows after the table has understood the intent.
 - Keep arrows visual-only: they should not move cards or automatically perform game actions. Preserve normal right-click menus, card dragging, and touch-friendly interactions.
 - Decide on multiple simultaneous arrows, colors/labels, and exact menu wording during implementation; start with the simplest reliable targeting arrow.
+
+## 13. Play a hovered hand card onto the battlefield tapped — IN PROGRESS (v0.16.0 PR #8)
+
+- When the cursor is over one of your cards in hand, pressing **T** moves it onto the battlefield with its tapped state set. It should land in the battlefield area that matches the card's type, using the existing automatic placement logic.
+- When a card already on the battlefield is hovered, **T** keeps its existing tap/untap behavior.
+- Add the shortcut to the in-game Hotkey list and player guide. Check a creature, land, and artifact/enchantment card; also confirm T still taps and untaps battlefield cards.
 
 ## Suggested workflow
 
