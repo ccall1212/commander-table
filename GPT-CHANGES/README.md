@@ -12,6 +12,7 @@ The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES
 **Release tag status:** annotated tags `v0.14.1`, `v0.14.2`, `v0.15.0`, `v0.15.1`, and `v0.16.0` still need to be created and verified locally; see “Remaining release housekeeping” below.
 **Active feature branch:** `feat/random-commander-deck-picker-preview` — v0.17.0 preview for Objective #9, not merged or published.
 **Review PR:** [Draft PR #11](https://github.com/ccall1212/commander-table/pull/11). The live site remains v0.16.0 until the feature is tested and Chris approves publication.
+**PR housekeeping:** the earlier docs-only [PR #10](https://github.com/ccall1212/commander-table/pull/10) was closed as superseded by PR #11, which contains those priority notes along with the feature preview.
 
 ## Next feature priorities
 
