@@ -1,6 +1,6 @@
 # Commander Table — Objectives Backlog
 
-This is the working list of the next UI and gameplay improvements requested by Chris. Keep the original numbering so we can work through them one at a time. The current priority is **Objective 1**; objectives 7 and 8 have been added to the queue, not started.
+This is the working list of the next UI and gameplay improvements requested by Chris. Keep the original numbering so we can work through them one at a time. Objective 1 is complete and published in source; the next priority is **Objective 2**. Objectives 7 and 8 remain queued.
 
 ## Status key
 
@@ -8,17 +8,17 @@ This is the working list of the next UI and gameplay improvements requested by C
 - **Queued** — requested, not yet implemented.
 - **Needs decision** — a design or existing-shortcut conflict must be resolved before implementation.
 
-## 1. Restore the yellow active-player outline — IN PROGRESS
+## 1. Restore the yellow active-player outline — COMPLETE (v0.14.2 merged to main)
 
 Show a clear yellow/gold outline around the player whose turn it is. The existing "Pass Turn" button changes color, but the player board outline appears to have been lost.
 
 - Apply correctly in Sidebar and Grid layouts, including the active player's own board and opponents' boards.
 - When the turn passes, the highlight should move to the new active player.
 - Focused opponent views must not show an outline around the wrong / transparent overlay.
-- **Current work:** [PR #3 — Restore yellow outline for the active player](https://github.com/ccall1212/commander-table/pull/3).
-- **Status:** Source change prepared on branch `fix/active-turn-highlight`, version `0.14.2`. Browser verification is still required before publishing. See the PR for the manual test list.
+- **Pull request:** [PR #3 — Restore yellow outline for the active player](https://github.com/ccall1212/commander-table/pull/3) — merged in [commit `78b6d5a`](https://github.com/ccall1212/commander-table/commit/78b6d5ae99e0ef95f0e5b644f1aa27f716211f84).
+- **Status:** Chris previewed the change locally, confirmed it looked good, and approved publication. The app source is now on `main` at version `0.14.2`. GitHub Pages deployment and the missing annotated release tags are tracked in `GPT-CHANGES/README.md`.
 
-## 2. Animate the opening turn-order dice roll — QUEUED
+## 2. Animate the opening turn-order dice roll — NEXT
 
 When players roll to choose who goes first, show a large, clear animated dice result rather than only recording the result in the game log.
 
