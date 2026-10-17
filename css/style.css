@@ -89,7 +89,7 @@ body.side-open #side { display: grid; }
 #opps { display: flex; gap: 6px; padding: 6px; min-height: 0; }
 #opps.n1 { --cw: 74px; } #opps.n2 { --cw: 64px; } #opps.n3 { --cw: 54px; } #opps.n4, #opps.n5 { --cw: 46px; }
 #opps:empty::after { content: 'Waiting for other players to join… share the room code at the top left.'; margin: auto; color: var(--muted); }
-.opp { flex: 1; min-width: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); background: var(--panel);
+.opp { position: relative; flex: 1; min-width: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); background: var(--panel);
   border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
 /* Draw the active-player border above board content; the old inset shadow was hidden by the opaque board layers. */
 .opp.active::after, #mine.active::after {
