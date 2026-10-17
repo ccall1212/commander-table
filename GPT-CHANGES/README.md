@@ -20,6 +20,7 @@ The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES
 
 ## Opening turn-order dice animation — v0.15.0 (in progress)
 
+- **Pull request:** [#4 — Animate opening first-player dice roll](https://github.com/ccall1212/commander-table/pull/4) — open for review.
 - **Branch:** `feat/animated-first-player-roll`.
 - Adds a shared `firstroll` visual event containing the final d20 results from the existing host-side turn-order calculation. Every connected screen shows a brief number-roll animation and highlights the winner.
 - Does not change the tie-reroll logic, chosen `T.order`, or Start game behavior. The overlay ignores pointer input so it cannot block game actions and respects reduced-motion preferences.
