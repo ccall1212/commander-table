@@ -2,7 +2,7 @@
 
 This folder records changes prepared or committed by ChatGPT for Commander Table, along with release steps that remain incomplete. It is a handoff log, not a replacement for `CHANGELOG.md` (which is the player-facing release history) or `AGENTS.md` (which documents the project's development and release workflow).
 
-The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES.md). Objectives 1–3 and 8, 10, and 13 are complete and deployed. Objective 4 (larger battlefield cards) is intentionally deferred for now. Objectives 5–7, 9, 11, and 12 remain queued.
+The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES.md). Objectives 1–3, 8, 10, and 13 are complete and deployed. Objective 4 (larger battlefield cards) is intentionally deferred. Objective #9 (random deck / website URL import) is paused in draft [PR #11](https://github.com/ccall1212/commander-table/pull/11) and has **not been merged or pushed to main**; see the [PR #11 investigation handoff](PR-11-DECK-IMPORT-INVESTIGATION.md). Objective #6 (animate drawing a card) is now the next priority. Objectives 5, 7, 11, and 12 remain queued.
 
 **Status checked:** 2026-10-17  
 **App version on main:** `0.16.0` (merged and deployed).  
@@ -10,6 +10,12 @@ The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES
 **GitHub Pages:** [deployment run `38996909975`](https://github.com/ccall1212/commander-table/actions/runs/38996909975) succeeded.  
 **Browser testing:** ChatGPT verified source-level checks only; real-browser/multiplayer checks remain for Chris to run.  
 **Release tag status:** annotated tags `v0.14.1`, `v0.14.2`, `v0.15.0`, `v0.15.1`, and `v0.16.0` still need to be created and verified locally; see “Remaining release housekeeping” below.
+
+## PR #11 — random deck picker / website URL import (draft, not in main)
+
+- **Status:** [Draft PR #11](https://github.com/ccall1212/commander-table/pull/11) remains open on `feat/random-commander-deck-picker-preview`. The v0.17.0 source changes have **not been merged or pushed to main and have not been published**; live/main stays at v0.16.0. Only this investigation note and backlog updates are being committed to main so Claude Code can find them later.
+- **Controls:** random selection and website URL import remain hidden/disabled in the PR preview; normal plain-text import stays available.
+- **Findings and Claude Code test steps:** see [PR-11-DECK-IMPORT-INVESTIGATION.md](PR-11-DECK-IMPORT-INVESTIGATION.md).
 
 ## Active-player yellow outline — v0.14.2 (merged to main)
 
