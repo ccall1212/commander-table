@@ -52,7 +52,7 @@ Chris confirmed that he tested the pointer/clicking fix in a real browser before
 
 # Manual test checklist — iPad and phone Touch mode (v0.22.0 candidate)
 
-1. Extract the branch ZIP, run `python -m http.server 8099 --bind 127.0.0.1` in its folder, and open `http://127.0.0.1:8099/index.html`. For an iPhone/iPad, serve the folder from a computer on the same Wi-Fi and open that computer's local-network address on the device.
+1. Extract the branch ZIP, run `python -m http.server 8099 --bind 0.0.0.0` in its folder, and open `http://127.0.0.1:8099/index.html` on that computer. For an iPhone/iPad on the same Wi-Fi, open `http://<COMPUTER-LAN-IP>:8099/index.html` on the device (replace the placeholder with the computer's local IP address).
 2. Start Practice solo. Open **☰ → Touch mode**. Confirm the menu item shows a check mark and the toast explains that page scrolling is disabled. Reload and confirm Touch mode remains enabled on that device.
 3. On a phone held upright, confirm a small banner recommends landscape and can be dismissed. Rotate sideways and confirm the banner disappears and the game uses the available screen height. Rotate back and confirm the game remains usable; the banner may appear again if it was not dismissed.
 4. Tap a card in your hand and on the battlefield. Its large preview should appear and include an **Actions** button. Tap **Actions** and confirm the existing card context menu opens and its options work.
