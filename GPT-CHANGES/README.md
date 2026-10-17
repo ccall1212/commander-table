@@ -31,7 +31,7 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 - **Goal:** allow a player to choose a local image for their own table background and/or card back, with clear format/dimension guidance, preview, validation, and a way to restore presets.
 - **Storage/sharing decision:** local browser storage only; don't upload user images to a server. Check practical storage limits and handle oversized images gracefully.
 - **Existing code:** appearance presets and preference handling are in `js/appearance.js`; lobby picker markup is in `index.html`; styling is in `css/style.css`; app state carries appearance preferences in `js/app.js`.
-- **Implemented on branch / PR #30:** custom card-back and background uploads, local-only optimized WebP storage, preview/reset controls, validation/dimension guidance, version 0.21.0, player README, changelog, and `TESTING.md`. The PR links the exact branch ZIP. Source syntax execution and real-browser checks remain unperformed here; Chris should test Sidebar and Grid at 1920×1080 and 1366×768, plus a second player to verify custom images do not leak.
+- **Implemented on branch / PR #30:** custom card-back and background uploads, local-only optimized WebP storage, preview/reset controls, validation/dimension guidance, version 0.21.1, player README, changelog, and `TESTING.md`. The PR links the exact branch ZIP. Source syntax execution and real-browser checks remain unperformed here; Chris should test Sidebar and Grid at 1920×1080 and 1366×768, plus a second player to verify custom images do not leak.
 
 ## How a change gets released
 
