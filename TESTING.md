@@ -1,4 +1,4 @@
-# Manual test checklist — Commander slam animation (v0.20.2 candidate)
+# Manual test checklist — Commander slam animation (v0.20.3 candidate)
 
 ## Start the app
 

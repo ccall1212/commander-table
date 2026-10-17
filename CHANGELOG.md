@@ -6,6 +6,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.20.3] - 2026-10-17
+
+### Fixed
+- Fix the Commander slam never showing in online games: the host rejected every card as invalid.
+- Send the slam right after the card's new position instead of on a timer, so it can't arrive too early.
+- Make the impact sound louder and add a short noise "slam" so it can be heard on laptop speakers.
+
 ## [0.20.2] - 2026-10-17
 
 ### Fixed
@@ -312,7 +319,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - First playable build: paste-import decks from Moxfield or Archidekt (via Scryfall), 2–4 player rooms over PeerJS with self-healing reconnects, a searchable zone viewer, commander damage tracking and automatic tokens.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.20.2...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.20.3...HEAD
+[0.20.3]: https://github.com/ccall1212/commander-table/compare/v0.20.2...v0.20.3
 [0.20.2]: https://github.com/ccall1212/commander-table/compare/v0.20.1...v0.20.2
 [0.20.1]: https://github.com/ccall1212/commander-table/compare/v0.20.0...v0.20.1
 [0.20.0]: https://github.com/ccall1212/commander-table/compare/v0.19.1...v0.20.0

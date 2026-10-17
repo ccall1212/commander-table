@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.20.2';
+const APP_VERSION = '0.20.3';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -312,7 +312,7 @@ function hostRecv(msg, from) {
       break;
     }
     case 'slamfx': {
-      if (!S.table.seats.includes(from) || typeof msg.iid !== 'string' || !/^[\\w-]{1,40}$/.test(msg.iid)) return;
+      if (!S.table.seats.includes(from) || typeof msg.iid !== 'string' || !/^[\w-]{1,40}$/.test(msg.iid)) return;
       const player = S.players[from];
       const card = player && player.zones && Array.isArray(player.zones.battlefield) && player.zones.battlefield.find(c => c.iid === msg.iid);
       const knownCommander = player && Array.isArray(player.cmdrs) && player.cmdrs.some(c => c.iid === msg.iid);
@@ -1165,7 +1165,7 @@ function animateDrawCard(pid, count) {
 }
 
 // Send only a public card instance ID and color identity; no hidden card information is included.
-// The short delay lets the public battlefield update reach the host before it validates the event.
+// The card's new position is published first (messages reach the host in order), so the host can find it.
 function emitCommanderSlam(iid, ci) {
   const colors = Array.isArray(ci) ? [...new Set(ci.filter(c => ['W', 'U', 'B', 'R', 'G'].includes(c)))] : [];
   // Play during the initiating click/drag gesture so browser autoplay rules don't swallow it.
@@ -1175,7 +1175,8 @@ function emitCommanderSlam(iid, ci) {
     animateCommanderSlam(S.pid, iid, colors);
     return;
   }
-  setTimeout(() => toHost({ t: 'slamfx', iid, ci: colors }), 180);
+  clearTimeout(pubTimer); doPublish();
+  toHost({ t: 'slamfx', iid, ci: colors });
 }
 
 function animateCommanderSlam(pid, iid, ci) {
@@ -1259,10 +1260,10 @@ function playCommanderSlamSound() {
       const now = ctx.currentTime;
       const thud = ctx.createOscillator(), thudGain = ctx.createGain();
       thud.type = 'sine';
-      thud.frequency.setValueAtTime(105, now);
-      thud.frequency.exponentialRampToValueAtTime(42, now + 0.19);
+      thud.frequency.setValueAtTime(180, now);
+      thud.frequency.exponentialRampToValueAtTime(55, now + 0.19);
       thudGain.gain.setValueAtTime(0.0001, now);
-      thudGain.gain.exponentialRampToValueAtTime(0.24, now + 0.012);
+      thudGain.gain.exponentialRampToValueAtTime(0.5, now + 0.012);
       thudGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.24);
       thud.connect(thudGain); thudGain.connect(ctx.destination);
       thud.start(now); thud.stop(now + 0.25);
@@ -1272,10 +1273,22 @@ function playCommanderSlamSound() {
       crack.frequency.setValueAtTime(460, now);
       crack.frequency.exponentialRampToValueAtTime(115, now + 0.065);
       crackGain.gain.setValueAtTime(0.0001, now);
-      crackGain.gain.exponentialRampToValueAtTime(0.055, now + 0.004);
+      crackGain.gain.exponentialRampToValueAtTime(0.18, now + 0.004);
       crackGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.075);
       crack.connect(crackGain); crackGain.connect(ctx.destination);
       crack.start(now); crack.stop(now + 0.08);
+
+      // A short burst of noise is the "slam": it has plenty of treble, so small speakers can play it.
+      const frames = Math.floor(ctx.sampleRate * 0.12);
+      const noiseBuffer = ctx.createBuffer(1, frames, ctx.sampleRate);
+      const samples = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < frames; i++) samples[i] = (Math.random() * 2 - 1) * (1 - i / frames);
+      const noise = ctx.createBufferSource(), noiseGain = ctx.createGain();
+      noise.buffer = noiseBuffer;
+      noiseGain.gain.setValueAtTime(0.35, now);
+      noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+      noise.connect(noiseGain); noiseGain.connect(ctx.destination);
+      noise.start(now);
       setTimeout(() => { if (ctx.state !== 'closed') ctx.close().catch(() => {}); }, 350);
     };
     if (ctx.state === 'suspended') ctx.resume().then(play).catch(() => {});
