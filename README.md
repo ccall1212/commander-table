@@ -110,6 +110,7 @@ Dropped connections and crashed tabs happen, and recovering from them is the mai
 
 - Click a battlefield card to tap or untap it.
 - Double-click a card in your hand to play it.
+- Hover over a card in your hand and press **T** to play it onto the battlefield **tapped**; it is placed in the battlefield area that matches its card type. On the battlefield, **T** still taps or untaps it.
 - Double-click your commander to cast it. Commander tax is manual: left-click the 🪙 chip beside CMD for +2, right-click for −2 (or use the commander's right-click menu).
 - Right-click any of your cards for options: counters, transform, face down, **Copy this card**, give control, and move to any zone.
 - Right-click an opponent's card (or use the graveyard/exile viewer) to **Copy this card** onto your battlefield — handy for Clone effects. Copies show a purple **TOKEN COPY** label and vanish if they leave the battlefield.
@@ -184,7 +185,7 @@ Dropped connections and crashed tabs happen, and recovering from them is the mai
 
 Open **☰ → Hotkey list…** during a game to see the full reference.
 
-Hover over one of your cards and press **T** to tap, **F** to flip, **Z** to turn face down/up, **G** to move to Graveyard, **E** to move to Exile, **H** to move to Hand, **B** to move to Battlefield, **A** to attach, **J** to add a counter, or **I** to view card information.
+Hover over one of your cards and press **T** to tap or untap it; if the hovered card is in your hand, **T** instead plays it onto the battlefield tapped. Press **F** to flip, **Z** to turn face down/up, **G** to move to Graveyard, **E** to move to Exile, **H** to move to Hand, **B** to move to Battlefield, **A** to attach, **J** to add a counter, or **I** to view card information.
 
 Hover over your **Library** and press **S** to shuffle (the Library itself wiggles with a short sound), or **X** to mill the top card into your Graveyard. Press **L** anywhere during a game to open Search Library. **Ctrl+F** remains the browser's Find-on-page shortcut. You can also draw with **D**, untap all with **U**, pass the turn with **Space**, and undo with **Ctrl+Z** (or **⌘Z** on Mac).
 
