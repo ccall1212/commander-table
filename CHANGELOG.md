@@ -9,6 +9,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - `AGENTS.md`: how changes are made, tested, versioned and released (for AI assistants and humans).
 
+## [0.18.0] - 2026-10-16
+
+### Added
+- Drag on empty battlefield space to select several cards, then drag any selected card to move the group together.
+- Hold **Shift** while drawing a selection rectangle to add cards; **Shift-click** toggles one card, and clicking empty space or pressing **Esc** clears the selection.
+- Dropping a selected group on a zone pile moves the whole group; dropping it on another player's board gives that player control of the group.
+
 ## [0.17.1] - 2026-10-17
 
 ### Fixed
@@ -266,7 +273,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - First playable build: paste-import decks from Moxfield or Archidekt (via Scryfall), 2–4 player rooms over PeerJS with self-healing reconnects, a searchable zone viewer, commander damage tracking and automatic tokens.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.17.1...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.18.0...HEAD
+[0.18.0]: https://github.com/ccall1212/commander-table/compare/v0.17.1...v0.18.0
 [0.17.1]: https://github.com/ccall1212/commander-table/compare/v0.17.0...v0.17.1
 [0.17.0]: https://github.com/ccall1212/commander-table/compare/v0.16.0...v0.17.0
 [0.16.0]: https://github.com/ccall1212/commander-table/compare/v0.15.1...v0.16.0

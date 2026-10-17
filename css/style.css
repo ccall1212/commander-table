@@ -291,6 +291,9 @@ body.side-open #side { display: grid; }
 .board.arrange .region .grip.sw { left: -2px; bottom: -2px; cursor: nesw-resize; border-radius: 0 8px 0 10px; }
 .board.arrange .region .grip.se { right: -2px; bottom: -2px; cursor: nwse-resize; border-radius: 8px 0 10px 0; }
 .board .card { position: absolute; touch-action: none; }
+.board .card.selected { outline: 3px solid var(--accent) !important; outline-offset: 2px; }
+.ct-selection-rectangle { position: fixed; display: none; pointer-events: none; z-index: 2500;
+  border: 1px solid var(--accent); background: rgba(212,167,44,.14); box-shadow: 0 0 0 1px rgba(0,0,0,.35); }
 .board .card.tapped { margin: 0; }
 .board .card:hover { z-index: 900 !important; }
 .board .card.att { filter: brightness(.92); }

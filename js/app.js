@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.17.1';
+const APP_VERSION = '0.18.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -112,6 +112,7 @@ const S = {
   net: { state: 'offline', text: '' },
   hover: null,      // {pid, iid}
   dragging: false,
+  selected: new Set(), // selected battlefield card IDs; local UI state only
   dragEndAt: 0,
   arrange: false,   // editing my zone layout
   focus: null,      // opponent pid shown large
@@ -714,6 +715,7 @@ function resetForNewGame() {
   const deck = Deck.get(S.deckId);
   if (!deck) { UI.toast('Your deck is missing from this browser — cannot restart.', { kind: 'error' }); return; }
   S.me = newPlayer(deck, S.me.name, S.me);
+  S.selected.clear();
   S.undo = [];
   publish(true);
 }
@@ -1943,6 +1945,7 @@ function renderNow() {
   }
 }
 function renderBody() {
+  pruneSelection();
   const idx = buildIndex();
   { const row = $('#myRow'), h = row && row.offsetHeight; if (h) $('#table').style.setProperty('--stripH', h + 'px'); }
   renderTop(); renderOpps(idx); renderMine(idx); renderLog();
@@ -1965,6 +1968,7 @@ function cardHTML(c, def, o) {
   const cls = ['card'];
   if (typeof drawPendingIids !== 'undefined' && drawPendingIids.has(c.iid)) cls.push('ct-draw-pending');
   if (c.t) cls.push('tapped'); if (o.mine) cls.push('mine'); if (c.att) cls.push('att');
+  if (o.zone === 'battlefield' && ctrl === S.pid && !c.att && S.selected.has(c.iid)) cls.push('selected');
   let inner;
   if (c.fd) {
     inner = UI.cardBackHTML('', appearanceBackFor(o.pid)) + (o.mine && def ? `<span class="fdname">${esc(dname(def))}</span>` : '');
@@ -2610,6 +2614,7 @@ function previewFromEl(cardEl) {
 //  Events
 // =====================================================================
 let drag = null; // a card being dragged with the pointer
+let selectionDrag = null; // a temporary selection rectangle
 function bindGame() {
   const g = $('#game');
   g.addEventListener('click', e => {
@@ -2638,6 +2643,15 @@ function bindGame() {
     if (ctr && card && card.dataset.pid === S.pid) { addCounter(card.dataset.iid, ctr.dataset.ctr, 1); return; }
     const ptb = t.closest('.badges .pt');
     if (ptb && card && card.dataset.pid === S.pid) { changePT(card.dataset.iid, 1, 1); return; }
+    if (card && e.shiftKey && card.dataset.pid === S.pid && card.dataset.zone === 'battlefield') {
+      const f = findCard(card.dataset.iid);
+      if (f && f.zone === 'battlefield' && !f.card.att) {
+        if (S.selected.has(card.dataset.iid)) S.selected.delete(card.dataset.iid);
+        else S.selected.add(card.dataset.iid);
+        applySelectionClasses(); render();
+      }
+      return;
+    }
     if (t.closest('.ad-control')) return; // Auto-Draw control is inside the clickable Library pile
     const pile = t.closest('[data-pile]');
     if (pile) {
@@ -2734,6 +2748,15 @@ function bindGame() {
     if (e.button !== 0 || S.attachFrom) return;
     const handle = e.target.closest('.board.arrange .rlabel, .board.arrange .grip');
     if (handle && handle.closest('.board').dataset.pid === S.pid) { startRegionDrag(e, handle); return; }
+    // Empty-space drag on my own battlefield starts a selection box, unless we're arranging zones.
+    const selectionWrap = e.target.closest('.boardwrap');
+    const selectionBoard = selectionWrap && selectionWrap.firstElementChild;
+    if (selectionWrap && selectionWrap.dataset.board === S.pid && selectionBoard &&
+        selectionBoard.dataset.pid === S.pid && !S.arrange && !selectionBoard.classList.contains('arrange') &&
+        !e.target.closest('.card, .bpile, .zbox, .tpile, .tstrip, [data-drop], [data-pile], .rlabel, .grip, button, input, label, .ad-control')) {
+      startSelectionDrag(e, selectionWrap);
+      return;
+    }
     // dragging one of my piles drags its top card (library: top of deck; graveyard/exile: newest)
     if (e.target.closest('.ad-control')) return; // the Auto-Draw switch inside the Library pile isn't a drag handle
     const pile = e.target.closest('.zbox[data-pile], .tpile[data-pile]');
@@ -2750,6 +2773,7 @@ function bindGame() {
   });
   window.addEventListener('pointermove', e => {
     if (S.regionDrag) { regionMove(e); return; }
+    if (selectionDrag) { moveSelectionDrag(e); return; }
     if (!drag) return;
     if (!drag.moved) {
       if (Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < 6) return;
@@ -2761,6 +2785,7 @@ function bindGame() {
   });
   window.addEventListener('pointerup', e => {
     if (S.regionDrag) { regionEnd(); return; }
+    if (selectionDrag) { endSelectionDrag(e); return; }
     if (!drag) return;
     const d = drag; drag = null;
     if (!d.moved) return;
@@ -2772,6 +2797,7 @@ function bindGame() {
     try { dropCard(d, e); } finally { render(); }
   });
   window.addEventListener('pointercancel', () => {
+    if (selectionDrag) { cancelSelectionDrag(false); return; }
     if (drag && drag.moved) { drag.ghost.remove(); drag.el.classList.remove('dragging'); clearHighlights(); S.dragging = false; render(); }
     drag = null;
     if (S.regionDrag) regionEnd();
@@ -2844,7 +2870,15 @@ function beginCardDrag(e) {
   drag.gx = drag.offC.dx + w / 2; drag.gy = drag.offC.dy + h / 2;
   drag.ghost = gh; drag.moved = true;
   const f = findCard(drag.iid);
-  drag.attachable = !!(f && isAttachable(defOf(f.card)));
+  const requested = S.selected.has(drag.iid) ? [...S.selected] : [drag.iid];
+  drag.groupPositions = requested.map(iid => {
+    const found = findCard(iid);
+    return found && found.zone === 'battlefield' && !found.card.att
+      ? { iid, x: num(found.card.x, 10), y: num(found.card.y, 20) } : null;
+  }).filter(Boolean);
+  if (!drag.groupPositions.some(p => p.iid === drag.iid) && f)
+    drag.groupPositions = [{ iid: drag.iid, x: num(f.card.x, 10), y: num(f.card.y, 20) }];
+  drag.attachable = drag.groupPositions.length === 1 && !!(f && isAttachable(defOf(f.card)));
   el.classList.add('dragging');
   S.dragging = true; uiEpoch++;
   UI.closeMenu && UI.closeMenu();
@@ -2855,6 +2889,157 @@ function boardPoint(wrap, clientX, clientY) {
   const b = wrap.firstElementChild, s = +b.dataset.s || 1, ox = +b.dataset.ox || 0, oy = +b.dataset.oy || 0, rect = wrap.getBoundingClientRect();
   return { x: (clientX - rect.left - ox) / s, y: (clientY - rect.top - oy) / s };
 }
+
+function selectionBoxElement() {
+  let box = document.getElementById('ct-selection-rectangle');
+  if (!box) {
+    box = document.createElement('div');
+    box.id = 'ct-selection-rectangle';
+    box.className = 'ct-selection-rectangle';
+    document.body.appendChild(box);
+  }
+  return box;
+}
+function pruneSelection() {
+  for (const iid of S.selected) {
+    const f = findCard(iid);
+    if (!f || f.zone !== 'battlefield' || f.card.att) S.selected.delete(iid);
+  }
+}
+function applySelectionClasses() {
+  document.querySelectorAll('.board .card[data-iid]').forEach(el => {
+    el.classList.toggle('selected',
+      el.dataset.pid === S.pid && el.dataset.zone === 'battlefield' && S.selected.has(el.dataset.iid));
+  });
+}
+function startSelectionDrag(e, wrap) {
+  e.preventDefault();
+  const additive = !!e.shiftKey;
+  const base = additive ? new Set(S.selected) : new Set();
+  if (!additive) S.selected.clear();
+  selectionDrag = { wrap, sx: e.clientX, sy: e.clientY, additive, base, moved: false };
+  const box = selectionBoxElement();
+  box.style.display = 'none';
+  applySelectionClasses();
+}
+function moveSelectionDrag(e) {
+  const d = selectionDrag;
+  if (!d) return;
+  if (!d.moved && Math.hypot(e.clientX - d.sx, e.clientY - d.sy) < 6) return;
+  d.moved = true;
+  const left = Math.min(d.sx, e.clientX), top = Math.min(d.sy, e.clientY);
+  const right = Math.max(d.sx, e.clientX), bottom = Math.max(d.sy, e.clientY);
+  const box = selectionBoxElement();
+  box.style.left = left + 'px';
+  box.style.top = top + 'px';
+  box.style.width = Math.max(1, right - left) + 'px';
+  box.style.height = Math.max(1, bottom - top) + 'px';
+  box.style.display = 'block';
+
+  const hits = new Set();
+  d.wrap.querySelectorAll('.board .card[data-zone="battlefield"][data-iid]').forEach(el => {
+    if (el.dataset.pid !== S.pid) return;
+    const f = findCard(el.dataset.iid);
+    if (!f || f.zone !== 'battlefield' || f.card.att) return;
+    const r = el.getBoundingClientRect();
+    if (r.right >= left && r.left <= right && r.bottom >= top && r.top <= bottom) hits.add(el.dataset.iid);
+  });
+  S.selected.clear();
+  d.base.forEach(iid => S.selected.add(iid));
+  hits.forEach(iid => S.selected.add(iid));
+  applySelectionClasses();
+}
+function endSelectionDrag(e) {
+  const d = selectionDrag;
+  if (!d) return;
+  if (d.moved) moveSelectionDrag(e);
+  else S.selected.clear(); // clicking empty battlefield clears selection
+  selectionDrag = null;
+  const box = document.getElementById('ct-selection-rectangle');
+  if (box) box.style.display = 'none';
+  if (d.moved) S.dragEndAt = Date.now(); // suppress the click generated when a drag ends
+  applySelectionClasses();
+  render();
+}
+function cancelSelectionDrag(clearSelection = true) {
+  const d = selectionDrag;
+  selectionDrag = null;
+  const box = document.getElementById('ct-selection-rectangle');
+  if (box) box.style.display = 'none';
+  S.selected.clear();
+  if (!clearSelection && d) d.base.forEach(iid => S.selected.add(iid));
+  applySelectionClasses();
+  render();
+}
+function moveGroupOnBattlefield(group, dx, dy) {
+  const moved = [];
+  act(() => {
+    const bf = S.me.zones.battlefield;
+    for (const p of group) {
+      const f = findCard(p.iid);
+      if (!f || f.zone !== 'battlefield' || f.card.att) continue;
+      f.card.x = clamp(Math.round(p.x + dx), 0, BW - CW);
+      f.card.y = clamp(Math.round(p.y + dy), 0, myBH() - CH);
+      moved.push(f.card);
+    }
+    if (!moved.length) return null;
+    const ids = new Set(moved.map(c => c.iid));
+    S.me.zones.battlefield = bf.filter(c => !ids.has(c.iid)).concat(moved);
+    return ['moved ' + moved.length + ' cards together'];
+  });
+}
+function finishGroupZoneMove(results, to) {
+  for (const r of results) {
+    if (r.orphans && r.orphans.length) orphanToast(r.orphans);
+    if (r.card && r.card.cmd && !r.gone && to !== 'command' && to !== 'battlefield' && r.card.own === S.pid) {
+      UI.toast(dname(r.def) + ' went to your ' + ZL[to] + '.', {
+        ms: 8000, action: { label: 'Move to command zone', onClick: () => doMove(r.card.iid, 'command') }
+      });
+    }
+  }
+}
+function moveGroupToZone(group, to, opts = {}) {
+  const results = [];
+  act(() => {
+    const order = to === 'library' && opts.pos !== 'bottom' ? [...group].reverse() : group;
+    for (const p of order) {
+      const r = moveCard(p.iid, to, opts);
+      if (r && !r.repos) results.push(r);
+    }
+    if (!results.length) return null;
+    return ['moved ' + results.length + ' cards to ' + (ZL[to] || to)];
+  });
+  finishGroupZoneMove(results, to);
+}
+function giveControlGroup(group, to, at, anchorIid) {
+  if (!group.length) return;
+  const lead = group.find(p => p.iid === anchorIid) || group[0];
+  let count = 0;
+  const orphaned = [];
+  act(() => {
+    for (const p of group) {
+      const f = findCard(p.iid);
+      if (!f) continue;
+      const def = defOf(f.card);
+      S.me.zones[f.zone].splice(f.idx, 1);
+      if (f.zone === 'battlefield') {
+        const detached = detachFrom(S.pid, p.iid);
+        if (detached.length) orphaned.push(...detached);
+      }
+      const card = Object.assign({}, f.card);
+      delete card.x; delete card.y; card.att = null;
+      if (f.zone !== 'battlefield') { card.t = false; card.fd = false; card.fl = false; card.c = {}; }
+      const req = { k: 'give', card, def: Deck.slimDef(def) };
+      req.x = clamp(Math.round(at.x + p.x - lead.x), 0, BW - CW);
+      req.y = clamp(Math.round(at.y + p.y - lead.y), 0, myBH() - CH);
+      sendReq(to, req);
+      count++;
+    }
+    return count ? ['gave control of ' + count + ' cards to ' + pname(to)] : null;
+  });
+  if (orphaned.length) setTimeout(() => orphanToast(orphaned), 0);
+}
+
 function dragHighlight(e) {
   const el = document.elementFromPoint(e.clientX, e.clientY);
   let tgt = null, cls = 'dropok';
@@ -2872,6 +3057,29 @@ function dropCard(d, e) {
   const el = document.elementFromPoint(e.clientX, e.clientY);
   if (!el) return;
   const f = findCard(d.iid); if (!f) return;
+  if (d.groupPositions && d.groupPositions.length > 1) {
+    const wrap = el.closest('.boardwrap');
+    const tgt = el.closest('[data-drop]');
+    if (tgt && (!wrap || wrap.dataset.board === S.pid)) {
+      moveGroupToZone(d.groupPositions, tgt.dataset.drop,
+        tgt.dataset.drop === 'library' ? { pos: e.shiftKey ? 'bottom' : 'top' } : {});
+      return;
+    }
+    if (wrap && wrap.dataset.board === S.pid) {
+      const pt = boardPoint(wrap, e.clientX - d.offC.dx, e.clientY - d.offC.dy);
+      const pos = storedPos(wrap.firstElementChild, pt.x - CW / 2, pt.y - CH / 2);
+      const lead = d.groupPositions.find(p => p.iid === d.iid) || d.groupPositions[0];
+      moveGroupOnBattlefield(d.groupPositions, pos.x - lead.x, pos.y - lead.y);
+      return;
+    }
+    if (wrap && wrap.dataset.board && wrap.dataset.board !== S.pid && S.players[wrap.dataset.board]) {
+      const pt = boardPoint(wrap, e.clientX, e.clientY);
+      const pos = storedPos(wrap.firstElementChild, pt.x - CW / 2, pt.y - CH / 2);
+      giveControlGroup(d.groupPositions, wrap.dataset.board, pos, d.iid);
+      return;
+    }
+    return;
+  }
   const tcard = el.closest('.board .card');
   if (d.attachable && tcard && tcard.dataset.iid !== d.iid && tcard.dataset.zone === 'battlefield') {
     attachTo(d.iid, tcard.dataset.pid, tcard.dataset.iid);
@@ -3063,6 +3271,7 @@ function onKey(e) {
   if (e.key === 'Escape' && S.attachFrom) { endAttach(); return; }
   if (e.target.closest && e.target.closest('input,textarea,select,[contenteditable]')) return;
   if (document.querySelector('.w-backdrop')) return; // a dialog/viewer is open
+  if (e.key === 'Escape' && (selectionDrag || S.selected.size)) { cancelSelectionDrag(true); return; }
   if (e.code === 'Space' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey) {
     // Leave Spacebar's native behavior alone when a button or other interactive control has focus.
     if (e.target.closest && e.target.closest('button,a,[role="button"],[tabindex],label')) return;
@@ -3200,7 +3409,7 @@ function leaveGame() {
     setTimeout(() => {
       try { Net.stop(); } catch (e) { /* ignore */ }
       LS.del('ct.sess.' + S.pid); LS.del('ct.last');
-      S.me = null; S.table = null; S.players = {}; S.log = []; S.undo = [];
+      S.me = null; S.table = null; S.players = {}; S.log = []; S.undo = []; S.selected.clear();
       S.viewers.forEach(v => v.v.close());
       showLobby();
     }, 300);

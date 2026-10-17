@@ -28,7 +28,9 @@ When a Commander moves from the command zone to the battlefield, play a brief sl
 
 See [PR-11-DECK-IMPORT-INVESTIGATION.md](PR-11-DECK-IMPORT-INVESTIGATION.md). Draft PR #11. Do not merge or publish it until the live tests listed there pass.
 
-## 11. Drag a selection rectangle to select and move several cards — QUEUED (Chris wants this next)
+## 11. Drag a selection rectangle to select and move several cards — IN PROGRESS (v0.18.0 candidate)
+
+**Branch/PR:** `feat/multi-card-selection` / [PR #13](https://github.com/ccall1212/commander-table/pull/13) — not merged or published.
 
 Chris wants a **selection rectangle like StarCraft or EDHPlay**: press the mouse on empty space on your battlefield, drag, and a visible rectangle follows the pointer; every one of your cards the rectangle touches is selected. Then the whole selection can be dragged and moved together in one go.
 
