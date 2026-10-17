@@ -12,10 +12,17 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 
 ## Current state
 
-- **Released on main:** v0.17.1; GitHub Pages run [39006634748](https://github.com/ccall1212/commander-table/actions/runs/39006634748) succeeded for main commit [8b6b351](https://github.com/ccall1212/commander-table/commit/8b6b351e2c180ff2320b20b9c2e92087dc07ae14).
-- **Release tags verified:** v0.14.1, v0.14.2, v0.15.0, v0.15.1, v0.16.0, v0.17.0, and v0.17.1 exist and point to their intended commits. Some older release notes below may describe their status before they were created.
+- **Released on main:** v0.18.1; GitHub Pages run [39008364719](https://github.com/ccall1212/commander-table/actions/runs/39008364719) succeeded for release commit [5548ba6](https://github.com/ccall1212/commander-table/commit/5548ba67826c1a10b2db6bc53256fd4ae438d799).
+- **Release tags verified:** v0.14.1, v0.14.2, v0.15.0, v0.15.1, v0.16.0, v0.17.0, and v0.17.1 exist and point to their intended commits. The v0.18.1 tag is still pending (see below).
 - **Layouts:** only **Sidebar** and **Grid** exist. The Top and Focus layouts were removed.
 - **In flight:** draft PR #11 only (paused deck import).
+
+## Remaining release housekeeping
+
+- **Release commit:** [5548ba67826c1a10b2db6bc53256fd4ae438d799](https://github.com/ccall1212/commander-table/commit/5548ba67826c1a10b2db6bc53256fd4ae438d799) is the exact v0.18.1 release commit.
+- **Deployment:** GitHub Pages run [39008364719](https://github.com/ccall1212/commander-table/actions/runs/39008364719) completed successfully for that commit. The Pages workflow passed; I could not independently retrieve the live page HTML through the available fetcher.
+- **Annotated tag:** `v0.18.1` did not exist when checked. Create it pointing at the exact release commit above, then push it. The available GitHub connection cannot create annotated tags.
+- **Branch cleanup:** `feat/multi-card-selection` remains on GitHub after merge. Delete it with the **Delete branch** button on [PR #13](https://github.com/ccall1212/commander-table/pull/13); this connection cannot delete branches.
 ## How a change gets released (short version)
 
 1. ChatGPT works on a branch and opens a pull request, with a short click list for Chris (see "Writing the test list" in `AGENTS.md`).
