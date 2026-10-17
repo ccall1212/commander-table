@@ -1,4 +1,4 @@
-# Test Commander Table — Selection Rectangle (v0.18.0 candidate)
+# Test Commander Table — Selection Rectangle (v0.18.1 candidate)
 
 This is a test copy of the unmerged selection-rectangle feature.
 
@@ -18,7 +18,7 @@ This is a test copy of the unmerged selection-rectangle feature.
 
 ## Click list
 
-1. **Sidebar:** drag from an empty area of your battlefield around three cards across Creatures and Lands. Release, then drag a selected card. The cards should move together and keep their spacing.
+1. **Sidebar:** drag from an empty area of your battlefield around three cards across Creatures and Lands. Release, then drag a selected card. The drag preview should show every selected card in the same relative arrangement—not only the card you grabbed. The cards should move together and keep their spacing.
 2. **Grid:** repeat the test in your own quadrant.
 3. **Selection controls:** hold Shift while drawing to add to the selection. Shift-click a card to toggle it. Click empty battlefield space or press Esc to clear.
 4. **Existing actions:** click one card to tap/untap it, and drag an unselected card; only that card should move.
