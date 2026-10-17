@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.20.3';
+const APP_VERSION = '0.20.4';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -846,10 +846,16 @@ function doMove(iid, to, opts = {}) {
     if (res.repos) return res.wasAtt ? ['unattached {0}', [res.def]] : null;
     return [moveText(res, to, opts), [res.def]];
   });
-  if (!res || res.repos) return;
+  if (!res) return;
+  if (res.repos) {
+    playCardPlaceSound();
+    return;
+  }
   const { card, def } = res;
   if (res.from === 'command' && to === 'battlefield' && !card.fd && !res.gone && def) {
     emitCommanderSlam(card.iid, def.ci);
+  } else if (to === 'battlefield' && !res.gone) {
+    playCardPlaceSound();
   }
   if (res.orphans && res.orphans.length) orphanToast(res.orphans);
   if (card.cmd && !res.gone && to !== 'command' && to !== 'battlefield' && card.own === S.pid) {
@@ -1231,7 +1237,7 @@ function animateCommanderSlam(pid, iid, ci) {
     if (reduceMotion) {
       // Respect reduced-motion preferences with a static color flash instead of movement.
       ring.style.opacity = '1';
-      setTimeout(() => ring.remove(), 460);
+      setTimeout(() => ring.remove(), 760);
       return;
     }
 
@@ -1239,17 +1245,53 @@ function animateCommanderSlam(pid, iid, ci) {
       { transform: 'translateY(-18px) scale(1.055) rotate(-1.4deg)', filter: 'brightness(1.28)', boxShadow: glow, offset: 0 },
       { transform: 'translateY(2px) scale(.985) rotate(.25deg)', filter: 'brightness(1.15)', boxShadow: glow, offset: .58 },
       { transform: 'translateY(0) scale(1) rotate(0)', filter: 'brightness(1)', boxShadow: 'none', offset: 1 }
-    ], { duration: 430, easing: 'cubic-bezier(.2,.75,.25,1)' });
+    ], { duration: 680, easing: 'cubic-bezier(.2,.75,.25,1)' });
     const motion = ring.animate([
       { opacity: 0, transform: 'translateY(-10px) scale(.9)' },
       { opacity: .95, transform: 'translateY(0) scale(1.02)', offset: .36 },
       { opacity: .65, transform: 'translateY(0) scale(1.09)', offset: .65 },
       { opacity: 0, transform: 'translateY(0) scale(1.16)' }
-    ], { duration: 540, easing: 'cubic-bezier(.2,.75,.25,1)' });
+    ], { duration: 900, easing: 'cubic-bezier(.2,.75,.25,1)' });
     motion.finished.then(() => ring.remove(), () => ring.remove());
   };
   requestAnimationFrame(() => requestAnimationFrame(start));
 }
+function playCardPlaceSound() {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return;
+  let ctx;
+  try {
+    ctx = new AudioContextClass();
+    const play = () => {
+      const now = ctx.currentTime;
+      const thud = ctx.createOscillator(), gain = ctx.createGain();
+      thud.type = 'sine';
+      thud.frequency.setValueAtTime(190, now);
+      thud.frequency.exponentialRampToValueAtTime(95, now + 0.09);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.18, now + 0.006);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+      thud.connect(gain); gain.connect(ctx.destination);
+      thud.start(now); thud.stop(now + 0.13);
+      const frames = Math.floor(ctx.sampleRate * 0.055);
+      const buffer = ctx.createBuffer(1, frames, ctx.sampleRate);
+      const samples = buffer.getChannelData(0);
+      for (let i = 0; i < frames; i++) samples[i] = (Math.random() * 2 - 1) * (1 - i / frames);
+      const noise = ctx.createBufferSource(), noiseGain = ctx.createGain();
+      noise.buffer = buffer;
+      noiseGain.gain.setValueAtTime(0.09, now);
+      noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.055);
+      noise.connect(noiseGain); noiseGain.connect(ctx.destination);
+      noise.start(now);
+      setTimeout(() => { if (ctx.state !== 'closed') ctx.close().catch(() => {}); }, 220);
+    };
+    if (ctx.state === 'suspended') ctx.resume().then(play).catch(() => {});
+    else play();
+  } catch (_) {
+    if (ctx && ctx.state !== 'closed') ctx.close().catch(() => {});
+  }
+}
+
 function playCommanderSlamSound() {
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
   if (!AudioContextClass) return;
@@ -1260,36 +1302,46 @@ function playCommanderSlamSound() {
       const now = ctx.currentTime;
       const thud = ctx.createOscillator(), thudGain = ctx.createGain();
       thud.type = 'sine';
-      thud.frequency.setValueAtTime(180, now);
-      thud.frequency.exponentialRampToValueAtTime(55, now + 0.19);
+      thud.frequency.setValueAtTime(145, now);
+      thud.frequency.exponentialRampToValueAtTime(32, now + 0.34);
       thudGain.gain.setValueAtTime(0.0001, now);
-      thudGain.gain.exponentialRampToValueAtTime(0.5, now + 0.012);
-      thudGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.24);
+      thudGain.gain.exponentialRampToValueAtTime(0.72, now + 0.014);
+      thudGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.42);
       thud.connect(thudGain); thudGain.connect(ctx.destination);
-      thud.start(now); thud.stop(now + 0.25);
+      thud.start(now); thud.stop(now + 0.43);
 
       const crack = ctx.createOscillator(), crackGain = ctx.createGain();
       crack.type = 'triangle';
       crack.frequency.setValueAtTime(460, now);
       crack.frequency.exponentialRampToValueAtTime(115, now + 0.065);
       crackGain.gain.setValueAtTime(0.0001, now);
-      crackGain.gain.exponentialRampToValueAtTime(0.18, now + 0.004);
+      crackGain.gain.exponentialRampToValueAtTime(0.24, now + 0.004);
       crackGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.075);
       crack.connect(crackGain); crackGain.connect(ctx.destination);
       crack.start(now); crack.stop(now + 0.08);
 
       // A short burst of noise is the "slam": it has plenty of treble, so small speakers can play it.
-      const frames = Math.floor(ctx.sampleRate * 0.12);
+      const frames = Math.floor(ctx.sampleRate * 0.22);
       const noiseBuffer = ctx.createBuffer(1, frames, ctx.sampleRate);
       const samples = noiseBuffer.getChannelData(0);
       for (let i = 0; i < frames; i++) samples[i] = (Math.random() * 2 - 1) * (1 - i / frames);
       const noise = ctx.createBufferSource(), noiseGain = ctx.createGain();
       noise.buffer = noiseBuffer;
-      noiseGain.gain.setValueAtTime(0.35, now);
-      noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+      noiseGain.gain.setValueAtTime(0.48, now);
+      noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
       noise.connect(noiseGain); noiseGain.connect(ctx.destination);
       noise.start(now);
-      setTimeout(() => { if (ctx.state !== 'closed') ctx.close().catch(() => {}); }, 350);
+      // A delayed, lower sub-impact gives the Commander cast a heavier boom.
+      const boom = ctx.createOscillator(), boomGain = ctx.createGain();
+      boom.type = 'sine';
+      boom.frequency.setValueAtTime(72, now + 0.045);
+      boom.frequency.exponentialRampToValueAtTime(28, now + 0.39);
+      boomGain.gain.setValueAtTime(0.0001, now);
+      boomGain.gain.setValueAtTime(0.42, now + 0.045);
+      boomGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.44);
+      boom.connect(boomGain); boomGain.connect(ctx.destination);
+      boom.start(now + 0.045); boom.stop(now + 0.45);
+      setTimeout(() => { if (ctx.state !== 'closed') ctx.close().catch(() => {}); }, 560);
     };
     if (ctx.state === 'suspended') ctx.resume().then(play).catch(() => {});
     else play();
@@ -3249,6 +3301,7 @@ function moveGroupToZone(group, to, opts = {}) {
     return ['moved ' + results.length + ' cards to ' + (ZL[to] || to)];
   });
   finishGroupZoneMove(results, to);
+  if (to === 'battlefield' && results.length) playCardPlaceSound();
 }
 function giveControlGroup(group, to, at, anchorIid) {
   if (!group.length) return;
