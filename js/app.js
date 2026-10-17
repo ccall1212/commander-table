@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.20.0';
+const APP_VERSION = '0.20.1';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -1168,15 +1168,17 @@ function animateDrawCard(pid, count) {
 function emitCommanderSlam(iid, ci) {
   const colors = Array.isArray(ci) ? [...new Set(ci.filter(c => ['W', 'U', 'B', 'R', 'G'].includes(c)))] : [];
   if (S.role === 'solo') {
-    onBroadcast({ t: 'slamfx', pid: S.pid, iid, ci: colors });
+    // Run locally instead of routing through the multiplayer broadcast handler.
+    animateCommanderSlam(S.pid, iid, colors);
     return;
   }
   setTimeout(() => toHost({ t: 'slamfx', iid, ci: colors }), 180);
 }
 
 function animateCommanderSlam(pid, iid, ci) {
-  if (!pid || !iid || $('#game').classList.contains('hidden') ||
+  if (!pid || !iid ||
       (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+  playCommanderSlamSound();
   const palette = { W: '#f2e4b5', U: '#62c5f2', B: '#a38bd2', R: '#ff705f', G: '#76cf91' };
   const colors = [...new Set((ci || []).filter(c => palette[c]).map(c => palette[c]))];
   if (!colors.length) colors.push('#e6d8a5'); // a neutral glow for colorless commanders
@@ -1186,8 +1188,8 @@ function animateCommanderSlam(pid, iid, ci) {
 
   const start = () => {
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const candidates = [...document.querySelectorAll('.card[data-iid]')]
-      .filter(el => el.dataset.iid === iid && drawAnimationVisible(el))
+    const candidates = [...document.querySelectorAll('.card[data-iid][data-zone="battlefield"]')]
+      .filter(el => el.dataset.iid === iid && (!el.dataset.pid || el.dataset.pid === pid) && drawAnimationVisible(el))
       .map(el => ({ el, rect: el.getBoundingClientRect() }))
       .filter(x => x.rect.width > 4 && x.rect.height > 8)
       .sort((a, b) => b.rect.width * b.rect.height - a.rect.width * a.rect.height);
@@ -1203,9 +1205,12 @@ function animateCommanderSlam(pid, iid, ci) {
       left: rect.left + 'px', top: rect.top + 'px',
       width: rect.width + 'px', height: rect.height + 'px',
       borderRadius: getComputedStyle(card).borderRadius || '5px',
+      border: '4px solid transparent',
       borderColor: border,
-      background: 'linear-gradient(transparent, transparent) padding-box, conic-gradient(' + colors.join(', ') + ') border-box',
-      boxShadow: glow
+      background: 'linear-gradient(rgba(255,255,255,.06), rgba(255,255,255,.06)) padding-box, conic-gradient(' + colors.join(', ') + ') border-box',
+      boxShadow: glow + ', 0 0 0 3px rgba(255,255,255,.5)',
+      zIndex: '2147483647',
+      mixBlendMode: 'screen'
     });
     document.body.appendChild(ring);
 
@@ -1223,6 +1228,42 @@ function animateCommanderSlam(pid, iid, ci) {
     motion.finished.then(() => ring.remove(), () => ring.remove());
   };
   requestAnimationFrame(() => requestAnimationFrame(start));
+}
+function playCommanderSlamSound() {
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return;
+  let ctx;
+  try {
+    ctx = new AudioContextClass();
+    const play = () => {
+      const now = ctx.currentTime;
+      const thud = ctx.createOscillator(), thudGain = ctx.createGain();
+      thud.type = 'sine';
+      thud.frequency.setValueAtTime(105, now);
+      thud.frequency.exponentialRampToValueAtTime(42, now + 0.19);
+      thudGain.gain.setValueAtTime(0.0001, now);
+      thudGain.gain.exponentialRampToValueAtTime(0.24, now + 0.012);
+      thudGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.24);
+      thud.connect(thudGain); thudGain.connect(ctx.destination);
+      thud.start(now); thud.stop(now + 0.25);
+
+      const crack = ctx.createOscillator(), crackGain = ctx.createGain();
+      crack.type = 'triangle';
+      crack.frequency.setValueAtTime(460, now);
+      crack.frequency.exponentialRampToValueAtTime(115, now + 0.065);
+      crackGain.gain.setValueAtTime(0.0001, now);
+      crackGain.gain.exponentialRampToValueAtTime(0.055, now + 0.004);
+      crackGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.075);
+      crack.connect(crackGain); crackGain.connect(ctx.destination);
+      crack.start(now); crack.stop(now + 0.08);
+      setTimeout(() => { if (ctx.state !== 'closed') ctx.close().catch(() => {}); }, 350);
+    };
+    if (ctx.state === 'suspended') ctx.resume().then(play).catch(() => {});
+    else play();
+  } catch (_) {
+    if (ctx && ctx.state !== 'closed') ctx.close().catch(() => {});
+  }
 }
 function untapAll() { act(() => { S.me.zones.battlefield.forEach(c => { c.t = false; }); return ['untapped everything']; }); }
 let shuffleAudioContext = null;
