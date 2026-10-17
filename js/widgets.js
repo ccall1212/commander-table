@@ -212,6 +212,7 @@
       closed = true;
       clearTimeout(closeTimer);
       closeFrom(0);
+      window.removeEventListener('pointerdown', onDown, true);
       window.removeEventListener('mousedown', onDown, true);
       window.removeEventListener('keydown', onKey, true);
       window.removeEventListener('blur', onBlur);
@@ -222,6 +223,9 @@
 
     build(items, 0, x, y, null);
     menuState = state;
+    // Dismiss on pointerdown so mouse, pen, and touch interactions all close the menu
+    // before the outside target handles the same interaction. Keep mousedown as a fallback.
+    window.addEventListener('pointerdown', onDown, true);
     window.addEventListener('mousedown', onDown, true);
     window.addEventListener('keydown', onKey, true);
     window.addEventListener('blur', onBlur);
