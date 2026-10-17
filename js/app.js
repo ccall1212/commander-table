@@ -2861,6 +2861,8 @@ function beginCardDrag(e) {
   const board = el.closest('.board');
   const s = board ? (+board.dataset.s || 1) : 1;
   const w = el.offsetWidth * s, h = el.offsetHeight * s;
+  // Keep the pointer offset relative to the grabbed card for accurate drop placement.
+  drag.offC = { dx: e.clientX - (r.left + r.width / 2), dy: e.clientY - (r.top + r.height / 2) };
   const f = findCard(drag.iid);
   const requested = S.selected.has(drag.iid) ? [...S.selected] : [drag.iid];
   drag.groupPositions = requested.map(iid => {
@@ -2914,8 +2916,7 @@ function beginCardDrag(e) {
     gh.removeAttribute('style');
     gh.style.cssText = `width:${w}px;height:${h}px;--cw:${w}px;left:0;top:0;`;
     document.body.appendChild(gh);
-    // keep the grab point: pointer offset from the card's visual centre
-    drag.offC = { dx: e.clientX - (r.left + r.width / 2), dy: e.clientY - (r.top + r.height / 2) };
+    // keep the grab point so the single-card preview follows the pointer naturally
     drag.gx = drag.offC.dx + w / 2; drag.gy = drag.offC.dy + h / 2;
   }
   drag.ghost = gh; drag.moved = true;
