@@ -1091,7 +1091,7 @@ function animateDrawCard(pid, count) {
       const flightFrames = [];
       for (let step = 0; step <= STEP_COUNT; step++) {
         const time = step / STEP_COUNT;
-        const progress = 1 - Math.pow(1 - time, 3);
+        const progress = 1 - Math.pow(1 - time, 2.2);
         const x = dx * progress;
         const y = dy * progress - 4 * lift * progress * (1 - progress);
         const scale = 1 + (endScale - 1) * progress;
