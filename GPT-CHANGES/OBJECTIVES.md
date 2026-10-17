@@ -1,6 +1,6 @@
 # Commander Table — Objectives backlog
 
-Features Chris has asked for that are **not built yet or remain open**. The numbers are Chris's original numbering; finished ones (1, 2, 3, 6, 8, 10, 13, 14, 16) were removed, and #7 (opponent boards looking dim) was dropped: the dimming only applies to players who are reconnecting or out, on purpose. Objective #15 is in progress on a feature branch; see [GPT-CHANGES/README.md](README.md). Work on one at a time on its own branch and pull request, and read `AGENTS.md` first.
+Features Chris has asked for that are **not built yet or remain open**. The numbers are Chris's original numbering; finished ones (1, 2, 3, 6, 8, 10, 13, 14, 16) were removed, and #7 (opponent boards looking dim) was dropped: the dimming only applies to players who are reconnecting or out, on purpose. Objective #15 (custom image uploads and pointer fixes) shipped in v0.21.4 via [PR #30](https://github.com/ccall1212/commander-table/pull/30). Objective #18 is the queued iPad/touch support work. Work on one at a time on its own branch and pull request, and read `AGENTS.md` first.
 
 Status key: **Queued** = requested, not started. **In progress** = a branch / PR exists (see `README.md`). **Paused** = started, waiting on something. **Deferred** = on purpose not now.
 
