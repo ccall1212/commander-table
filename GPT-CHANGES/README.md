@@ -2,7 +2,7 @@
 
 This folder records changes prepared or committed by ChatGPT for Commander Table, along with release steps that remain incomplete. It is a handoff log, not a replacement for `CHANGELOG.md` (which is the player-facing release history) or `AGENTS.md` (which documents the project's development and release workflow).
 
-The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES.md). Objectives 1–3 and 8, 10, and 13 are complete and deployed. Objective 4 (larger battlefield cards) is intentionally deferred for now. Objectives 5–7, 9, 11, and 12 remain queued.
+The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES.md). Objectives 1–3 and 8, 10, and 13 are complete and deployed. Objective 4 (larger battlefield cards) is intentionally deferred for now. **Next priorities: Objective #9 (random deck picker), followed by Objective #6 (draw-card animation).** Objectives 5, 7, and 11–12 remain queued.
 
 **Status checked:** 2026-10-17  
 **App version on main:** `0.16.0` (merged and deployed).  
@@ -10,6 +10,13 @@ The active backlog of upcoming features is tracked in [OBJECTIVES.md](OBJECTIVES
 **GitHub Pages:** [deployment run `38996909975`](https://github.com/ccall1212/commander-table/actions/runs/38996909975) succeeded.  
 **Browser testing:** ChatGPT verified source-level checks only; real-browser/multiplayer checks remain for Chris to run.  
 **Release tag status:** annotated tags `v0.14.1`, `v0.14.2`, `v0.15.0`, `v0.15.1`, and `v0.16.0` still need to be created and verified locally; see “Remaining release housekeeping” below.
+
+## Next feature priorities
+
+1. **Objective #9 — Random deck picker from Archidekt or Moxfield.** Investigate what public deck discovery/import interfaces are actually available and whether bracket metadata can be trusted. Keep manual deck import available if automated discovery or bracket filters are limited.
+2. **Objective #6 — Draw-card animation.** Once the random deck picker is addressed, animate a draw from Library toward hand and flipping on arrival, including an appropriate opponent-visible animation. Keep it brief and non-blocking, and avoid animating unrelated hand movements.
+
+The numbered objective IDs remain unchanged; these are execution priorities only.
 
 ## Active-player yellow outline — v0.14.2 (merged to main)
 
