@@ -127,7 +127,7 @@ Expected: manual power-only changes never alter toughness; manual toughness-only
 2. Open `http://127.0.0.1:8099/index.html`, click **Practice solo**, and put a creature on the battlefield.
 3. **Click the blue power number itself.** Expect power to increase by 1 and toughness to stay unchanged. Click the dark toughness number itself. Expect toughness to increase by 1 and power to stay unchanged.
 4. **Right-click the power number** and confirm only power decreases by 1. Right-click toughness and confirm only toughness decreases by 1.
-5. Confirm the badge is small and white like the original, with black power and toughness numbers side by side and no slash between them. Each number remains a separate click target; avoid large buttons or extra card space. Cards without recognized P/T should not get clickable stats.
+5. Confirm the badge stays small and white like the original, with black power and toughness numbers side by side and no slash. Hovering or focusing either number should darken the entire corresponding half of the pill—clearly visible, full-height, rounded on the outside edge, and flat at the center seam. No small box just around the digit.
 6. Right-click the card body (not a stat number) → **Power / Toughness**. Separately test **Power +1**, **Power −1**, **Toughness +1**, and **Toughness −1**. Each menu command must change only its named stat. Manual +1/+1 changes both intentionally.
 7. Add a real +1/+1 counter and confirm both values increase; remove the counter and confirm both return. Reset manual changes and confirm actual counters remain.
 8. Check Sidebar and Grid at approximately 1920×1080 and 1366×768.
