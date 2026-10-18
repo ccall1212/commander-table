@@ -63,3 +63,45 @@ Add an optional **Touch mode** for iPad Safari, launched from the top-right hamb
 - In Touch mode, lock page gestures on the hand row and draggable board surfaces so a bottom-edge hand drag stays on the table. Use the live visual viewport height and safe-area insets, while leaving internal menu, log and dialog scrolling enabled.
 - Fit the game to the dynamic mobile viewport height. On narrow phones in portrait, show a dismissible landscape recommendation rather than trying to force orientation lock (ordinary mobile Safari pages cannot reliably force it).
 - Test in real iPhone/iPad Safari in portrait and landscape, including enabling/disabling Touch mode, host and joiner sessions, card inspection, card actions, dragging from the bottom edge of the hand, intentional group selection/movement, internal dialog scrolling, menu dismissal, and both Sidebar and Grid layouts. Desktop emulation alone is not sufficient for marking this complete.
+
+
+## 19. Separate power and toughness controls — QUEUED
+
+Provide separate **Power + / Power −** and **Toughness + / Toughness −** controls so a player can change only one stat at a time.
+
+- Changes must combine correctly with existing +1/+1 counters: counters continue to increase both power and toughness, while a manual power-only or toughness-only adjustment affects just that stat.
+- Keep displayed values consistent across card inspection, the battlefield, and other players' views; preserve the card's printed base stats and counter state rather than silently rewriting them.
+- Define how manual adjustments interact with temporary effects and stat-changing abilities during implementation. Do not make one-sided adjustments behave like +1/+1 counters.
+- Test a creature with no counters, with one or more +1/+1 counters, after each separate adjustment, and from a second player's view in both Sidebar and Grid.
+
+## 20. Poison counter lethal warning — QUEUED
+
+When a player reaches **10 poison counters**, make their poison total turn red, using the same visual warning style as lethal Commander damage.
+
+- The warning should activate at 10 or more poison counters and clear if the total falls below 10.
+- Keep poison totals and warning state synchronized for every player; do not change the existing poison counter rules.
+- Test totals of 9, 10, and 11, including changes made by another player and both Sidebar and Grid layouts.
+
+## 21. Restore the lethal-damage Concede prompt — QUEUED
+
+Investigate and restore the confirmation prompt that used to appear when a player's life total or Commander damage became lethal.
+
+- First identify the previous behavior and the change that caused the prompt to stop appearing; restore the intended behavior rather than adding a duplicate prompt.
+- Confirm what counts as lethal for life total and Commander damage, and keep the prompt from appearing repeatedly on every render or unrelated state update.
+- Verify the prompt's actions and dismissal, and test lethal changes caused locally and by another player in both Sidebar and Grid.
+
+## 22. Fix Grid view dragging cards to player piles — QUEUED
+
+Restore drag-and-drop from cards on the battlefield to the player's **Library, Graveyard, Exile, and Command zone** in Grid view.
+
+- Check the player's own Grid quadrant and any relevant opponent-view interactions; preserve current Sidebar behavior.
+- Use the existing board coordinate conversion and card-action paths. Grid boards are scaled, so do not treat screen coordinates as stored board coordinates.
+- Test dragging to each of the four destinations in Grid and Sidebar at 1920×1080 and 1366×768, including a second player watching.
+
+## 23. T hotkey opens the Token menu over the battlefield — QUEUED
+
+When the mouse is hovering over the battlefield and the player presses **T**, open the token menu so they can create a token.
+
+- Keep the existing **T** behavior for tapping/untapping a battlefield card or playing a hovered hand card tapped. The token-menu action should apply only when the pointer is over empty battlefield space and must not steal those existing card/hand shortcuts.
+- Check the current hotkey list and token-menu entry point before implementation; reuse the existing token creation UI rather than creating a second menu.
+- Test with the pointer over empty battlefield space, over a creature, over a card in hand, and outside the battlefield, in both Sidebar and Grid.

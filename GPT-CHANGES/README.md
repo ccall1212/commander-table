@@ -12,11 +12,10 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 
 ## Current state
 
-- **Main version:** v0.21.4; [PR #30](https://github.com/ccall1212/commander-table/pull/30) merged to `main` at commit [99afe59](https://github.com/ccall1212/commander-table/commit/99afe59d865adb6f19de684eb798b0b617346d67). This release includes custom local appearance uploads and the pointer/context-menu fixes.
-- **In progress:** [PR #32](https://github.com/ccall1212/commander-table/pull/32) adds optional phone/iPad Touch mode, page-scroll prevention during card drags, a portrait-to-landscape hint, and press-and-hold context menus. The follow-up fixes keep the hand and surrounding tabletop in the drag gesture, size the game from Safari's live viewport, and preserve internal scrolling. Proposed test version is v0.22.1; it is not merged or live.
+- **Main version:** v0.22.1; [PR #32](https://github.com/ccall1212/commander-table/pull/32) and follow-up [PR #33](https://github.com/ccall1212/commander-table/pull/33) are merged to `main` at commit [4a6ad47](https://github.com/ccall1212/commander-table/commit/4a6ad47af02722460dd9d179e73f94bc99cefc03). This release includes optional phone/iPad Touch mode and the iOS Safari drag/viewport fixes. The annotated `v0.22.1` tag and live-site verification are still outstanding.
 - **Browser testing:** Chris confirmed he tested the pointer/clicking fix in a real browser before publication. ChatGPT did not independently run the browser or automated browser tests.
 - **Commander slam:** the animation and synthesized impact sound are back to the v0.20.6 implementation. Chris wants to keep refining the sound; do that on a separate branch, not by changing the published version in place.
-- **In progress:** objective #18, phone/iPad touch-friendly browser support. The opt-in **Touch mode** is being implemented in [PR #32](https://github.com/ccall1212/commander-table/pull/32); details and real-iPad test requirements are in [OBJECTIVES.md](OBJECTIVES.md).
+- **Shipped in main:** objective #18, phone/iPad touch-friendly browser support. Touch mode is included in v0.22.1; real iPhone/iPad test results and live deployment status still need confirmation.
 - **Paused:** draft [PR #11](https://github.com/ccall1212/commander-table/pull/11), random deck selection / website import. Do not merge until its listed live tests pass.
 - **Layouts:** Sidebar and Grid only.
 - **Release tags:** the annotated tags below are still required; the GitHub connector cannot create annotated tags:
