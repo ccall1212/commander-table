@@ -1131,6 +1131,13 @@ body.touch-mode #myBar .ctrpanel {
   box-shadow: none;
 }
 .card .badges .pt .pt-stat + .pt-stat { margin-left: 3px; }
+/* Darken the selected value softly instead of drawing a hard rectangular focus box. */
 .card .badges .pt .pt-stat:hover,
-.card .badges .pt .pt-stat:focus-visible { background: rgba(0,0,0,.08); outline: 1px solid #555; outline-offset: -1px; }
+.card .badges .pt .pt-stat:focus,
+.card .badges .pt .pt-stat:focus-visible {
+  background: rgba(0,0,0,.16);
+  border-radius: 4px;
+  outline: none;
+  box-shadow: none;
+}
 .card .badges .pt.mod { outline: 1px solid rgba(0,0,0,.35); }
