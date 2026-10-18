@@ -82,7 +82,7 @@ When a player reaches **10 poison counters**, make their poison total turn red, 
 - Keep poison totals and warning state synchronized for every player; do not change the existing poison counter rules.
 - Test totals of 9, 10, and 11, including changes made by another player and both Sidebar and Grid layouts.
 
-## 21. Restore the lethal-damage Concede prompt — QUEUED
+## 21. Restore the lethal-damage Concede prompt — IN PROGRESS
 
 Investigate and restore the confirmation prompt that used to appear when a player's life total or Commander damage became lethal.
 

@@ -13,6 +13,7 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 ## Current state
 
 - **Main version:** v0.22.2; [PR #35](https://github.com/ccall1212/commander-table/pull/35) merged to `main` at release commit [66c611e](https://github.com/ccall1212/commander-table/commit/66c611e93d393c40246fa51b21338758f22303eb). Chris tested the Grid pile-drop fix and confirmed it works.
+- **In progress:** objective #21, lethal Concede prompt restoration and empty-library warning, on [branch `fix/lethal-concede-prompt`](https://github.com/ccall1212/commander-table/tree/fix/lethal-concede-prompt), candidate v0.22.3. The change is prepared for browser testing; do not merge until Chris confirms.
 - **Touch mode:** v0.22.0 and the iOS Safari drag-viewport follow-up v0.22.1 are merged to `main` (PRs #32 and #33).
 - **Commander slam:** the animation and synthesized impact sound are back to the v0.20.6 implementation. Chris wants to keep refining the sound; do that on a separate branch.
 - **Paused:** draft [PR #11](https://github.com/ccall1212/commander-table/pull/11), random deck selection / website import. Do not merge until its listed live tests pass.

@@ -85,3 +85,23 @@ Chris confirmed that he tested the pointer/clicking fix in a real browser before
 9. Check the browser console for errors, then stop the server with Ctrl+C.
 
 **Not yet verified:** actual browser/multiplayer interaction; please run this checklist on the ZIP.
+
+
+# Manual test checklist — lethal Concede prompt (v0.22.3 candidate)
+
+## Start the app
+1. Extract this exact branch ZIP.
+2. From the extracted project folder, run `python -m http.server 8099 --bind 127.0.0.1`.
+3. Open `http://127.0.0.1:8099/index.html`.
+4. For multiplayer checks, host in one tab and join the same room in a second tab using `http://127.0.0.1:8099/index.html?join=<ROOM>`.
+
+## Click-by-click checks
+1. **Life lethal:** in Practice solo, use the life − button to move from 1 to 0. Expect one Concede confirmation. Choose **Cancel**; click unrelated controls and cause a render. The prompt must not reopen by itself. Raise life above 0, then cross to 0 again; expect a new prompt.
+2. **Commander damage lethal:** in a two-player game, open the victim's life/counters panel. Increase damage from one opposing Commander to 20, then to 21. Expect the Concede prompt when that one Commander reaches 21, even if life remains above 0. Cancel and confirm it does not reopen on render.
+3. **Empty library:** use **Draw X…** repeatedly until the Library is empty. Confirm its 0 count is red in Sidebar and Grid. Attempt another draw. Expect the empty-library warning and Concede prompt. Cancel, then attempt another draw; expect the prompt again for that new attempt, not merely because the screen rendered.
+4. **Partial draw:** if a Draw X action draws the remaining cards and requests more, expect the empty-library prompt once for that action, not one prompt per missing card.
+5. **Remote life change:** in a two-tab game, have the other player change your life so it crosses from positive to 0 or below. Confirm your own tab shows the prompt.
+6. **Layouts and sizes:** repeat the relevant checks in Sidebar and Grid at approximately 1920×1080 and 1366×768. Confirm a second player sees the red zero library count where the library is displayed.
+7. **Console:** check both tabs for errors. Confirm canceling a prompt does not concede the game; choosing **Concede game** does.
+
+Expected: one prompt per new lethal crossing or empty-library draw attempt, no prompt loop caused by render/state updates, and a red zero library count.

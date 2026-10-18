@@ -18,6 +18,7 @@ input, textarea, select { font: inherit; color: var(--text); background: #0a0d12
 input:focus, textarea:focus { outline: none; border-color: var(--accent); }
 kbd { background: var(--panel2); border: 1px solid var(--border); border-radius: 3px; padding: 0 4px; font-size: 11px; }
 .hidden { display: none !important; }
+.lib-empty { color: var(--danger) !important; }
 .muted { color: var(--muted); }
 .small { font-size: 12px; }
 .row { display: flex; gap: 8px; align-items: center; }
