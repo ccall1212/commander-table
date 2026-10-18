@@ -82,14 +82,14 @@ When a player reaches **10 poison counters**, make their poison total turn red, 
 - Keep poison totals and warning state synchronized for every player; do not change the existing poison counter rules.
 - Test totals of 9, 10, and 11, including changes made by another player and both Sidebar and Grid layouts.
 
-## 21. Restore the lethal-damage Concede prompt — IN PROGRESS
+## 21. Restore the lethal-damage Concede prompt — SHIPPED in v0.22.3 via [PR #37](https://github.com/ccall1212/commander-table/pull/37)
 
 Investigate and restore the confirmation prompt that used to appear when a player's life total or Commander damage became lethal.
 
 - First identify the previous behavior and the change that caused the prompt to stop appearing; restore the intended behavior rather than adding a duplicate prompt.
 - Confirm what counts as lethal for life total and Commander damage, and keep the prompt from appearing repeatedly on every render or unrelated state update.
 - **Empty library:** if a player attempts to draw when their library has 0 cards, turn the library count (0) red and show the Concede prompt again. Treat this as its own clear trigger, not as a repeated prompt on every render.
-- Verify the prompt's actions and dismissal, and test lethal changes caused locally and by another player in both Sidebar and Grid. Also test attempting to draw from an empty library, including that the 0 turns red and the prompt appears again.
+- **Tested by Chris:** Chris confirmed the change works and approved publishing. The prompt covers lethal life totals, 21 Commander damage, and empty-library draw attempts; the zero Library count turns red.
 
 ## 23. T hotkey opens the Token menu over the battlefield — QUEUED
 
