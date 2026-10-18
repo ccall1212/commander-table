@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.22.2';
+const APP_VERSION = '0.22.3';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -981,7 +981,10 @@ function draw(n = 1) {
     return drawn.length ? [`drew ${plural(drawn.length, 'card')}`] : null;
   });
   if (drawn.length) emitDrawAnimation(Math.min(drawn.length, 5));
-  if (drawn.length < requested) UI.toast('Your library is empty!', { kind: 'warn' });
+  if (drawn.length < requested) {
+    UI.toast('Your library is empty!', { kind: 'warn' });
+    askConcede('You attempted to draw from an empty library. Would you like to concede?', 'Your library is empty');
+  }
 }
 // Event contains no card ID/name. The host validates the sender and relays only player ID + count.
 function emitDrawAnimation(count) {
@@ -1649,9 +1652,7 @@ function changeLife(d, by) {
     lifeLog.from = null; lifeLog.by = '';
   }, 1400);
   if (before > 0 && after <= 0) {
-    UI.confirm(`You are at ${after} life. Would you like to concede? You can choose Cancel and continue playing at negative life.`, {
-      title: 'You reached 0 life', danger: true, okLabel: 'Concede game'
-    }).then(ok => { if (ok) concedeGame(); });
+    askConcede(`You are at ${after} life. Would you like to concede? You can choose Cancel and continue playing at negative life.`, 'You reached 0 life');
   }
 }
 const cdLog = {};
@@ -1673,11 +1674,15 @@ function cmdDmgClick(el, d) {
 }
 function changeCmdDmg(key, d) {
   const cur = S.me.cmdDmg[key] || 0;
-  if (cur + d < 0) return;
-  act(() => { S.me.cmdDmg[key] = cur + d; if (S.me.cmdDmg[key] === 0) delete S.me.cmdDmg[key]; });
+  const next = cur + d;
+  if (next < 0) return;
+  act(() => { S.me.cmdDmg[key] = next; if (S.me.cmdDmg[key] === 0) delete S.me.cmdDmg[key]; });
   changeLife(-d);
   const [opid, ciid] = key.split(':');
   const cm = ((S.players[opid] && S.players[opid].cmdrs) || []).find(c => c.iid === ciid);
+  if (cur < 21 && next >= 21) {
+    askConcede(`You have taken ${next} commander damage from ${cm ? cm.name : 'one commander'}. Would you like to concede?`, 'Lethal commander damage');
+  }
   clearTimeout(cdLog[key]);
   cdLog[key] = setTimeout(() => {
     const v = S.me.cmdDmg[key] || 0;
@@ -2531,7 +2536,7 @@ function pileInfo(pid) {
 function myZonesHTML() {
   const pi = pileInfo(S.pid), me = S.me;
   const box = (k, label, sub) => `<div class="zbox" data-pile="${k}" data-pid="${esc(S.pid)}" data-drop="${k}" title="${esc(pi[k].tip)}">
-      <div class="zlabel${k === 'library' ? ' zlabel-lib' : ''}">${label} <b>${pi[k].n}</b>${sub ? ` <span class="zsub">${sub}</span>` : ''}</div><div class="zcard">${pi[k].face}</div></div>`;
+      <div class="zlabel${k === 'library' ? ' zlabel-lib' : ''}">${label} <b class="${k === 'library' && pi[k].n === 0 ? 'lib-empty' : ''}">${pi[k].n}</b>${sub ? ` <span class="zsub">${sub}</span>` : ''}</div><div class="zcard">${pi[k].face}</div></div>`;
   const cmd = me.zones.command;
   const taxIid = (cmd[0] && cmd[0].iid) || (me.cmdrs[0] && me.cmdrs[0].iid) || '';
   const tax = taxIid ? 2 * (me.casts[taxIid] || 0) : 0;
@@ -2751,7 +2756,7 @@ function oppHandHTML(pid) {
 function oppZonesHTML(pid) {
   const p = S.players[pid], defs = p.defs || {}, pi = pileInfo(pid);
   const box = (k, label, sub) => `<div class="zbox" data-pile="${k}" data-pid="${esc(pid)}" title="${esc(pi[k].tip)}${k === 'library' ? '' : ' — click to search'}">
-      <div class="zlabel">${label} <b>${pi[k].n}</b>${sub ? ` <span class="zsub">${sub}</span>` : ''}</div><div class="zcard">${pi[k].face}</div></div>`;
+      <div class="zlabel">${label} <b class="${k === 'library' && pi[k].n === 0 ? 'lib-empty' : ''}">${pi[k].n}</b>${sub ? ` <span class="zsub">${sub}</span>` : ''}</div><div class="zcard">${pi[k].face}</div></div>`;
   const cmd = (p.zones.command || []).map(c => cardHTML(c, c.id && defs[c.id], { mine: false, pid, ctrl: pid, zone: 'command' })).join('');
   return box('library', 'LIB') + box('graveyard', 'GY', pi.graveyard.n ? `${pi.graveyard.tc.perm}P` : '') + box('exile', 'EXILE') +
     `<div class="zbox cmdbox"><div class="zlabel">CMD</div><div class="zcard cmdcards">${cmd}</div></div>`;
@@ -2771,7 +2776,7 @@ function myTileOverlayHTML(bh, bw) {
   const n = z.hand.length, mid = (n - 1) / 2, step = n > 1 ? Math.min(4, 30 / n) : 0;
   const fan = i => { const off = i - mid; return `--rot:${(off * step).toFixed(1)}deg;--arc:${(mid ? 8 * (off / mid) ** 2 : 0).toFixed(1)}px;z-index:${i + 1}`; };
   const hand = z.hand.map((c, i) => cardHTML(c, defOf(c), { mine: true, pid: S.pid, zone: 'hand', style: fan(i) })).join('');
-  const pile = (k, label) => `<div class="tpile" data-pile="${k}" data-pid="${esc(S.pid)}" data-drop="${k}" title="${esc(pi[k].tip)}"><div class="tpcard">${pi[k].face || ''}</div><div class="tplabel">${label} <b>${pi[k].n}</b></div></div>`;
+  const pile = (k, label) => `<div class="tpile" data-pile="${k}" data-pid="${esc(S.pid)}" data-drop="${k}" title="${esc(pi[k].tip)}"><div class="tpcard">${pi[k].face || ''}</div><div class="tplabel">${label} <b class="${k === 'library' && pi[k].n === 0 ? 'lib-empty' : ''}">${pi[k].n}</b></div></div>`;
   const cmd = z.command.map(c => cardHTML(c, defOf(c), { mine: true, pid: S.pid, zone: 'command' })).join('');
   return `<div class="tlife">${lifeBoxHTML(S.pid, true)}</div>
     <div class="tstrip" style="top:${bh}px;width:${bw}px"><div class="thand mine" data-drop="hand" style="--hm:${handSpread(n, bw)}px">${hand}${n ? `<b class="thn">${n}</b>` : ''}</div>
@@ -2795,7 +2800,7 @@ function tileOverlayHTML(pid, bh, bw) {
   const hand = revealed
     ? p.revHand.map((c, i) => cardHTML(c, c.id && defs[c.id], { mine: false, pid, ctrl: pid, zone: 'hand', style: fan(i) })).join('')
     : Array.from({ length: n }, (_, i) => `<div class="card oback" style="${fan(i)}">${UI.cardBackHTML('', appearanceBackFor(pid))}</div>`).join('');
-  const pile = (k, label) => `<div class="tpile"${k === 'library' ? ` data-fx="library" data-pid="${esc(pid)}"` : ''}><div class="tpcard">${pi[k].face || ''}</div><div class="tplabel">${label} <b>${pi[k].n}</b></div></div>`;
+  const pile = (k, label) => `<div class="tpile"${k === 'library' ? ` data-fx="library" data-pid="${esc(pid)}"` : ''}><div class="tpcard">${pi[k].face || ''}</div><div class="tplabel">${label} <b class="${k === 'library' && pi[k].n === 0 ? 'lib-empty' : ''}">${pi[k].n}</b></div></div>`;
   const cmd = (p.zones.command || []).map(c => cardHTML(c, c.id && defs[c.id], { mine: false, pid, ctrl: pid, zone: 'command' })).join('');
   return `<div class="tlife">${lifeBoxHTML(pid, true)}</div>
     <div class="tstrip" style="top:${bh}px;width:${bw}px"><div class="thand" style="--hm:${handSpread(n, bw)}px">${hand}${handN ? `<b class="thn">${handN}</b>` : ''}</div>
@@ -2820,7 +2825,7 @@ function renderOpp(el, pid, idx) {
     return;
   }
   const pi = pileInfo(pid);
-  const oz = (k, label, sub) => `<span class="oz" data-pile="${k}" data-pid="${esc(pid)}" title="${esc(pi[k].tip)}${k === 'library' ? '' : ' — click to search'}">${label} <b>${pi[k].n}</b>${sub ? ` <span class="zsub">${sub}</span>` : ''}</span>`;
+  const oz = (k, label, sub) => `<span class="oz" data-pile="${k}" data-pid="${esc(pid)}" title="${esc(pi[k].tip)}${k === 'library' ? '' : ' — click to search'}">${label} <b class="${k === 'library' && pi[k].n === 0 ? 'lib-empty' : ''}">${pi[k].n}</b>${sub ? ` <span class="zsub">${sub}</span>` : ''}</span>`;
   const cmdCards = (p.zones.command || []).map(c => cardHTML(c, c.id && defs[c.id], Object.assign({}, o, { zone: 'command' }))).join('');
   // their hand, right next to their commander: a small fan of card backs (face up only if they revealed it) + the count
   const revealed = !!(p.revHand && p.revHand.length);
@@ -3636,6 +3641,21 @@ function onButton(a, btn, e) {
     case 'view': S.view = btn.dataset.v; LS.set('ct.view', S.view); S.focus = null; document.body.classList.remove('side-open'); render(); break;
     case 'displaysettings': displaySettings(); break;
   }
+}
+let concedePromptOpen = false;
+function askConcede(message, title) {
+  if (concedePromptOpen) return;
+  concedePromptOpen = true;
+  let result;
+  try {
+    result = UI.confirm(message, { title, danger: true, okLabel: 'Concede game' });
+  } catch (e) {
+    concedePromptOpen = false;
+    throw e;
+  }
+  Promise.resolve(result).then(ok => {
+    if (ok) concedeGame();
+  }, () => {}).finally(() => { concedePromptOpen = false; });
 }
 function concedeGame() {
   const T = S.table;

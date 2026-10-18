@@ -4,7 +4,13 @@ All notable changes to Commander Table are listed here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/). Each release is tagged `vX.Y.Z` in git.
 
-## [Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.22.2...HEAD
+## [Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.22.3...HEAD
+
+## [0.22.3] - 2026-10-18
+
+### Fixed
+- Restore the Concede confirmation when life reaches 0 or below or one commander deals 21 damage.
+- Warn again when a player attempts to draw from an empty library, and highlight the zero library count in red.
 
 ## [0.22.2] - 2026-10-18
 
@@ -26,6 +32,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - In Touch mode, prevent accidental page scrolling during card drags, use the dynamic mobile viewport height, and recommend landscape on narrow phones without blocking portrait play.
 - Keep the standard desktop interaction path unchanged when Touch mode is off.
 
+[0.22.3]: https://github.com/ccall1212/commander-table/compare/v0.22.2...v0.22.3
 [0.22.2]: https://github.com/ccall1212/commander-table/compare/v0.22.1...v0.22.2
 [0.22.1]: https://github.com/ccall1212/commander-table/compare/v0.22.0...v0.22.1
 [0.22.0]: https://github.com/ccall1212/commander-table/compare/v0.21.4...v0.22.0
