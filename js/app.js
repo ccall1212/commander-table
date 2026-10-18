@@ -2342,7 +2342,7 @@ function cardHTML(c, def, o) {
       const parts = String(pt.text).split('/');
       const power = parts[0] || '?', toughness = parts[1] || '?';
       const statTitle = 'Click power for +1 or right-click for −1; click toughness for +1 or right-click for −1';
-      if (/^-?\\d+$/.test(power) && /^-?\\d+$/.test(toughness)) {
+      if (/^-?\d+$/.test(power) && /^-?\d+$/.test(toughness)) {
         badges += `<span class="pt${pt.modified ? ' mod' : ''}" title="${statTitle}${def && def.pt ? ' (printed ' + esc(def.pt) + ')' : ''}"><button type="button" class="pt-stat pt-stat-power" data-pt-stat="power" aria-label="Increase power">${esc(power)}</button><span class="pt-separator" aria-hidden="true">/</span><button type="button" class="pt-stat pt-stat-toughness" data-pt-stat="toughness" aria-label="Increase toughness">${esc(toughness)}</button></span>`;
       } else {
         badges += `<span class="pt${pt.modified ? ' mod' : ''}" title="Power / toughness${def && def.pt ? ' (printed ' + esc(def.pt) + ')' : ''}">${esc(pt.text)}</span>`;
