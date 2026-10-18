@@ -119,3 +119,17 @@ Expected: one prompt per new lethal crossing or empty-library draw attempt, no p
 8. Test in Sidebar and Grid at 1920×1080 and 1366×768. In a second browser tab/player, confirm the other player's board shows the same resulting P/T. Check the console for errors.
 
 Expected: manual power-only changes never alter toughness; manual toughness-only changes never alter power; actual +1/+1 and −1/−1 counters still affect both stats; all players see the same displayed result.
+
+
+# Manual test checklist — EDHPlay-style card power/toughness badge (v0.22.4 candidate)
+
+1. Extract the ZIP and run `python -m http.server 8099 --bind 127.0.0.1` in the extracted project folder.
+2. Open `http://127.0.0.1:8099/index.html`, then click **Practice solo** and load a deck with creatures.
+3. On the battlefield, confirm creature power and toughness appear at the card's bottom-right as two distinct, readable number chips: blue power on the left, toughness on the right, with a dark separator/backing.
+4. Confirm cards without power/toughness (such as ordinary lands) do not show a P/T badge. Non-creature permanents with stats should show one if the app recognizes their P/T.
+5. Right-click a creature → **Power / Toughness**. Change only power, then only toughness. Confirm only the selected number changes and the badge remains anchored at the bottom-right.
+6. Add a real +1/+1 counter. Confirm both values increase; remove it and confirm both return. Apply a manual adjustment and confirm it remains distinct from a real counter. Reset manual adjustments and confirm actual counters remain.
+7. Check the badge on a card with long/negative stats if available, and confirm it does not cover the card's text in a way that makes the stats unreadable.
+8. Test Sidebar and Grid at approximately 1920×1080 and 1366×768.
+9. For multiplayer consistency, host in one tab and join from a second tab. Change P/T in the owner tab and confirm the same values and badge styling appear on both clients, in both layouts.
+10. Check the browser console for errors, then stop the server with Ctrl+C.
