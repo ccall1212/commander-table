@@ -89,3 +89,13 @@ When the mouse is hovering over the battlefield and the player presses **T**, op
 - Keep the existing **T** behavior for tapping/untapping a battlefield card or playing a hovered hand card tapped. The token-menu action should apply only when the pointer is over empty battlefield space and must not steal those existing card/hand shortcuts.
 - Check the current hotkey list and token-menu entry point before implementation; reuse the existing token creation UI rather than creating a second menu.
 - Test with the pointer over empty battlefield space, over a creature, over a card in hand, and outside the battlefield, in both Sidebar and Grid.
+
+## 24. Browse deck and change card printings before starting a game — QUEUED
+
+After a player imports or selects a saved deck in the start menu, provide a **Browse / Edit deck** area where they can review the full deck and choose alternate printings for individual cards before hosting or joining a game.
+
+- Show the whole deck in a clear, scrollable list or gallery, including card names and their current printing/art, with an easy way to open a card's available printings.
+- Reuse the existing card-printing lookup/selection behavior where possible, including the ability to choose from available printings rather than limiting the choice to a small fixed number.
+- Save each card's selected printing with that deck in the browser, using the existing local saved-deck behavior, so choices persist after leaving or reopening the page and are used when the game starts.
+- Keep this as a pre-game deck-editing workflow; changing a printing should not change card counts, card rules, or other deck contents.
+- Test with a deck that has multiple alternate printings, reload the page and verify the choices persist, then start a game and confirm the chosen printings are used. Include both a newly imported deck and an already-saved deck.
