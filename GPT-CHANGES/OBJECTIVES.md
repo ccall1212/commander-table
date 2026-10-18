@@ -88,7 +88,8 @@ Investigate and restore the confirmation prompt that used to appear when a playe
 
 - First identify the previous behavior and the change that caused the prompt to stop appearing; restore the intended behavior rather than adding a duplicate prompt.
 - Confirm what counts as lethal for life total and Commander damage, and keep the prompt from appearing repeatedly on every render or unrelated state update.
-- Verify the prompt's actions and dismissal, and test lethal changes caused locally and by another player in both Sidebar and Grid.
+- **Empty library:** if a player attempts to draw when their library has 0 cards, turn the library count (0) red and show the Concede prompt again. Treat this as its own clear trigger, not as a repeated prompt on every render.
+- Verify the prompt's actions and dismissal, and test lethal changes caused locally and by another player in both Sidebar and Grid. Also test attempting to draw from an empty library, including that the 0 turns red and the prompt appears again.
 
 ## 22. Fix Grid view dragging cards to player piles — QUEUED
 
