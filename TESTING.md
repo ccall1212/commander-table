@@ -121,15 +121,15 @@ Expected: one prompt per new lethal crossing or empty-library draw attempt, no p
 Expected: manual power-only changes never alter toughness; manual toughness-only changes never alter power; actual +1/+1 and −1/−1 counters still affect both stats; all players see the same displayed result.
 
 
-# Manual test checklist — EDHPlay-style card power/toughness badge (v0.22.4 candidate)
+# Manual test checklist — independently clickable power/toughness (v0.22.4 candidate)
 
 1. Extract the ZIP and run `python -m http.server 8099 --bind 127.0.0.1` in the extracted project folder.
-2. Open `http://127.0.0.1:8099/index.html`, then click **Practice solo** and load a deck with creatures.
-3. On the battlefield, confirm creature power and toughness appear at the card's bottom-right as two distinct, readable number chips: blue power on the left, toughness on the right, with a dark separator/backing.
-4. Confirm cards without power/toughness (such as ordinary lands) do not show a P/T badge. Non-creature permanents with stats should show one if the app recognizes their P/T.
-5. Right-click a creature → **Power / Toughness**. Change only power, then only toughness. Confirm only the selected number changes and the badge remains anchored at the bottom-right.
-6. Add a real +1/+1 counter. Confirm both values increase; remove it and confirm both return. Apply a manual adjustment and confirm it remains distinct from a real counter. Reset manual adjustments and confirm actual counters remain.
-7. Check the badge on a card with long/negative stats if available, and confirm it does not cover the card's text in a way that makes the stats unreadable.
-8. Test Sidebar and Grid at approximately 1920×1080 and 1366×768.
-9. For multiplayer consistency, host in one tab and join from a second tab. Change P/T in the owner tab and confirm the same values and badge styling appear on both clients, in both layouts.
+2. Open `http://127.0.0.1:8099/index.html`, click **Practice solo**, and put a creature on the battlefield.
+3. **Click the blue power number itself.** Expect power to increase by 1 and toughness to stay unchanged. Click the dark toughness number itself. Expect toughness to increase by 1 and power to stay unchanged.
+4. **Right-click the power number** and confirm only power decreases by 1. Right-click toughness and confirm only toughness decreases by 1.
+5. Confirm the displayed badge stays compact, like a simple `3/4` at bottom-right, without large stat boxes taking up extra card space. Cards without recognized P/T should not get clickable stats.
+6. Right-click the card body (not a stat number) → **Power / Toughness**. Separately test **Power +1**, **Power −1**, **Toughness +1**, and **Toughness −1**. Each menu command must change only its named stat. Manual +1/+1 changes both intentionally.
+7. Add a real +1/+1 counter and confirm both values increase; remove the counter and confirm both return. Reset manual changes and confirm actual counters remain.
+8. Check Sidebar and Grid at approximately 1920×1080 and 1366×768.
+9. If possible, host in one tab and join from a second. Verify clicks on either stat update the same single stat for both players.
 10. Check the browser console for errors, then stop the server with Ctrl+C.
