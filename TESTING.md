@@ -63,3 +63,25 @@ Chris confirmed that he tested the pointer/clicking fix in a real browser before
 9. Turn Touch mode off. Confirm normal desktop mouse/right-click behavior is restored; reload and confirm the saved off state remains. Check the browser console for errors.
 
 **Important:** iPhone Safari does not reliably allow a normal website to force orientation lock, so Touch mode recommends landscape rather than requiring it. Real iPhone/iPad Safari testing is still needed to confirm touch gestures and screen sizing.
+
+
+# Manual test checklist — Grid battlefield pile drops (v0.22.2 candidate)
+
+## Start the app
+1. Extract this ZIP.
+2. In the extracted project folder, run `python -m http.server 8099 --bind 127.0.0.1`.
+3. Open `http://127.0.0.1:8099/index.html`.
+4. Start a game with at least two players (a host tab and a second tab joined to the same room).
+
+## Click-by-click checks
+1. Select **Grid** view and use the player's own quadrant.
+2. Drag a battlefield creature onto **LIB**. Expect it to move to the Library (normal drop goes to the top; hold Shift to put it on the bottom).
+3. Drag another battlefield card onto **GY**; confirm it leaves the battlefield and appears in the Graveyard.
+4. Drag a card onto **EXILE**; confirm it moves to Exile.
+5. Drag a Commander/permanent onto **CMD**; confirm it moves to the Command zone.
+6. Repeat all four destinations in **Sidebar** view to check that existing behavior is unchanged.
+7. Repeat at browser sizes **1920×1080** and **1366×768**. In the second tab, confirm the other player's public view updates to the same zone.
+8. Confirm ordinary card repositioning within the battlefield and attaching cards still work.
+9. Check the browser console for errors, then stop the server with Ctrl+C.
+
+**Not yet verified:** actual browser/multiplayer interaction; please run this checklist on the ZIP.
