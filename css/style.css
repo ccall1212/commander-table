@@ -1095,3 +1095,53 @@ body.touch-mode #myBar .ctrpanel {
 }
 #ct-touch-orientation-hint span { flex: 1; min-width: 0; }
 #ct-touch-orientation-hint button { min-height: 40px; }
+
+
+
+
+/* Compact original-style white P/T pill with two independently clickable halves. */
+.card .badges .pt {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #f1f1f1;
+  color: #111;
+  box-shadow: 0 1px 3px rgba(0,0,0,.45);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 16px;
+  text-shadow: none;
+}
+.card .badges .pt .pt-stat {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  margin: 0;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #111;
+  font: inherit;
+  line-height: inherit;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: none;
+  transition: background-color .08s ease;
+}
+/* Fill the whole half-pill; the parent clips the rounded outside edge. */
+.card .badges .pt .pt-stat:hover,
+.card .badges .pt .pt-stat:focus,
+.card .badges .pt .pt-stat:focus-visible {
+  background: #b8b8b8;
+  outline: none;
+  box-shadow: none;
+}
+.card .badges .pt.mod { outline: 1px solid rgba(0,0,0,.35); }

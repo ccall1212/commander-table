@@ -6,7 +6,7 @@ A free, browser-based Magic: The Gathering Commander table for playing with frie
 
 **Play now:** https://ccall1212.github.io/commander-table/ — nothing to install. See [CHANGELOG.md](CHANGELOG.md) for what changed in each version.
 
-**Current app version:** v0.22.3.
+**Current app version:** v0.22.4.
 
 ## What you need
 
@@ -43,7 +43,7 @@ Decks are saved in your browser.
 - One person clicks **Host a game** and gets a 5-letter room code. Click the code in the top-left to copy an invite link, and send it to your friends. (☰ → **Copy invite link** does the same thing.)
 - Everyone else opens the link (or enters the code) and clicks **Join**.
 - The host clicks **Start game** to begin. If everyone rolled for first player (🎲 Dice, see **Turn helpers**), that order is used. Otherwise the turn order is random.
-- The player whose turn it is has a yellow outline around their board in Sidebar and Grid layouts.
+- The player whose turn it is has a yellow outline around their board in Sidebar and Grid layouts. Battlefield creatures show a compact power/toughness badge at the card's bottom-right. Click the power value to increase only power, or the toughness value to increase only toughness; right-click either value to decrease only that stat.
 - Supports 2 to 4 players comfortably, and the table seats up to 6. It's designed for 1v1 up to 4-player Commander.
 - When a Commander is played from the command zone, a punchy boom-crack Commander slam-and-glow effect highlights the play in its color identity, while ordinary card placements and battlefield repositioning use a softer tap sound. Two-color Commanders split the ring into top/bottom halves; three- to five-color identities use distinct radial segments. Players with reduced-motion preferences see a brief static color flash instead of movement.
 - Want to practice alone? Click **Practice solo**.
@@ -166,7 +166,7 @@ Dropped connections and crashed tabs happen, and recovering from them is the mai
 **Counters, power/toughness & card info**
 
 - Right-click a card → **Counters**: add +1/+1 or −1/−1 (they cancel each other out, like the real rules), Loyalty ±1 on planeswalkers, **Add a counter…** for any named counter (charge, shield, stun…), plus **Increment / Double / Decrement all counters** and **Reset counters**.
-- Right-click a card → **Power / Toughness**: **Set power/toughness…** (e.g. 4/4), increment/decrement power or toughness, and **Reset**. The card shows its current P/T badge (printed P/T + counters + changes) and everyone sees it.
+- Right-click a battlefield card → **Power / Toughness**. Use **Power +1 / Power −1** or **Toughness +1 / Toughness −1** to change just one stat; **Alt+1 / Alt+3** adjust power and **Alt+2 / Alt+4** adjust toughness. **Manual +1/+1 (until reset)** changes both stats without adding a counter. Real +1/+1 and −1/−1 counters still affect both stats, and the resulting P/T badge is shared with everyone. **Set power/toughness…** changes the base override; **Reset power/toughness** clears manual changes. Manual changes are bookkeeping aids: they stay until reset and do not automatically model or expire temporary effects or abilities from card rules text.
 - Right-click any card (yours or an opponent's, or in a graveyard/exile search) → **View information**: big card image, rules text with mana symbols, official rulings, set and rarity, format legality and price.
 - Shortcuts while hovering one of your cards: **+** / **−** add a +1/+1 / −1/−1 counter, **J** add a named counter, **Shift+1 / Shift+2 / Shift+3** increment / double / decrement all counters, **Alt+1 / Alt+3** power up/down, **Alt+2 / Alt+4** toughness up/down, **Z** face down, **I** view information (works on opponents' cards too).
 
