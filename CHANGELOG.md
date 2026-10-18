@@ -9,7 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ## [0.22.4] - 2026-10-18
 
 ### Changed
-- Make separate Power and Toughness adjustments easier to identify, and distinguish manual P/T changes from actual +1/+1 counters.
+- Display battlefield power and toughness as separate high-contrast number chips in an EDHPlay-inspired badge; retain independent P/T adjustment and counter behavior.
 
 
 ## [0.22.3] - 2026-10-18
