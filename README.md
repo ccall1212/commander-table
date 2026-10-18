@@ -43,7 +43,7 @@ Decks are saved in your browser.
 - One person clicks **Host a game** and gets a 5-letter room code. Click the code in the top-left to copy an invite link, and send it to your friends. (☰ → **Copy invite link** does the same thing.)
 - Everyone else opens the link (or enters the code) and clicks **Join**.
 - The host clicks **Start game** to begin. If everyone rolled for first player (🎲 Dice, see **Turn helpers**), that order is used. Otherwise the turn order is random.
-- The player whose turn it is has a yellow outline around their board in Sidebar and Grid layouts.
+- The player whose turn it is has a yellow outline around their board in Sidebar and Grid layouts. Battlefield creatures show power and toughness in a compact, two-part badge at the card's bottom-right.
 - Supports 2 to 4 players comfortably, and the table seats up to 6. It's designed for 1v1 up to 4-player Commander.
 - When a Commander is played from the command zone, a punchy boom-crack Commander slam-and-glow effect highlights the play in its color identity, while ordinary card placements and battlefield repositioning use a softer tap sound. Two-color Commanders split the ring into top/bottom halves; three- to five-color identities use distinct radial segments. Players with reduced-motion preferences see a brief static color flash instead of movement.
 - Want to practice alone? Click **Practice solo**.
