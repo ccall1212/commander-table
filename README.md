@@ -47,6 +47,10 @@ Decks are saved in your browser.
 - Want to practice alone? Click **Practice solo**.
 - To concede, ☰ → **Concede game…** marks you out and skips you in turn order. If it was your turn, play passes to the next player.
 
+## iPad and touch controls
+
+On an iPad or phone, open the top-right **☰** menu and turn on **Touch mode**. The setting is saved only in that browser on that device, and does not change what other players see. Touch mode keeps the page fixed so dragging cards is less likely to scroll the webpage, while taps and holds open card controls. On a phone in portrait, a reminder recommends rotating to landscape for more room; you can dismiss it and keep playing upright. Turn Touch mode off from the same menu to restore standard page behavior.
+
 ## Display settings
 
 Open ☰ → **Display settings…** to adjust how things look on your screen:
@@ -113,7 +117,7 @@ Dropped connections and crashed tabs happen, and recovering from them is the mai
 - Double-click a card in your hand to play it.
 - Hover over a card in your hand and press **T** to play it onto the battlefield **tapped**; it is placed in the battlefield area that matches its card type. On the battlefield, **T** still taps or untaps it.
 - Double-click your commander to cast it. Commander tax is manual: left-click the 🪙 chip beside CMD for +2, right-click for −2 (or use the commander's right-click menu).
-- Right-click any of your cards for options: counters, transform, face down, **Copy this card**, give control, and move to any zone.
+- Right-click any of your cards for options: counters, transform, face down, **Copy this card**, give control, and move to any zone. On iPad with **Touch mode** on, tap a card and choose **Actions**, or press and hold it to open those options.
 - Right-click an opponent's card (or use the graveyard/exile viewer) to **Copy this card** onto your battlefield — handy for Clone effects. Copies show a purple **TOKEN COPY** label and vanish if they leave the battlefield.
 - Drag cards between hand, battlefield, graveyard, exile, library, and command zone. Shift-drop onto the library to put a card on the bottom. Drag cards within your hand to reorder it.
 - **Select several battlefield cards:** drag from empty space on your battlefield to draw a rectangle around cards. The tabletop prevents browser text/image selection while you drag. Drag any selected card to move the group. Hold **Shift** while drawing to add cards, or **Shift-click** a card to toggle it. Click empty battlefield space or press **Esc** to clear the selection. Dropping a selected group onto one of your zone piles moves the whole group there; dropping it on another player's board gives them control of the whole group.

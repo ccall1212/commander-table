@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.21.4';
+const APP_VERSION = '0.22.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -120,7 +120,9 @@ const S = {
   attachToast: null,
   fit: {},          // 'mode:pid' -> {dw, dh} display size the auto-fit chose for that board
   regionDrag: null,
-  viewers: new Set()
+  viewers: new Set(),
+  touchMode: !!LS.get('ct.touchMode', false),
+  touchPreview: null
 };
 
 const pname = pid => (pid === S.pid && S.me) ? S.me.name : ((S.players[pid] && S.players[pid].name) || 'Someone');
@@ -2081,6 +2083,36 @@ function diceMenu(x, y) {
     } }
   ]);
 }
+let touchOrientationHintDismissed = false;
+function refreshTouchOrientationHint() {
+  const old = $('#ct-touch-orientation-hint');
+  const gameActive = $('#game') && !$('#game').classList.contains('hidden');
+  const portraitPhone = gameActive && S.touchMode && window.innerWidth <= 700 && window.innerHeight > window.innerWidth;
+  if (!portraitPhone) {
+    if (old) old.remove();
+    if (window.innerWidth > 700 || window.innerWidth > window.innerHeight) touchOrientationHintDismissed = false;
+    return;
+  }
+  if (old || touchOrientationHintDismissed) return;
+  const hint = document.createElement('div');
+  hint.id = 'ct-touch-orientation-hint';
+  hint.setAttribute('role', 'status');
+  hint.innerHTML = '<span><b>Playing on a phone?</b> Landscape gives your hand and battlefield more room. You can keep playing upright if you prefer.</span><button type="button">Got it</button>';
+  hint.querySelector('button').addEventListener('click', () => {
+    touchOrientationHintDismissed = true;
+    hint.remove();
+  });
+  document.body.appendChild(hint);
+}
+function setTouchMode(enabled) {
+  S.touchMode = !!enabled;
+  LS.set('ct.touchMode', S.touchMode);
+  document.body.classList.toggle('touch-mode', S.touchMode);
+  S.touchPreview = null;
+  hidePreview();
+  refreshTouchOrientationHint();
+  UI.toast(S.touchMode ? 'Touch mode on: page scrolling is disabled; drag cards to move them. Landscape is recommended on phones.' : 'Touch mode off: standard desktop controls restored.', { ms: 4000 });
+}
 function mainMenu(x, y) {
   const m = S.me;
   const items = [
@@ -2091,6 +2123,7 @@ function mainMenu(x, y) {
     { label: S.arrange ? 'Done arranging zones' : 'Arrange my zones', onClick: toggleArrange },
     { label: 'Tidy up my cards', onClick: () => act(() => { tidyBoard(); return ['tidied up their battlefield']; }) },
     { label: 'Display settings…', onClick: displaySettings },
+    { label: `Touch mode: ${S.touchMode ? 'On' : 'Off'}`, checked: S.touchMode, onClick: () => setTouchMode(!S.touchMode) },
     { label: 'Hotkey list…', onClick: showHotkeyList },
     { sep: true },
     { label: 'Auto-untap on my turn', checked: m.autoUntap, onClick: () => act(() => { m.autoUntap = !m.autoUntap; }, { noUndo: true }) },
@@ -2885,18 +2918,20 @@ function preview(def, hidden, tag) {
   if (!def || !pv) return;
   pv.classList.remove('hidden');
   setTimeout(placePv, 0);
-  if (hidden) { pv.innerHTML = `<div class="pv-imgs">${UI.cardBackHTML()}</div><div class="pv-tag">Face-down card</div>`; return; }
+  if (hidden) { pv.innerHTML = `<div class="pv-imgs">${UI.cardBackHTML()}</div><div class="pv-tag">Face-down card</div>` + (S.touchMode && S.touchPreview ? `<button class="ct-touch-actions" type="button" data-touch-actions="${esc(S.touchPreview.iid)}">Actions</button>` : ''); return; }
   const imgs = [def.img, def.imgBack].filter(IMG_OK);
   // The card image carries its own text; only show text when there's no image (or a COPY / attached tag).
   pv.innerHTML = (imgs.length
     ? `<div class="pv-imgs ${imgs.length > 1 ? 'two' : ''}">${imgs.map(u => `<img src="${esc(u)}" alt="">`).join('')}</div>`
     : `<div class="pv-txt"><b>${esc(def.name || '')}</b>${def.mana ? ' ' + esc(def.mana) : ''}${def.type ? `<br><span class="muted">${esc(def.type)}</span>` : ''}${def.oracle ? `<br>${esc(def.oracle)}` : ''}${def.pt ? `<br><b>${esc(def.pt)}</b>` : ''}</div>`) +
-    (tag ? `<div class="pv-tag"><span class="tag ${tag === 'Copy' ? 'cp' : ''}">${esc(tag.toUpperCase())}</span></div>` : '');
+    (tag ? `<div class="pv-tag"><span class="tag ${tag === 'Copy' ? 'cp' : ''}">${esc(tag.toUpperCase())}</span></div>` : '') +
+    (S.touchMode && S.touchPreview ? `<button class="ct-touch-actions" type="button" data-touch-actions="${esc(S.touchPreview.iid)}">Actions</button>` : '');
 }
 const tagOf = c => (c.cp ? 'Copy' : c.tok ? 'Token' : '');
 function previewFromEl(cardEl) {
   const pid = cardEl.dataset.pid, iid = cardEl.dataset.iid;
   S.hover = { pid, iid };
+  S.touchPreview = S.touchMode ? { pid, iid } : null;
   S.pvFix = pid === S.pid && cardEl.dataset.zone === 'hand' ? (cardEl.closest('#myHand, .thand') || null) : null;
   if (pid === S.pid) {
     const f = findCard(iid);
@@ -3046,11 +3081,36 @@ function bindGame() {
     // anything that isn't a card (board, hand, log reference, zone viewer tile) hides the preview
     if (!(e.target.closest && e.target.closest('.card, .cref, [data-pvid], [data-iid]'))) hidePreview(); else placePv();
   }, { passive: true });
-  document.addEventListener('pointerdown', hidePreview, true);
+  document.addEventListener('pointerdown', e => {
+    if (S.touchMode && e.target.closest && e.target.closest('#pv')) return;
+    hidePreview();
+  }, true);
+  $('#pv').addEventListener('click', e => {
+    const btn = e.target.closest('[data-touch-actions]');
+    if (!btn || !S.touchMode || !S.touchPreview) return;
+    e.preventDefault(); e.stopPropagation();
+    const r = btn.getBoundingClientRect(), target = S.touchPreview;
+    hidePreview();
+    if (target.pid === S.pid) cardMenu(r.left, r.top, target.iid);
+    else oppCardMenu(r.left, r.top, target.pid, target.iid);
+  });
 
   // ---- pointer-driven dragging: cards (anywhere) and zones (arrange mode)
+  let touchHoldTimer = null, touchHoldTarget = null, touchHoldFired = false, touchHoldStart = null;
+  const clearTouchHold = () => { if (touchHoldTimer) clearTimeout(touchHoldTimer); touchHoldTimer = null; touchHoldTarget = null; touchHoldStart = null; };
   g.addEventListener('pointerdown', e => {
     if (e.button !== 0 || S.attachFrom) return;
+    if (S.touchMode && e.pointerType === 'touch') {
+      const target = e.target.closest('.card, [data-pile], [data-phead], .ohead, [data-a="tax"], .ctrs .ctr, .badges .pt');
+      if (target) {
+        clearTouchHold(); touchHoldFired = false; touchHoldTarget = target; touchHoldStart = { x: e.clientX, y: e.clientY };
+        const heldTarget = target, heldPoint = touchHoldStart;
+        touchHoldTimer = setTimeout(() => {
+          touchHoldTimer = null; touchHoldFired = true; drag = null; selectionDrag = null; hidePreview();
+          heldTarget.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: heldPoint.x, clientY: heldPoint.y, button: 2, buttons: 0 }));
+        }, 550);
+      }
+    }
     const handle = e.target.closest('.board.arrange .rlabel, .board.arrange .grip');
     if (handle && handle.closest('.board').dataset.pid === S.pid) { startRegionDrag(e, handle); return; }
     // Empty-space drag on my own battlefield starts a selection box, unless we're arranging zones.
@@ -3077,6 +3137,7 @@ function bindGame() {
     drag = { iid: card.dataset.iid, el: card, sx: e.clientX, sy: e.clientY, moved: false };
   });
   window.addEventListener('pointermove', e => {
+    if (touchHoldTimer && touchHoldStart && Math.hypot(e.clientX - touchHoldStart.x, e.clientY - touchHoldStart.y) >= 6) clearTouchHold();
     if (S.regionDrag) { regionMove(e); return; }
     if (selectionDrag) { moveSelectionDrag(e); return; }
     if (!drag) return;
@@ -3089,11 +3150,19 @@ function bindGame() {
     dragHighlight(e);
   });
   window.addEventListener('pointerup', e => {
+    if (touchHoldFired) { touchHoldFired = false; clearTouchHold(); S.dragEndAt = Date.now(); return; }
+    clearTouchHold();
     if (S.regionDrag) { regionEnd(); return; }
     if (selectionDrag) { endSelectionDrag(e); return; }
-    if (!drag) return;
+    if (!drag) {
+      if (S.touchMode && e.pointerType === 'touch') { const card = e.target.closest && e.target.closest('.card'); if (card) previewFromEl(card); }
+      return;
+    }
     const d = drag; drag = null;
-    if (!d.moved) return;
+    if (!d.moved) {
+      if (S.touchMode && e.pointerType === 'touch' && d.el && d.el.classList.contains('card')) previewFromEl(d.el);
+      return;
+    }
     S.dragEndAt = Date.now();
     d.ghost.remove();
     d.el.classList.remove('dragging');
@@ -3102,6 +3171,7 @@ function bindGame() {
     try { dropCard(d, e); } finally { render(); }
   });
   window.addEventListener('pointercancel', () => {
+    clearTouchHold(); touchHoldFired = false;
     if (selectionDrag) { cancelSelectionDrag(false); return; }
     if (drag && drag.moved) { drag.ghost.remove(); drag.el.classList.remove('dragging'); clearHighlights(); S.dragging = false; render(); }
     drag = null;
@@ -3772,6 +3842,7 @@ function leaveGame() {
 let selDeck = null;
 function showLobby() {
   $('#game').classList.add('hidden'); $('#lobby').classList.remove('hidden');
+  refreshTouchOrientationHint();
   document.title = 'Commander Table';
   $('#nameIn').value = LS.get('ct.name', '') || '';
   renderAppearancePickers();
@@ -3803,6 +3874,7 @@ function showLobby() {
 }
 function showGame() {
   $('#lobby').classList.add('hidden'); $('#game').classList.remove('hidden');
+  refreshTouchOrientationHint();
   document.title = S.role === 'solo' ? 'Practice — Commander Table' : `${S.room} — Commander Table`;
   logLen = -1;
   render();
@@ -4002,6 +4074,10 @@ function begin(role) {
 //  Boot
 // =====================================================================
 function boot() {
+  document.body.classList.toggle('touch-mode', S.touchMode);
+  refreshTouchOrientationHint();
+  window.addEventListener('resize', refreshTouchOrientationHint, { passive: true });
+  window.addEventListener('orientationchange', refreshTouchOrientationHint, { passive: true });
   let pid = SS.get('ct.pid', null);
   if (!pid) { pid = 'p' + uid(); SS.set('ct.pid', pid); }
   S.pid = pid;

@@ -48,3 +48,17 @@ Custom images are optimized to WebP and stored in that browser's local storage. 
 ## Browser test status — pointer/clicking fix (v0.21.4)
 
 Chris confirmed that he tested the pointer/clicking fix in a real browser before publication. This is user-performed browser testing; ChatGPT did not independently run the app in a browser or run an automated browser test. Use the checklist above for future regression checks.
+
+
+# Manual test checklist — iPad and phone Touch mode (v0.22.0 candidate)
+
+1. Extract the branch ZIP, run `python -m http.server 8099 --bind 0.0.0.0` in its folder, and open `http://127.0.0.1:8099/index.html` on that computer. For an iPhone/iPad on the same Wi-Fi, open `http://<COMPUTER-LAN-IP>:8099/index.html` on the device (replace the placeholder with the computer's local IP address).
+2. Start Practice solo. Open **☰ → Touch mode**. Confirm the menu item shows a check mark and the toast explains that page scrolling is disabled. Reload and confirm Touch mode remains enabled on that device.
+3. On a phone held upright, confirm a small banner recommends landscape and can be dismissed. Rotate sideways and confirm the banner disappears and the game uses the available screen height. Rotate back and confirm the game remains usable; the banner may appear again if it was not dismissed.
+4. Tap a card in your hand and on the battlefield. Its large preview should appear and include an **Actions** button. Tap **Actions** and confirm the existing card context menu opens and its options work.
+5. Press and hold a card for about half a second. Its context menu should open; lifting your finger must not also tap/untap or drag the card. Repeat on a Library/Graveyard pile and a card belonging to an opponent.
+6. Drag cards from the very bottom edge of the screen, including from the hand. The page must not scroll; the grabbed card should move instead. Also drag battlefield cards, tap/untap, drag from empty battlefield space to select multiple cards, and move the selected group.
+7. Confirm menus and dialogs that need their own scrolling can still scroll internally. Check both Sidebar and Grid, solo and a second-player session if available.
+8. Turn Touch mode off. Confirm normal page behavior and desktop right-click are restored; reload and confirm the saved off state remains. Check the browser console for errors.
+
+**Important:** iPhone Safari does not reliably allow a normal website to force orientation lock, so Touch mode recommends landscape rather than requiring it. Real iPhone/iPad Safari testing is still needed to confirm touch gestures and screen sizing.

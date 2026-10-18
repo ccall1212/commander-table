@@ -320,6 +320,12 @@ body.attaching .board .card:hover { outline: 3px solid #7c4dff; }
   position: absolute; bottom: calc(100% + 26px); left: 50%; transform: translateX(-50%); z-index: 40; white-space: nowrap;
   box-shadow: 0 8px 24px rgba(0,0,0,.5); }
 
+/* Optional iPad touch mode: keep card previews actionable and suppress Safari callouts. */
+body.touch-mode #pv.floatpv { pointer-events: auto; width: min(320px, calc(100vw - 24px)); max-height: calc(100vh - 24px); overflow-y: auto; }
+body.touch-mode .ct-touch-actions { display: block; width: 100%; min-height: 44px; margin-top: 8px; border: 1px solid var(--accent); border-radius: 8px; background: var(--accent); color: #17130a; font: 700 15px/1.2 system-ui, sans-serif; }
+body.touch-mode .card, body.touch-mode .board, body.touch-mode .w-menu { -webkit-touch-callout: none; }
+body.touch-mode .card:hover { transform: none; }
+
 /* ---------- Lanes & cards ---------- */
 .lane { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-height: 6px; }
 .lane:empty { display: none; }
@@ -997,3 +1003,64 @@ body.lens-on #pv { display: none; }
   opacity: 0 !important;
   pointer-events: none !important;
 }
+
+
+/* Touch mode uses the screen as a fixed tabletop, not a scrolling webpage. */
+html:has(body.touch-mode), body.touch-mode {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+body.touch-mode #lobby {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+body.touch-mode #game {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+body.touch-mode .boardwrap,
+body.touch-mode #myHand,
+body.touch-mode #myZones,
+body.touch-mode .tstrip,
+body.touch-mode .thand,
+body.touch-mode .tpile,
+body.touch-mode .card,
+body.touch-mode .bpile,
+body.touch-mode .pile,
+body.touch-mode .zbox,
+body.touch-mode .tpcard {
+  touch-action: none;
+}
+body.touch-mode #myHand .card,
+body.touch-mode .board .card {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+#ct-touch-orientation-hint {
+  position: fixed;
+  z-index: 2147483000;
+  top: max(8px, env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: min(560px, calc(100vw - 20px));
+  padding: 10px 12px;
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  background: rgba(22, 27, 36, .97);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, .55);
+  color: var(--text);
+  font-size: 13px;
+}
+#ct-touch-orientation-hint span { flex: 1; min-width: 0; }
+#ct-touch-orientation-hint button { min-height: 40px; }
