@@ -12,8 +12,8 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 
 ## Current state
 
-- **Main version:** v0.22.2; [PR #35](https://github.com/ccall1212/commander-table/pull/35) merged to `main` at release commit [66c611e](https://github.com/ccall1212/commander-table/commit/66c611e93d393c40246fa51b21338758f22303eb). Chris tested the Grid pile-drop fix and confirmed it works.
-- **In progress:** objective #21, lethal Concede prompt restoration and empty-library warning, on [branch `fix/lethal-concede-prompt`](https://github.com/ccall1212/commander-table/tree/fix/lethal-concede-prompt), candidate v0.22.3. The change is prepared for browser testing; do not merge until Chris confirms.
+- **Main version:** v0.22.3; [PR #37](https://github.com/ccall1212/commander-table/pull/37) merged to `main` at commit [1f667cb](https://github.com/ccall1212/commander-table/commit/1f667cb831be234225c22dbac07b08cf55e9bd31). Chris tested and approved the lethal Concede prompt and empty-library warning fix.
+- **Objective #21 shipped:** lethal Concede prompts and red zero-library count are included in v0.22.3. The required annotated tag `v0.22.3` must point to `1f667cb831be234225c22dbac07b08cf55e9bd31`.
 - **Touch mode:** v0.22.0 and the iOS Safari drag-viewport follow-up v0.22.1 are merged to `main` (PRs #32 and #33).
 - **Commander slam:** the animation and synthesized impact sound are back to the v0.20.6 implementation. Chris wants to keep refining the sound; do that on a separate branch.
 - **Paused:** draft [PR #11](https://github.com/ccall1212/commander-table/pull/11), random deck selection / website import. Do not merge until its listed live tests pass.
@@ -28,6 +28,7 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
   - `v0.22.0` → `ea6b1ec15bd348b99952fbf36d38157ff9045cdb`
   - `v0.22.1` → `4a6ad47af02722460dd9d179e73f94bc99cefc03`
   - `v0.22.2` → `66c611e93d393c40246fa51b21338758f22303eb`
+  - `v0.22.3` → `1f667cb831be234225c22dbac07b08cf55e9bd31`
   Use annotated tags (for example, with Claude Code). Until the release tags exist, the GitHub version badge may not show the latest app version.
 ## How a change gets released
 
