@@ -65,12 +65,13 @@ Add an optional **Touch mode** for iPad Safari, launched from the top-right hamb
 - Test in real iPhone/iPad Safari in portrait and landscape, including enabling/disabling Touch mode, host and joiner sessions, card inspection, card actions, dragging from the bottom edge of the hand, intentional group selection/movement, internal dialog scrolling, menu dismissal, and both Sidebar and Grid layouts. Desktop emulation alone is not sufficient for marking this complete.
 
 
-## 19. Separate power and toughness controls — IN PROGRESS (v0.22.4 candidate)
+## 19. Card power/toughness display and independent adjustments — IN PROGRESS (v0.22.4 candidate)
 
-Provide separate **Power + / Power −** and **Toughness + / Toughness −** controls so a player can change only one stat at a time.
+Display power and toughness directly on battlefield creature cards in an EDHPlay-inspired bottom-right badge, with separate high-contrast number chips. Keep the independent adjustment controls available.
 
 - Changes must combine correctly with existing +1/+1 counters: counters continue to increase both power and toughness, while a manual power-only or toughness-only adjustment affects just that stat.
 - Keep displayed values consistent across card inspection, the battlefield, and other players' views; preserve the card's printed base stats and counter state rather than silently rewriting them.
+- Badge should remain legible over card art, clearly separate power from toughness, and avoid showing on cards without recognized P/T.
 - Define how manual adjustments interact with temporary effects and stat-changing abilities during implementation. Do not make one-sided adjustments behave like +1/+1 counters.
 - Test a creature with no counters, with one or more +1/+1 counters, after each separate adjustment, and from a second player's view in both Sidebar and Grid.
 
