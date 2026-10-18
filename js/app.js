@@ -2341,7 +2341,12 @@ function cardHTML(c, def, o) {
     if (pt.text && (pt.modified || creature)) {
       const parts = String(pt.text).split('/');
       const power = parts[0] || '?', toughness = parts[1] || '?';
-      badges += `<span class="pt${pt.modified ? ' mod' : ''}" title="Power / toughness${def && def.pt ? ' (printed ' + esc(def.pt) + ')' : ''} — left-click +1/+1, right-click −1/−1"><span class="pt-power">${esc(power)}</span><span class="pt-separator">/</span><span class="pt-toughness">${esc(toughness)}</span></span>`;
+      const statTitle = 'Click power for +1 or right-click for −1; click toughness for +1 or right-click for −1';
+      if (/^-?\\d+$/.test(power) && /^-?\\d+$/.test(toughness)) {
+        badges += `<span class="pt${pt.modified ? ' mod' : ''}" title="${statTitle}${def && def.pt ? ' (printed ' + esc(def.pt) + ')' : ''}"><button type="button" class="pt-stat pt-stat-power" data-pt-stat="power" aria-label="Increase power">${esc(power)}</button><span class="pt-separator" aria-hidden="true">/</span><button type="button" class="pt-stat pt-stat-toughness" data-pt-stat="toughness" aria-label="Increase toughness">${esc(toughness)}</button></span>`;
+      } else {
+        badges += `<span class="pt${pt.modified ? ' mod' : ''}" title="Power / toughness${def && def.pt ? ' (printed ' + esc(def.pt) + ')' : ''}">${esc(pt.text)}</span>`;
+      }
     }
   }
   // mana cost along the top edge of cards in hand
@@ -2998,8 +3003,11 @@ function bindGame() {
     const ctr = t.closest('.ctr');
     const card = t.closest('.card');
     if (ctr && card && card.dataset.pid === S.pid) { addCounter(card.dataset.iid, ctr.dataset.ctr, 1); return; }
-    const ptb = t.closest('.badges .pt');
-    if (ptb && card && card.dataset.pid === S.pid) { changePT(card.dataset.iid, 1, 1); return; }
+    const ptStat = t.closest('.badges .pt-stat');
+    if (ptStat && card && card.dataset.pid === S.pid) {
+      changePT(card.dataset.iid, ptStat.dataset.ptStat === 'power' ? 1 : 0, ptStat.dataset.ptStat === 'toughness' ? 1 : 0);
+      return;
+    }
     if (card && e.shiftKey && card.dataset.pid === S.pid && card.dataset.zone === 'battlefield') {
       const f = findCard(card.dataset.iid);
       if (f && f.zone === 'battlefield' && !f.card.att) {
@@ -3042,8 +3050,11 @@ function bindGame() {
     const rcard = e.target.closest('.card');
     const rctr = e.target.closest('.ctrs .ctr');
     if (rctr && rcard && rcard.dataset.pid === S.pid) { addCounter(rcard.dataset.iid, rctr.dataset.ctr, -1); return; }
-    const rpt = e.target.closest('.badges .pt');
-    if (rpt && rcard && rcard.dataset.pid === S.pid) { changePT(rcard.dataset.iid, -1, -1); return; }
+    const rpt = e.target.closest('.badges .pt-stat');
+    if (rpt && rcard && rcard.dataset.pid === S.pid) {
+      changePT(rcard.dataset.iid, rpt.dataset.ptStat === 'power' ? -1 : 0, rpt.dataset.ptStat === 'toughness' ? -1 : 0);
+      return;
+    }
     const card = e.target.closest('.card');
     if (card && card.dataset.pid === S.pid) { cardMenu(e.clientX, e.clientY, card.dataset.iid); return; }
     if (card) { oppCardMenu(e.clientX, e.clientY, card.dataset.pid, card.dataset.iid); return; }
@@ -3118,7 +3129,7 @@ function bindGame() {
   g.addEventListener('pointerdown', e => {
     if (e.button !== 0 || S.attachFrom) return;
     if (S.touchMode && e.pointerType === 'touch') {
-      const target = e.target.closest('.card, [data-pile], [data-phead], .ohead, [data-a="tax"], .ctrs .ctr, .badges .pt');
+      const target = e.target.closest('.badges .pt-stat, .card, [data-pile], [data-phead], .ohead, [data-a="tax"], .ctrs .ctr, .badges .pt');
       if (target) {
         clearTouchHold(); touchHoldFired = false; touchHoldTarget = target; touchHoldStart = { x: e.clientX, y: e.clientY };
         const heldTarget = target, heldPoint = touchHoldStart;
