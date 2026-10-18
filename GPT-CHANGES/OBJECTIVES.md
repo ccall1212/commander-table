@@ -99,3 +99,13 @@ After a player imports or selects a saved deck in the start menu, provide a **Br
 - Save each card's selected printing with that deck in the browser, using the existing local saved-deck behavior, so choices persist after leaving or reopening the page and are used when the game starts.
 - Keep this as a pre-game deck-editing workflow; changing a printing should not change card counts, card rules, or other deck contents.
 - Test with a deck that has multiple alternate printings, reload the page and verify the choices persist, then start a game and confirm the chosen printings are used. Include both a newly imported deck and an already-saved deck.
+
+## 25. Enter a life total directly — QUEUED
+
+Allow a player to type the life total they want instead of repeatedly pressing the +/− controls to reach a number.
+
+- Provide an obvious **Set life total…** or click-to-edit action for the relevant player's life total. Entering `70` should set the total to 70, not add 70 to the current total.
+- Keep the existing +/− life controls working as before.
+- Validate the entry as a whole number and give a clear way to cancel without changing the total.
+- Use the existing life-total update and synchronization flow so the changed total appears consistently to the other players in the room; do not bypass game state or log behavior.
+- Test setting totals both above and below the current total (for example, 40 → 70 and 40 → 12), cancellation/invalid input, and visibility from a second player in Sidebar and Grid layouts.
