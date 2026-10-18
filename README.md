@@ -6,7 +6,7 @@ A free, browser-based Magic: The Gathering Commander table for playing with frie
 
 **Play now:** https://ccall1212.github.io/commander-table/ — nothing to install. See [CHANGELOG.md](CHANGELOG.md) for what changed in each version.
 
-**Current app version:** v0.22.2.
+**Current app version:** v0.22.3.
 
 ## What you need
 
