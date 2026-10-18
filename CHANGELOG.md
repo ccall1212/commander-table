@@ -4,7 +4,14 @@ All notable changes to Commander Table are listed here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/). Each release is tagged `vX.Y.Z` in git.
 
-## [Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.22.0...HEAD
+## [Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.22.1...HEAD
+
+## [0.22.1] - 2026-10-17
+
+### Fixed
+- Prevent Safari from taking over touch drags started around the overflowing hand and tabletop edges.
+- Fit Touch mode to Safari's visible viewport and respect the device safe area without adding extra height.
+- Keep menus, the game log and dialogs independently scrollable while the page stays fixed.
 
 ## [0.22.0] - 2026-10-17
 
@@ -14,6 +21,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - In Touch mode, prevent accidental page scrolling during card drags, use the dynamic mobile viewport height, and recommend landscape on narrow phones without blocking portrait play.
 - Keep the standard desktop interaction path unchanged when Touch mode is off.
 
+[0.22.1]: https://github.com/ccall1212/commander-table/compare/v0.22.0...v0.22.1
 [0.22.0]: https://github.com/ccall1212/commander-table/compare/v0.21.4...v0.22.0
 
 ## [0.21.4] - 2026-10-17
@@ -334,7 +342,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - First playable build: paste-import decks from Moxfield or Archidekt (via Scryfall), 2–4 player rooms over PeerJS with self-healing reconnects, a searchable zone viewer, commander damage tracking and automatic tokens.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.20.5...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.22.1...HEAD
 [0.20.5]: https://github.com/ccall1212/commander-table/compare/v0.20.4...v0.20.5
 [0.20.4]: https://github.com/ccall1212/commander-table/compare/v0.20.3...v0.20.4
 [0.20.3]: https://github.com/ccall1212/commander-table/compare/v0.19.1...v0.20.3
