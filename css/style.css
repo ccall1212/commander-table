@@ -1099,13 +1099,14 @@ body.touch-mode #myBar .ctrpanel {
 
 
 
-/* Compact original-style white P/T badge with independently clickable values. */
+/* Compact original-style white P/T pill with two independently clickable halves. */
 .card .badges .pt {
   display: inline-flex;
-  align-items: center;
+  align-items: stretch;
   gap: 0;
-  padding: 0 4px;
-  border-radius: 9px;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 999px;
   background: #f1f1f1;
   color: #111;
   box-shadow: 0 1px 3px rgba(0,0,0,.45);
@@ -1117,9 +1118,13 @@ body.touch-mode #myBar .ctrpanel {
 .card .badges .pt .pt-stat {
   appearance: none;
   -webkit-appearance: none;
+  display: inline-flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
   min-width: 0;
   margin: 0;
-  padding: 0 1px;
+  padding: 0 4px;
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -1129,14 +1134,13 @@ body.touch-mode #myBar .ctrpanel {
   text-align: center;
   cursor: pointer;
   box-shadow: none;
+  transition: background-color .08s ease;
 }
-.card .badges .pt .pt-stat + .pt-stat { margin-left: 3px; }
-/* Darken the selected value softly instead of drawing a hard rectangular focus box. */
+/* Fill the whole half-pill; the parent clips the rounded outside edge. */
 .card .badges .pt .pt-stat:hover,
 .card .badges .pt .pt-stat:focus,
 .card .badges .pt .pt-stat:focus-visible {
-  background: rgba(0,0,0,.16);
-  border-radius: 4px;
+  background: #b8b8b8;
   outline: none;
   box-shadow: none;
 }
