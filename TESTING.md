@@ -105,3 +105,17 @@ Chris confirmed that he tested the pointer/clicking fix in a real browser before
 7. **Console:** check both tabs for errors. Confirm canceling a prompt does not concede the game; choosing **Concede game** does.
 
 Expected: one prompt per new lethal crossing or empty-library draw attempt, no prompt loop caused by render/state updates, and a red zero library count.
+
+
+# Manual test checklist — separate Power/Toughness controls (v0.22.4 candidate)
+
+1. Extract this branch ZIP, run `python -m http.server 8099 --bind 127.0.0.1` in the extracted folder, and open `http://127.0.0.1:8099/index.html`.
+2. Start Practice solo and put a creature with printed P/T on the battlefield. Right-click it → **Power / Toughness**. Confirm the menu has **Power +1**, **Power −1**, **Toughness +1**, **Toughness −1**, plus **Manual +1/+1 (until reset)**.
+3. Apply **Power +1** and **Power −1**. Only power should change; toughness should remain at its prior value. Repeat with the toughness controls and verify only toughness changes.
+4. Add a real **+1/+1 counter** from **Counters**. Both stats should increase by one on top of the manual adjustments. Remove it and confirm both stats return while manual changes remain.
+5. Use **Manual +1/+1 (until reset)**. Both stats should increase, but the card's counter display should not gain a +1/+1 counter. Choose **Reset power/toughness** and confirm manual P/T changes clear without removing real counters.
+6. Use **Set power/toughness…** (for example, 4/4), then add a counter and a one-stat adjustment. Confirm the final badge combines the base override, counter(s), and independent changes. Reset and confirm the printed P/T returns.
+7. Test a creature with no counters and one with multiple +1/+1 counters. Test a creature with unusual printed P/T if available.
+8. Test in Sidebar and Grid at 1920×1080 and 1366×768. In a second browser tab/player, confirm the other player's board shows the same resulting P/T. Check the console for errors.
+
+Expected: manual power-only changes never alter toughness; manual toughness-only changes never alter power; actual +1/+1 and −1/−1 counters still affect both stats; all players see the same displayed result.
