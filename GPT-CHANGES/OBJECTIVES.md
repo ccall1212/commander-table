@@ -65,7 +65,7 @@ Add an optional **Touch mode** for iPad Safari, launched from the top-right hamb
 - Test in real iPhone/iPad Safari in portrait and landscape, including enabling/disabling Touch mode, host and joiner sessions, card inspection, card actions, dragging from the bottom edge of the hand, intentional group selection/movement, internal dialog scrolling, menu dismissal, and both Sidebar and Grid layouts. Desktop emulation alone is not sufficient for marking this complete.
 
 
-## 19. Separate power and toughness controls — QUEUED
+## 19. Separate power and toughness controls — IN PROGRESS (v0.22.4 candidate)
 
 Provide separate **Power + / Power −** and **Toughness + / Toughness −** controls so a player can change only one stat at a time.
 
