@@ -1097,38 +1097,49 @@ body.touch-mode #myBar .ctrpanel {
 #ct-touch-orientation-hint button { min-height: 40px; }
 
 
-/* EDHPlay-inspired battlefield P/T badge: separate, high-contrast stat chips. */
+
+/* Compact, independently clickable power/toughness badge. Keep the overall footprint tiny. */
 .card .badges .pt {
   display: inline-flex;
   align-items: stretch;
   gap: 0;
-  overflow: hidden;
   padding: 0;
-  border: 1px solid rgba(255,255,255,.28);
-  border-radius: 5px;
-  background: #11151d;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.3);
+  border-radius: 3px;
+  background: rgba(8, 11, 17, .92);
   color: #fff;
-  box-shadow: 0 2px 5px rgba(0,0,0,.7);
-  font-size: clamp(10px, 1.05em, 15px);
-  line-height: 1.25;
-  font-weight: 900;
-  font-variant-numeric: tabular-nums;
-  text-shadow: 0 1px 1px rgba(0,0,0,.55);
+  box-shadow: 0 1px 3px rgba(0,0,0,.65);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 15px;
+  text-shadow: 0 1px 1px rgba(0,0,0,.6);
 }
-.card .badges .pt .pt-power,
-.card .badges .pt .pt-toughness {
-  display: inline-grid;
-  place-items: center;
-  min-width: 1.45em;
-  padding: 1px 3px;
+.card .badges .pt .pt-stat {
+  appearance: none;
+  -webkit-appearance: none;
+  min-width: 15px;
+  margin: 0;
+  padding: 0 3px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: inherit;
+  text-align: center;
+  cursor: pointer;
 }
-.card .badges .pt .pt-power { background: #183b73; color: #fff; }
-.card .badges .pt .pt-toughness { background: #252b36; color: #fff; }
+.card .badges .pt .pt-stat-power { background: #183b73; color: #fff; }
+.card .badges .pt .pt-stat-toughness { background: #242a34; color: #fff; }
 .card .badges .pt .pt-separator {
-  display: inline-grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
   padding: 0 1px;
-  background: #11151d;
-  color: #d5dbe5;
+  color: #c9d1dc;
+  background: rgba(8, 11, 17, .95);
+  pointer-events: none;
 }
-.card .badges .pt.mod { outline: 1px solid rgba(255,255,255,.55); }
+.card .badges .pt .pt-stat:hover,
+.card .badges .pt .pt-stat:focus-visible { filter: brightness(1.3); outline: 1px solid #fff; outline-offset: -1px; }
+.card .badges .pt.mod { outline: 1px solid rgba(255,255,255,.5); }
