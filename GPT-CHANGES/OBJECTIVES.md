@@ -1,6 +1,6 @@
 # Commander Table — Objectives backlog
 
-Features Chris has asked for that are **not built yet or remain open**. The numbers are Chris's original numbering; finished ones (1, 2, 3, 6, 8, 10, 13, 14, 16) were removed, and #7 (opponent boards looking dim) was dropped: the dimming only applies to players who are reconnecting or out, on purpose. Objective #15 (custom image uploads and pointer fixes) shipped in v0.21.4 via [PR #30](https://github.com/ccall1212/commander-table/pull/30). Objective #18 is the in-progress iPad/touch support work. Work on one at a time on its own branch and pull request, and read `AGENTS.md` first.
+Features Chris has asked for that are **not built yet or remain open**. The numbers are Chris's original numbering; finished ones (1, 2, 3, 6, 8, 10, 13, 14, 16) were removed, and #7 (opponent boards looking dim) was dropped: the dimming only applies to players who are reconnecting or out, on purpose. Objective #15 (custom image uploads and pointer fixes) shipped in v0.21.4 via [PR #30](https://github.com/ccall1212/commander-table/pull/30). Objective #22 (Grid pile drops) shipped in v0.22.2 via [PR #35](https://github.com/ccall1212/commander-table/pull/35). Objective #18 is the in-progress iPad/touch support work. Work on one at a time on its own branch and pull request, and read `AGENTS.md` first.
 
 Status key: **Queued** = requested, not started. **In progress** = a branch / PR exists (see `README.md`). **Paused** = started, waiting on something. **Deferred** = on purpose not now.
 
@@ -90,14 +90,6 @@ Investigate and restore the confirmation prompt that used to appear when a playe
 - Confirm what counts as lethal for life total and Commander damage, and keep the prompt from appearing repeatedly on every render or unrelated state update.
 - **Empty library:** if a player attempts to draw when their library has 0 cards, turn the library count (0) red and show the Concede prompt again. Treat this as its own clear trigger, not as a repeated prompt on every render.
 - Verify the prompt's actions and dismissal, and test lethal changes caused locally and by another player in both Sidebar and Grid. Also test attempting to draw from an empty library, including that the 0 turns red and the prompt appears again.
-
-## 22. Fix Grid view dragging cards to player piles — IN PROGRESS
-
-Restore drag-and-drop from cards on the battlefield to the player's **Library, Graveyard, Exile, and Command zone** in Grid view.
-
-- Check the player's own Grid quadrant and any relevant opponent-view interactions; preserve current Sidebar behavior.
-- Use the existing board coordinate conversion and card-action paths. Grid boards are scaled, so do not treat screen coordinates as stored board coordinates.
-- Test dragging to each of the four destinations in Grid and Sidebar at 1920×1080 and 1366×768, including a second player watching.
 
 ## 23. T hotkey opens the Token menu over the battlefield — QUEUED
 
