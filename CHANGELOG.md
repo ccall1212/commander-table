@@ -11,8 +11,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - Add optional Touch mode from the hamburger menu for iPad, iPhone, and other touch screens, saved locally per browser/device.
 - Let touch players tap cards to inspect them and open an **Actions** menu, or press and hold cards and piles to open their context menu.
-- In Touch mode, prevent accidental page scrolling during card drags, use the dynamic mobile viewport height, and recommend landscape on narrow phones without blocking portrait play.
+- In Touch mode, lock page gestures while dragging cards, use the live mobile viewport height, and recommend landscape on narrow phones without blocking portrait play.
 - Keep the standard desktop interaction path unchanged when Touch mode is off.
+
+### Fixed
+- Extend touch gesture protection to the hand and surrounding tabletop so dragging near the bottom edge does not hand the gesture to Safari's page scrolling.
+- Fit the game within the visible safe area and preserve scrolling inside menus, the game log, and dialogs.
 
 [0.22.0]: https://github.com/ccall1212/commander-table/compare/v0.21.4...v0.22.0
 

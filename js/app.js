@@ -2084,6 +2084,15 @@ function diceMenu(x, y) {
   ]);
 }
 let touchOrientationHintDismissed = false;
+function updateTouchViewportHeight() {
+  const viewport = window.visualViewport;
+  const height = viewport && viewport.height > 0 ? viewport.height : window.innerHeight;
+  if (S.touchMode && Number.isFinite(height) && height > 0) {
+    document.documentElement.style.setProperty('--ct-viewport-height', `${Math.round(height)}px`);
+  } else {
+    document.documentElement.style.removeProperty('--ct-viewport-height');
+  }
+}
 function refreshTouchOrientationHint() {
   const old = $('#ct-touch-orientation-hint');
   const gameActive = $('#game') && !$('#game').classList.contains('hidden');
@@ -2108,6 +2117,7 @@ function setTouchMode(enabled) {
   S.touchMode = !!enabled;
   LS.set('ct.touchMode', S.touchMode);
   document.body.classList.toggle('touch-mode', S.touchMode);
+  updateTouchViewportHeight();
   S.touchPreview = null;
   hidePreview();
   refreshTouchOrientationHint();
@@ -4075,9 +4085,15 @@ function begin(role) {
 // =====================================================================
 function boot() {
   document.body.classList.toggle('touch-mode', S.touchMode);
+  updateTouchViewportHeight();
   refreshTouchOrientationHint();
-  window.addEventListener('resize', refreshTouchOrientationHint, { passive: true });
-  window.addEventListener('orientationchange', refreshTouchOrientationHint, { passive: true });
+  const updateMobileViewport = () => {
+    updateTouchViewportHeight();
+    refreshTouchOrientationHint();
+  };
+  window.addEventListener('resize', updateMobileViewport, { passive: true });
+  window.addEventListener('orientationchange', updateMobileViewport, { passive: true });
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', updateMobileViewport, { passive: true });
   let pid = SS.get('ct.pid', null);
   if (!pid) { pid = 'p' + uid(); SS.set('ct.pid', pid); }
   S.pid = pid;

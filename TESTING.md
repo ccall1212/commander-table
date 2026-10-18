@@ -57,8 +57,9 @@ Chris confirmed that he tested the pointer/clicking fix in a real browser before
 3. On a phone held upright, confirm a small banner recommends landscape and can be dismissed. Rotate sideways and confirm the banner disappears and the game uses the available screen height. Rotate back and confirm the game remains usable; the banner may appear again if it was not dismissed.
 4. Tap a card in your hand and on the battlefield. Its large preview should appear and include an **Actions** button. Tap **Actions** and confirm the existing card context menu opens and its options work.
 5. Press and hold a card for about half a second. Its context menu should open; lifting your finger must not also tap/untap or drag the card. Repeat on a Library/Graveyard pile and a card belonging to an opponent.
-6. Drag cards from the very bottom edge of the screen, including from the hand. The page must not scroll; the grabbed card should move instead. Also drag battlefield cards, tap/untap, drag from empty battlefield space to select multiple cards, and move the selected group.
-7. Confirm menus and dialogs that need their own scrolling can still scroll internally. Check both Sidebar and Grid, solo and a second-player session if available.
-8. Turn Touch mode off. Confirm normal page behavior and desktop right-click are restored; reload and confirm the saved off state remains. Check the browser console for errors.
+6. **Bottom-edge drag / page scroll:** drag several cards from the bottom 10–20 pixels of the hand, by the art and by the edges between overlapping cards. Safari should not move the page; the grabbed card should follow your finger.
+7. **Internal scrolling:** open the game log and scroll it; open long card context menus and tall dialogs/viewers and scroll inside them. They should scroll without moving the page.
+8. **Rotation / browser bars:** rotate portrait to landscape and back, and test after Safari's address/tab bars collapse or reappear. The board should stay within the visible screen and the landscape hint should remain dismissible.
+9. Turn Touch mode off. Confirm normal desktop mouse/right-click behavior is restored; reload and confirm the saved off state remains. Check the browser console for errors.
 
 **Important:** iPhone Safari does not reliably allow a normal website to force orientation lock, so Touch mode recommends landscape rather than requiring it. Real iPhone/iPad Safari testing is still needed to confirm touch gestures and screen sizing.

@@ -321,7 +321,7 @@ body.attaching .board .card:hover { outline: 3px solid #7c4dff; }
   box-shadow: 0 8px 24px rgba(0,0,0,.5); }
 
 /* Optional iPad touch mode: keep card previews actionable and suppress Safari callouts. */
-body.touch-mode #pv.floatpv { pointer-events: auto; width: min(320px, calc(100vw - 24px)); max-height: calc(100vh - 24px); overflow-y: auto; }
+body.touch-mode #pv.floatpv { pointer-events: auto; width: min(320px, calc(100vw - 24px)); max-height: calc(var(--ct-viewport-height, 100dvh) - 24px); overflow-y: auto; }
 body.touch-mode .ct-touch-actions { display: block; width: 100%; min-height: 44px; margin-top: 8px; border: 1px solid var(--accent); border-radius: 8px; background: var(--accent); color: #17130a; font: 700 15px/1.2 system-ui, sans-serif; }
 body.touch-mode .card, body.touch-mode .board, body.touch-mode .w-menu { -webkit-touch-callout: none; }
 body.touch-mode .card:hover { transform: none; }
@@ -1021,13 +1021,22 @@ body.touch-mode #lobby {
 body.touch-mode #game {
   height: 100vh;
   height: 100dvh;
+  height: var(--ct-viewport-height, 100dvh);
   min-height: 0;
   overflow: hidden;
-  padding-bottom: env(safe-area-inset-bottom);
+  /* Keep the grid inside device cutouts without adding height to the game. */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
-body.touch-mode .boardwrap,
+
+/* The hand fan extends past its own box. Protect the surrounding tabletop too,
+   so a drag started on a card's bottom edge stays a tabletop gesture. */
+body.touch-mode #myBf,
+body.touch-mode #myRow,
+body.touch-mode #handWrap,
 body.touch-mode #myHand,
 body.touch-mode #myZones,
+body.touch-mode .boardwrap,
+body.touch-mode .board,
 body.touch-mode .tstrip,
 body.touch-mode .thand,
 body.touch-mode .tpile,
@@ -1038,11 +1047,32 @@ body.touch-mode .zbox,
 body.touch-mode .tpcard {
   touch-action: none;
 }
-body.touch-mode #myHand .card,
-body.touch-mode .board .card {
+
+body.touch-mode #myRow,
+body.touch-mode #myHand,
+body.touch-mode .board,
+body.touch-mode .board * {
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
+}
+
+/* Keep intentional scrolling inside the log, previews, menus and dialogs. */
+body.touch-mode #side,
+body.touch-mode #log,
+body.touch-mode .oside,
+body.touch-mode #pv.floatpv,
+body.touch-mode .w-menu,
+body.touch-mode .w-dialog,
+body.touch-mode .w-modal-body,
+body.touch-mode .w-v-scroll,
+body.touch-mode .w-pp-list,
+body.touch-mode .conn-diag,
+body.touch-mode #oppPanel,
+body.touch-mode #myBar .ctrpanel {
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 #ct-touch-orientation-hint {
   position: fixed;
