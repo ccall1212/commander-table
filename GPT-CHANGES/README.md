@@ -14,7 +14,7 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 
 - **Main version:** v0.22.3; [PR #37](https://github.com/ccall1212/commander-table/pull/37) merged to `main` at commit [1f667cb](https://github.com/ccall1212/commander-table/commit/1f667cb831be234225c22dbac07b08cf55e9bd31). Chris tested and approved the lethal Concede prompt and empty-library warning fix.
 - **Objective #21 shipped:** lethal Concede prompts and red zero-library count are included in v0.22.3. The required annotated tag `v0.22.3` must point to `1f667cb831be234225c22dbac07b08cf55e9bd31`.
-- **In progress:** objective #19, clearer separate Power/Toughness controls, on [branch `feat/separate-pt-controls`](https://github.com/ccall1212/commander-table/tree/feat/separate-pt-controls), candidate v0.22.4. The PR will distinguish manual stat adjustments from actual counters; wait for Chris to test before merging.
+- **In progress:** objective #19, EDHPlay-style card Power/Toughness display and separate controls, on [branch `feat/separate-pt-controls`](https://github.com/ccall1212/commander-table/tree/feat/separate-pt-controls), candidate v0.22.4. The PR will distinguish manual stat adjustments from actual counters; wait for Chris to test before merging.
 - **Touch mode:** v0.22.0 and the iOS Safari drag-viewport follow-up v0.22.1 are merged to `main` (PRs #32 and #33).
 - **Commander slam:** the animation and synthesized impact sound are back to the v0.20.6 implementation. Chris wants to keep refining the sound; do that on a separate branch.
 - **Paused:** draft [PR #11](https://github.com/ccall1212/commander-table/pull/11), random deck selection / website import. Do not merge until its listed live tests pass.
