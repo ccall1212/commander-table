@@ -2339,7 +2339,9 @@ function cardHTML(c, def, o) {
     const pt = effPT(c, def);
     const creature = def && /Creature/.test((c.fl && def.backType) || def.type || '');
     if (pt.text && (pt.modified || creature)) {
-      badges += `<span class="pt${pt.modified ? ' mod' : ''}" title="Power/toughness${def && def.pt ? ' (printed ' + esc(def.pt) + ')' : ''} — left-click +1/+1, right-click −1/−1">${esc(pt.text)}</span>`;
+      const parts = String(pt.text).split('/');
+      const power = parts[0] || '?', toughness = parts[1] || '?';
+      badges += `<span class="pt${pt.modified ? ' mod' : ''}" title="Power / toughness${def && def.pt ? ' (printed ' + esc(def.pt) + ')' : ''} — left-click +1/+1, right-click −1/−1"><span class="pt-power">${esc(power)}</span><span class="pt-separator">/</span><span class="pt-toughness">${esc(toughness)}</span></span>`;
     }
   }
   // mana cost along the top edge of cards in hand
