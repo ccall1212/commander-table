@@ -12,22 +12,22 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 
 ## Current state
 
-- **Main version:** v0.21.4; [PR #30](https://github.com/ccall1212/commander-table/pull/30) merged to `main` at commit [99afe59](https://github.com/ccall1212/commander-table/commit/99afe59d865adb6f19de684eb798b0b617346d67). This release includes custom local appearance uploads and the pointer/context-menu fixes.
-- **In progress:** [PR #32](https://github.com/ccall1212/commander-table/pull/32) adds optional phone/iPad Touch mode, page-scroll prevention during card drags, a portrait-to-landscape hint, and press-and-hold context menus. The follow-up fixes keep the hand and surrounding tabletop in the drag gesture, size the game from Safari's live viewport, and preserve internal scrolling. Proposed test version is v0.22.1; it is not merged or live.
-- **Browser testing:** Chris confirmed he tested the pointer/clicking fix in a real browser before publication. ChatGPT did not independently run the browser or automated browser tests.
-- **Commander slam:** the animation and synthesized impact sound are back to the v0.20.6 implementation. Chris wants to keep refining the sound; do that on a separate branch, not by changing the published version in place.
-- **In progress:** objective #18, phone/iPad touch-friendly browser support. The opt-in **Touch mode** is being implemented in [PR #32](https://github.com/ccall1212/commander-table/pull/32); details and real-iPad test requirements are in [OBJECTIVES.md](OBJECTIVES.md).
+- **Main version:** v0.22.2; [PR #35](https://github.com/ccall1212/commander-table/pull/35) merged to `main` at release commit [66c611e](https://github.com/ccall1212/commander-table/commit/66c611e93d393c40246fa51b21338758f22303eb). Chris tested the Grid pile-drop fix and confirmed it works.
+- **Touch mode:** v0.22.0 and the iOS Safari drag-viewport follow-up v0.22.1 are merged to `main` (PRs #32 and #33).
+- **Commander slam:** the animation and synthesized impact sound are back to the v0.20.6 implementation. Chris wants to keep refining the sound; do that on a separate branch.
 - **Paused:** draft [PR #11](https://github.com/ccall1212/commander-table/pull/11), random deck selection / website import. Do not merge until its listed live tests pass.
 - **Layouts:** Sidebar and Grid only.
-- **Release tags:** the annotated tags below are still required; the GitHub connector cannot create annotated tags:
+- **Annotated release tags still needed:** the GitHub connection cannot create annotated tags. Create each tag at the exact commit shown:
   - `v0.18.1` → `5548ba67826c1a10b2db6bc53256fd4ae438d799`
   - `v0.18.2` → `897b645bec23316344d140a5e8265a9319713027`
   - `v0.19.0` → `c85ddc8cfb7b56502f5f71dd69860db77331dee1`
   - `v0.19.1` → `e078f0789d3b2c5a891a8579e888135de17b5218`
   - `v0.20.6` → `9d42d06673831c54cbd759e3e44621c9cd299b41`
   - `v0.21.4` → `99afe59d865adb6f19de684eb798b0b617346d67`
-  Ask Chris to create these as **annotated** tags (for example, using Claude Code if he chooses). Until the `v0.21.4` annotated tag exists, the version badge may not reflect the newest release.
-
+  - `v0.22.0` → `ea6b1ec15bd348b99952fbf36d38157ff9045cdb`
+  - `v0.22.1` → `4a6ad47af02722460dd9d179e73f94bc99cefc03`
+  - `v0.22.2` → `66c611e93d393c40246fa51b21338758f22303eb`
+  Use annotated tags (for example, with Claude Code). Until the release tags exist, the GitHub version badge may not show the latest app version.
 ## How a change gets released
 
 1. ChatGPT makes a focused branch and PR, includes the required test ZIP and simple testing steps, and performs available syntax/code checks.
@@ -40,6 +40,3 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 - The GitHub connector cannot create annotated tags or delete branches. Ask for the exact tag targets and use GitHub's Delete branch control after merged work when needed.
 - Keep this folder limited to open/in-flight work. Keep the player-facing [README](../README.md) and [CHANGELOG](../CHANGELOG.md) current when features change or ship.
 
-
-## Current implementation — objective #22
-- **In progress:** [Grid pile-drop fix PR](https://github.com/ccall1212/commander-table/pull/35) is being prepared on `fix/grid-pile-drop-targets`, candidate version `0.22.2`. Root cause: Grid renders the hand/pile drop targets inside the same board wrapper used for battlefield placement, and `dropCard()` was handling the wrapper before checking the explicit pile target.
