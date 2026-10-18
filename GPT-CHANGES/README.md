@@ -12,9 +12,9 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 
 ## Current state
 
-- **Main version:** v0.22.3; [PR #37](https://github.com/ccall1212/commander-table/pull/37) merged to `main` at commit [1f667cb](https://github.com/ccall1212/commander-table/commit/1f667cb831be234225c22dbac07b08cf55e9bd31). Chris tested and approved the lethal Concede prompt and empty-library warning fix.
+- **Main version:** v0.22.4; [PR #38](https://github.com/ccall1212/commander-table/pull/38) merged to `main` at commit [a0aac81](https://github.com/ccall1212/commander-table/commit/a0aac816d99caa37d89e414f028056e09ec35c2d). Chris tested and approved the independent P/T controls and final compact half-pill highlight.
 - **Objective #21 shipped:** lethal Concede prompts and red zero-library count are included in v0.22.3. The required annotated tag `v0.22.3` must point to `1f667cb831be234225c22dbac07b08cf55e9bd31`.
-- **In progress:** objective #19, compact P/T badge with truly independent click targets, on [branch `feat/separate-pt-controls`](https://github.com/ccall1212/commander-table/tree/feat/separate-pt-controls), candidate v0.22.4. The P/T badge now has separate power and toughness click targets; each target changes only its own stat on left-click and right-click. Separate menu commands remain available. Wait for Chris to test before merging.
+- **Objective #19 shipped:** compact white P/T badge with independently clickable power and toughness, separate adjustment menu controls, and a visible full-half-pill hover/focus highlight are included in v0.22.4 via PR #38.
 - **Touch mode:** v0.22.0 and the iOS Safari drag-viewport follow-up v0.22.1 are merged to `main` (PRs #32 and #33).
 - **Commander slam:** the animation and synthesized impact sound are back to the v0.20.6 implementation. Chris wants to keep refining the sound; do that on a separate branch.
 - **Paused:** draft [PR #11](https://github.com/ccall1212/commander-table/pull/11), random deck selection / website import. Do not merge until its listed live tests pass.
@@ -30,7 +30,7 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
   - `v0.22.1` → `4a6ad47af02722460dd9d179e73f94bc99cefc03`
   - `v0.22.2` → `66c611e93d393c40246fa51b21338758f22303eb`
   - `v0.22.3` → `1f667cb831be234225c22dbac07b08cf55e9bd31`
-  - `v0.22.4` → pending (candidate branch; add exact merge commit when published)
+  - `v0.22.4` → `a0aac816d99caa37d89e414f028056e09ec35c2d`
   Use annotated tags (for example, with Claude Code). Until the release tags exist, the GitHub version badge may not show the latest app version.
 ## How a change gets released
 
