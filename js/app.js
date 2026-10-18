@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.22.1';
+const APP_VERSION = '0.22.2';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -3512,6 +3512,16 @@ function dropCard(d, e) {
     attachTo(d.iid, tcard.dataset.pid, tcard.dataset.iid);
     return;
   }
+  // In Grid, the hand and piles are rendered inside the fitted board itself. Check explicit
+  // drop targets before the surrounding board wrapper, or a pile drop is mistaken for a
+  // battlefield reposition because both elements share the same .boardwrap.
+  const tgt = el.closest('[data-drop]');
+  if (tgt) {
+    const zone = tgt.dataset.drop;
+    if (zone === 'hand' && f.zone === 'hand') { reorderHand(d.iid, e.clientX); return; }
+    doMove(d.iid, zone, zone === 'library' ? { pos: e.shiftKey ? 'bottom' : 'top' } : {});
+    return;
+  }
   const wrap = el.closest('.boardwrap');
   if (wrap && wrap.dataset.board === S.pid) {
     const pt = boardPoint(wrap, e.clientX - d.offC.dx, e.clientY - d.offC.dy);
@@ -3525,12 +3535,6 @@ function dropCard(d, e) {
     const pt = boardPoint(wrap, e.clientX, e.clientY);
     { const sp = storedPos(wrap.firstElementChild, pt.x - CW / 2, pt.y - CH / 2); giveControl(d.iid, wrap.dataset.board, { x: sp.x, y: sp.y }); }
     return;
-  }
-  const tgt = el.closest('[data-drop]');
-  if (tgt) {
-    const zone = tgt.dataset.drop;
-    if (zone === 'hand' && f.zone === 'hand') { reorderHand(d.iid, e.clientX); return; }
-    doMove(d.iid, zone, zone === 'library' ? { pos: e.shiftKey ? 'bottom' : 'top' } : {});
   }
 }
 function reorderHand(iid, clientX) {

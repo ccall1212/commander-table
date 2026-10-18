@@ -39,3 +39,7 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 - ChatGPT cannot run the app in a real browser or hear audio. Chris's browser testing is the browser test; don't describe code review as browser testing.
 - The GitHub connector cannot create annotated tags or delete branches. Ask for the exact tag targets and use GitHub's Delete branch control after merged work when needed.
 - Keep this folder limited to open/in-flight work. Keep the player-facing [README](../README.md) and [CHANGELOG](../CHANGELOG.md) current when features change or ship.
+
+
+## Current implementation — objective #22
+- **In progress:** [Grid pile-drop fix PR](https://github.com/ccall1212/commander-table/pull/35) is being prepared on `fix/grid-pile-drop-targets`, candidate version `0.22.2`. Root cause: Grid renders the hand/pile drop targets inside the same board wrapper used for battlefield placement, and `dropCard()` was handling the wrapper before checking the explicit pile target.
