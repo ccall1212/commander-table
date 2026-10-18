@@ -1,6 +1,6 @@
 # Commander Table — Objectives backlog
 
-Features Chris has asked for that are **not built yet or remain open**. The numbers are Chris's original numbering; finished ones (1, 2, 3, 6, 8, 10, 13, 14, 16) were removed, and #7 (opponent boards looking dim) was dropped: the dimming only applies to players who are reconnecting or out, on purpose. Objective #15 (custom image uploads and pointer fixes) shipped in v0.21.4 via [PR #30](https://github.com/ccall1212/commander-table/pull/30). Objective #22 (Grid pile drops) shipped in v0.22.2 via [PR #35](https://github.com/ccall1212/commander-table/pull/35). Objective #18 is the in-progress iPad/touch support work. Work on one at a time on its own branch and pull request, and read `AGENTS.md` first.
+Features Chris has asked for that are **not built yet or remain open**. The numbers are Chris's original numbering; finished ones (1, 2, 3, 6, 8, 10, 13, 14, 16, 19) were removed, and #7 (opponent boards looking dim) was dropped: the dimming only applies to players who are reconnecting or out, on purpose. Objective #15 (custom image uploads and pointer fixes) shipped in v0.21.4 via [PR #30](https://github.com/ccall1212/commander-table/pull/30). Objective #22 (Grid pile drops) shipped in v0.22.2 via [PR #35](https://github.com/ccall1212/commander-table/pull/35). Objective #19 (compact P/T badge and independent stat adjustments) shipped in v0.22.4 via [PR #38](https://github.com/ccall1212/commander-table/pull/38). Objective #18 is the in-progress iPad/touch support work. Work on one at a time on its own branch and pull request, and read `AGENTS.md` first.
 
 Status key: **Queued** = requested, not started. **In progress** = a branch / PR exists (see `README.md`). **Paused** = started, waiting on something. **Deferred** = on purpose not now.
 
@@ -64,16 +64,6 @@ Add an optional **Touch mode** for iPad Safari, launched from the top-right hamb
 - Fit the game to the dynamic mobile viewport height. On narrow phones in portrait, show a dismissible landscape recommendation rather than trying to force orientation lock (ordinary mobile Safari pages cannot reliably force it).
 - Test in real iPhone/iPad Safari in portrait and landscape, including enabling/disabling Touch mode, host and joiner sessions, card inspection, card actions, dragging from the bottom edge of the hand, intentional group selection/movement, internal dialog scrolling, menu dismissal, and both Sidebar and Grid layouts. Desktop emulation alone is not sufficient for marking this complete.
 
-
-## 19. Card power/toughness display and independent adjustments — IN PROGRESS (v0.22.4 candidate)
-
-Display a compact power/toughness badge at the bottom-right of battlefield cards. Each stat must be independently clickable: clicking power changes only power; clicking toughness changes only toughness. The corresponding right-click decrements only the selected stat. Keep separate Power +1 / Power −1 / Toughness +1 / Toughness −1 menu controls.
-
-- Changes must combine correctly with existing +1/+1 counters: counters continue to increase both power and toughness, while a manual power-only or toughness-only adjustment affects just that stat.
-- Keep displayed values consistent across card inspection, the battlefield, and other players' views; preserve the card's printed base stats and counter state rather than silently rewriting them.
-- Keep the badge as small as a simple `3/4` label; do not add oversized chips or consume more card space than necessary.
-- Define how manual adjustments interact with temporary effects and stat-changing abilities during implementation. Do not make one-sided adjustments behave like +1/+1 counters.
-- Test a creature with no counters, with one or more +1/+1 counters, after each separate adjustment, and from a second player's view in both Sidebar and Grid.
 
 ## 20. Poison counter lethal warning — QUEUED
 
