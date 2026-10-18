@@ -1095,3 +1095,40 @@ body.touch-mode #myBar .ctrpanel {
 }
 #ct-touch-orientation-hint span { flex: 1; min-width: 0; }
 #ct-touch-orientation-hint button { min-height: 40px; }
+
+
+/* EDHPlay-inspired battlefield P/T badge: separate, high-contrast stat chips. */
+.card .badges .pt {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 0;
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid rgba(255,255,255,.28);
+  border-radius: 5px;
+  background: #11151d;
+  color: #fff;
+  box-shadow: 0 2px 5px rgba(0,0,0,.7);
+  font-size: clamp(10px, 1.05em, 15px);
+  line-height: 1.25;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 1px rgba(0,0,0,.55);
+}
+.card .badges .pt .pt-power,
+.card .badges .pt .pt-toughness {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.45em;
+  padding: 1px 3px;
+}
+.card .badges .pt .pt-power { background: #183b73; color: #fff; }
+.card .badges .pt .pt-toughness { background: #252b36; color: #fff; }
+.card .badges .pt .pt-separator {
+  display: inline-grid;
+  place-items: center;
+  padding: 0 1px;
+  background: #11151d;
+  color: #d5dbe5;
+}
+.card .badges .pt.mod { outline: 1px solid rgba(255,255,255,.55); }
