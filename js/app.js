@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.22.3';
+const APP_VERSION = '0.22.4';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -1967,11 +1967,11 @@ function ptItems(iid) {
   return [
     { label: 'Set power/toughness…', onClick: () => setPT(iid) },
     { sep: true },
-    { label: 'Increment power', hint: 'Alt+1', onClick: () => changePT(iid, 1, 0) },
-    { label: 'Decrement power', hint: 'Alt+3', onClick: () => changePT(iid, -1, 0) },
-    { label: 'Increment toughness', hint: 'Alt+2', onClick: () => changePT(iid, 0, 1) },
-    { label: 'Decrement toughness', hint: 'Alt+4', onClick: () => changePT(iid, 0, -1) },
-    { label: '+1/+1 until reset', onClick: () => changePT(iid, 1, 1) },
+    { label: 'Power +1', hint: 'Alt+1', onClick: () => changePT(iid, 1, 0) },
+    { label: 'Power −1', hint: 'Alt+3', onClick: () => changePT(iid, -1, 0) },
+    { label: 'Toughness +1', hint: 'Alt+2', onClick: () => changePT(iid, 0, 1) },
+    { label: 'Toughness −1', hint: 'Alt+4', onClick: () => changePT(iid, 0, -1) },
+    { label: 'Manual +1/+1 (until reset)', onClick: () => changePT(iid, 1, 1) },
     { sep: true },
     { label: 'Reset power/toughness', disabled: !mod, onClick: () => resetPT(iid) }
   ];
