@@ -1,6 +1,6 @@
 # Commander Table — Objectives backlog
 
-Features Chris has asked for that are **not built yet or remain open**. The numbers are Chris's original numbering; finished ones (1, 2, 3, 6, 8, 10, 11, 13, 14, 15, 16, 19, 20, 21, 22, 23, 25) were removed, and #7 (opponent boards looking dim) was dropped: the dimming only applies to players who are reconnecting or out, on purpose. Objective #15 (custom image uploads and pointer fixes) shipped in v0.21.4 via [PR #30](https://github.com/ccall1212/commander-table/pull/30). Objective #22 (Grid pile drops) shipped in v0.22.2 via [PR #35](https://github.com/ccall1212/commander-table/pull/35). Objective #19 (compact P/T badge and independent stat adjustments) shipped in v0.22.4 via [PR #38](https://github.com/ccall1212/commander-table/pull/38). Objective #23 (T hotkey opens the Token menu on empty battlefield space) shipped in v0.24.0 via [PR #41](https://github.com/ccall1212/commander-table/pull/41). Objectives #20 and #25 shipped in v0.23.0 via [PR #40](https://github.com/ccall1212/commander-table/pull/40). Objective #18 is the in-progress iPad/touch support work. Work on one at a time on its own branch and pull request, and read `AGENTS.md` first.
+Features Chris has asked for that are **not built yet or remain open**. The numbers are Chris's original numbering; finished ones (1, 2, 3, 6, 8, 10, 11, 13, 14, 15, 16, 19, 20, 21, 22, 23, 25) were removed, and #7 (opponent boards looking dim) was dropped: the dimming only applies to players who are reconnecting or out, on purpose. Objective #15 (custom image uploads and pointer fixes) shipped in v0.21.4 via [PR #30](https://github.com/ccall1212/commander-table/pull/30). Objective #22 (Grid pile drops) shipped in v0.22.2 via [PR #35](https://github.com/ccall1212/commander-table/pull/35). Objective #19 (compact P/T badge and independent stat adjustments) shipped in v0.22.4 via [PR #38](https://github.com/ccall1212/commander-table/pull/38). Objective #23 (T hotkey opens the Token menu on empty battlefield space) shipped in v0.24.0 via [PR #41](https://github.com/ccall1212/commander-table/pull/41). Objectives #20 and #25 shipped in v0.23.0 via [PR #40](https://github.com/ccall1212/commander-table/pull/40). Objectives #17 (room chat) and #26 (turn-start banner) are being implemented together on `feat/chat-turn-notices`. Objective #18 is the in-progress iPad/touch support work. Work on one at a time on its own branch and pull request, and read `AGENTS.md` first.
 
 Status key: **Queued** = requested, not started. **In progress** = a branch / PR exists (see `README.md`). **Paused** = started, waiting on something. **Deferred** = on purpose not now.
 
@@ -39,7 +39,7 @@ Let a player draw an arrow from one card (or player) to another so the table can
 - **Where to look:** cross-player actions are messages relayed by the host, which validates the sender (see how `drawfx` is validated in `hostRecv`). Arrows need the same treatment, and must survive layout changes and board scaling, so anchor them to card ids (`data-iid`), not pixel positions, and redraw after each render (`setHTML()` patches the DOM in place and cards are matched by `data-iid`).
 - Start with one simple arrow at a time; decide colours/labels and exact menu wording during implementation.
 
-## 17. Separate floating chat notifications — QUEUED
+## 17. Separate floating chat notifications — IN PROGRESS
 
 Add a lightweight chat experience that is separate from the action log. New messages should briefly appear as an unobtrusive floating overlay and then fade away.
 
@@ -47,7 +47,7 @@ Add a lightweight chat experience that is separate from the action log. New mess
 - Provide a way to open or view recent chat history so messages that fade away are not permanently lost.
 - Synchronize messages with the other players in the room using the existing host-validated networking approach; chat must not change game state or reveal hidden information.
 - Keep the overlay out of the way of cards and controls, support different screen sizes, and respect `prefers-reduced-motion`.
-- Decide whether players can mute/hide the overlay and how long chat history lasts during implementation.
+- Keep the latest 100 messages in the current room session. The **Chat** panel opens the history; while it is open, new messages appear there without an additional floating popup. While it is closed, messages from other players show a short-lived popup and an unread count. The sender sees their own message in history but not a duplicate popup.
 
 ## 18. iPad and touch-friendly browser support — PARTLY SHIPPED (Touch mode in v0.22.0 and v0.22.1; real-device testing and refinements remain)
 
@@ -74,7 +74,7 @@ After a player imports or selects a saved deck in the start menu, provide a **Br
 - Keep this as a pre-game deck-editing workflow; changing a printing should not change card counts, card rules, or other deck contents.
 - Test with a deck that has multiple alternate printings, reload the page and verify the choices persist, then start a game and confirm the chosen printings are used. Include both a newly imported deck and an already-saved deck.
 
-## 26. "YOUR TURN" fade-in banner over the active player's board — QUEUED
+## 26. "YOUR TURN" fade-in banner over the active player's board — IN PROGRESS
 
 When a new turn starts, show a large "YOUR TURN" over that player's board. It fades in, holds briefly, then fades out on its own.
 

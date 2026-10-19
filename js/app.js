@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.24.0';
+const APP_VERSION = '0.25.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -108,6 +108,7 @@ const S = {
   players: {},      // pid -> public view (includes my own)
   online: {},       // pid -> bool, maintained by host
   log: [],
+  chat: [], chatOpen: false, chatUnread: 0,
   undo: [],
   net: { state: 'offline', text: '' },
   hover: null,      // {pid, iid}
@@ -292,8 +293,29 @@ function say(text, cards) {
   toHost({ t: 'log', text, cards: cs });
 }
 
+function cleanChatEntry(raw) {
+  if (!isObj(raw)) return null;
+  const text = String(raw.text || '').replace(/\s+/g, ' ').trim().slice(0, 280);
+  if (!text) return null;
+  return { ts: Math.max(0, num(raw.ts, Date.now())), pid: String(raw.pid || '').slice(0, 40), name: String(raw.name || 'Player').slice(0, 40) || 'Player', text };
+}
+function cleanChatHistory(list) { return Array.isArray(list) ? list.slice(-100).map(cleanChatEntry).filter(Boolean) : []; }
+function cleanChatMessage(msg, from) {
+  if (!S.table || !Array.isArray(S.table.seats) || !S.table.seats.includes(from)) return null;
+  return cleanChatEntry({ ts: Date.now(), pid: from, name: pname(from), text: msg && msg.text });
+}
+function sendChat(text) {
+  const clean = String(text || '').replace(/\s+/g, ' ').trim().slice(0, 280);
+  if (!clean) return false;
+  if (S.role === 'solo') { UI.toast('Room chat is available in a shared game.', { kind: 'warn' }); return false; }
+  if (S.net.state !== 'online') { UI.toast('Reconnect before sending a chat message.', { kind: 'warn' }); return false; }
+  toHost({ t: 'chat', text: clean });
+  return true;
+}
+
 // ----- host side -----
 function newTable(room) {
+  S.chat = []; S.chatOpen = false; S.chatUnread = 0;
   return { room, seats: [S.pid], order: [], active: null, turn: 0, turnSeq: 0, phase: 3, started: false, monarch: null, initiative: null, out: {} };
 }
 function hostRecv(msg, from) {
@@ -307,6 +329,7 @@ function hostRecv(msg, from) {
       break;
     }
     case 'log': { const e = cleanLog(msg, from); if (e) broadcast({ t: 'log', e }); break; }
+    case 'chat': { const e = cleanChatMessage(msg, from); if (e) broadcast({ t: 'chat', e }); break; }
     case 'drawfx': {
       if (!S.table.seats.includes(from)) return;
       const count = clamp(Math.floor(num(msg.count, 1)), 1, 5);
@@ -635,6 +658,16 @@ function onBroadcast(msg) {
   switch (msg.t) {
     case 'pub': if (msg.p && msg.p.pid) { S.players[msg.p.pid] = msg.p; if (msg.p.pid !== S.pid) checkOrphans(); } break;
     case 'log': S.log.push(msg.e); if (S.log.length > 300) S.log.splice(0, S.log.length - 300); break;
+    case 'chat': {
+      const e = cleanChatEntry(msg.e);
+      if (e) {
+        S.chat.push(e);
+        if (S.chat.length > 100) S.chat.splice(0, S.chat.length - 100);
+        if (e.pid !== S.pid && !S.chatOpen) { S.chatUnread++; showChatPopup(e); }
+        renderChatHistory(false);
+      }
+      break;
+    }
     case 'drawfx': if (typeof msg.pid === 'string') animateDrawCard(msg.pid, clamp(Math.floor(num(msg.count, 1)), 1, 5)); break;
     case 'slamfx':
       if (typeof msg.pid === 'string' && typeof msg.iid === 'string') {
@@ -645,7 +678,7 @@ function onBroadcast(msg) {
     case 'placefx':
       if (typeof msg.pid === 'string' && typeof msg.iid === 'string' && msg.pid !== S.pid) playCardPlaceSound();
       break;
-    case 'table': S.table = msg.table; afterTable(); break;
+    case 'table': S.table = msg.table; handleTurnNoticeUpdate(S.table); afterTable(); break;
     case 'firstroll': showFirstRoll(msg); break;
     case 'online': S.online = msg.online || {}; break;
     case 'newgame': resetForNewGame(); break;
@@ -656,7 +689,8 @@ function onBroadcast(msg) {
 function clientRecv(msg) {
   if (!msg) return;
   if (msg.t === 'snap') {
-    S.table = msg.table; S.players = msg.players || {}; S.log = msg.log || []; S.online = msg.online || {};
+    S.table = msg.table; S.players = msg.players || {}; S.log = msg.log || []; S.online = msg.online || {}; S.chat = cleanChatHistory(msg.chat);
+    seedTurnNotice(S.table);
     S.players[S.pid] = publicView();
     checkOrphans();
     afterTable(); saveSoon(); render();
@@ -665,7 +699,7 @@ function clientRecv(msg) {
   if (msg.t === 'req') { onReq(msg.req, msg.from); return; }
   onBroadcast(msg);
 }
-function snapFor() { return { t: 'snap', table: S.table, players: S.players, log: S.log.slice(-150), online: S.online }; }
+function snapFor() { return { t: 'snap', table: S.table, players: S.players, log: S.log.slice(-150), online: S.online, chat: S.chat.slice(-100) }; }
 
 // Requests from other players, applied to MY state.
 function onReq(req, from) {
@@ -720,6 +754,58 @@ function onReq(req, from) {
     const d = clamp(num(req.d), -21, 21);
     if (d) changeCmdDmg(req.key.slice(0, 90), d);
   }
+}
+
+// Transient shared turn cue: seed snapshots/resumes so rejoining never replays the current turn.
+let turnNoticeInitialized = false, lastTurnNoticeKey = null, activeTurnNotice = null;
+let turnNoticeTimer = null, turnNoticeToken = 0;
+function turnKey(t) {
+  return t && t.started && t.active ? String(t.room || '') + '|' + Math.max(1, num(t.turnSeq, num(t.turn))) + '|' + String(t.active) : null;
+}
+function cancelTurnNotice() {
+  turnNoticeToken++;
+  if (turnNoticeTimer) clearTimeout(turnNoticeTimer);
+  turnNoticeTimer = null;
+  activeTurnNotice = null;
+}
+function seedTurnNotice(t) {
+  cancelTurnNotice();
+  turnNoticeInitialized = true;
+  lastTurnNoticeKey = turnKey(t);
+}
+function scheduleTurnNotice(pid, key) {
+  cancelTurnNotice();
+  const token = turnNoticeToken, waitStarted = Date.now();
+  const reducedMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const showWhenReady = () => {
+    if (token !== turnNoticeToken) return;
+    if (document.querySelector('.first-roll-overlay') && Date.now() - waitStarted < 9000) {
+      turnNoticeTimer = setTimeout(showWhenReady, 100);
+      return;
+    }
+    activeTurnNotice = { pid, key };
+    render();
+    turnNoticeTimer = setTimeout(() => {
+      if (token !== turnNoticeToken) return;
+      activeTurnNotice = null;
+      turnNoticeTimer = null;
+      render();
+    }, reducedMotion ? 1250 : 1800);
+  };
+  showWhenReady();
+}
+function handleTurnNoticeUpdate(t) {
+  const nextKey = turnKey(t);
+  if (!turnNoticeInitialized) { seedTurnNotice(t); return; }
+  if (nextKey === lastTurnNoticeKey) return;
+  lastTurnNoticeKey = nextKey;
+  if (!nextKey) { cancelTurnNotice(); render(); return; }
+  scheduleTurnNotice(t.active, nextKey);
+}
+function turnNoticeHTML(pid) {
+  if (!activeTurnNotice || activeTurnNotice.pid !== pid) return '';
+  const label = pid === S.pid ? 'YOUR TURN' : pname(pid).toUpperCase() + "'S TURN";
+  return '<div class="ct-turn-notice" data-turn-key="' + esc(activeTurnNotice.key) + '" aria-hidden="true">' + esc(label) + '</div>';
 }
 
 // After the shared table changes: run my turn-start automation once per turn.
@@ -2442,8 +2528,9 @@ function boardHTML(pid, idx, mode) {
     z += list.length + 2;
   }
   if (tile) html += tileOverlayHTML(pid, dh, dw);
+  html += turnNoticeHTML(pid);
   const bw = mode ? dw : BW;
-  return `<div class="board${editing ? ' arrange' : ''}" data-pid="${esc(pid)}"${mode ? ` data-fit="${mode}" data-dw="${dw}" data-dh="${dh}" data-bh0="${bh0}"` : ''} style="width:${bw}px;height:${(mode ? dh : bh0) + (tile ? TILE_STRIP : 0)}px">${html}</div>`;
+  return `<div class="board${editing ? ' arrange' : ''}${tile ? ' tile-display' : ''}" data-pid="${esc(pid)}"${mode ? ` data-fit="${mode}" data-dw="${dw}" data-dh="${dh}" data-bh0="${bh0}"` : ''} style="width:${bw}px;height:${(mode ? dh : bh0) + (tile ? TILE_STRIP : 0)}px">${html}</div>`;
 }
 // A point on a fitted board's display space -> where that card's top-left corner belongs in the stored 1000 x bh space.
 function storedPos(board, x, y) {
@@ -2681,6 +2768,7 @@ function renderTop() {
     html = `<span>Round <b>${T.turn}</b> · <b style="color:${colorOf(T.active)}">${esc(mine ? 'Your' : pname(T.active) + "'s")}</b> turn</span>`;
   }
   $('#turnBox').innerHTML = html;
+  updateChatButton();
   const turnActions = $('#turnActions');
   if (turnActions) {
     const autoUntap = `<label class="tgl" title="Auto: Untap everything at the start of your turn (${S.me.autoUntap ? 'on' : 'off'})"><input type="checkbox" data-a="autountap"${S.me.autoUntap ? ' checked' : ''}><span></span></label>`;
@@ -2941,6 +3029,69 @@ function renderLog() {
   if (atTop) box.scrollTop = 0;
 }
 
+function updateChatButton() {
+  const btn = $('#chatBtn'), badge = $('#chatUnread');
+  if (!btn || !badge) return;
+  const count = Math.max(0, S.chatUnread || 0);
+  badge.textContent = count > 99 ? '99+' : String(count);
+  badge.classList.toggle('hidden', !count || S.chatOpen);
+  btn.classList.toggle('has-unread', !!count && !S.chatOpen);
+  btn.setAttribute('aria-expanded', S.chatOpen ? 'true' : 'false');
+  btn.disabled = S.role === 'solo';
+  btn.title = S.role === 'solo' ? 'Room chat is available in a shared game' : 'Open room chat';
+}
+function renderChatHistory(forceBottom) {
+  const box = $('#chatHistory');
+  if (!box) return;
+  const pinned = !!forceBottom || box.scrollHeight - box.scrollTop - box.clientHeight < 48;
+  box.innerHTML = S.chat.slice(-100).map(e => {
+    const time = new Date(e.ts || Date.now()).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    const who = e.pid === S.pid ? 'You' : (e.name || 'Player');
+    return '<div class="ct-chat-entry"><div class="ct-chat-entry-head"><strong style="color:' + colorOf(e.pid) + '">' + esc(who) + '</strong><span class="ct-chat-entry-time">' + esc(time) + '</span></div><div class="ct-chat-entry-text">' + esc(e.text) + '</div></div>';
+  }).join('') || '<div class="ct-chat-empty">No messages yet. Say hello to your table.</div>';
+  if (pinned) requestAnimationFrame(() => { if (box.isConnected) box.scrollTop = box.scrollHeight; });
+  updateChatButton();
+}
+function setChatPanelOpen(open) {
+  S.chatOpen = !!open && S.role !== 'solo';
+  if (S.chatOpen) S.chatUnread = 0;
+  const panel = $('#chatPanel');
+  if (panel) panel.classList.toggle('hidden', !S.chatOpen);
+  updateChatButton();
+  if (S.chatOpen) {
+    renderChatHistory(true);
+    const input = $('#chatInput');
+    if (input) input.focus();
+  }
+}
+function showChatPopup(e) {
+  const container = $('#chatPopups');
+  if (!container || S.chatOpen || e.pid === S.pid) return;
+  const popup = document.createElement('div');
+  popup.className = 'ct-chat-popup';
+  const who = document.createElement('strong');
+  who.className = 'ct-chat-popup-name';
+  who.textContent = e.name || 'Player';
+  who.style.color = colorOf(e.pid);
+  const message = document.createElement('span');
+  message.className = 'ct-chat-popup-text';
+  message.textContent = e.text;
+  popup.append(who, message);
+  container.appendChild(popup);
+  while (container.children.length > 3) container.firstElementChild.remove();
+  setTimeout(() => {
+    if (!popup.isConnected) return;
+    popup.classList.add('is-leaving');
+    setTimeout(() => popup.remove(), 380);
+  }, 4200);
+}
+function sendChatFromForm(e) {
+  e.preventDefault();
+  const input = $('#chatInput');
+  if (!input) return;
+  if (sendChat(input.value)) { input.value = ''; input.focus(); }
+}
+
 // --- preview panel
 // Floating preview: follows the cursor while you hover a card; hidden while dragging / magnifying.
 let pvMouse = { x: 0, y: 0 };
@@ -3000,6 +3151,10 @@ let drag = null; // a card being dragged with the pointer
 let selectionDrag = null; // a temporary selection rectangle
 function bindGame() {
   const g = $('#game');
+  const chatBtn = $('#chatBtn'), chatClose = $('#chatClose'), chatForm = $('#chatForm');
+  if (chatBtn) chatBtn.addEventListener('click', () => setChatPanelOpen(!S.chatOpen));
+  if (chatClose) chatClose.addEventListener('click', () => setChatPanelOpen(false));
+  if (chatForm) chatForm.addEventListener('submit', sendChatFromForm);
   // Native browser text/image dragging can steal pointer gestures from the tabletop's card drag logic.
   g.addEventListener('dragstart', e => {
     if (e.target.closest('.board, .card')) e.preventDefault();
@@ -3775,6 +3930,7 @@ function showConnInfo() {
 function onKey(e) {
   if (!S.me || $('#game').classList.contains('hidden')) return;
   if (e.key === 'Escape' && S.attachFrom) { endAttach(); return; }
+  if (e.key === 'Escape' && S.chatOpen) { setChatPanelOpen(false); e.preventDefault(); return; }
   if (e.target.closest && e.target.closest('input,textarea,select,[contenteditable]')) return;
   if (document.querySelector('.w-backdrop')) return; // a dialog/viewer is open
   if (e.key === 'Escape' && (selectionDrag || S.selected.size)) { cancelSelectionDrag(true); return; }
@@ -3895,7 +4051,7 @@ function saveNow() {
   const host = S.role !== 'client';
   LS.set('ct.sess.' + S.pid, {
     v: 2, at: Date.now(), role: S.role, room: S.room, deckId: S.deckId, me: S.me,
-    table: host ? S.table : null, players: host ? S.players : null, log: host ? S.log.slice(-150) : null
+    table: host ? S.table : null, players: host ? S.players : null, log: host ? S.log.slice(-150) : null, chat: host ? S.chat.slice(-100) : null
   });
   LS.set('ct.last', S.pid);
 }
@@ -3906,7 +4062,7 @@ function loadSession(pid) {
 function resume(sess) {
   S.role = sess.role; S.room = sess.room; S.deckId = sess.deckId; S.me = sess.me;
   normalizeMe(S.me);
-  S.table = sess.table || null; S.players = sess.players || {}; S.log = sess.log || []; S.online = {};
+  S.table = sess.table || null; S.players = sess.players || {}; S.log = sess.log || []; S.chat = cleanChatHistory(sess.chat); S.chatOpen = false; S.chatUnread = 0; S.online = {};
   if (S.role === 'host') Object.keys(S.players).forEach(p => { if (p !== S.pid) S.online[p] = false; });
   showGame();
   startNet();
@@ -3965,6 +4121,8 @@ function showLobby() {
 }
 function showGame() {
   $('#lobby').classList.add('hidden'); $('#game').classList.remove('hidden');
+  setChatPanelOpen(false);
+  seedTurnNotice(S.table);
   refreshTouchOrientationHint();
   document.title = S.role === 'solo' ? 'Practice — Commander Table' : `${S.room} — Commander Table`;
   logLen = -1;
