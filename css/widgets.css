@@ -296,6 +296,19 @@
 
 /* One card tile */
 .w-vcard { position: relative; width: 146px; cursor: pointer; user-select: none; -webkit-user-select: none; }
+.w-vcard:hover { z-index: 5; }
+.w-vcard-remove {
+  position: absolute; top: 5px; right: 5px; z-index: 6;
+  width: 27px; height: 27px; padding: 0;
+  border: 1px solid rgba(255,255,255,.55); border-radius: 7px;
+  background: rgba(10,12,18,.92); color: #fff; font-size: 20px; line-height: 1;
+  font-weight: 700; cursor: pointer; box-shadow: 0 2px 7px rgba(0,0,0,.5);
+}
+.w-vcard-remove:hover, .w-vcard-remove:focus-visible {
+  background: var(--danger, #b83232); color: #fff; outline: 2px solid var(--text, #fff); outline-offset: 1px;
+}
+.w-vcard-remove:focus:not(:focus-visible) { outline: none; }
+
 .w-vcard-art {
   position: relative;
   width: 100%;

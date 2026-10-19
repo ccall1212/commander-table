@@ -1,179 +1,215 @@
-/* deck-editor.js — browse saved deck printings before a game starts.
- * Classic script; exposes window.CTDeckEditor.
- */
+/* deck-editor.js — visual pre-game deck builder, using the in-game card viewer. */
 (function () {
   'use strict';
-
-  const IMG_PREFIX = 'https://cards.scryfall.io/';
-  let activeDeckId = null;
-  let afterSave = null;
-
-  const $ = (s) => document.querySelector(s);
-  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (ch) =>
-    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
-  const imageUrl = (value) => typeof value === 'string' && value.indexOf(IMG_PREFIX) === 0 ? value : '';
-
-  function copyCount(deck) {
-    const commanderCount = (deck.commanders || []).length;
-    const mainCount = (deck.cards || []).reduce((n, row) => n + Math.max(0, Math.floor(row.qty || 0)), 0);
-    return { commanderCount, mainCount, total: commanderCount + mainCount };
+  let activeDeckId = null, deckViewer = null, addViewer = null, afterSave = null;
+  let onHover = null, onLeave = null, recordMeta = new Map();
+  const quantity = entry => Math.max(0, Math.floor(Number(entry && entry.qty) || 0));
+  const nameOf = def => String(def && def.name || '');
+  const currentDeck = () => activeDeckId ? Deck.get(activeDeckId) : null;
+  function countNamed(deck, name) {
+    let n = 0;
+    (deck.commanders || []).forEach(d => { if (nameOf(d) === name) n++; });
+    (deck.cards || []).forEach(e => { if (nameOf(e.def) === name) n += quantity(e); });
+    return n;
   }
-
-  function printingLabel(def) {
-    const label = [
-      def.setName || (def.set ? String(def.set).toUpperCase() : ''),
-      def.set && def.setName ? String(def.set).toUpperCase() : '',
-      def.cn ? '#' + def.cn : '',
-      def.year || ''
-    ].filter(Boolean);
-    return label.length ? label.join(' · ') : 'Printing details unavailable';
-  }
-
-  function rowHtml(kind, index, copy, def, qty) {
-    def = def || {};
-    const img = imageUrl(def.img);
-    const name = def.name || 'Unknown card';
-    const art = img
-      ? '<img class="deck-editor-art" src="' + esc(img) + '" alt="' + esc(name) + '" loading="lazy" decoding="async" draggable="false">'
-      : '<div class="deck-editor-art deck-editor-art-empty" aria-hidden="true">No art</div>';
-    const copyNote = kind === 'card' && qty > 1
-      ? '<span class="deck-editor-copy">Copy ' + (copy + 1) + ' of ' + qty + '</span>'
-      : '';
-    return '<article class="deck-editor-row">' + art +
-      '<div class="deck-editor-details"><span class="deck-editor-name">' + esc(name) + '</span>' +
-      '<span class="deck-editor-meta">' + esc(printingLabel(def)) + '</span>' + copyNote + '</div>' +
-      '<button type="button" data-editor-change="1" data-editor-kind="' + kind +
-      '" data-editor-index="' + index + '" data-editor-copy="' + copy + '">Change printing…</button></article>';
-  }
-
-  function render() {
-    const box = $('#deckEditorBox');
-    const rows = $('#deckEditorRows');
-    if (!box || !rows || !activeDeckId) return;
-    const deck = Deck.get(activeDeckId);
-    if (!deck) { close(); return; }
-
-    const counts = copyCount(deck);
-    $('#deckEditorTitle').textContent = 'Browse / Edit: ' + (deck.name || 'Untitled deck');
-    $('#deckEditorSummary').textContent = counts.total + ' cards · changes save to this deck in this browser';
-    const html = [];
-
-    if ((deck.commanders || []).length) {
-      html.push('<div class="deck-editor-group">Commander' + (deck.commanders.length > 1 ? 's' : '') + ' · ' + deck.commanders.length + '</div>');
-      deck.commanders.forEach((def, index) => html.push(rowHtml('commander', index, 0, def, 1)));
-    }
-    if (counts.mainCount) {
-      html.push('<div class="deck-editor-group">Main deck · ' + counts.mainCount + ' cards</div>');
-      (deck.cards || []).forEach((entry, index) => {
-        const qty = Math.max(0, Math.floor(entry.qty || 0));
-        for (let copy = 0; copy < qty; copy++) {
-          html.push(rowHtml('card', index, copy, entry.def, qty));
-        }
-      });
-    }
-    if (!counts.total) html.push('<div class="deck-editor-empty">This saved deck has no cards to display.</div>');
-    rows.innerHTML = html.join('');
-    box.classList.remove('hidden');
-  }
-
-  function open(deckId, onDeckSaved) {
-    if (!Deck.get(deckId)) {
-      UI.toast('Select or import a saved deck first.', { kind: 'warn' });
-      return;
-    }
-    activeDeckId = deckId;
-    afterSave = typeof onDeckSaved === 'function' ? onDeckSaved : null;
-    render();
-  }
-
-  function close() {
-    activeDeckId = null;
-    afterSave = null;
-    const box = $('#deckEditorBox');
-    const rows = $('#deckEditorRows');
-    if (box) box.classList.add('hidden');
-    if (rows) rows.innerHTML = '';
-  }
-
   function keepTokens(oldDef, newDef) {
     return Object.assign({}, newDef, {
       tokens: (oldDef && oldDef.tokens && oldDef.tokens.length ? oldDef.tokens : newDef.tokens) || []
     });
   }
-
-  function savePrinting(kind, index, copy, newDef) {
-    const deck = Deck.get(activeDeckId);
-    if (!deck || !newDef) return;
-    if (kind === 'commander') {
-      const oldDef = deck.commanders[index];
-      if (!oldDef) return;
-      deck.commanders[index] = keepTokens(oldDef, newDef);
-    } else if (kind === 'card') {
-      const entry = (deck.cards || [])[index];
-      if (!entry || !entry.def) return;
-      const oldDef = entry.def;
-      const qty = Math.max(0, Math.floor(entry.qty || 0));
-      const picked = keepTokens(oldDef, newDef);
-      if (qty > 1) {
-        // Split off exactly one physical copy so remaining copies keep their existing printing.
-        entry.qty = qty - 1;
-        deck.cards.splice(index + 1, 0, { def: picked, qty: 1 });
-      } else {
-        entry.def = picked;
-      }
-    } else return;
-
+  function makeViewerCards(deck) {
+    const cards = [], meta = new Map();
+    (deck.commanders || []).forEach((def, index) => {
+      const iid = 'deck-commander-' + index;
+      cards.push({ iid, def: def || {}, qty: 1 });
+      meta.set(iid, { kind: 'commander', index, def: def || {} });
+    });
+    (deck.cards || []).forEach((entry, index) => {
+      const def = entry && entry.def || {}, qty = quantity(entry);
+      if (!qty) return;
+      const iid = 'deck-card-' + index;
+      cards.push({ iid, def, qty });
+      meta.set(iid, { kind: 'card', index, def, qty });
+    });
+    recordMeta = meta;
+    return cards;
+  }
+  function refresh() {
+    const deck = currentDeck();
+    if (!deck) { close(); return; }
+    if (afterSave) afterSave();
+    if (deckViewer) deckViewer.update(makeViewerCards(deck));
+  }
+  function entryLine(def, qty) {
+    const set = def && def.set && def.cn ? ' (' + String(def.set).toUpperCase() + ') ' + def.cn : '';
+    return String(Math.max(1, Math.floor(Number(qty) || 1))) + ' ' + nameOf(def) + set;
+  }
+  function exportText(deck) {
+    const lines = ['About', 'Name: ' + (deck.name || 'Untitled deck'), '', 'Commander'];
+    (deck.commanders || []).forEach(def => { if (nameOf(def)) lines.push(entryLine(def, 1)); });
+    lines.push('', 'Deck');
+    (deck.cards || []).forEach(entry => {
+      const qty = quantity(entry);
+      if (qty && nameOf(entry.def)) lines.push(entryLine(entry.def, qty));
+    });
+    return lines.join('\n') + '\n';
+  }
+  function safeFileName(name) {
+    return String(name || 'commander-deck').normalize('NFKD')
+      .replace(/[^\w.-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 70) || 'commander-deck';
+  }
+  function downloadDeck() {
+    const deck = currentDeck();
+    if (!deck) return;
+    const blob = new Blob([exportText(deck)], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob), link = document.createElement('a');
+    link.href = url;
+    link.download = safeFileName(deck.name) + '.txt';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    UI.toast('Deck exported as a text decklist.');
+  }
+  function saveDeck(deck, message) {
     try {
       Deck.save(deck);
-      if (afterSave) afterSave();
-      render();
-      UI.toast('Saved — this card will use the selected printing next game.', { ms: 2800 });
-    } catch (e) {
-      UI.toast(e.message || 'Could not save the selected printing.', { kind: 'error' });
+      refresh();
+      UI.toast(message || 'Deck saved.', { ms: 2600 });
+    } catch (err) {
+      UI.toast(err && err.message ? err.message : 'Could not save this deck.', { kind: 'error' });
     }
   }
-
-  async function changePrinting(button) {
-    if (!activeDeckId || !button) return;
-    const kind = button.dataset.editorKind;
-    const index = Number(button.dataset.editorIndex);
-    const copy = Number(button.dataset.editorCopy) || 0;
-    const deck = Deck.get(activeDeckId);
-    if (!deck || !Number.isInteger(index) || index < 0) return;
-    const def = kind === 'commander' ? (deck.commanders || [])[index] :
-      kind === 'card' && deck.cards[index] ? deck.cards[index].def : null;
-    if (!def || !def.name) return;
-
-    const toast = UI.toast('Finding printings of ' + def.name + '…', { ms: 4000 });
+  function removeOne(iid) {
+    const meta = recordMeta.get(iid), deck = currentDeck();
+    if (!meta || !deck) return;
+    if (meta.kind === 'commander') deck.commanders.splice(meta.index, 1);
+    else {
+      const entry = deck.cards[meta.index];
+      if (!entry) return;
+      if (quantity(entry) > 1) entry.qty = quantity(entry) - 1;
+      else deck.cards.splice(meta.index, 1);
+    }
+    saveDeck(deck, 'Card removed from deck.');
+  }
+  function setCommander(iid) {
+    const meta = recordMeta.get(iid), deck = currentDeck();
+    if (!meta || !deck || meta.kind !== 'card' || !meta.def) return;
+    const def = meta.def;
+    const legal = Deck.commanderCandidates([{ def }]).some(c => c.id === def.id);
+    if (!legal) { UI.toast(nameOf(def) + ' is not recognized as a Commander candidate.', { kind: 'warn' }); return; }
+    if ((deck.commanders || []).length >= 2) { UI.toast('This deck already has two commanders. Remove one first.', { kind: 'warn' }); return; }
+    if ((deck.commanders || []).some(c => nameOf(c) === nameOf(def))) { UI.toast(nameOf(def) + ' is already in the Commander section.', { kind: 'warn' }); return; }
+    const entry = deck.cards[meta.index];
+    if (!entry) return;
+    if (quantity(entry) > 1) entry.qty = quantity(entry) - 1;
+    else deck.cards.splice(meta.index, 1);
+    deck.commanders = (deck.commanders || []).concat([def]);
+    saveDeck(deck, 'Set ' + nameOf(def) + ' as a commander.');
+  }
+  function savePrinting(iid, newDef, scope) {
+    const meta = recordMeta.get(iid), deck = currentDeck();
+    if (!meta || !deck || !newDef) return;
+    if (scope === 'all') {
+      const targetName = nameOf(meta.def);
+      deck.commanders = (deck.commanders || []).map(def => nameOf(def) === targetName ? keepTokens(def, newDef) : def);
+      (deck.cards || []).forEach(entry => { if (nameOf(entry.def) === targetName) entry.def = keepTokens(entry.def, newDef); });
+    } else if (meta.kind === 'commander') {
+      if (!deck.commanders[meta.index]) return;
+      deck.commanders[meta.index] = keepTokens(deck.commanders[meta.index], newDef);
+    } else {
+      const entry = deck.cards[meta.index];
+      if (!entry) return;
+      if (quantity(entry) > 1) {
+        const original = entry.def;
+        entry.qty = quantity(entry) - 1;
+        deck.cards.splice(meta.index + 1, 0, { def: keepTokens(original, newDef), qty: 1 });
+      } else entry.def = keepTokens(entry.def, newDef);
+    }
+    saveDeck(deck, scope === 'all'
+      ? 'Saved this printing for ALL copies of ' + nameOf(meta.def) + '.'
+      : 'Saved this printing for the selected copy.');
+  }
+  async function changePrinting(iid) {
+    const meta = recordMeta.get(iid), deck = currentDeck();
+    if (!meta || !deck || !meta.def || !meta.def.name) return;
+    const targetName = nameOf(meta.def);
     let prints;
-    try {
-      prints = await Deck.fetchPrints(def.name);
-    } catch (e) {
-      UI.toast(e.message || 'Could not load printings.', { kind: 'error' });
-      return;
-    } finally {
-      if (toast && typeof toast.close === 'function') toast.close();
-    }
-    if (!prints.length) {
-      UI.toast('No printings found for ' + def.name + '.');
-      return;
-    }
+    const toast = UI.toast('Finding printings of ' + targetName + '…', { ms: 4000 });
+    try { prints = await Deck.fetchPrints(targetName); }
+    catch (err) { UI.toast(err && err.message ? err.message : 'Could not load printings.', { kind: 'error' }); return; }
+    finally { if (toast && typeof toast.close === 'function') toast.close(); }
+    if (!prints.length) { UI.toast('No printings found for ' + targetName + '.'); return; }
     UI.printPicker({
-      title: 'Choose printing for ' + def.name,
-      prints: prints,
-      currentId: def.id,
-      showAll: false,
-      onPick: (newDef) => savePrinting(kind, index, copy, newDef)
+      title: 'Choose printing for ' + targetName, prints, currentId: meta.def.id,
+      showAll: countNamed(deck, targetName) > 1, allLabel: 'Use for ALL copies',
+      onPick: (newDef, scope) => savePrinting(iid, newDef, scope)
     });
   }
-
-  const rowContainer = $('#deckEditorRows');
-  if (rowContainer) rowContainer.addEventListener('click', (event) => {
-    const button = event.target.closest('[data-editor-change]');
-    if (button) changePrinting(button);
-  });
-  const closeButton = $('#closeDeckEditor');
-  if (closeButton) closeButton.addEventListener('click', close);
-
-  window.CTDeckEditor = { open: open, close: close };
+  function addCard(def) {
+    const deck = currentDeck();
+    if (!deck || !def || !def.id || !def.name) return;
+    deck.cards = Array.isArray(deck.cards) ? deck.cards : [];
+    const found = deck.cards.find(entry => entry.def && entry.def.id === def.id);
+    if (found) found.qty = quantity(found) + 1;
+    else deck.cards.push({ def, qty: 1 });
+    saveDeck(deck, 'Added ' + nameOf(def) + ' to the deck.');
+  }
+  function openAddCard() {
+    const deck = currentDeck();
+    if (!deck) return;
+    addViewer = UI.viewer({
+      title: 'Add cards to ' + (deck.name || 'your deck'), cards: [],
+      searchProvider: query => Deck.searchCards(query, 50),
+      onCardClick: def => addCard(def),
+      onHover: def => { if (onHover) onHover(def); },
+      onClose: () => { addViewer = null; if (onLeave) onLeave(); }
+    });
+  }
+  function handleAction(key, iid) {
+    if (key === 'printing') { changePrinting(iid); return; }
+    if (key === 'remove') { removeOne(iid); return; }
+    if (key === 'commander') setCommander(iid);
+  }
+  function open(deckId, onDeckSaved, options) {
+    close();
+    if (!Deck.get(deckId)) { UI.toast('Select or import a saved deck first.', { kind: 'warn' }); return; }
+    activeDeckId = deckId;
+    afterSave = typeof onDeckSaved === 'function' ? onDeckSaved : null;
+    onHover = options && typeof options.onHover === 'function' ? options.onHover : null;
+    onLeave = options && typeof options.onLeave === 'function' ? options.onLeave : null;
+    const deck = currentDeck();
+    deckViewer = UI.viewer({
+      title: 'Deck Builder — ' + (deck.name || 'Untitled deck'),
+      cards: makeViewerCards(deck), showQuantity: true, removeKey: 'remove',
+      actions: [
+        { key: 'printing', label: 'Change printing…' },
+        { key: 'commander', label: 'Set as commander' },
+        { key: 'remove', label: 'Remove from deck' }
+      ],
+      footer: [
+        { key: 'add', label: '+ Add card', primary: true },
+        { key: 'export', label: 'Export deck' }
+      ],
+      onAction: handleAction,
+      onFooter: key => { if (key === 'add') openAddCard(); else if (key === 'export') downloadDeck(); },
+      onHover: def => { if (onHover) onHover(def); },
+      onClose: () => {
+        deckViewer = null;
+        activeDeckId = null;
+        recordMeta.clear();
+        if (onLeave) onLeave();
+        onLeave = null; onHover = null; afterSave = null;
+      }
+    });
+  }
+  function close() {
+    if (deckViewer) deckViewer.close();
+    deckViewer = null; activeDeckId = null; recordMeta.clear();
+    if (addViewer) addViewer.close();
+    addViewer = null;
+    if (onLeave) onLeave();
+    onLeave = null; onHover = null; afterSave = null;
+  }
+  window.CTDeckEditor = { open, close };
 })();
