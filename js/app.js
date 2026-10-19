@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.26.0';
+const APP_VERSION = '0.27.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -313,6 +313,20 @@ function sendChat(text) {
   return true;
 }
 
+// Only the single deliberately revealed card is sent to other players—never the rest of the hand.
+function cleanRevealCard(raw) {
+  if (!isObj(raw)) return null;
+  const d = Deck.slimDef(raw);
+  const str = (v, max) => typeof v === 'string' ? v.slice(0, max) : '';
+  const image = u => IMG_OK(u) ? u.slice(0, 1000) : '';
+  const card = {
+    id: str(d.id, 100), name: str(d.name, 160), face: str(d.face, 160), backName: str(d.backName, 160),
+    type: str(d.type, 180), backType: str(d.backType, 180), pt: str(d.pt, 40),
+    img: image(d.img), imgBack: image(d.imgBack)
+  };
+  return card.name || card.face ? card : null;
+}
+
 // ----- host side -----
 function newTable(room) {
   S.chat = []; S.chatOpen = false; S.chatUnread = 0;
@@ -330,6 +344,13 @@ function hostRecv(msg, from) {
     }
     case 'log': { const e = cleanLog(msg, from); if (e) broadcast({ t: 'log', e }); break; }
     case 'chat': { const e = cleanChatMessage(msg, from); if (e) broadcast({ t: 'chat', e }); break; }
+    case 'reveal': {
+      if (!Array.isArray(S.table.seats) || !S.table.seats.includes(from)) return;
+      const card = cleanRevealCard(msg.card);
+      if (!card) return;
+      broadcast({ t: 'reveal', pid: from, card });
+      break;
+    }
     case 'drawfx': {
       if (!S.table.seats.includes(from)) return;
       const count = clamp(Math.floor(num(msg.count, 1)), 1, 5);
@@ -654,6 +675,85 @@ function showFirstRoll(msg) {
   overlay._ctRollTimeouts.push(dismiss);
 }
 
+let revealCardTimer = null;
+function showRevealedCard(msg) {
+  if (!isObj(msg) || typeof msg.pid !== 'string' || !S.table ||
+      !Array.isArray(S.table.seats) || !S.table.seats.includes(msg.pid)) return;
+  const card = cleanRevealCard(msg.card);
+  if (!card) return;
+
+  const previous = $('#ctRevealOverlay');
+  if (previous) previous.remove();
+  clearTimeout(revealCardTimer);
+
+  const overlay = document.createElement('div');
+  overlay.id = 'ctRevealOverlay';
+  overlay.className = 'ct-reveal-overlay';
+  overlay.setAttribute('role', 'status');
+  overlay.setAttribute('aria-live', 'polite');
+
+  const panel = document.createElement('div');
+  panel.className = 'ct-reveal-panel';
+  const heading = document.createElement('div');
+  heading.className = 'ct-reveal-heading';
+  heading.textContent = pname(msg.pid) + ' revealed a card';
+  panel.appendChild(heading);
+
+  const title = document.createElement('strong');
+  title.className = 'ct-reveal-name';
+  title.textContent = card.face || card.name || 'Revealed card';
+  panel.appendChild(title);
+
+  const addFallback = () => {
+    const fallback = document.createElement('div');
+    fallback.className = 'ct-reveal-text';
+    const name = document.createElement('strong');
+    name.textContent = card.face || card.name || 'Revealed card';
+    fallback.appendChild(name);
+    if (card.type) {
+      const type = document.createElement('div');
+      type.textContent = card.type;
+      fallback.appendChild(type);
+    }
+    if (card.pt) {
+      const pt = document.createElement('div');
+      pt.textContent = card.pt;
+      fallback.appendChild(pt);
+    }
+    panel.appendChild(fallback);
+  };
+
+  const urls = [...new Set([card.img, card.imgBack].filter(IMG_OK))];
+  if (urls.length) {
+    const images = document.createElement('div');
+    images.className = 'ct-reveal-images' + (urls.length > 1 ? ' two' : '');
+    urls.forEach(url => {
+      const img = document.createElement('img');
+      img.src = url;
+      img.alt = card.face || card.name || 'Revealed card';
+      img.onerror = () => {
+        img.remove();
+        if (!images.querySelector('img')) {
+          images.remove();
+          addFallback();
+        }
+      };
+      images.appendChild(img);
+    });
+    panel.appendChild(images);
+  } else {
+    addFallback();
+  }
+
+  overlay.appendChild(panel);
+  document.body.appendChild(overlay);
+  revealCardTimer = setTimeout(() => {
+    if (!overlay.isConnected) return;
+    overlay.classList.add('is-leaving');
+    revealCardTimer = setTimeout(() => overlay.remove(), 280);
+  }, 4800);
+}
+
 function onBroadcast(msg) {
   switch (msg.t) {
     case 'pub': if (msg.p && msg.p.pid) { S.players[msg.p.pid] = msg.p; if (msg.p.pid !== S.pid) checkOrphans(); } break;
@@ -673,6 +773,7 @@ function onBroadcast(msg) {
       }
       break;
     }
+    case 'reveal': showRevealedCard(msg); break;
     case 'drawfx': if (typeof msg.pid === 'string') animateDrawCard(msg.pid, clamp(Math.floor(num(msg.count, 1)), 1, 5)); break;
     case 'slamfx':
       if (typeof msg.pid === 'string' && typeof msg.iid === 'string') {
@@ -1924,6 +2025,14 @@ async function millN(to, faceDown) {
     return [`${to === 'graveyard' ? 'milled' : 'exiled from the top'} ${moved.length}: ${refs}${moved.length > 8 ? '…' : ''}`, moved];
   });
 }
+function revealCardToEveryone(iid) {
+  const f = findCard(iid);
+  if (!f || f.zone !== 'hand') return;
+  const d = defOf(f.card);
+  if (!d) return UI.toast('Could not reveal that card.', { kind: 'warn' });
+  say('revealed {0} from their hand', [d]);
+  toHost({ t: 'reveal', card: Deck.slimDef(d) });
+}
 function revealTop() {
   const c = S.me.zones.library[0];
   if (!c) return UI.toast('Library is empty');
@@ -2013,7 +2122,7 @@ function cardMenu(x, y, iid) {
     if (attachable) items.push({ label: /Equipment/.test(d.type || '') ? 'Play & equip to…' : 'Cast & attach to…', onClick: () => startAttach(iid) });
     items.push({ label: 'Play tapped', hint: 'T', onClick: () => doMove(iid, 'battlefield', { tapped: true }) });
     items.push({ label: 'Play face down', onClick: () => doMove(iid, 'battlefield', { faceDown: true }) });
-    items.push({ label: 'Reveal to everyone', onClick: () => say('revealed {0} from their hand', [d]) });
+    items.push({ label: 'Reveal to everyone', onClick: () => revealCardToEveryone(iid) });
   }
   if (z === 'command') {
     const n = S.me.casts[iid] || 0;
