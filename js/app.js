@@ -707,6 +707,13 @@ function onReq(req, from) {
   if (req.k === 'life') {
     const d = clamp(num(req.d), -100, 100);
     if (d) changeLife(d, pname(from));
+    return;
+  }
+  if (req.k === 'life-set') {
+    if (!Number.isInteger(req.life)) return;
+    const target = clamp(req.life, -9999, 9999);
+    if (target !== S.me.life) changeLife(target - S.me.life, pname(from));
+    return;
   }
   if (req.k === 'cmddmg' && typeof req.key === 'string' && req.key.startsWith(from + ':')) {
     // another player dealt me damage with their own commander
@@ -2563,7 +2570,7 @@ function ctrPanelHTML(pid) {
   const mine = pid === S.pid;
   const p = mine ? null : S.players[pid];
   const vals = mine ? Object.assign({ Poison: S.me.poison }, S.me.ctr) : Object.assign({ Poison: p.poison }, p.ctr || {});
-  const rows = Object.keys(PLAYER_CTR_ICONS).map(k => `<div class="ctrrow"><span class="ci">${PLAYER_CTR_ICONS[k]}</span><span class="cn">${k}</span><b>${vals[k] || 0}</b>` +
+  const rows = Object.keys(PLAYER_CTR_ICONS).map(k => `<div class="ctrrow${k === 'Poison' && (vals[k] || 0) >= 10 ? ' lethal' : ''}"><span class="ci">${PLAYER_CTR_ICONS[k]}</span><span class="cn">${k}</span><b>${vals[k] || 0}</b>` +
     (mine ? `<button data-a="pctr" data-k="${k}" data-d="-1">−</button><button data-a="pctr" data-k="${k}" data-d="1">+</button>` : '<span></span><span></span>') + '</div>').join('');
   const cdPanel = cmdDmgPanelHTML(pid);
   return `<div class="ctrpanel">${cdPanel}${cdPanel ? '<div class="ctrsep"></div>' : ''}${rows}</div>`;
@@ -2579,7 +2586,7 @@ function lifeBoxHTML(pid, noPanel) {
   const cd = cmdDmgInfo(pid);
   const cdBadge = cd.max ? `<span class="cdbadge${cd.max >= 21 ? ' lethal' : ''}" title="Highest commander damage taken">⚔${cd.max}</span> ` : '';
   return `<span class="lifebox" title="Life${mine ? ' (Shift-click: ±5)' : ` — changing it asks ${esc(p.name)}'s game to apply it`}">
-      <button class="life-adjust" type="button" data-a="${a}" data-pid="${esc(pid)}" data-d="-1" aria-label="Decrease life total">−</button><b class="lifeN">${life}</b><button class="life-adjust" type="button" data-a="${a}" data-pid="${esc(pid)}" data-d="1" aria-label="Increase life total">+</button>
+      <button class="life-adjust" type="button" data-a="${a}" data-pid="${esc(pid)}" data-d="-1" aria-label="Decrease life total">−</button><b class="lifeN life-edit" data-a="setlife" data-pid="${esc(pid)}" role="button" tabindex="0" title="Click to set life total directly" aria-label="Set life total">${life}</b><button class="life-adjust" type="button" data-a="${a}" data-pid="${esc(pid)}" data-d="1" aria-label="Increase life total">+</button>
       <button class="more" data-a="ctrs" data-pid="${esc(pid)}" title="Commander damage, poison, energy, experience, rad, tickets">${cdBadge}${any ? esc(any) + ' ' : ''}▾</button></span>` +
     (open && !noPanel ? ctrPanelHTML(pid) : '');
 }
@@ -3611,6 +3618,19 @@ function onButton(a, btn, e) {
   const r = btn.getBoundingClientRect();
   switch (a) {
     case 'life': changeLife(d); break;
+    case 'setlife': {
+      const pid = btn.dataset.pid || S.pid;
+      const current = pid === S.pid ? S.me.life : (S.players[pid] && S.players[pid].life);
+      if (!Number.isFinite(current)) break;
+      UI.prompt({ title: `Set ${pid === S.pid ? 'your' : pname(pid) + "'s"} life total`, label: 'New life total (whole number)', type: 'number', value: current, min: -9999, max: 9999 })
+        .then(value => {
+          if (value == null) return;
+          if (!Number.isInteger(value)) { UI.toast('Enter a whole-number life total.', { kind: 'error' }); return; }
+          if (pid === S.pid) changeLife(value - S.me.life);
+          else sendReq(pid, { k: 'life-set', life: value });
+        });
+      break;
+    }
     case 'poison': act(() => { S.me.poison = Math.max(0, S.me.poison + d); return S.me.poison >= 10 && d > 0 ? ['has 10+ poison counters ☠'] : null; }); break;
     case 'pctr': act(() => {
       const k = btn.dataset.k;
