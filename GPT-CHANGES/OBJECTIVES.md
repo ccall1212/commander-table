@@ -64,11 +64,11 @@ After a player imports or selects a saved deck in the start menu, provide a **Br
 - Keep this as a pre-game deck-editing workflow; changing a printing should not change card counts, card rules, or other deck contents.
 - Test with a deck that has multiple alternate printings, reload the page and verify the choices persist, then start a game and confirm the chosen printings are used. Include both a newly imported deck and an already-saved deck.
 
-## 27. Reveal a hand card to everyone — IN PROGRESS
+## 27. Reveal one card from hand to everyone — IN PROGRESS
 
-Right-click a card in your hand and choose **Reveal to everyone**. Keep the existing game-log entry, but also display that one card's actual face image in a temporary on-screen reveal for every connected player.
+Right-click a card in your hand and choose **Reveal to everyone**. That one card stays face-up in its normal position in opponents' hand fans, using the same behavior as **Reveal my hand to everyone** without exposing the other cards.
 
-- Share only the deliberately selected card's display details, never the rest of the player's hidden hand.
-- Show the revealer and card name, and fade the reveal away after a few seconds without blocking table clicks.
-- Keep a useful name/type fallback if its image cannot load; support double-faced card images when available.
-- Test with at least two connected players, both Sidebar and Grid layouts, and at desktop and narrower window sizes.
+- Show only selected cards face-up; keep the remaining card backs hidden.
+- Provide a matching **Hide from everyone** action, and clear an individual reveal when the card leaves the hand.
+- Keep the full-hand reveal option working independently.
+- Test with at least two connected players, both Sidebar and Grid layouts, board focus, and desktop/narrow windows.
