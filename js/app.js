@@ -2972,6 +2972,14 @@ function myTileOverlayHTML(bh, bw) {
     <div class="tstrip" style="top:${bh}px;width:${bw}px"><div class="thand mine" data-drop="hand" style="--hm:${handSpread(n, bw)}px">${hand}${n ? `<b class="thn">${n}</b>` : ''}</div>
       <div class="tpiles">${pile('library', 'LIB')}${pile('graveyard', 'GY')}${pile('exile', 'EXILE')}<div class="tpile tcmd" data-drop="command"><div class="tpcard">${cmd}</div><div class="tplabel">CMD</div></div></div></div>`;
 }
+function renderMyTile(el, idx) {
+  const T = S.table || {}, m = S.me;
+  el.classList.toggle('active', T.active === S.pid);
+  setHTML(el.querySelector('.ohead'), `<span class="dot" style="--pc:${colorOf(S.pid)}"></span><span class="pname" data-phead="${esc(S.pid)}" title="Right-click for options">${esc(m.name)}</span><span class="tag you">YOU</span>
+    ${T.active === S.pid ? '<span class="tag">TURN</span>' : ''}${T.monarch === S.pid ? '<span title="Monarch">👑</span>' : ''}${T.initiative === S.pid ? '<span title="Initiative">🏰</span>' : ''}`);
+  el.querySelector('.obf').removeAttribute('style');
+  setHTML(el.querySelector('.obf'), `<div class="boardwrap tile" data-board="${esc(S.pid)}" style="${esc(appearanceBoardStyleFor(S.pid))}">${boardHTML(S.pid, idx, 'tile')}</div>`);
+}
 function tileOverlayHTML(pid, bh, bw) {
   if (pid === S.pid) return myTileOverlayHTML(bh, bw);
   const p = S.players[pid], defs = p.defs || {}, pi = pileInfo(pid);
