@@ -277,6 +277,14 @@ function publicView() {
     casts: m.casts, hand: z.hand.length, lib: z.library.length, kept: m.kept, layout: m.layout, bh: myBH(),
     zones: { battlefield: take(z.battlefield), graveyard: take(z.graveyard), exile: take(z.exile), command: take(z.command) },
     revHand: m.revealHand ? take(z.hand) : null,
+    // An individually revealed card is public only while it remains in its owner's hand.
+    revCards: m.revealHand ? [] : z.hand.reduce((out, c, hIndex) => {
+      if (c.rvh) {
+        const p = take([c])[0];
+        if (p) { p.hIndex = hIndex; out.push(p); }
+      }
+      return out;
+    }, []),
     revTop: topIsRevealed(m) && z.library.length ? take([z.library[0]]) : null,
     defs
   };
@@ -313,20 +321,6 @@ function sendChat(text) {
   return true;
 }
 
-// Only the single deliberately revealed card is sent to other players—never the rest of the hand.
-function cleanRevealCard(raw) {
-  if (!isObj(raw)) return null;
-  const d = Deck.slimDef(raw);
-  const str = (v, max) => typeof v === 'string' ? v.slice(0, max) : '';
-  const image = u => IMG_OK(u) ? u.slice(0, 1000) : '';
-  const card = {
-    id: str(d.id, 100), name: str(d.name, 160), face: str(d.face, 160), backName: str(d.backName, 160),
-    type: str(d.type, 180), backType: str(d.backType, 180), pt: str(d.pt, 40),
-    img: image(d.img), imgBack: image(d.imgBack)
-  };
-  return card.name || card.face ? card : null;
-}
-
 // ----- host side -----
 function newTable(room) {
   S.chat = []; S.chatOpen = false; S.chatUnread = 0;
@@ -344,13 +338,6 @@ function hostRecv(msg, from) {
     }
     case 'log': { const e = cleanLog(msg, from); if (e) broadcast({ t: 'log', e }); break; }
     case 'chat': { const e = cleanChatMessage(msg, from); if (e) broadcast({ t: 'chat', e }); break; }
-    case 'reveal': {
-      if (!Array.isArray(S.table.seats) || !S.table.seats.includes(from)) return;
-      const card = cleanRevealCard(msg.card);
-      if (!card) return;
-      broadcast({ t: 'reveal', pid: from, card });
-      break;
-    }
     case 'drawfx': {
       if (!S.table.seats.includes(from)) return;
       const count = clamp(Math.floor(num(msg.count, 1)), 1, 5);
@@ -560,7 +547,14 @@ function cleanPub(p, from) {
     hand: num(p.hand), lib: num(p.lib), kept: !!p.kept,
     layout: cleanLayout(p.layout) || cloneLayout(DEFAULT_LAYOUT), bh: clamp(num(p.bh, BH), BH, BH_MAX),
     zones: { battlefield: cleanCards(z.battlefield), graveyard: cleanCards(z.graveyard), exile: cleanCards(z.exile), command: cleanCards(z.command, 4) },
-    revHand: p.revHand ? cleanCards(p.revHand, 60) : null, revTop: p.revTop ? cleanCards(p.revTop, 1) : null,
+    revHand: p.revHand ? cleanCards(p.revHand, 60) : null,
+    revCards: Array.isArray(p.revCards) ? p.revCards.slice(0, 60).map(raw => {
+      const c = cleanCards([raw], 1)[0];
+      const hIndex = raw && raw.hIndex;
+      if (!c || !c.iid.startsWith(from + '_') || !Number.isInteger(hIndex) || hIndex < 0 || hIndex >= Math.min(60, Math.max(0, num(p.hand)))) return null;
+      return Object.assign(c, { hIndex });
+    }).filter(Boolean) : [],
+    revTop: p.revTop ? cleanCards(p.revTop, 1) : null,
     defs: isObj(p.defs) ? p.defs : {}
   };
 }
@@ -675,85 +669,6 @@ function showFirstRoll(msg) {
   overlay._ctRollTimeouts.push(dismiss);
 }
 
-let revealCardTimer = null;
-function showRevealedCard(msg) {
-  if (!isObj(msg) || typeof msg.pid !== 'string' || !S.table ||
-      !Array.isArray(S.table.seats) || !S.table.seats.includes(msg.pid)) return;
-  const card = cleanRevealCard(msg.card);
-  if (!card) return;
-
-  const previous = $('#ctRevealOverlay');
-  if (previous) previous.remove();
-  clearTimeout(revealCardTimer);
-
-  const overlay = document.createElement('div');
-  overlay.id = 'ctRevealOverlay';
-  overlay.className = 'ct-reveal-overlay';
-  overlay.setAttribute('role', 'status');
-  overlay.setAttribute('aria-live', 'polite');
-
-  const panel = document.createElement('div');
-  panel.className = 'ct-reveal-panel';
-  const heading = document.createElement('div');
-  heading.className = 'ct-reveal-heading';
-  heading.textContent = pname(msg.pid) + ' revealed a card';
-  panel.appendChild(heading);
-
-  const title = document.createElement('strong');
-  title.className = 'ct-reveal-name';
-  title.textContent = card.face || card.name || 'Revealed card';
-  panel.appendChild(title);
-
-  const addFallback = () => {
-    const fallback = document.createElement('div');
-    fallback.className = 'ct-reveal-text';
-    const name = document.createElement('strong');
-    name.textContent = card.face || card.name || 'Revealed card';
-    fallback.appendChild(name);
-    if (card.type) {
-      const type = document.createElement('div');
-      type.textContent = card.type;
-      fallback.appendChild(type);
-    }
-    if (card.pt) {
-      const pt = document.createElement('div');
-      pt.textContent = card.pt;
-      fallback.appendChild(pt);
-    }
-    panel.appendChild(fallback);
-  };
-
-  const urls = [...new Set([card.img, card.imgBack].filter(IMG_OK))];
-  if (urls.length) {
-    const images = document.createElement('div');
-    images.className = 'ct-reveal-images' + (urls.length > 1 ? ' two' : '');
-    urls.forEach(url => {
-      const img = document.createElement('img');
-      img.src = url;
-      img.alt = card.face || card.name || 'Revealed card';
-      img.onerror = () => {
-        img.remove();
-        if (!images.querySelector('img')) {
-          images.remove();
-          addFallback();
-        }
-      };
-      images.appendChild(img);
-    });
-    panel.appendChild(images);
-  } else {
-    addFallback();
-  }
-
-  overlay.appendChild(panel);
-  document.body.appendChild(overlay);
-  revealCardTimer = setTimeout(() => {
-    if (!overlay.isConnected) return;
-    overlay.classList.add('is-leaving');
-    revealCardTimer = setTimeout(() => overlay.remove(), 280);
-  }, 4800);
-}
-
 function onBroadcast(msg) {
   switch (msg.t) {
     case 'pub': if (msg.p && msg.p.pid) { S.players[msg.p.pid] = msg.p; if (msg.p.pid !== S.pid) checkOrphans(); } break;
@@ -773,7 +688,6 @@ function onBroadcast(msg) {
       }
       break;
     }
-    case 'reveal': showRevealedCard(msg); break;
     case 'drawfx': if (typeof msg.pid === 'string') animateDrawCard(msg.pid, clamp(Math.floor(num(msg.count, 1)), 1, 5)); break;
     case 'slamfx':
       if (typeof msg.pid === 'string' && typeof msg.iid === 'string') {
@@ -1008,6 +922,7 @@ function moveCard(iid, to, opts = {}) {
     return null;
   }
   S.me.zones[from].splice(f.idx, 1);
+  if (from === 'hand' && to !== 'hand') delete card.rvh;
   let orphans = [];
   if (from === 'battlefield' && to !== 'battlefield') {
     card.t = false; card.c = {}; card.fl = false; card.pb = undefined; card.dp = 0; card.dt = 0; // a card that leaves forgets everything
@@ -1906,7 +1821,7 @@ function changeCmdDmg(key, d) {
 function mulligan() {
   act(() => {
     const z = S.me.zones;
-    z.library.push(...z.hand.splice(0));
+    z.library.push(...z.hand.splice(0).map(c => { delete c.rvh; return c; }));
     S.me.revealTopOnce = null;
     shuffle(z.library);
     z.hand = z.library.splice(0, 7);
@@ -2025,13 +1940,21 @@ async function millN(to, faceDown) {
     return [`${to === 'graveyard' ? 'milled' : 'exiled from the top'} ${moved.length}: ${refs}${moved.length > 8 ? '…' : ''}`, moved];
   });
 }
-function revealCardToEveryone(iid) {
+function toggleRevealHandCard(iid) {
   const f = findCard(iid);
   if (!f || f.zone !== 'hand') return;
+  if (S.me.revealHand) {
+    UI.toast('Your whole hand is already revealed. Turn that off to reveal individual cards.', { kind: 'warn' });
+    return;
+  }
   const d = defOf(f.card);
   if (!d) return UI.toast('Could not reveal that card.', { kind: 'warn' });
-  say('revealed {0} from their hand', [d]);
-  toHost({ t: 'reveal', card: Deck.slimDef(d) });
+  const show = !f.card.rvh;
+  act(() => {
+    if (show) f.card.rvh = true;
+    else delete f.card.rvh;
+    return [show ? 'revealed {0} from their hand' : 'hid {0} from everyone', [d]];
+  }, { noUndo: true });
 }
 function revealTop() {
   const c = S.me.zones.library[0];
@@ -2122,7 +2045,7 @@ function cardMenu(x, y, iid) {
     if (attachable) items.push({ label: /Equipment/.test(d.type || '') ? 'Play & equip to…' : 'Cast & attach to…', onClick: () => startAttach(iid) });
     items.push({ label: 'Play tapped', hint: 'T', onClick: () => doMove(iid, 'battlefield', { tapped: true }) });
     items.push({ label: 'Play face down', onClick: () => doMove(iid, 'battlefield', { faceDown: true }) });
-    items.push({ label: 'Reveal to everyone', onClick: () => revealCardToEveryone(iid) });
+    items.push({ label: c.rvh ? 'Hide from everyone' : 'Reveal to everyone', checked: !!c.rvh, disabled: S.me.revealHand, onClick: () => toggleRevealHandCard(iid) });
   }
   if (z === 'command') {
     const n = S.me.casts[iid] || 0;
@@ -2145,7 +2068,7 @@ function oppCard(pid, iid) {
     const c = (p.zones[z] || []).find(x => x.iid === iid);
     if (c) return { c, def: c.id ? p.defs[c.id] : null };
   }
-  const c = (p.revHand || []).find(x => x.iid === iid);
+  const c = (p.revHand || []).find(x => x.iid === iid) || (p.revCards || []).find(x => x.iid === iid);
   return c ? { c, def: c.id ? p.defs[c.id] : null } : null;
 }
 function oppCardMenu(x, y, pid, iid) {
@@ -3061,16 +2984,25 @@ function renderOpp(el, pid, idx) {
   const pi = pileInfo(pid);
   const oz = (k, label, sub) => `<span class="oz" data-pile="${k}" data-pid="${esc(pid)}" title="${esc(pi[k].tip)}${k === 'library' ? '' : ' — click to search'}">${label} <b class="${k === 'library' && pi[k].n === 0 ? 'lib-empty' : ''}">${pi[k].n}</b>${sub ? ` <span class="zsub">${sub}</span>` : ''}</span>`;
   const cmdCards = (p.zones.command || []).map(c => cardHTML(c, c.id && defs[c.id], Object.assign({}, o, { zone: 'command' }))).join('');
-  // their hand, right next to their commander: a small fan of card backs (face up only if they revealed it) + the count
+  // Their hand mirrors Reveal my hand to everyone, but can also expose selected cards only.
   const revealed = !!(p.revHand && p.revHand.length);
+  const revCards = revealed ? [] : (Array.isArray(p.revCards) ? p.revCards : []);
   const handN = num(p.hand);
-  const shown = revealed ? p.revHand.length : Math.min(handN, 10);
+  const shown = revealed ? p.revHand.length : (revCards.length ? Math.min(Math.max(0, handN), 60) : Math.min(handN, 10));
   const mid = (shown - 1) / 2, step = shown > 1 ? Math.min(6, 40 / shown) : 0;
   const fan = i => { const off = i - mid; return `--rot:${(off * step).toFixed(1)}deg;--arc:${(mid ? 3 * (off / mid) ** 2 : 0).toFixed(1)}px;z-index:${i + 1}`; };
+  const backAt = i => `<div class="card oback" style="${fan(i)}">${UI.cardBackHTML('', appearanceBackFor(pid))}</div>`;
+  const revealedAt = new Map(revCards.map(c => [c.hIndex, c]));
   const handCards = revealed
     ? p.revHand.map((c, i) => cardHTML(c, c.id && defs[c.id], Object.assign({}, o, { zone: 'hand', style: fan(i) }))).join('')
-    : Array.from({ length: shown }, (_, i) => `<div class="card oback" style="${fan(i)}">${UI.cardBackHTML('', appearanceBackFor(pid))}</div>`).join('');
-  const handHTML = `<span class="ohhand${revealed ? ' revealed' : ''}${handN ? '' : ' empty'}" title="${esc(p.name)} has ${plural(handN, 'card')} in hand${revealed ? ' (revealed — hover to read)' : ''}">${handCards}<b class="ohn">${handN}</b></span>`;
+    : revCards.length
+      ? Array.from({ length: shown }, (_, i) => {
+          const c = revealedAt.get(i);
+          return c ? cardHTML(c, c.id && defs[c.id], Object.assign({}, o, { zone: 'hand', style: fan(i) })) : backAt(i);
+        }).join('')
+      : Array.from({ length: shown }, (_, i) => backAt(i)).join('');
+  const handTitle = revealed ? ' (revealed — hover to read)' : revCards.length ? ` (${revCards.length} card${revCards.length === 1 ? '' : 's'} revealed — hover to read)` : '';
+  const handHTML = `<span class="ohhand${revealed ? ' revealed' : revCards.length ? ' partial-reveal' : ''}${handN ? '' : ' empty'}" title="${esc(p.name)} has ${plural(handN, 'card')} in hand${handTitle}">${handCards}<b class="ohn">${handN}</b></span>`;
   setHTML(el.querySelector('.ohead'), `${curView() === 'grid' ? '<button data-a="viewme" title="Back to my board">← My board</button>' : ''}<span class="dot" style="--pc:${colorOf(pid)}"></span>
     <span class="pname" data-phead="${esc(pid)}" title="Right-click for options">${esc(p.name)}</span>
     ${off ? '<span class="tag off">RECONNECTING</span>' : ''}${T.out && T.out[pid] ? '<span class="tag off">OUT</span>' : ''}
@@ -3111,7 +3043,7 @@ function renderMine(idx) {
   }).join(''));
   if (S.handHov) { const hc = [...$('#myHand').children].find(c => c.dataset.iid === S.handHov); if (hc) hc.classList.add('hov'); } // keep the lifted card up across re-renders
   const hn = vo ? $('#myHand').children.length : z.hand.length;
-  $('#handLabel').innerHTML = vo ? `${esc(S.players[vo].name)} · HAND <b>${num(S.players[vo].hand)}</b>${S.players[vo].revHand && S.players[vo].revHand.length ? ' · REVEALED' : ''}` : `HAND <b>${z.hand.length}</b>`;
+  $('#handLabel').innerHTML = vo ? `${esc(S.players[vo].name)} · HAND <b>${num(S.players[vo].hand)}</b>${S.players[vo].revHand && S.players[vo].revHand.length ? ' · REVEALED' : (S.players[vo].revCards || []).length ? ` · ${S.players[vo].revCards.length} REVEALED` : ''}` : `HAND <b>${z.hand.length}</b>`;
   $('#myHand').style.setProperty('--n', Math.max(1, hn)); // CSS overlaps cards so the hand never scrolls
   setHTML($('#myZones'), vo ? oppZonesHTML(vo) : myZonesHTML());
   const mb = $('#mullBar');
