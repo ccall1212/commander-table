@@ -22,8 +22,8 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 
 1. ChatGPT makes a focused branch and PR, includes the test ZIP and simple testing steps, and runs the available syntax/code checks.
 2. Chris tests the branch in his browser and reports what he tried. Record his testing accurately; don't claim tests he didn't perform.
-3. Stop and wait for Chris to say **publish**. Only then merge, update the release docs (`CHANGELOG.md`, `docs/GUIDE.md`), delete the branch, and verify the live site.
-4. **Tags are automatic.** A GitHub Action (`.github/workflows/tag-release.yml`) creates the annotated `vX.Y.Z` tag when a new app version lands on `main`. After publishing, check that the tag appeared; if it did not, tell Chris. Do not write tag targets or "tag still needed" lists in this folder.
+3. Stop and wait for Chris to say **publish** for the specific PR/version. Only then merge the approved PR, update release docs (`CHANGELOG.md`, `docs/GUIDE.md`), verify the automatic release tag and live site, and delete the branch if possible.
+4. **Tags are automatic — never manually tag as part of the normal release flow.** The GitHub Action (`.github/workflows/tag-release.yml`) creates the annotated `vX.Y.Z` tag on a push to `main`. After publishing, verify the tag exists and that its final target commit SHA exactly matches the merge commit on `main`. For annotated tags, follow the tag-object SHA to the tag object and compare its `object.sha`. If the tag is missing or points elsewhere, inspect/report the workflow result to Chris; do not create, move, or rewrite it manually unless Chris separately authorizes recovery. Do not write tag targets or "tag still needed" lists in this folder.
 
 ## Known things that are not your problem
 
