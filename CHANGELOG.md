@@ -9,7 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ## [0.27.0] - 2026-10-19
 
 ### Added
-- Make **Reveal to everyone** show the actual card image to every player in a temporary on-screen reveal, while keeping the action in the game log.
+- Make **Reveal to everyone** show just the selected card face-up in its normal spot in the opponent's hand fan, while the rest of the hand stays face-down.
 
 
 ## [0.26.0] - 2026-10-19
