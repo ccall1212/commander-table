@@ -1662,6 +1662,18 @@ function changeLife(d, by) {
     askConcede(`You are at ${after} life. Would you like to concede? You can choose Cancel and continue playing at negative life.`, 'You reached 0 life');
   }
 }
+function changePoison(d) {
+  const before = Math.max(0, num(S.me.poison));
+  act(() => {
+    S.me.poison = Math.max(0, before + d);
+    return S.me.poison >= 10 && d > 0 ? ['has 10+ poison counters ☠'] : null;
+  });
+  const after = S.me.poison;
+  if (before < 10 && after >= 10) {
+    askConcede(`You have ${after} poison counters. Would you like to concede?`, 'Lethal poison');
+  }
+}
+
 const cdLog = {};
 // Commander tax chip: left-click +2, right-click −2 (stored as a cast count).
 function changeTax(iid, d) {
@@ -3631,12 +3643,13 @@ function onButton(a, btn, e) {
         });
       break;
     }
-    case 'poison': act(() => { S.me.poison = Math.max(0, S.me.poison + d); return S.me.poison >= 10 && d > 0 ? ['has 10+ poison counters ☠'] : null; }); break;
-    case 'pctr': act(() => {
+    case 'poison': changePoison(d); break;
+    case 'pctr': {
       const k = btn.dataset.k;
-      if (k === 'Poison') { S.me.poison = Math.max(0, S.me.poison + d); return S.me.poison >= 10 && d > 0 ? ['has 10+ poison counters ☠'] : null; }
-      S.me.ctr[k] = (S.me.ctr[k] || 0) + d; if (S.me.ctr[k] <= 0) delete S.me.ctr[k];
-    }); break;
+      if (k === 'Poison') changePoison(d);
+      else act(() => { S.me.ctr[k] = (S.me.ctr[k] || 0) + d; if (S.me.ctr[k] <= 0) delete S.me.ctr[k]; });
+      break;
+    }
     case 'ctrs': S.ctrOpen = S.ctrOpen === btn.dataset.pid ? null : btn.dataset.pid; render(); break;
     case 'tax': changeTax(btn.dataset.iid, 1); break;
     case 'addctr': UI.menu(r.left, r.bottom + 4, PLAYER_COUNTERS.map(k => ({ label: k, onClick: () => act(() => { S.me.ctr[k] = (S.me.ctr[k] || 0) + 1; }) }))); break;
