@@ -73,3 +73,16 @@ After a player imports or selects a saved deck in the start menu, provide a **Br
 - Save each card's selected printing with that deck in the browser, using the existing local saved-deck behavior, so choices persist after leaving or reopening the page and are used when the game starts.
 - Keep this as a pre-game deck-editing workflow; changing a printing should not change card counts, card rules, or other deck contents.
 - Test with a deck that has multiple alternate printings, reload the page and verify the choices persist, then start a game and confirm the chosen printings are used. Include both a newly imported deck and an already-saved deck.
+
+## 26. "YOUR TURN" fade-in banner over the active player's board — QUEUED
+
+When a new turn starts, show a large "YOUR TURN" over that player's board. It fades in, holds briefly, then fades out on its own.
+
+- **Who sees what (confirm with Chris, default below):** the active player sees **YOUR TURN** over their own board. Everyone else sees **<NAME>'S TURN** over that player's board, so the whole table can tell at a glance whose turn it is.
+- **Timing:** about 0.3 s fade in, about 1 s hold, about 0.5 s fade out (roughly 2 s total). Chris can ask for tuning.
+- **Trigger only on a real turn change:** play it once per turn (use the table's turn counter `T.turnSeq` / active player `T.active`, and remember the last turn it played for so renders, reconnects, page reloads and duplicate updates never replay it). Play it for the very first turn too, after the opening d20 roll overlay has finished. Do not play it when someone rejoins or reloads mid-turn.
+- **Where it appears:** over the active player's board wherever that board is on screen: your own board, an opponent's miniature tile, or a board being viewed full size, in both **Sidebar** and **Grid** (in Grid your own quadrant is the miniature `.opp.mytile`). Find the right element for each case rather than assuming one layout.
+- **Click-through and light:** it must ignore the mouse and touch so it never blocks play, stay inside the board it labels, and respect `prefers-reduced-motion` (skip the animation or show it briefly without fading).
+- Keep it visual only: no game-state changes, no new network message if the existing table update already tells every client the turn changed.
+- **Where to look in `js/app.js`:** the opening roll overlay (search for `first-roll`) and the draw animation (`animateDrawCard()`) are working examples of click-through overlay effects. A turn change reaches every client in the table update (`T.active`, `T.turnSeq`; see the `pass` operation in the host's table code and `afterTable()`). The yellow active-player outline shows how the code already finds the active player's board element.
+- **Test list for Chris:** (1) two or more players, press **Pass turn** and watch the banner fade in and out over the new active player's board on every screen; (2) check Sidebar and Grid; (3) reload a tab mid-turn and confirm the banner does not replay; (4) host a solo practice game and confirm nothing odd happens; (5) a very fast sequence of passes should not stack banners.
