@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.26.0';
+const APP_VERSION = '0.27.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -277,6 +277,14 @@ function publicView() {
     casts: m.casts, hand: z.hand.length, lib: z.library.length, kept: m.kept, layout: m.layout, bh: myBH(),
     zones: { battlefield: take(z.battlefield), graveyard: take(z.graveyard), exile: take(z.exile), command: take(z.command) },
     revHand: m.revealHand ? take(z.hand) : null,
+    // An individually revealed card is public only while it remains in its owner's hand.
+    revCards: m.revealHand ? [] : z.hand.reduce((out, c, hIndex) => {
+      if (c.rvh) {
+        const p = take([c])[0];
+        if (p) { p.hIndex = hIndex; out.push(p); }
+      }
+      return out;
+    }, []),
     revTop: topIsRevealed(m) && z.library.length ? take([z.library[0]]) : null,
     defs
   };
@@ -539,7 +547,14 @@ function cleanPub(p, from) {
     hand: num(p.hand), lib: num(p.lib), kept: !!p.kept,
     layout: cleanLayout(p.layout) || cloneLayout(DEFAULT_LAYOUT), bh: clamp(num(p.bh, BH), BH, BH_MAX),
     zones: { battlefield: cleanCards(z.battlefield), graveyard: cleanCards(z.graveyard), exile: cleanCards(z.exile), command: cleanCards(z.command, 4) },
-    revHand: p.revHand ? cleanCards(p.revHand, 60) : null, revTop: p.revTop ? cleanCards(p.revTop, 1) : null,
+    revHand: p.revHand ? cleanCards(p.revHand, 60) : null,
+    revCards: Array.isArray(p.revCards) ? p.revCards.slice(0, 60).map(raw => {
+      const c = cleanCards([raw], 1)[0];
+      const hIndex = raw && raw.hIndex;
+      if (!c || !c.iid.startsWith(from + '_') || !Number.isInteger(hIndex) || hIndex < 0 || hIndex >= Math.min(60, Math.max(0, num(p.hand)))) return null;
+      return Object.assign(c, { hIndex });
+    }).filter(Boolean) : [],
+    revTop: p.revTop ? cleanCards(p.revTop, 1) : null,
     defs: isObj(p.defs) ? p.defs : {}
   };
 }
@@ -907,6 +922,7 @@ function moveCard(iid, to, opts = {}) {
     return null;
   }
   S.me.zones[from].splice(f.idx, 1);
+  if (from === 'hand' && to !== 'hand') delete card.rvh;
   let orphans = [];
   if (from === 'battlefield' && to !== 'battlefield') {
     card.t = false; card.c = {}; card.fl = false; card.pb = undefined; card.dp = 0; card.dt = 0; // a card that leaves forgets everything
@@ -1705,6 +1721,7 @@ function giveControl(iid, to, at) {
   const d = defOf(f.card);
   act(() => {
     S.me.zones[f.zone].splice(f.idx, 1);
+    if (f.zone === 'hand') delete f.card.rvh;
     const orphans = f.zone === 'battlefield' ? detachFrom(S.pid, iid) : [];
     if (orphans.length) setTimeout(() => orphanToast(orphans), 0);
     const card = Object.assign({}, f.card); delete card.x; delete card.y; card.att = null;
@@ -1805,7 +1822,7 @@ function changeCmdDmg(key, d) {
 function mulligan() {
   act(() => {
     const z = S.me.zones;
-    z.library.push(...z.hand.splice(0));
+    z.library.push(...z.hand.splice(0).map(c => { delete c.rvh; return c; }));
     S.me.revealTopOnce = null;
     shuffle(z.library);
     z.hand = z.library.splice(0, 7);
@@ -1924,6 +1941,22 @@ async function millN(to, faceDown) {
     return [`${to === 'graveyard' ? 'milled' : 'exiled from the top'} ${moved.length}: ${refs}${moved.length > 8 ? '…' : ''}`, moved];
   });
 }
+function toggleRevealHandCard(iid) {
+  const f = findCard(iid);
+  if (!f || f.zone !== 'hand') return;
+  if (S.me.revealHand) {
+    UI.toast('Your whole hand is already revealed. Turn that off to reveal individual cards.', { kind: 'warn' });
+    return;
+  }
+  const d = defOf(f.card);
+  if (!d) return UI.toast('Could not reveal that card.', { kind: 'warn' });
+  const show = !f.card.rvh;
+  act(() => {
+    if (show) f.card.rvh = true;
+    else delete f.card.rvh;
+    return [show ? 'revealed {0} from their hand' : 'hid {0} from everyone', [d]];
+  }, { noUndo: true });
+}
 function revealTop() {
   const c = S.me.zones.library[0];
   if (!c) return UI.toast('Library is empty');
@@ -2013,7 +2046,7 @@ function cardMenu(x, y, iid) {
     if (attachable) items.push({ label: /Equipment/.test(d.type || '') ? 'Play & equip to…' : 'Cast & attach to…', onClick: () => startAttach(iid) });
     items.push({ label: 'Play tapped', hint: 'T', onClick: () => doMove(iid, 'battlefield', { tapped: true }) });
     items.push({ label: 'Play face down', onClick: () => doMove(iid, 'battlefield', { faceDown: true }) });
-    items.push({ label: 'Reveal to everyone', onClick: () => say('revealed {0} from their hand', [d]) });
+    items.push({ label: c.rvh ? 'Hide from everyone' : 'Reveal to everyone', checked: !!c.rvh, disabled: S.me.revealHand, onClick: () => toggleRevealHandCard(iid) });
   }
   if (z === 'command') {
     const n = S.me.casts[iid] || 0;
@@ -2036,7 +2069,7 @@ function oppCard(pid, iid) {
     const c = (p.zones[z] || []).find(x => x.iid === iid);
     if (c) return { c, def: c.id ? p.defs[c.id] : null };
   }
-  const c = (p.revHand || []).find(x => x.iid === iid);
+  const c = (p.revHand || []).find(x => x.iid === iid) || (p.revCards || []).find(x => x.iid === iid);
   return c ? { c, def: c.id ? p.defs[c.id] : null } : null;
 }
 function oppCardMenu(x, y, pid, iid) {
@@ -2868,15 +2901,47 @@ function viewedOpp() {
   return S.players[S.focus] ? S.focus : null;
 }
 // Their hand + piles, drawn in the same bottom strip as mine (same markup, read-only): hand face-down unless revealed.
+function revealedHandSlots(cards, handN, shown) {
+  const slots = new Map(), total = Math.max(0, Math.floor(num(handN))), n = Math.max(0, Math.floor(num(shown)));
+  if (!n || !total) return slots;
+  // Miniature board fans show at most 12 cards, so map a real hand index to its nearest visible slot.
+  // Larger, full-size hand strips render every card and keep the exact index.
+  for (const c of (Array.isArray(cards) ? cards : []).slice().sort((a, b) => num(a.hIndex) - num(b.hIndex))) {
+    if (!Number.isInteger(c.hIndex) || c.hIndex < 0 || c.hIndex >= total) continue;
+    let i = total > n ? Math.round(c.hIndex * (n - 1) / Math.max(1, total - 1)) : c.hIndex;
+    i = clamp(i, 0, n - 1);
+    // Two revealed cards can map to the same miniature slot for very large hands; keep both visible if space allows.
+    if (slots.has(i)) {
+      let found = -1;
+      for (let d = 1; d < n; d++) {
+        if (i - d >= 0 && !slots.has(i - d)) { found = i - d; break; }
+        if (i + d < n && !slots.has(i + d)) { found = i + d; break; }
+      }
+      if (found < 0) continue;
+      i = found;
+    }
+    slots.set(i, c);
+  }
+  return slots;
+}
 function oppHandHTML(pid) {
   const p = S.players[pid], defs = p.defs || {};
   const revealed = !!(p.revHand && p.revHand.length);
-  const n = revealed ? p.revHand.length : Math.min(num(p.hand), 14);
+  const revCards = revealed ? [] : (Array.isArray(p.revCards) ? p.revCards : []);
+  const handN = Math.min(60, Math.max(0, Math.floor(num(p.hand))));
+  const n = revealed ? p.revHand.length : (revCards.length ? handN : Math.min(handN, 14));
   const mid = (n - 1) / 2, step = n > 1 ? Math.min(3, 28 / n) : 0;
   const fan = i => { const off = i - mid; return `--rot:${(off * step).toFixed(2)}deg;--arc:${(mid ? 12 * (off / mid) ** 2 : 0).toFixed(1)}px;z-index:${i + 1}`; };
+  const revealedAt = revealedHandSlots(revCards, handN, n);
+  const backAt = i => `<div class="card oback" style="${fan(i)}">${UI.cardBackHTML('', appearanceBackFor(pid))}</div>`;
   return revealed
     ? p.revHand.map((c, i) => cardHTML(c, c.id && defs[c.id], { mine: false, pid, ctrl: pid, zone: 'hand', style: fan(i) })).join('')
-    : Array.from({ length: n }, (_, i) => `<div class="card oback" style="${fan(i)}">${UI.cardBackHTML('', appearanceBackFor(pid))}</div>`).join('');
+    : revCards.length
+      ? Array.from({ length: n }, (_, i) => {
+          const c = revealedAt.get(i);
+          return c ? cardHTML(c, c.id && defs[c.id], { mine: false, pid, ctrl: pid, zone: 'hand', style: fan(i) }) : backAt(i);
+        }).join('')
+      : Array.from({ length: n }, (_, i) => backAt(i)).join('');
 }
 function oppZonesHTML(pid) {
   const p = S.players[pid], defs = p.defs || {}, pi = pileInfo(pid);
@@ -2919,19 +2984,26 @@ function tileOverlayHTML(pid, bh, bw) {
   if (pid === S.pid) return myTileOverlayHTML(bh, bw);
   const p = S.players[pid], defs = p.defs || {}, pi = pileInfo(pid);
   const revealed = !!(p.revHand && p.revHand.length);
-  const handN = num(p.hand), n = revealed ? p.revHand.length : Math.min(handN, 12);
+  const revCards = revealed ? [] : (Array.isArray(p.revCards) ? p.revCards : []);
+  const handN = Math.max(0, Math.floor(num(p.hand))), n = revealed ? p.revHand.length : Math.min(handN, 12);
   const mid = (n - 1) / 2, step = n > 1 ? Math.min(4, 30 / n) : 0;
   const fan = i => { const off = i - mid; return `--rot:${(off * step).toFixed(1)}deg;--arc:${(mid ? 8 * (off / mid) ** 2 : 0).toFixed(1)}px;z-index:${i + 1}`; };
+  const revealedAt = revealedHandSlots(revCards, handN, n);
+  const backAt = i => `<div class="card oback" style="${fan(i)}">${UI.cardBackHTML('', appearanceBackFor(pid))}</div>`;
   const hand = revealed
     ? p.revHand.map((c, i) => cardHTML(c, c.id && defs[c.id], { mine: false, pid, ctrl: pid, zone: 'hand', style: fan(i) })).join('')
-    : Array.from({ length: n }, (_, i) => `<div class="card oback" style="${fan(i)}">${UI.cardBackHTML('', appearanceBackFor(pid))}</div>`).join('');
+    : revCards.length
+      ? Array.from({ length: n }, (_, i) => {
+          const c = revealedAt.get(i);
+          return c ? cardHTML(c, c.id && defs[c.id], { mine: false, pid, ctrl: pid, zone: 'hand', style: fan(i) }) : backAt(i);
+        }).join('')
+      : Array.from({ length: n }, (_, i) => backAt(i)).join('');
   const pile = (k, label) => `<div class="tpile"${k === 'library' ? ` data-fx="library" data-pid="${esc(pid)}"` : ''}><div class="tpcard">${pi[k].face || ''}</div><div class="tplabel">${label} <b class="${k === 'library' && pi[k].n === 0 ? 'lib-empty' : ''}">${pi[k].n}</b></div></div>`;
   const cmd = (p.zones.command || []).map(c => cardHTML(c, c.id && defs[c.id], { mine: false, pid, ctrl: pid, zone: 'command' })).join('');
   return `<div class="tlife">${lifeBoxHTML(pid, true)}</div>
     <div class="tstrip" style="top:${bh}px;width:${bw}px"><div class="thand" style="--hm:${handSpread(n, bw)}px">${hand}${handN ? `<b class="thn">${handN}</b>` : ''}</div>
       <div class="tpiles">${pile('library', 'LIB')}${pile('graveyard', 'GY')}${pile('exile', 'EXILE')}<div class="tpile tcmd"><div class="tpcard">${cmd}</div><div class="tplabel">CMD</div></div></div></div>`;
 }
-
 function renderOpp(el, pid, idx) {
   const p = S.players[pid], T = S.table || {}, defs = p.defs || {};
   const o = { mine: false, pid };
@@ -2952,16 +3024,25 @@ function renderOpp(el, pid, idx) {
   const pi = pileInfo(pid);
   const oz = (k, label, sub) => `<span class="oz" data-pile="${k}" data-pid="${esc(pid)}" title="${esc(pi[k].tip)}${k === 'library' ? '' : ' — click to search'}">${label} <b class="${k === 'library' && pi[k].n === 0 ? 'lib-empty' : ''}">${pi[k].n}</b>${sub ? ` <span class="zsub">${sub}</span>` : ''}</span>`;
   const cmdCards = (p.zones.command || []).map(c => cardHTML(c, c.id && defs[c.id], Object.assign({}, o, { zone: 'command' }))).join('');
-  // their hand, right next to their commander: a small fan of card backs (face up only if they revealed it) + the count
+  // Their hand mirrors Reveal my hand to everyone, but can also expose selected cards only.
   const revealed = !!(p.revHand && p.revHand.length);
+  const revCards = revealed ? [] : (Array.isArray(p.revCards) ? p.revCards : []);
   const handN = num(p.hand);
-  const shown = revealed ? p.revHand.length : Math.min(handN, 10);
+  const shown = revealed ? p.revHand.length : (revCards.length ? Math.min(Math.max(0, handN), 60) : Math.min(handN, 10));
   const mid = (shown - 1) / 2, step = shown > 1 ? Math.min(6, 40 / shown) : 0;
   const fan = i => { const off = i - mid; return `--rot:${(off * step).toFixed(1)}deg;--arc:${(mid ? 3 * (off / mid) ** 2 : 0).toFixed(1)}px;z-index:${i + 1}`; };
+  const backAt = i => `<div class="card oback" style="${fan(i)}">${UI.cardBackHTML('', appearanceBackFor(pid))}</div>`;
+  const revealedAt = new Map(revCards.map(c => [c.hIndex, c]));
   const handCards = revealed
     ? p.revHand.map((c, i) => cardHTML(c, c.id && defs[c.id], Object.assign({}, o, { zone: 'hand', style: fan(i) }))).join('')
-    : Array.from({ length: shown }, (_, i) => `<div class="card oback" style="${fan(i)}">${UI.cardBackHTML('', appearanceBackFor(pid))}</div>`).join('');
-  const handHTML = `<span class="ohhand${revealed ? ' revealed' : ''}${handN ? '' : ' empty'}" title="${esc(p.name)} has ${plural(handN, 'card')} in hand${revealed ? ' (revealed — hover to read)' : ''}">${handCards}<b class="ohn">${handN}</b></span>`;
+    : revCards.length
+      ? Array.from({ length: shown }, (_, i) => {
+          const c = revealedAt.get(i);
+          return c ? cardHTML(c, c.id && defs[c.id], Object.assign({}, o, { zone: 'hand', style: fan(i) })) : backAt(i);
+        }).join('')
+      : Array.from({ length: shown }, (_, i) => backAt(i)).join('');
+  const handTitle = revealed ? ' (revealed — hover to read)' : revCards.length ? ` (${revCards.length} card${revCards.length === 1 ? '' : 's'} revealed — hover to read)` : '';
+  const handHTML = `<span class="ohhand${revealed ? ' revealed' : revCards.length ? ' partial-reveal' : ''}${handN ? '' : ' empty'}" title="${esc(p.name)} has ${plural(handN, 'card')} in hand${handTitle}">${handCards}<b class="ohn">${handN}</b></span>`;
   setHTML(el.querySelector('.ohead'), `${curView() === 'grid' ? '<button data-a="viewme" title="Back to my board">← My board</button>' : ''}<span class="dot" style="--pc:${colorOf(pid)}"></span>
     <span class="pname" data-phead="${esc(pid)}" title="Right-click for options">${esc(p.name)}</span>
     ${off ? '<span class="tag off">RECONNECTING</span>' : ''}${T.out && T.out[pid] ? '<span class="tag off">OUT</span>' : ''}
@@ -3002,7 +3083,7 @@ function renderMine(idx) {
   }).join(''));
   if (S.handHov) { const hc = [...$('#myHand').children].find(c => c.dataset.iid === S.handHov); if (hc) hc.classList.add('hov'); } // keep the lifted card up across re-renders
   const hn = vo ? $('#myHand').children.length : z.hand.length;
-  $('#handLabel').innerHTML = vo ? `${esc(S.players[vo].name)} · HAND <b>${num(S.players[vo].hand)}</b>${S.players[vo].revHand && S.players[vo].revHand.length ? ' · REVEALED' : ''}` : `HAND <b>${z.hand.length}</b>`;
+  $('#handLabel').innerHTML = vo ? `${esc(S.players[vo].name)} · HAND <b>${num(S.players[vo].hand)}</b>${S.players[vo].revHand && S.players[vo].revHand.length ? ' · REVEALED' : (S.players[vo].revCards || []).length ? ` · ${S.players[vo].revCards.length} REVEALED` : ''}` : `HAND <b>${z.hand.length}</b>`;
   $('#myHand').style.setProperty('--n', Math.max(1, hn)); // CSS overlaps cards so the hand never scrolls
   setHTML($('#myZones'), vo ? oppZonesHTML(vo) : myZonesHTML());
   const mb = $('#mullBar');
@@ -3202,6 +3283,15 @@ function preview(def, hidden, tag) {
 const tagOf = c => (c.cp ? 'Copy' : c.tok ? 'Token' : '');
 function previewFromEl(cardEl) {
   const pid = cardEl.dataset.pid, iid = cardEl.dataset.iid;
+  // Anonymous card backs in an opponent's hand have no identity to preview.
+  // Hide the previous card's preview instead of leaving it stuck over the hand.
+  if (!pid || !iid) {
+    S.hover = null;
+    S.touchPreview = null;
+    S.pvFix = null;
+    hidePreview();
+    return;
+  }
   S.hover = { pid, iid };
   S.touchPreview = S.touchMode ? { pid, iid } : null;
   S.pvFix = pid === S.pid && cardEl.dataset.zone === 'hand' ? (cardEl.closest('#myHand, .thand') || null) : null;
@@ -3727,6 +3817,7 @@ function giveControlGroup(group, to, at, anchorIid) {
       if (!f) continue;
       const def = defOf(f.card);
       S.me.zones[f.zone].splice(f.idx, 1);
+      if (f.zone === 'hand') delete f.card.rvh;
       if (f.zone === 'battlefield') {
         const detached = detachFrom(S.pid, p.iid);
         if (detached.length) orphaned.push(...detached);

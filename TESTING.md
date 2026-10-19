@@ -185,3 +185,25 @@ Expected: **T** opens the Token menu only when the pointer is over empty space o
 6. Enable the operating system/browser reduced-motion preference and repeat a turn change and receive a chat message. The banner should appear briefly without moving/fading animation; chat popups, button pulse, panel glow, and message highlight should not animate.
 
 Browser validation is required before publishing. If audio is blocked until a gesture, turn **Sound on** from inside the chat panel to enable it for that page. Check chat synchronization with a third player tab if possible.
+
+# Manual test checklist — Reveal one hand card to everyone (v0.27.0 candidate)
+
+## Start the app
+1. Extract this test ZIP.
+2. In the extracted project folder, run `python -m http.server 8099 --bind 127.0.0.1`.
+3. Open `http://127.0.0.1:8099/index.html`.
+4. Host a game in one tab and join it from another tab using `http://127.0.0.1:8099/index.html?join=<ROOM>`, with a different player name and deck.
+5. Stop the server with Ctrl+C when finished.
+
+## Reveal checks
+1. In the host tab, right-click one card in your hand and choose **Reveal to everyone**. In the opponent tab, expect that exact card to turn face-up in its normal spot in the hand fan, with the rest face-down. When you view that opponent's board, the same card must also be face-up in the larger bottom hand strip.
+2. Repeat from the joining player's hand. Both players should see that card revealed in the opponent's hand area without opening the game log.
+3. Right-click the same card and choose **Hide from everyone**. It should turn back into a card back on the opponent's screen.
+4. Confirm the game log still records both the reveal/hide actions and no other card in the hand is exposed.
+5. Move a revealed card out of the hand, then return it to the hand if possible. It should no longer be revealed automatically.
+6. Try **Reveal my hand to everyone** separately. It should still reveal the entire hand; turning that option off should leave any individually revealed cards face-up.
+7. Switch between Sidebar and Grid at roughly 1920×1080 and 1366×768. Check the compact opponent hand fan, the larger bottom hand strip while viewing an opponent, and the Grid miniature. Also try a narrower/mobile-sized window.
+8. Hover the revealed card to show its large preview, then slowly move over adjacent face-down cards in the same hand. The preview should disappear over anonymous face-down cards instead of continuing to show the previously revealed card; it should reappear when the revealed card is hovered again. Leaving the hand should also hide the preview.
+9. Confirm no console errors. Ensure participating tabs run the v0.27.0 candidate; older clients do not display individual reveals.
+
+**Tested by Chris (2026-10-19):** confirmed the individually revealed card displays face-up in the opponent's hand. Found that its large preview remained visible when the pointer moved over other face-down cards, then disappeared on leaving the hand. A follow-up fix now clears that stale preview on anonymous card backs; retest step 8 after downloading the updated candidate.

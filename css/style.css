@@ -694,7 +694,7 @@ body.lens-on #pv { display: none; }
 .ohhand .card .w-cardback { position: absolute; inset: 0; border-radius: inherit; }
 .ohhand .card .badges, .ohhand .card .ctrs, .ohhand .card .pips { display: none; }
 .ohhand .ohn { margin-left: 7px; font-weight: 800; font-size: 13px; color: var(--text); }
-.ohhand.revealed { border-color: var(--accent); }
+.ohhand.revealed, .ohhand.partial-reveal { border-color: var(--accent); }
 .ohhand.revealed .ohn::after { content: ' revealed'; font-size: 10px; font-weight: 600; color: var(--accent); text-transform: uppercase; }
 .ohhand.empty .ohn { margin-left: 2px; color: var(--muted); }
 @media (prefers-reduced-motion: reduce) { .ohhand .card { transition: none; } }
