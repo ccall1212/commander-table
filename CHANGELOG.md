@@ -11,6 +11,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - Let players click a life total and set it directly, with the same life-change logging and multiplayer synchronization as the existing controls.
 - Highlight poison totals in red at 10 or more counters, clearing the warning below 10 in both Sidebar and Grid views.
+- Prompt the player to concede when their poison total first reaches 10 or more, matching the existing lethal-life and commander-damage prompts.
 
 
 ## [0.22.4] - 2026-10-18
