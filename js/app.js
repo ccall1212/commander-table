@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.22.4';
+const APP_VERSION = '0.23.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -2586,7 +2586,7 @@ function lifeBoxHTML(pid, noPanel) {
   const cd = cmdDmgInfo(pid);
   const cdBadge = cd.max ? `<span class="cdbadge${cd.max >= 21 ? ' lethal' : ''}" title="Highest commander damage taken">⚔${cd.max}</span> ` : '';
   return `<span class="lifebox" title="Life${mine ? ' (Shift-click: ±5)' : ` — changing it asks ${esc(p.name)}'s game to apply it`}">
-      <button class="life-adjust" type="button" data-a="${a}" data-pid="${esc(pid)}" data-d="-1" aria-label="Decrease life total">−</button><b class="lifeN life-edit" data-a="setlife" data-pid="${esc(pid)}" role="button" tabindex="0" title="Click to set life total directly" aria-label="Set life total">${life}</b><button class="life-adjust" type="button" data-a="${a}" data-pid="${esc(pid)}" data-d="1" aria-label="Increase life total">+</button>
+      <button class="life-adjust" type="button" data-a="${a}" data-pid="${esc(pid)}" data-d="-1" aria-label="Decrease life total">−</button><button class="lifeN life-edit" type="button" data-a="setlife" data-pid="${esc(pid)}" title="Click to set life total directly" aria-label="Set life total">${life}</button><button class="life-adjust" type="button" data-a="${a}" data-pid="${esc(pid)}" data-d="1" aria-label="Increase life total">+</button>
       <button class="more" data-a="ctrs" data-pid="${esc(pid)}" title="Commander damage, poison, energy, experience, rad, tickets">${cdBadge}${any ? esc(any) + ' ' : ''}▾</button></span>` +
     (open && !noPanel ? ctrPanelHTML(pid) : '');
 }
