@@ -797,7 +797,11 @@
 
       // Chip counts reflect the current search; active chips stay visible so they can be un-toggled.
       const counts = {};
-      searched.forEach((r) => r.cats.forEach((c) => { counts[c] = (counts[c] || 0) + 1; }));
+      searched.forEach((r) => {
+        const weight = typeof opts.countItems === 'function'
+          ? Math.max(1, Number(opts.countItems([r])) || 1) : 1;
+        r.cats.forEach((c) => { counts[c] = (counts[c] || 0) + weight; });
+      });
       chips.forEach((ch) => {
         const n = counts[ch.type] || 0;
         const on = typeOn.has(ch.type);
