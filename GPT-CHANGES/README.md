@@ -13,6 +13,7 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 ## Current state
 
 - **Main version:** v0.22.4; [PR #38](https://github.com/ccall1212/commander-table/pull/38) merged to `main` at commit [a0aac81](https://github.com/ccall1212/commander-table/commit/a0aac816d99caa37d89e414f028056e09ec35c2d). Chris tested and approved the independent P/T controls and final compact half-pill highlight.
+- **In progress:** [PR #40](https://github.com/ccall1212/commander-table/pull/40) combines objectives #25 (direct life-total entry) and #20 (red poison warning at 10+), on branch `feat/direct-life-poison-warning`, with candidate version v0.23.0. Required exact-branch test ZIP is still missing because the available environment cannot download the repository archive; do not claim the ZIP is available.
 - **Objective #21 shipped:** lethal Concede prompts and red zero-library count are included in v0.22.3. The required annotated tag `v0.22.3` must point to `1f667cb831be234225c22dbac07b08cf55e9bd31`.
 - **Objective #19 shipped:** compact white P/T badge with independently clickable power and toughness, separate adjustment menu controls, and a visible full-half-pill hover/focus highlight are included in v0.22.4 via PR #38.
 - **Touch mode:** v0.22.0 and the iOS Safari drag-viewport follow-up v0.22.1 are merged to `main` (PRs #32 and #33).

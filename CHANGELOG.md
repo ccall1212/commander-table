@@ -4,7 +4,15 @@ All notable changes to Commander Table are listed here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/). Each release is tagged `vX.Y.Z` in git.
 
-## [Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.22.4...HEAD
+## [Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.23.0...HEAD
+
+## [0.23.0] - 2026-10-18
+
+### Added
+- Let players click a life total and set it directly, with the same life-change logging and multiplayer synchronization as the existing controls.
+- Highlight poison totals in red at 10 or more counters, clearing the warning below 10 in both Sidebar and Grid views.
+- Prompt the player to concede when their poison total first reaches 10 or more, matching the existing lethal-life and commander-damage prompts.
+
 
 ## [0.22.4] - 2026-10-18
 
@@ -38,6 +46,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - In Touch mode, prevent accidental page scrolling during card drags, use the dynamic mobile viewport height, and recommend landscape on narrow phones without blocking portrait play.
 - Keep the standard desktop interaction path unchanged when Touch mode is off.
 
+[0.23.0]: https://github.com/ccall1212/commander-table/compare/v0.22.4...v0.23.0
 [0.22.4]: https://github.com/ccall1212/commander-table/compare/v0.22.3...v0.22.4
 [0.22.3]: https://github.com/ccall1212/commander-table/compare/v0.22.2...v0.22.3
 [0.22.2]: https://github.com/ccall1212/commander-table/compare/v0.22.1...v0.22.2
