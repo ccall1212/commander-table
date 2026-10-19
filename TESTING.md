@@ -203,4 +203,7 @@ Browser validation is required before publishing. If audio is blocked until a ge
 5. Move a revealed card out of the hand, then return it to the hand if possible. It should no longer be revealed automatically.
 6. Try **Reveal my hand to everyone** separately. It should still reveal the entire hand; turning that option off should leave any individually revealed cards face-up.
 7. Switch between Sidebar and Grid at roughly 1920×1080 and 1366×768. Check the compact opponent hand fan, the larger bottom hand strip while viewing an opponent, and the Grid miniature. Also try a narrower/mobile-sized window.
-8. Confirm no console errors. Ensure participating tabs run the v0.27.0 candidate; older clients do not display individual reveals.
+8. Hover the revealed card to show its large preview, then slowly move over adjacent face-down cards in the same hand. The preview should disappear over anonymous face-down cards instead of continuing to show the previously revealed card; it should reappear when the revealed card is hovered again. Leaving the hand should also hide the preview.
+9. Confirm no console errors. Ensure participating tabs run the v0.27.0 candidate; older clients do not display individual reveals.
+
+**Tested by Chris (2026-10-19):** confirmed the individually revealed card displays face-up in the opponent's hand. Found that its large preview remained visible when the pointer moved over other face-down cards, then disappeared on leaving the hand. A follow-up fix now clears that stale preview on anonymous card backs; retest step 8 after downloading the updated candidate.
