@@ -12,7 +12,7 @@ This is Chris's personal project. **ChatGPT (his personal account) is the main a
 |---|---|---|
 | Writes code on a branch / PR | ✅ main job | ✅ if asked |
 | Merges a PR / publishes to `main` | ✅ only when Chris says "publish" | ✅ if asked |
-| Creates annotated release tags | automatic (a GitHub Action does it when the version lands on `main`) | automatic, or by hand |
+| Creates annotated release tags | GitHub Actions does this automatically when the version lands on `main`; never hand-create as routine | same automatic workflow; manual recovery only if Chris explicitly authorizes it |
 | Runs the game in a browser, multi-player tests | ❌ | ✅ |
 | Fixes hard bugs, anything needing a real shell | tries first | ✅ if ChatGPT is stuck |
 
@@ -48,7 +48,7 @@ The normal flow is:
 - **Write the test list** in the PR or commit: the exact clicks and keys to try, how many players, which
   layout (Sidebar / Grid) and screen size, and what should happen.
 - **Be honest about what was checked by whom.** Never write "tested" for something only read in the code; do write "tested by Chris" for what he told you he tried.
-- Don't merge to `main`, tag, or bump past a version that's already tagged.
+- Don't merge to `main` without Chris's explicit approval, manually create/move release tags as part of the normal flow, or bump past a version that's already tagged.
 
 ## What this is
 
