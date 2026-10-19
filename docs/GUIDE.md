@@ -215,7 +215,8 @@ For a hovered card, **+ / =** adds a +1/+1 counter and **− / _** adds a −1/�
 ## Room chat and turn notifications
 
 - Click **💬 Chat** in the top bar to open room chat. Type a message and press **Enter** or **Send** to share it with everyone in the room. Chat is separate from the game log; opening the chat panel shows the latest 100 messages for the room session, including after a reconnect.
-- When the panel is closed, messages from other players briefly appear as small notifications near the top-right of the table and then fade away. An unread count on **Chat** helps you notice messages you missed. Your own sent messages appear in history but do not create a duplicate notification on your screen.
+- When the panel is closed, messages from other players briefly appear as small notifications near the top-right of the table and then fade away. The **Chat** button gently pulses and shows an unread count until you open it. When chat is already open, the newest message and panel border briefly glow instead. Your own sent messages appear in history but do not create duplicate notifications.
+- **Sound off** is the default. Use the button in the chat header to turn the quiet two-note message chime on or off; the choice is saved on that browser. Sounds play only for other players' messages, with rapid messages throttled to avoid repeated chimes.
 - At the start of each turn, a short banner appears over that player's battlefield. The active player sees **YOUR TURN**; everyone else sees **NAME'S TURN** over the same player's board. It is visual only and never blocks card movement or clicks. With reduced motion enabled, the banner appears briefly without animation.
 
 ## Turn helpers

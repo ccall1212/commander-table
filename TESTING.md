@@ -161,7 +161,7 @@ Expected: manual power-only changes never alter toughness; manual toughness-only
 Expected: **T** opens the Token menu only when the pointer is over empty space on your own battlefield. Existing T actions for tapping/untapping a battlefield card and playing a hovered hand card tapped remain unchanged.
 
 
-# Manual test checklist — Room chat and turn-start notifications (v0.25.0 candidate)
+# Manual test checklist — Room chat and turn-start notifications (v0.26.0 candidate)
 
 ## Start the test copy
 1. Extract this ZIP and run python -m http.server 8099 --bind 127.0.0.1 in the project folder.
@@ -170,10 +170,11 @@ Expected: **T** opens the Token menu only when the pointer is over empty space o
 
 ## Room chat
 1. In both tabs, click Chat. Send a message from tab 1 with Enter and from tab 2 with the Send button. Expect each message in both histories with the correct sender and time.
-2. Close Chat in both tabs. Send a message from tab 2. Tab 1 should show a small, non-click-blocking popup near the top-right; it should fade after a short delay and increment the unread count on Chat. Tab 2 should not show a duplicate popup for its own message.
-3. Open Chat in tab 1. Confirm messages remain in history. Send another message while the panel is open; it should appear in history without a separate popup. Scroll up in history, receive a new message, and confirm your scroll position is not forcibly jumped to the bottom.
-4. Reload tab 2 and reopen Chat. Recent room history should be supplied again by the host. Confirm chat messages are not inserted into the game log and do not change cards, life, turns, or other game state.
-5. Try sending a blank message and a message containing literal markup such as <b>hello</b>. Blank text should not send; markup should appear as plain text, not formatting. A long message should be capped at 280 characters.
+2. Check the panel's **Sound off** control is off by default. Close Chat in both tabs and send a message from tab 2. Tab 1 should show a brief, gentle gold pulse on Chat, a small non-click-blocking popup near the top-right, and an unread count; the popup should fade after a short delay. Tab 2 should not show a duplicate popup for its own message.
+3. Open Chat in tab 1 and turn **Sound on**. Send a message from tab 2: tab 1 should play a soft two-note chime, and Sound on should remain selected if the page is reloaded. Turn it off again and confirm later messages are silent. The other player's own sent message should not chime on their screen. Send several messages quickly and confirm the chime does not repeatedly fire for every rapid message.
+4. With Chat still open, send another message from tab 2. The new message should briefly highlight in the history and the panel border should glow gently; the Chat button should also pulse. It should not show a separate popup or add an unread count while the panel is open. Scroll up in history, receive a new message, and confirm your scroll position is not forcibly jumped to the bottom.
+5. Reload tab 2 and reopen Chat. Recent room history should be supplied again by the host. Confirm chat messages are not inserted into the game log and do not change cards, life, turns, or other game state.
+6. Try sending a blank message and a message containing literal markup such as <b>hello</b>. Blank text should not send; markup should appear as plain text, not formatting. A long message should be capped at 280 characters.
 
 ## Turn-start banner
 1. Start the game. Let the opening d20 roll overlay finish; then expect a short YOUR TURN banner over the first player's board. Other players should see NAME'S TURN over that same board.
@@ -181,6 +182,6 @@ Expected: **T** opens the Token menu only when the pointer is over empty space o
 3. Switch between Sidebar and Grid, and check at approximately 1920×1080 and 1366×768. The message should remain readable over the correct board, including when the current player is in a miniature tile or being viewed full-size.
 4. Reload a tab mid-turn and confirm the banner does not replay for the current turn; the next actual pass should trigger it once. Quickly pass several times and confirm old banners do not stack.
 5. Start a Practice solo game. The turn banner should work after the opening roll; Room chat should be disabled. Check the console for errors.
-6. Enable the operating system/browser reduced-motion preference and repeat a turn change. The banner should appear briefly without moving/fading animation; chat popups should appear/disappear without animation.
+6. Enable the operating system/browser reduced-motion preference and repeat a turn change and receive a chat message. The banner should appear briefly without moving/fading animation; chat popups, button pulse, panel glow, and message highlight should not animate.
 
-Browser validation is required before publishing. Check chat synchronization with a third player tab if possible.
+Browser validation is required before publishing. If audio is blocked until a gesture, turn **Sound on** from inside the chat panel to enable it for that page. Check chat synchronization with a third player tab if possible.

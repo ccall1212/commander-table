@@ -4,12 +4,12 @@ All notable changes to Commander Table are listed here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/). Each release is tagged `vX.Y.Z` in git.
 
-## [Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.25.0...HEAD
+## [Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.26.0...HEAD
 
-## [0.25.0] - 2026-10-19
+## [0.26.0] - 2026-10-19
 
 ### Added
-- Add room chat with synchronized messages, short-lived floating notifications, and recent chat history separate from the game log.
+- Add room chat with synchronized messages, recent history, pulsing/unread visual notifications, in-panel new-message highlights, and an optional quiet two-note sound that is off by default.
 - Show a brief “YOUR TURN” or “NAME’S TURN” banner over the active player’s board when each new turn begins.
 
 ## [0.24.0] - 2026-10-18
@@ -57,7 +57,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - In Touch mode, prevent accidental page scrolling during card drags, use the dynamic mobile viewport height, and recommend landscape on narrow phones without blocking portrait play.
 - Keep the standard desktop interaction path unchanged when Touch mode is off.
 
-[0.25.0]: https://github.com/ccall1212/commander-table/compare/v0.24.0...v0.25.0
+[0.26.0]: https://github.com/ccall1212/commander-table/compare/v0.24.0...v0.26.0
 [0.24.0]: https://github.com/ccall1212/commander-table/compare/v0.23.0...v0.24.0
 [0.23.0]: https://github.com/ccall1212/commander-table/compare/v0.22.4...v0.23.0
 [0.22.4]: https://github.com/ccall1212/commander-table/compare/v0.22.3...v0.22.4

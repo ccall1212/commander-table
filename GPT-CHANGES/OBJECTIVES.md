@@ -47,7 +47,7 @@ Add a lightweight chat experience that is separate from the action log. New mess
 - Provide a way to open or view recent chat history so messages that fade away are not permanently lost.
 - Synchronize messages with the other players in the room using the existing host-validated networking approach; chat must not change game state or reveal hidden information.
 - Keep the overlay out of the way of cards and controls, support different screen sizes, and respect `prefers-reduced-motion`.
-- Keep the latest 100 messages in the current room session. The **Chat** panel opens the history; while it is open, new messages appear there without an additional floating popup. While it is closed, messages from other players show a short-lived popup and an unread count. The sender sees their own message in history but not a duplicate popup.
+- Keep the latest 100 messages in the current room session. The **Chat** panel opens the history; while it is open, new messages appear there without an additional floating popup, and the newest entry plus the panel border briefly glow. While closed, messages from other players show a short-lived popup, a quick gold pulse on the Chat button, and an unread count until the panel is opened. The sender sees their own message in history but not a duplicate popup. An optional, browser-local two-note chime is off by default, only plays for other players' messages, and throttles rapid arrivals.
 
 ## 18. iPad and touch-friendly browser support — PARTLY SHIPPED (Touch mode in v0.22.0 and v0.22.1; real-device testing and refinements remain)
 
