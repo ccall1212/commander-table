@@ -70,7 +70,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Dismiss context menus when clicking or tapping outside them.
 - Prevent browser text and image dragging on the tabletop from interfering with card dragging and accidentally selecting multiple cards.
 
-[0.21.4]: https://github.com/ccall1212/commander-table/compare/v0.20.6...v0.21.4
+[0.21.4]: https://github.com/ccall1212/commander-table/compare/v0.20.5...v0.21.4
 
 ## [0.20.5] - 2026-10-17
 

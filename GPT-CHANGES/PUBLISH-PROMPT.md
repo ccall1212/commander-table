@@ -17,7 +17,7 @@ Read `AGENTS.md` and `GPT-CHANGES/README.md` first. Inspect the real repository 
 ### Steps
 
 1. **Inspect and protect.** Confirm the default branch, the working branch/PR, the current app version and latest tag. Work on a focused branch, never directly on `main`. Do not overwrite unrelated work.
-2. **Implement.** Keep it small and in the project's plain HTML/CSS/JS style. Update `README.md` (player guide), `CHANGELOG.md` (what players will notice) and the version with `python tools/bump-version.py X.Y.Z`; never edit version references by hand.
+2. **Implement.** Keep it small and in the project's plain HTML/CSS/JS style. Update `docs/GUIDE.md` (player guide), `CHANGELOG.md` (what players will notice) and the version with `python tools/bump-version.py X.Y.Z`; never edit version references by hand.
 3. **Check what you can.** Read the diff; confirm every function, CSS class, id and `data-a` action you use exists and that nothing you removed is still referenced. Run syntax checks if your tools allow. Search for every place that looks up an element you moved or renamed. Never call source review "browser testing".
 4. **Open or update the pull request** with a Conventional Commit title, a summary, and an exact **click list** for a human tester: how many players, which layout (Sidebar / Grid), screen size, what to click or press, and what should happen. State clearly what was not tested.
 5. **Stop and wait.** Chris tests the change himself and reports back (that is the browser test; record it as "Tested by Chris: ..."). Do not merge or publish before Chris says "publish" for this specific version. Claude Code is only a backup that Chris may call on.
@@ -33,7 +33,7 @@ Chris's authorization applies only to the named change and version.
 - [ ] Change implemented and reviewed
 - [ ] Tested by Chris (note what he tried) and anything he did not mention is listed as unverified
 - [ ] `index.html` and `js/app.js` versions agree; all 14 `?v=` references match
-- [ ] `CHANGELOG.md` entry and compare links correct; `README.md` accurate
+- [ ] `CHANGELOG.md` entry and compare links correct; `docs/GUIDE.md` accurate
 - [ ] Merged into `main`
 - [ ] Annotated `vX.Y.Z` tag exists on GitHub and points at the release commit
 - [ ] GitHub Pages deployment succeeded and the live page shows the new version

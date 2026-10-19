@@ -1,6 +1,6 @@
 # Commander Table — Objectives backlog
 
-Features Chris has asked for that are **not built yet or remain open**. The numbers are Chris's original numbering; finished ones (1, 2, 3, 6, 8, 10, 13, 14, 16, 19, 20, 23, 25) were removed, and #7 (opponent boards looking dim) was dropped: the dimming only applies to players who are reconnecting or out, on purpose. Objective #15 (custom image uploads and pointer fixes) shipped in v0.21.4 via [PR #30](https://github.com/ccall1212/commander-table/pull/30). Objective #22 (Grid pile drops) shipped in v0.22.2 via [PR #35](https://github.com/ccall1212/commander-table/pull/35). Objective #19 (compact P/T badge and independent stat adjustments) shipped in v0.22.4 via [PR #38](https://github.com/ccall1212/commander-table/pull/38). Objective #23 (T hotkey opens the Token menu on empty battlefield space) shipped in v0.24.0 via [PR #41](https://github.com/ccall1212/commander-table/pull/41). Objectives #20 and #25 shipped in v0.23.0 via [PR #40](https://github.com/ccall1212/commander-table/pull/40). Objective #18 is the in-progress iPad/touch support work. Work on one at a time on its own branch and pull request, and read `AGENTS.md` first.
+Features Chris has asked for that are **not built yet or remain open**. The numbers are Chris's original numbering; finished ones (1, 2, 3, 6, 8, 10, 11, 13, 14, 15, 16, 19, 20, 21, 22, 23, 25) were removed, and #7 (opponent boards looking dim) was dropped: the dimming only applies to players who are reconnecting or out, on purpose. Objective #15 (custom image uploads and pointer fixes) shipped in v0.21.4 via [PR #30](https://github.com/ccall1212/commander-table/pull/30). Objective #22 (Grid pile drops) shipped in v0.22.2 via [PR #35](https://github.com/ccall1212/commander-table/pull/35). Objective #19 (compact P/T badge and independent stat adjustments) shipped in v0.22.4 via [PR #38](https://github.com/ccall1212/commander-table/pull/38). Objective #23 (T hotkey opens the Token menu on empty battlefield space) shipped in v0.24.0 via [PR #41](https://github.com/ccall1212/commander-table/pull/41). Objectives #20 and #25 shipped in v0.23.0 via [PR #40](https://github.com/ccall1212/commander-table/pull/40). Objective #18 is the in-progress iPad/touch support work. Work on one at a time on its own branch and pull request, and read `AGENTS.md` first.
 
 Status key: **Queued** = requested, not started. **In progress** = a branch / PR exists (see `README.md`). **Paused** = started, waiting on something. **Deferred** = on purpose not now.
 
@@ -18,7 +18,7 @@ Cards feel a little small when the browser is maximized on a 2K display (the siz
 
 ## 5. One-time "slam" animation when a card is played — SHIPPED; SOUND REFINEMENT OPEN
 
-The Commander-to-battlefield slam animation and synthesized impact sound are published in v0.20.6 (PR #28). Chris wants to keep refining the sound, so any further audio work should be a separate focused change and must not disturb the currently published v0.20.6 version while under review.
+The Commander-to-battlefield slam animation and synthesized impact sound are published in v0.20.5 (PR #28). Chris wants to keep refining the sound, so any further audio work should be a separate focused change and must not disturb the currently published v0.20.6 version while under review.
 
 - Trigger on the play event only, never on later dragging or repositioning.
 - Keep it short, click-through, and respectful of `prefers-reduced-motion`.
@@ -49,7 +49,7 @@ Add a lightweight chat experience that is separate from the action log. New mess
 - Keep the overlay out of the way of cards and controls, support different screen sizes, and respect `prefers-reduced-motion`.
 - Decide whether players can mute/hide the overlay and how long chat history lasts during implementation.
 
-## 18. iPad and touch-friendly browser support — IN PROGRESS
+## 18. iPad and touch-friendly browser support — PARTLY SHIPPED (Touch mode in v0.22.0 and v0.22.1; real-device testing and refinements remain)
 
 Add an optional **Touch mode** for iPad Safari, launched from the top-right hamburger menu (☰ → **Touch mode**). Keep the existing desktop board and mouse interaction path as intact as possible: touch-specific controls and behavior should live behind this opt-in mode rather than forcing a broad redesign of the main battlefield. This is a mode for the existing website, not a separate native iPad app.
 
@@ -63,15 +63,6 @@ Add an optional **Touch mode** for iPad Safari, launched from the top-right hamb
 - In Touch mode, lock page gestures on the hand row and draggable board surfaces so a bottom-edge hand drag stays on the table. Use the live visual viewport height and safe-area insets, while leaving internal menu, log and dialog scrolling enabled.
 - Fit the game to the dynamic mobile viewport height. On narrow phones in portrait, show a dismissible landscape recommendation rather than trying to force orientation lock (ordinary mobile Safari pages cannot reliably force it).
 - Test in real iPhone/iPad Safari in portrait and landscape, including enabling/disabling Touch mode, host and joiner sessions, card inspection, card actions, dragging from the bottom edge of the hand, intentional group selection/movement, internal dialog scrolling, menu dismissal, and both Sidebar and Grid layouts. Desktop emulation alone is not sufficient for marking this complete.
-
-## 21. Restore the lethal-damage Concede prompt — SHIPPED in v0.22.3 via [PR #37](https://github.com/ccall1212/commander-table/pull/37)
-
-Investigate and restore the confirmation prompt that used to appear when a player's life total or Commander damage became lethal.
-
-- First identify the previous behavior and the change that caused the prompt to stop appearing; restore the intended behavior rather than adding a duplicate prompt.
-- Confirm what counts as lethal for life total and Commander damage, and keep the prompt from appearing repeatedly on every render or unrelated state update.
-- **Empty library:** if a player attempts to draw when their library has 0 cards, turn the library count (0) red and show the Concede prompt again. Treat this as its own clear trigger, not as a repeated prompt on every render.
-- **Tested by Chris:** Chris confirmed the change works and approved publishing. The prompt covers lethal life totals, 21 Commander damage, and empty-library draw attempts; the zero Library count turns red.
 
 ## 24. Browse deck and change card printings before starting a game — QUEUED
 

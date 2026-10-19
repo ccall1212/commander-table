@@ -12,7 +12,7 @@ This is Chris's personal project. **ChatGPT (his personal account) is the main a
 |---|---|---|
 | Writes code on a branch / PR | ✅ main job | ✅ if asked |
 | Merges a PR / publishes to `main` | ✅ only when Chris says "publish" | ✅ if asked |
-| Creates annotated release tags | ❌ the GitHub connection can't | ✅ |
+| Creates annotated release tags | automatic (a GitHub Action does it when the version lands on `main`) | automatic, or by hand |
 | Runs the game in a browser, multi-player tests | ❌ | ✅ |
 | Fixes hard bugs, anything needing a real shell | tries first | ✅ if ChatGPT is stuck |
 
@@ -26,9 +26,9 @@ The normal flow is:
      browser": that is true of every change and only confuses the record.
    - Only list things as unverified when Chris did not mention them (for example "multiplayer with a second
      player was not mentioned"). If it is unclear what he tried, ask one short question instead of guessing.
-3. **Chris says "publish"** for a named version. ChatGPT merges, asks for the tag (it can't create it),
+3. **Chris says "publish"** for a named version. ChatGPT merges, checks that the release tag appeared (a GitHub Action creates it),
    deletes the branch and updates the docs.
-4. **Only if Chris asks**, Claude Code tests with several players, creates the tag, or fixes what ChatGPT couldn't.
+4. **Only if Chris asks**, Claude Code tests with several players or fixes what ChatGPT couldn't.
 
 ### Checks ChatGPT does itself (it can't run a browser)
 - Keep each branch **small and focused** on one feature or fix. Big rewrites can't be reviewed safely.
@@ -72,7 +72,7 @@ The normal flow is:
 | `js/lens.js` | Magnifier (hold V) |
 | `js/net-config.js` | Relay URL (public, not a secret) |
 | `tools/bump-version.py` | Sets the version everywhere in one step |
-| `CHANGELOG.md`, `README.md` | Release notes and the player-facing guide |
+| `CHANGELOG.md`, `docs/GUIDE.md`, `README.md` | Release notes; the full player guide; a short overview of the game |
 | `tests/net-harness.html`, `tests/test_relay_protocol.py` | Automated tests |
 
 ## Ground rules
@@ -100,7 +100,7 @@ Read this before changing layout or anything that finds elements on the page. Se
 - **Practice solo skips the network path.** In solo, `toHost()` calls `hostRecv()` directly, and some effects run locally instead of going through the host. A new message must also be tested by sending it through `hostRecv()` (or with a second tab), otherwise a broken host check hides until someone plays online. The Commander slam shipped (v0.20.0 to v0.20.2) with a host check that rejected every card id because of this.
 - **Regex literals: write `\w`, not `\\w`.** Inside `/.../` a doubled backslash means "a literal backslash". Test a validation regex against a real id such as `p6u6wnase_1` before relying on it.
 - **Cache-busting:** after any CSS/JS change run `tools/bump-version.py`; the browser (and the live site, for about 10 minutes) otherwise serves old files.
-- **Tags and branches:** you cannot create tags (ask for them with the exact commit); delete a branch once its PR is merged.
+- **Tags and branches:** the release tag is created automatically (`.github/workflows/tag-release.yml`); delete a branch once its PR is merged.
 
 ## Required test ZIP for Chris
 
@@ -149,7 +149,7 @@ Read this before changing layout or anything that finds elements on the page. Se
    [Unreleased]: https://github.com/ccall1212/commander-table/compare/vX.Y.Z...HEAD
    [X.Y.Z]: https://github.com/ccall1212/commander-table/compare/vPREVIOUS...vX.Y.Z
    ```
-7. **Update `README.md`** for anything a player would notice (controls, menus, layouts, shortcuts). Preserve the original compact GitHub-tag version badge beside the license badge: `[![Version](https://img.shields.io/github/v/tag/ccall1212/commander-table?label=version&sort=semver&color=blue)](CHANGELOG.md)`. Do not replace it with plain text or a fixed-version badge. The badge follows the latest semantic Git tag, so after a release ChatGPT must record the exact tag target in `GPT-CHANGES/README.md` and ask Chris to have Claude Code create the required annotated tag when ChatGPT cannot. Do not claim the badge is current until the tag exists.
+7. **Update `docs/GUIDE.md`** for anything a player would notice (controls, menus, layouts, shortcuts). The `README.md` is only a short overview of the game and rarely needs to change; do not add feature detail or a version number to it. Its version badge follows the latest Git tag by itself (`https://img.shields.io/github/v/tag/...`); never replace it with fixed text. A GitHub Action creates the `vX.Y.Z` tag automatically when a new version reaches `main`, so you do not need to ask for one (check that the tag appeared).
 8. **Commit** with [Conventional Commits](https://www.conventionalcommits.org/): `feat: …`, `fix: …`,
    `docs: …`, `chore: …`, `feat(ui): …`. Include the version in the subject for releases, e.g.
    `fix(ui): piles keep their own size (v0.7.1)`. Say in the body what changed and why.
