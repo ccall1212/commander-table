@@ -44,7 +44,7 @@ Decks are saved in your browser.
 - Everyone else opens the link (or enters the code) and clicks **Join**.
 - The host clicks **Start game** to begin. If everyone rolled for first player (🎲 Dice, see **Turn helpers**), that order is used. Otherwise the turn order is random.
 - The player whose turn it is has a yellow outline around their board in Sidebar and Grid layouts. Battlefield creatures show a compact power/toughness badge at the card's bottom-right. Click the power value to increase only power, or the toughness value to increase only toughness; right-click either value to decrease only that stat.
-- Click your life total or an opponent’s displayed life total to set it directly; enter a whole number and confirm. The existing +/− controls remain available. Poison counters turn red at 10 or more.
+- Click your life total or an opponent’s displayed life total to set it directly; enter a whole number and confirm. The existing +/− controls remain available. Poison counters turn red at 10 or more and trigger a lethal-poison concede prompt when you reach that threshold.
 - Supports 2 to 4 players comfortably, and the table seats up to 6. It's designed for 1v1 up to 4-player Commander.
 - When a Commander is played from the command zone, a punchy boom-crack Commander slam-and-glow effect highlights the play in its color identity, while ordinary card placements and battlefield repositioning use a softer tap sound. Two-color Commanders split the ring into top/bottom halves; three- to five-color identities use distinct radial segments. Players with reduced-motion preferences see a brief static color flash instead of movement.
 - Want to practice alone? Click **Practice solo**.
