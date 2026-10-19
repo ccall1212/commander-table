@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.25.0';
+const APP_VERSION = '0.26.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -663,8 +663,13 @@ function onBroadcast(msg) {
       if (e) {
         S.chat.push(e);
         if (S.chat.length > 100) S.chat.splice(0, S.chat.length - 100);
-        if (e.pid !== S.pid && !S.chatOpen) { S.chatUnread++; showChatPopup(e); }
-        renderChatHistory(false);
+        if (e.pid !== S.pid) {
+          pulseChatButton();
+          playChatChime();
+          if (S.chatOpen) pulseChatPanel();
+          else { S.chatUnread++; showChatPopup(e); }
+        }
+        renderChatHistory(false, S.chatOpen && e.pid !== S.pid ? e : null);
       }
       break;
     }
@@ -3029,6 +3034,73 @@ function renderLog() {
   if (atTop) box.scrollTop = 0;
 }
 
+function chatSoundEnabled() { return !!LS.get('ct.chatSound', false); }
+let chatAudioContext = null;
+let chatLastChimeAt = 0;
+let chatButtonPulseTimer = null;
+let chatPanelGlowTimer = null;
+function prepareChatAudio() {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return;
+  try {
+    if (!chatAudioContext) chatAudioContext = new AudioContextClass();
+    if (chatAudioContext.state === 'suspended') chatAudioContext.resume().catch(() => {});
+  } catch (e) { /* Audio is optional; never interrupt game play. */ }
+}
+function updateChatSoundToggle() {
+  const btn = $('#chatSoundToggle');
+  if (!btn) return;
+  const enabled = chatSoundEnabled();
+  btn.textContent = enabled ? '🔊 Sound on' : '🔇 Sound off';
+  btn.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+  btn.setAttribute('aria-label', enabled ? 'Mute chat notification sound' : 'Enable chat notification sound');
+  btn.title = enabled ? 'Mute chat notification sound' : 'Enable chat notification sound';
+}
+function toggleChatSound() {
+  const enabled = !chatSoundEnabled();
+  LS.set('ct.chatSound', enabled);
+  updateChatSoundToggle();
+  if (enabled) prepareChatAudio();
+}
+function playChatChime() {
+  if (!chatSoundEnabled() || !chatAudioContext) return;
+  const ctx = chatAudioContext;
+  const play = () => {
+    if (!chatSoundEnabled() || ctx.state !== 'running' || Date.now() - chatLastChimeAt < 900) return;
+    chatLastChimeAt = Date.now();
+    const start = ctx.currentTime;
+    [[880, 0], [1174.66, 0.12]].forEach(([frequency, offset]) => {
+      const tone = ctx.createOscillator(), volume = ctx.createGain(), at = start + offset;
+      tone.type = 'sine';
+      tone.frequency.setValueAtTime(frequency, at);
+      volume.gain.setValueAtTime(0.0001, at);
+      volume.gain.exponentialRampToValueAtTime(0.045, at + 0.025);
+      volume.gain.exponentialRampToValueAtTime(0.0001, at + 0.18);
+      tone.connect(volume); volume.connect(ctx.destination);
+      tone.start(at); tone.stop(at + 0.19);
+    });
+  };
+  if (ctx.state === 'suspended') ctx.resume().then(play).catch(() => {});
+  else play();
+}
+function pulseChatButton() {
+  const btn = $('#chatBtn');
+  if (!btn) return;
+  clearTimeout(chatButtonPulseTimer);
+  btn.classList.remove('ct-chat-pulse');
+  void btn.offsetWidth;
+  btn.classList.add('ct-chat-pulse');
+  chatButtonPulseTimer = setTimeout(() => btn.classList.remove('ct-chat-pulse'), 1350);
+}
+function pulseChatPanel() {
+  const panel = $('#chatPanel');
+  if (!panel || !S.chatOpen) return;
+  clearTimeout(chatPanelGlowTimer);
+  panel.classList.remove('ct-chat-new-message');
+  void panel.offsetWidth;
+  panel.classList.add('ct-chat-new-message');
+  chatPanelGlowTimer = setTimeout(() => panel.classList.remove('ct-chat-new-message'), 1450);
+}
 function updateChatButton() {
   const btn = $('#chatBtn'), badge = $('#chatUnread');
   if (!btn || !badge) return;
@@ -3038,16 +3110,18 @@ function updateChatButton() {
   btn.classList.toggle('has-unread', !!count && !S.chatOpen);
   btn.setAttribute('aria-expanded', S.chatOpen ? 'true' : 'false');
   btn.disabled = S.role === 'solo';
-  btn.title = S.role === 'solo' ? 'Room chat is available in a shared game' : 'Open room chat';
+  btn.title = S.role === 'solo' ? 'Room chat is available in a shared game' : (S.chatOpen ? 'Close room chat' : 'Open room chat');
+  updateChatSoundToggle();
 }
-function renderChatHistory(forceBottom) {
+function renderChatHistory(forceBottom, highlightEntry) {
   const box = $('#chatHistory');
   if (!box) return;
   const pinned = !!forceBottom || box.scrollHeight - box.scrollTop - box.clientHeight < 48;
   box.innerHTML = S.chat.slice(-100).map(e => {
     const time = new Date(e.ts || Date.now()).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
     const who = e.pid === S.pid ? 'You' : (e.name || 'Player');
-    return '<div class="ct-chat-entry"><div class="ct-chat-entry-head"><strong style="color:' + colorOf(e.pid) + '">' + esc(who) + '</strong><span class="ct-chat-entry-time">' + esc(time) + '</span></div><div class="ct-chat-entry-text">' + esc(e.text) + '</div></div>';
+    const highlight = e === highlightEntry ? ' is-new' : '';
+    return '<div class="ct-chat-entry' + highlight + '"><div class="ct-chat-entry-head"><strong style="color:' + colorOf(e.pid) + '">' + esc(who) + '</strong><span class="ct-chat-entry-time">' + esc(time) + '</span></div><div class="ct-chat-entry-text">' + esc(e.text) + '</div></div>';
   }).join('') || '<div class="ct-chat-empty">No messages yet. Say hello to your table.</div>';
   if (pinned) requestAnimationFrame(() => { if (box.isConnected) box.scrollTop = box.scrollHeight; });
   updateChatButton();
@@ -3151,10 +3225,16 @@ let drag = null; // a card being dragged with the pointer
 let selectionDrag = null; // a temporary selection rectangle
 function bindGame() {
   const g = $('#game');
-  const chatBtn = $('#chatBtn'), chatClose = $('#chatClose'), chatForm = $('#chatForm');
+  const chatBtn = $('#chatBtn'), chatClose = $('#chatClose'), chatForm = $('#chatForm'), chatSoundToggle = $('#chatSoundToggle');
   if (chatBtn) chatBtn.addEventListener('click', () => setChatPanelOpen(!S.chatOpen));
   if (chatClose) chatClose.addEventListener('click', () => setChatPanelOpen(false));
   if (chatForm) chatForm.addEventListener('submit', sendChatFromForm);
+  if (chatSoundToggle) chatSoundToggle.addEventListener('click', toggleChatSound);
+  document.addEventListener('pointerdown', function unlockSavedChatSound() {
+    if (!chatSoundEnabled() || (!window.AudioContext && !window.webkitAudioContext)) return;
+    prepareChatAudio();
+    if (chatAudioContext && chatAudioContext.state === 'running') document.removeEventListener('pointerdown', unlockSavedChatSound);
+  });
   // Native browser text/image dragging can steal pointer gestures from the tabletop's card drag logic.
   g.addEventListener('dragstart', e => {
     if (e.target.closest('.board, .card')) e.preventDefault();
