@@ -212,6 +212,12 @@ For a hovered card, **+ / =** adds a +1/+1 counter and **− / _** adds a −1/�
 - The Tokens menu (☰ → **Tokens**) lists your deck's tokens.
 - **Search all tokens** finds any token on Scryfall.
 
+## Room chat and turn notifications
+
+- Click **💬 Chat** in the top bar to open room chat. Type a message and press **Enter** or **Send** to share it with everyone in the room. Chat is separate from the game log; opening the chat panel shows the latest 100 messages for the room session, including after a reconnect.
+- When the panel is closed, messages from other players briefly appear as small notifications near the top-right of the table and then fade away. An unread count on **Chat** helps you notice messages you missed. Your own sent messages appear in history but do not create a duplicate notification on your screen.
+- At the start of each turn, a short banner appears over that player's battlefield. The active player sees **YOUR TURN**; everyone else sees **NAME'S TURN** over the same player's board. It is visual only and never blocks card movement or clicks. With reduced motion enabled, the banner appears briefly without animation.
+
 ## Turn helpers
 
 - **Auto-untap and Auto-Draw** at the start of your turn are toggled with switches (green = on): Auto-untap is the switch next to **Untap All** in the top bar, and **Auto-Draw** is labeled clearly beside it. They're also still in the ☰ menu. Both start off in every game. In 1v1, the first player skips the first draw.
