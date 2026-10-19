@@ -296,6 +296,19 @@
 
 /* One card tile */
 .w-vcard { position: relative; width: 146px; cursor: pointer; user-select: none; -webkit-user-select: none; }
+.w-vcard:hover { z-index: 5; }
+.w-vcard-remove {
+  position: absolute; top: 5px; right: 5px; z-index: 6;
+  width: 27px; height: 27px; padding: 0;
+  border: 1px solid rgba(255,255,255,.55); border-radius: 7px;
+  background: rgba(10,12,18,.92); color: #fff; font-size: 20px; line-height: 1;
+  font-weight: 700; cursor: pointer; box-shadow: 0 2px 7px rgba(0,0,0,.5);
+}
+.w-vcard-remove:hover, .w-vcard-remove:focus-visible {
+  background: var(--danger, #b83232); color: #fff; outline: 2px solid var(--text, #fff); outline-offset: 1px;
+}
+.w-vcard-remove:focus:not(:focus-visible) { outline: none; }
+
 .w-vcard-art {
   position: relative;
   width: 100%;
@@ -677,3 +690,40 @@ a.w-ci-price:focus-visible { outline: 2px solid var(--accent, #7c9cff); outline-
 .w-cardback-art { position: absolute; inset: 0; z-index: 0; display: block; border-radius: inherit;
   background-color: transparent; background-repeat: no-repeat; background-position: center; background-size: 100% 100%; }
 .w-cardback::before, .w-cardback::after { z-index: 1; }
+
+
+/* ---------- Deck builder export options ---------- */
+.w-dialog.w-export-dialog { width: min(700px, calc(100vw - 32px)); max-height: calc(100vh - 32px); }
+@supports (height: 100dvh) {
+  .w-dialog.w-export-dialog { max-height: calc(100dvh - 32px); }
+}
+.w-export { min-width: 0; }
+.w-export-layout {
+  display: grid; grid-template-columns: minmax(0, 1fr) 180px; gap: 14px;
+  padding: 14px;
+}
+.w-export-preview { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.w-export-label { font-size: 13px; color: var(--muted, #8b93a7); }
+.w-export-text {
+  box-sizing: border-box; width: 100%; min-width: 0; height: 230px; min-height: 160px;
+  resize: vertical; padding: 10px; font: 13px/1.55 ui-monospace, SFMono-Regular, Consolas, monospace;
+  white-space: pre; overflow: auto; color: var(--text, #e6e9f2);
+}
+.w-export-actions { display: flex; flex-direction: column; gap: 8px; padding-top: 25px; }
+.w-export-action {
+  width: 100%; text-align: left; font-size: 12px; line-height: 1.3; min-height: 38px;
+}
+.w-export-action.w-export-active {
+  border-color: var(--accent, #d4a72c);
+  box-shadow: 0 0 0 1px var(--accent, #d4a72c) inset;
+}
+.w-export-footer {
+  display: flex; justify-content: flex-end; gap: 8px;
+  padding: 12px 14px; border-top: 1px solid var(--border, #2b3142);
+}
+@media (max-width: 540px) {
+  .w-export-layout { grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 12px; }
+  .w-export-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding-top: 0; }
+  .w-export-action { text-align: center; padding-inline: 7px; }
+  .w-export-text { height: 35vh; }
+}

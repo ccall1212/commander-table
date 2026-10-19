@@ -4,7 +4,17 @@ All notable changes to Commander Table are listed here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/). Each release is tagged `vX.Y.Z` in git.
 
-## [Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.27.0...HEAD
+## [Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.28.0...HEAD
+
+## [0.28.0] - 2026-10-19
+
+### Added
+- Add a visual pre-game **Deck Builder** using the in-game card gallery: search and add cards, remove copies, change printings for one or ALL copies, sort/filter by name, type, color identity and mana value, and export through options to copy for Moxfield or plain text, or download a `.txt` file. Changes save to the deck in the browser.
+
+### Fixed
+- Keep saved printing changes isolated to the selected copy when switching one card's artwork during a game; choosing all copies still updates the full card name.
+
+
 
 ## [0.27.0] - 2026-10-19
 
@@ -66,6 +76,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - In Touch mode, prevent accidental page scrolling during card drags, use the dynamic mobile viewport height, and recommend landscape on narrow phones without blocking portrait play.
 - Keep the standard desktop interaction path unchanged when Touch mode is off.
 
+[0.28.0]: https://github.com/ccall1212/commander-table/compare/v0.27.0...v0.28.0
 [0.27.0]: https://github.com/ccall1212/commander-table/compare/v0.26.0...v0.27.0
 [0.26.0]: https://github.com/ccall1212/commander-table/compare/v0.24.0...v0.26.0
 [0.24.0]: https://github.com/ccall1212/commander-table/compare/v0.23.0...v0.24.0
@@ -394,7 +405,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - First playable build: paste-import decks from Moxfield or Archidekt (via Scryfall), 2–4 player rooms over PeerJS with self-healing reconnects, a searchable zone viewer, commander damage tracking and automatic tokens.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.22.1...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.28.0...HEAD
 [0.20.5]: https://github.com/ccall1212/commander-table/compare/v0.20.4...v0.20.5
 [0.20.4]: https://github.com/ccall1212/commander-table/compare/v0.20.3...v0.20.4
 [0.20.3]: https://github.com/ccall1212/commander-table/compare/v0.19.1...v0.20.3

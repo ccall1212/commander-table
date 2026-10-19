@@ -207,3 +207,24 @@ Browser validation is required before publishing. If audio is blocked until a ge
 9. Confirm no console errors. Ensure participating tabs run the v0.27.0 candidate; older clients do not display individual reveals.
 
 **Tested by Chris (2026-10-19):** confirmed the individually revealed card displays face-up in the opponent's hand. Found that its large preview remained visible when the pointer moved over other face-down cards, then disappeared on leaving the hand. A follow-up fix now clears that stale preview on anonymous card backs; retest step 8 after downloading the updated candidate.
+
+
+# Manual test checklist — visual Deck Builder (v0.28.0 candidate)
+
+## Start the app
+1. Extract this ZIP.
+2. In the extracted project folder, run `python -m http.server 8099 --bind 127.0.0.1`.
+3. Open `http://127.0.0.1:8099/index.html`.
+
+## Deck browsing, editing and export
+1. Open an existing saved deck and click **Deck Builder**. Confirm a large visual card grid opens like the in-game Search Library viewer, the art is easy to see, and hovering a card opens its enlarged preview.
+2. Use the type chips to filter for **Artifacts**, **Creatures**, **Lands**, and other available types. Change the **Sort** control between Name, Card type, Color identity, and Mana value. Verify the deck remains intact when the displayed list is filtered or sorted.
+3. Click the **×** on a card with a quantity greater than one. Exactly one copy should be removed; the remaining quantity and deck total decrease by one. Remove a single-copy entry; only that entry should disappear.
+4. Click **+ Add card**. Type at least two characters of a card name. Results should appear as card images; clicking a result adds one copy and leaves search available so more cards can be added. Add the same printing twice and verify the quantity increases. Try a name with several results and a name with no matches.
+5. Right-click a card and choose **Change printing…**. Verify the picker contains a visible **Use for ALL copies** option when the deck has duplicate copies of that card. Choose one printing for one copy and verify only that copy changes. Repeat and choose **Use for ALL copies**; confirm every copy of that card name, including basic lands, changes to the selected printing.
+6. Right-click a main-deck card and choose **Set as commander**. An eligible commander candidate should move into the Commander section; an ordinary non-commander card should show a clear warning. Confirm no more than two commanders can be set.
+7. Choose **Export deck**. Expect an **Export Options** dialog with a preview and only **Copy for Moxfield** and **Copy Plain Text** options—no Arena/MTGO buttons. The Moxfield preview must retain the current `About`, deck name, Commander/Deck sections, quantities, and set/collector numbers where available. Copy it and paste into a text editor to verify it. Click **Copy Plain Text** and verify the preview and copied content switches to Commander/Deck sections with quantities and card names, without set/collector metadata. Click **Download .txt** and confirm it downloads the currently selected format. Import the Moxfield-format text into a new saved deck and verify names/counts/commander parse correctly.
+8. Close the builder, reopen it, and reload the page. Confirm edits and printings persist. Start a game with the edited deck and spot-check that chosen printings are used.
+9. Test a newly imported deck and a deck saved before this feature. Repeat in desktop widths around **1920×1080** and **1366×768**, plus a narrow/mobile-sized window. Verify the existing lobby Import and Host/Join/Practice controls still work and the browser console has no errors.
+
+**Expected:** one-copy changes stay isolated, **ALL copies** applies to matching copies of a card (including basic lands), additions/removals persist, filters and sorting affect only the view, and exported lists retain the selected printing where possible.
