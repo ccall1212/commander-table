@@ -526,6 +526,26 @@
     return out;
   }
 
+
+  // Search paper cards by a partial name for the pre-game deck builder.
+  async function searchCards(query, limit) {
+    const name = String(query == null ? '' : query).replace(/["\\{}]/g, ' ').replace(/\s+/g, ' ').trim();
+    if (name.length < 2) return [];
+    const max = Math.max(1, Math.min(75, Math.floor(Number(limit) || 50)));
+    const q = 'game:paper name:"' + name + '"';
+    const url = API + '/cards/search?q=' + encodeURIComponent(q) +
+      '&unique=cards&order=name&dir=asc&include_extras=true&include_variations=true';
+    let r;
+    try { r = await request(url); }
+    catch (e) { throw new Error('Could not search Scryfall. Check your connection and try again.'); }
+    if (r.status === 404) return [];
+    if (!r.ok) throw new Error(apiErrorMessage(r));
+    return ((r.json && r.json.data) || [])
+      .filter(function (c) { return ['art_series', 'token', 'double_faced_token', 'emblem'].indexOf(c.layout) === -1; })
+      .slice(0, max)
+      .map(toDef);
+  }
+
   async function fetchById(id) {
     const r = await request(API + '/cards/' + encodeURIComponent(id));
     if (r.status === 404) throw new Error('Card not found on Scryfall.');
@@ -717,6 +737,7 @@
     commanderCandidates: commanderCandidates,
     searchTokens: searchTokens,
     fetchPrints: fetchPrints,
+    searchCards: searchCards,
     fetchCardInfo: fetchCardInfo,
     fetchById: fetchById,
     list: list,

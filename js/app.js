@@ -4319,7 +4319,7 @@ function bindLobby() {
   $('#resetCustomBackground').addEventListener('click', () => resetCustomImage('background'));
   $('#editDeckBtn').onclick = () => {
     if (!selDeck) { UI.toast('Select or import a saved deck first.', { kind: 'warn' }); return; }
-    CTDeckEditor.open(selDeck, renderDeckList);
+    CTDeckEditor.open(selDeck, renderDeckList, { onHover: d => preview(d), onLeave: () => hidePreview() });
   };
   $('#deckList').addEventListener('click', async e => {
     const del = e.target.closest('[data-del]');
