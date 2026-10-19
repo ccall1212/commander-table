@@ -9,7 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ## [0.28.0] - 2026-10-19
 
 ### Added
-- Add a visual pre-game **Deck Builder** using the in-game card gallery: search and add cards, remove copies, change printings for one or ALL copies, sort/filter by name, type, color identity and mana value, and export a plain-text decklist. Changes save to the deck in the browser.
+- Add a visual pre-game **Deck Builder** using the in-game card gallery: search and add cards, remove copies, change printings for one or ALL copies, sort/filter by name, type, color identity and mana value, and export through options to copy for Moxfield or plain text, or download a `.txt` file. Changes save to the deck in the browser.
 
 ### Fixed
 - Keep saved printing changes isolated to the selected copy when switching one card's artwork during a game; choosing all copies still updates the full card name.

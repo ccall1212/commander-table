@@ -40,17 +40,30 @@
     if (afterSave) afterSave();
     if (deckViewer) deckViewer.update(makeViewerCards(deck));
   }
-  function entryLine(def, qty) {
-    const set = def && def.set && def.cn ? ' (' + String(def.set).toUpperCase() + ') ' + def.cn : '';
+  function entryLine(def, qty, includePrinting) {
+    const set = includePrinting !== false && def && def.set && def.cn
+      ? ' (' + String(def.set).toUpperCase() + ') ' + def.cn : '';
     return String(Math.max(1, Math.floor(Number(qty) || 1))) + ' ' + nameOf(def) + set;
   }
+  // Moxfield keeps the current import-friendly format, including deck metadata and printing IDs.
   function exportText(deck) {
     const lines = ['About', 'Name: ' + (deck.name || 'Untitled deck'), '', 'Commander'];
-    (deck.commanders || []).forEach(def => { if (nameOf(def)) lines.push(entryLine(def, 1)); });
+    (deck.commanders || []).forEach(def => { if (nameOf(def)) lines.push(entryLine(def, 1, true)); });
     lines.push('', 'Deck');
     (deck.cards || []).forEach(entry => {
       const qty = quantity(entry);
-      if (qty && nameOf(entry.def)) lines.push(entryLine(entry.def, qty));
+      if (qty && nameOf(entry.def)) lines.push(entryLine(entry.def, qty, true));
+    });
+    return lines.join('\n') + '\n';
+  }
+  // Plain text is a simple, readable decklist: names and quantities, without set/collector metadata.
+  function exportPlainText(deck) {
+    const lines = ['Commander'];
+    (deck.commanders || []).forEach(def => { if (nameOf(def)) lines.push(entryLine(def, 1, false)); });
+    lines.push('', 'Deck');
+    (deck.cards || []).forEach(entry => {
+      const qty = quantity(entry);
+      if (qty && nameOf(entry.def)) lines.push(entryLine(entry.def, qty, false));
     });
     return lines.join('\n') + '\n';
   }
@@ -58,10 +71,8 @@
     return String(name || 'commander-deck').normalize('NFKD')
       .replace(/[^\w.-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 70) || 'commander-deck';
   }
-  function downloadDeck() {
-    const deck = currentDeck();
-    if (!deck) return;
-    const blob = new Blob([exportText(deck)], { type: 'text/plain;charset=utf-8' });
+  function downloadDeckText(deck, text) {
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob), link = document.createElement('a');
     link.href = url;
     link.download = safeFileName(deck.name) + '.txt';
@@ -69,7 +80,97 @@
     link.click();
     link.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
-    UI.toast('Deck exported as a text decklist.');
+    UI.toast('Deck downloaded as a text file.');
+  }
+  async function copyDeckText(text, textarea) {
+    try {
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        await navigator.clipboard.writeText(text);
+        UI.toast('Copied decklist to clipboard.');
+        return;
+      }
+    } catch (err) {
+      // Fall back below for browsers that restrict clipboard access.
+    }
+    try {
+      textarea.focus();
+      textarea.select();
+      textarea.setSelectionRange(0, textarea.value.length);
+      const ok = document.execCommand('copy');
+      if (ok) UI.toast('Copied decklist to clipboard.');
+      else UI.toast('Copy was blocked by the browser. Select the text and copy it manually.', { kind: 'warn' });
+    } catch (err) {
+      UI.toast('Copy was blocked by the browser. Select the text and copy it manually.', { kind: 'warn' });
+    }
+  }
+  function openExportOptions() {
+    const deck = currentDeck();
+    if (!deck) return;
+    const moxfieldText = exportText(deck);
+    let activeFormat = 'moxfield';
+
+    const layout = document.createElement('div');
+    layout.className = 'w-export';
+
+    const columns = document.createElement('div');
+    columns.className = 'w-export-layout';
+
+    const left = document.createElement('div');
+    left.className = 'w-export-preview';
+    const label = document.createElement('label');
+    label.className = 'w-export-label';
+    label.textContent = 'Deck List';
+    const textarea = document.createElement('textarea');
+    textarea.className = 'w-input w-export-text';
+    textarea.setAttribute('aria-label', 'Deck list preview');
+    textarea.spellcheck = false;
+    textarea.readOnly = true;
+    textarea.value = moxfieldText;
+    left.append(label, textarea);
+
+    const actions = document.createElement('div');
+    actions.className = 'w-export-actions';
+    const moxfieldButton = document.createElement('button');
+    moxfieldButton.type = 'button';
+    moxfieldButton.className = 'w-btn w-export-action';
+    moxfieldButton.textContent = 'Copy for Moxfield';
+    const plainButton = document.createElement('button');
+    plainButton.type = 'button';
+    plainButton.className = 'w-btn w-export-action';
+    plainButton.textContent = 'Copy Plain Text';
+    actions.append(moxfieldButton, plainButton);
+    columns.append(left, actions);
+
+    const footer = document.createElement('div');
+    footer.className = 'w-export-footer';
+    const download = document.createElement('button');
+    download.type = 'button';
+    download.className = 'w-btn w-btn-primary';
+    download.textContent = 'Download .txt';
+    footer.appendChild(download);
+    layout.append(columns, footer);
+
+    function selectFormat(format) {
+      activeFormat = format;
+      textarea.value = format === 'plain' ? exportPlainText(deck) : moxfieldText;
+      moxfieldButton.classList.toggle('w-export-active', format === 'moxfield');
+      plainButton.classList.toggle('w-export-active', format === 'plain');
+    }
+    moxfieldButton.addEventListener('click', () => {
+      selectFormat('moxfield');
+      copyDeckText(textarea.value, textarea);
+    });
+    plainButton.addEventListener('click', () => {
+      selectFormat('plain');
+      copyDeckText(textarea.value, textarea);
+    });
+    download.addEventListener('click', () => {
+      const text = activeFormat === 'plain' ? exportPlainText(deck) : exportText(deck);
+      downloadDeckText(deck, text);
+    });
+
+    selectFormat('moxfield');
+    UI.modal({ title: 'Export Options', el: layout, wide: true, className: 'w-export-dialog' });
   }
   function saveDeck(deck, message) {
     try {
@@ -219,7 +320,7 @@
         { key: 'export', label: 'Export deck' }
       ],
       onAction: handleAction,
-      onFooter: key => { if (key === 'add') openAddCard(); else if (key === 'export') downloadDeck(); },
+      onFooter: key => { if (key === 'add') openAddCard(); else if (key === 'export') openExportOptions(); },
       onHover: def => { if (onHover) onHover(def); },
       onClose: () => {
         deckViewer = null;
