@@ -2964,13 +2964,13 @@ function handSpread(n, bw) {
 function myTileOverlayHTML(bh, bw) {
   const m = S.me, z = m.zones, pi = pileInfo(S.pid);
   const n = z.hand.length, mid = (n - 1) / 2, step = n > 1 ? Math.min(4, 30 / n) : 0;
-  const fan = i => { const off = i - mid; return \`--rot:\${(off * step).toFixed(1)}deg;--arc:\${(mid ? 8 * (off / mid) ** 2 : 0).toFixed(1)}px;z-index:\${i + 1}\`; };
+  const fan = i => { const off = i - mid; return `--rot:${(off * step).toFixed(1)}deg;--arc:${(mid ? 8 * (off / mid) ** 2 : 0).toFixed(1)}px;z-index:${i + 1}`; };
   const hand = z.hand.map((c, i) => cardHTML(c, defOf(c), { mine: true, pid: S.pid, zone: 'hand', style: fan(i) })).join('');
-  const pile = (k, label) => \`<div class="tpile" data-pile="\${k}" data-pid="\${esc(S.pid)}" data-drop="\${k}" title="\${esc(pi[k].tip)}"><div class="tpcard">\${pi[k].face || ''}</div><div class="tplabel">\${label} <b class="\${k === 'library' && pi[k].n === 0 ? 'lib-empty' : ''}">\${pi[k].n}</b></div></div>\`;
+  const pile = (k, label) => `<div class="tpile" data-pile="${k}" data-pid="${esc(S.pid)}" data-drop="${k}" title="${esc(pi[k].tip)}"><div class="tpcard">${pi[k].face || ''}</div><div class="tplabel">${label} <b class="${k === 'library' && pi[k].n === 0 ? 'lib-empty' : ''}">${pi[k].n}</b></div></div>`;
   const cmd = z.command.map(c => cardHTML(c, defOf(c), { mine: true, pid: S.pid, zone: 'command' })).join('');
-  return \`<div class="tlife">\${lifeBoxHTML(S.pid, true)}</div>
-    <div class="tstrip" style="top:\${bh}px;width:\${bw}px"><div class="thand mine" data-drop="hand" style="--hm:\${handSpread(n, bw)}px">\${hand}\${n ? \`<b class="thn">\${n}</b>\` : ''}</div>
-      <div class="tpiles">\${pile('library', 'LIB')}\${pile('graveyard', 'GY')}\${pile('exile', 'EXILE')}<div class="tpile tcmd" data-drop="command"><div class="tpcard">\${cmd}</div><div class="tplabel">CMD</div></div></div></div>\`;
+  return `<div class="tlife">${lifeBoxHTML(S.pid, true)}</div>
+    <div class="tstrip" style="top:${bh}px;width:${bw}px"><div class="thand mine" data-drop="hand" style="--hm:${handSpread(n, bw)}px">${hand}${n ? `<b class="thn">${n}</b>` : ''}</div>
+      <div class="tpiles">${pile('library', 'LIB')}${pile('graveyard', 'GY')}${pile('exile', 'EXILE')}<div class="tpile tcmd" data-drop="command"><div class="tpcard">${cmd}</div><div class="tplabel">CMD</div></div></div></div>`;
 }
 function tileOverlayHTML(pid, bh, bw) {
   if (pid === S.pid) return myTileOverlayHTML(bh, bw);
@@ -2979,9 +2979,9 @@ function tileOverlayHTML(pid, bh, bw) {
   const revCards = revealed ? [] : (Array.isArray(p.revCards) ? p.revCards : []);
   const handN = Math.max(0, Math.floor(num(p.hand))), n = revealed ? p.revHand.length : Math.min(handN, 12);
   const mid = (n - 1) / 2, step = n > 1 ? Math.min(4, 30 / n) : 0;
-  const fan = i => { const off = i - mid; return \`--rot:\${(off * step).toFixed(1)}deg;--arc:\${(mid ? 8 * (off / mid) ** 2 : 0).toFixed(1)}px;z-index:\${i + 1}\`; };
+  const fan = i => { const off = i - mid; return `--rot:${(off * step).toFixed(1)}deg;--arc:${(mid ? 8 * (off / mid) ** 2 : 0).toFixed(1)}px;z-index:${i + 1}`; };
   const revealedAt = revealedHandSlots(revCards, handN, n);
-  const backAt = i => \`<div class="card oback" style="\${fan(i)}">\${UI.cardBackHTML('', appearanceBackFor(pid))}</div>\`;
+  const backAt = i => `<div class="card oback" style="${fan(i)}">${UI.cardBackHTML('', appearanceBackFor(pid))}</div>`;
   const hand = revealed
     ? p.revHand.map((c, i) => cardHTML(c, c.id && defs[c.id], { mine: false, pid, ctrl: pid, zone: 'hand', style: fan(i) })).join('')
     : revCards.length
@@ -2990,11 +2990,11 @@ function tileOverlayHTML(pid, bh, bw) {
           return c ? cardHTML(c, c.id && defs[c.id], { mine: false, pid, ctrl: pid, zone: 'hand', style: fan(i) }) : backAt(i);
         }).join('')
       : Array.from({ length: n }, (_, i) => backAt(i)).join('');
-  const pile = (k, label) => \`<div class="tpile"\${k === 'library' ? \` data-fx="library" data-pid="\${esc(pid)}"\` : ''}><div class="tpcard">\${pi[k].face || ''}</div><div class="tplabel">\${label} <b class="\${k === 'library' && pi[k].n === 0 ? 'lib-empty' : ''}">\${pi[k].n}</b></div></div>\`;
+  const pile = (k, label) => `<div class="tpile"${k === 'library' ? ` data-fx="library" data-pid="${esc(pid)}"` : ''}><div class="tpcard">${pi[k].face || ''}</div><div class="tplabel">${label} <b class="${k === 'library' && pi[k].n === 0 ? 'lib-empty' : ''}">${pi[k].n}</b></div></div>`;
   const cmd = (p.zones.command || []).map(c => cardHTML(c, c.id && defs[c.id], { mine: false, pid, ctrl: pid, zone: 'command' })).join('');
-  return \`<div class="tlife">\${lifeBoxHTML(pid, true)}</div>
-    <div class="tstrip" style="top:\${bh}px;width:\${bw}px"><div class="thand" style="--hm:\${handSpread(n, bw)}px">\${hand}\${handN ? \`<b class="thn">\${handN}</b>\` : ''}</div>
-      <div class="tpiles">\${pile('library', 'LIB')}\${pile('graveyard', 'GY')}\${pile('exile', 'EXILE')}<div class="tpile tcmd"><div class="tpcard">\${cmd}</div><div class="tplabel">CMD</div></div></div></div>\`;
+  return `<div class="tlife">${lifeBoxHTML(pid, true)}</div>
+    <div class="tstrip" style="top:${bh}px;width:${bw}px"><div class="thand" style="--hm:${handSpread(n, bw)}px">${hand}${handN ? `<b class="thn">${handN}</b>` : ''}</div>
+      <div class="tpiles">${pile('library', 'LIB')}${pile('graveyard', 'GY')}${pile('exile', 'EXILE')}<div class="tpile tcmd"><div class="tpcard">${cmd}</div><div class="tplabel">CMD</div></div></div></div>`;
 }
 function renderOpp(el, pid, idx) {
   const p = S.players[pid], T = S.table || {}, defs = p.defs || {};
