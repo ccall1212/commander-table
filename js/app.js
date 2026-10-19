@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.23.0';
+const APP_VERSION = '0.24.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -1857,6 +1857,12 @@ function tokensMenu(x, y) {
   items.push({ sep: true }, { label: 'Search all tokens…', onClick: searchTokens });
   UI.menu(x, y, items);
 }
+function ownEmptyBattlefieldHovered() {
+  const el = document.elementFromPoint(pvMouse.x, pvMouse.y);
+  if (!el || el.closest('.card, [data-pile], [data-phead], .ohead, .tstrip, .tlife, .tpile, .thand, .tpiles, .zbox')) return false;
+  const board = el.closest('.board[data-pid]');
+  return !!board && board.dataset.pid === S.pid;
+}
 async function searchTokens() {
   const q = await UI.prompt({ title: 'Create a token', label: 'Search tokens (e.g. Goblin, Treasure, Zombie, 1/1 Soldier)' });
   if (!q) return;
@@ -2208,7 +2214,7 @@ function showHotkeyList() {
       ['X', 'Mill the top card into your Graveyard']
     ] },
     { title: 'General', rows: [
-      ['D', 'Draw one card'], ['U', 'Untap all'], ['L', 'Open Search Library from anywhere'],
+      ['D', 'Draw one card'], ['U', 'Untap all'], ['L', 'Open Search Library from anywhere'], ['T (empty battlefield)', 'Open the Token menu'],
       ['Space', 'Pass the turn'], ['Ctrl+Z / ⌘Z', 'Undo'], ['Hold V', 'Use the magnifier']
     ] }
   ];
@@ -3792,6 +3798,11 @@ function onKey(e) {
     e.preventDefault(); allCounters(h.iid, { Digit1: 'inc', Digit2: 'double', Digit3: 'dec' }[e.code]); return;
   }
   const k = e.key.toLowerCase();
+  if (k === 't' && ownEmptyBattlefieldHovered()) {
+    e.preventDefault();
+    tokensMenu(pvMouse.x, pvMouse.y);
+    return;
+  }
   if (k === 'escape' && S.arrange) { toggleArrange(); return; }
   if ((k === 's' || k === 'x') && e.repeat) return; // avoid repeated shuffle/mill while a key is held
   if (k === 's') {

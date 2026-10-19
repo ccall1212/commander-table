@@ -145,3 +145,17 @@ Expected: manual power-only changes never alter toughness; manual toughness-only
 6. Repeat the poison and direct-life checks in Sidebar and Grid at 1920×1080 and 1366×768. Check the browser console for errors.
 7. Stop the local server with Ctrl+C.
 
+
+
+# Manual test checklist — T hotkey opens the Token menu (v0.24.0 candidate)
+
+1. Extract the exact branch ZIP. In the extracted project folder, run `python -m http.server 8099 --bind 127.0.0.1`, then open `http://127.0.0.1:8099/index.html`.
+2. Start Practice solo with a deck. In **Sidebar** view, move the pointer to empty space on your own battlefield and press **T**. The existing Token menu should open near the pointer. Choose a listed token, or use **Search all tokens…**, and confirm the chosen token is created using the existing flow.
+3. Put the pointer over one of your untapped battlefield cards and press **T**. It should tap; press **T** again and it should untap. The Token menu must not open for either press.
+4. Put the pointer over a card in your hand and press **T**. It should play that card onto the battlefield tapped; the Token menu must not open.
+5. Press **T** while pointing at an opponent's board, one of your Library/Graveyard/Exile/Command piles, the Grid hand/pile strip, the game log, or outside the board. The Token menu should not open from those locations.
+6. Switch to **Grid**. Repeat the empty-space test inside your own quadrant, then repeat the card-in-hand and card-on-battlefield tests. The small life/hand/pile strip is not empty battlefield space and must not trigger the menu.
+7. Repeat in Sidebar and Grid at approximately **1920×1080** and **1366×768**. If using a second player tab, confirm creating a token still uses the existing synchronized token flow.
+8. Check the browser console for errors, then stop the server with Ctrl+C.
+
+Expected: **T** opens the Token menu only when the pointer is over empty space on your own battlefield. Existing T actions for tapping/untapping a battlefield card and playing a hovered hand card tapped remain unchanged.

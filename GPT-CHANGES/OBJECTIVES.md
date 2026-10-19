@@ -82,12 +82,13 @@ Investigate and restore the confirmation prompt that used to appear when a playe
 - **Empty library:** if a player attempts to draw when their library has 0 cards, turn the library count (0) red and show the Concede prompt again. Treat this as its own clear trigger, not as a repeated prompt on every render.
 - **Tested by Chris:** Chris confirmed the change works and approved publishing. The prompt covers lethal life totals, 21 Commander damage, and empty-library draw attempts; the zero Library count turns red.
 
-## 23. T hotkey opens the Token menu over the battlefield — QUEUED
+## 23. T hotkey opens the Token menu over the battlefield — IN PROGRESS ([PR #41](https://github.com/ccall1212/commander-table/pull/41))
 
 When the mouse is hovering over the battlefield and the player presses **T**, open the token menu so they can create a token.
 
 - Keep the existing **T** behavior for tapping/untapping a battlefield card or playing a hovered hand card tapped. The token-menu action should apply only when the pointer is over empty battlefield space and must not steal those existing card/hand shortcuts.
-- Check the current hotkey list and token-menu entry point before implementation; reuse the existing token creation UI rather than creating a second menu.
+- Reuse the existing `tokensMenu()` and `createToken()` flow. The shortcut should work only on empty space inside the current player's board, not on cards, the hand/pile strip, or another player's board.
+- The in-game **Hotkey list…** and player README should mention the new empty-board behavior.
 - Test with the pointer over empty battlefield space, over a creature, over a card in hand, and outside the battlefield, in both Sidebar and Grid.
 
 ## 24. Browse deck and change card printings before starting a game — QUEUED
