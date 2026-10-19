@@ -11,6 +11,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - Make **Reveal to everyone** show just the selected card face-up in its normal spot in the opponent's hand fan, while the rest of the hand stays face-down.
 
+### Fixed
+- Clear a stale floating card preview when the pointer moves from a revealed card to a face-down card in an opponent's hand.
+
 
 ## [0.26.0] - 2026-10-19
 
