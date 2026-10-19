@@ -185,3 +185,21 @@ Expected: **T** opens the Token menu only when the pointer is over empty space o
 6. Enable the operating system/browser reduced-motion preference and repeat a turn change and receive a chat message. The banner should appear briefly without moving/fading animation; chat popups, button pulse, panel glow, and message highlight should not animate.
 
 Browser validation is required before publishing. If audio is blocked until a gesture, turn **Sound on** from inside the chat panel to enable it for that page. Check chat synchronization with a third player tab if possible.
+
+# Manual test checklist — Reveal hand card to everyone (v0.27.0 candidate)
+
+## Start the app
+1. Extract this test ZIP.
+2. In the extracted project folder, run `python -m http.server 8099 --bind 127.0.0.1`.
+3. Open `http://127.0.0.1:8099/index.html`.
+4. Host a game in one tab and join it from another tab using `http://127.0.0.1:8099/index.html?join=<ROOM>`, with a different player name and deck.
+5. Stop the server with Ctrl+C when finished.
+
+## Reveal checks
+1. In the host tab, right-click a card in your hand and choose **Reveal to everyone**. Expect the actual card image to appear prominently in a temporary overlay in both tabs, with the revealer's name, then disappear after a few seconds.
+2. Repeat from the joining player's hand. The card should appear for the host, the sender, and all other connected players, without anyone needing to open the game log.
+3. Confirm the game log still records who revealed the card, and clicking around the table while the overlay is visible still works.
+4. Confirm no other cards in the sender's hand are exposed. The new overlay should show only the single selected card.
+5. Test a card with a back face, if available, and a card image that does not load (the reveal should still show a useful card-name fallback).
+6. Switch between Sidebar and Grid at roughly 1920×1080 and 1366×768. Check a smaller/mobile-sized browser window too.
+7. Confirm no console errors. Ensure all participating tabs are running the same v0.27.0 candidate; older copies do not understand the new reveal notification.
