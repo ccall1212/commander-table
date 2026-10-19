@@ -3283,6 +3283,15 @@ function preview(def, hidden, tag) {
 const tagOf = c => (c.cp ? 'Copy' : c.tok ? 'Token' : '');
 function previewFromEl(cardEl) {
   const pid = cardEl.dataset.pid, iid = cardEl.dataset.iid;
+  // Anonymous card backs in an opponent's hand have no identity to preview.
+  // Hide the previous card's preview instead of leaving it stuck over the hand.
+  if (!pid || !iid) {
+    S.hover = null;
+    S.touchPreview = null;
+    S.pvFix = null;
+    hidePreview();
+    return;
+  }
   S.hover = { pid, iid };
   S.touchPreview = S.touchMode ? { pid, iid } : null;
   S.pvFix = pid === S.pid && cardEl.dataset.zone === 'hand' ? (cardEl.closest('#myHand, .thand') || null) : null;
