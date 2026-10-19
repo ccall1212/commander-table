@@ -186,7 +186,7 @@ Expected: **T** opens the Token menu only when the pointer is over empty space o
 
 Browser validation is required before publishing. If audio is blocked until a gesture, turn **Sound on** from inside the chat panel to enable it for that page. Check chat synchronization with a third player tab if possible.
 
-# Manual test checklist — Reveal hand card to everyone (v0.27.0 candidate)
+# Manual test checklist — Reveal one hand card to everyone (v0.27.0 candidate)
 
 ## Start the app
 1. Extract this test ZIP.
@@ -196,10 +196,11 @@ Browser validation is required before publishing. If audio is blocked until a ge
 5. Stop the server with Ctrl+C when finished.
 
 ## Reveal checks
-1. In the host tab, right-click a card in your hand and choose **Reveal to everyone**. Expect the actual card image to appear prominently in a temporary overlay in both tabs, with the revealer's name, then disappear after a few seconds.
-2. Repeat from the joining player's hand. The card should appear for the host, the sender, and all other connected players, without anyone needing to open the game log.
-3. Confirm the game log still records who revealed the card, and clicking around the table while the overlay is visible still works.
-4. Confirm no other cards in the sender's hand are exposed. The new overlay should show only the single selected card.
-5. Test a card with a back face, if available, and a card image that does not load (the reveal should still show a useful card-name fallback).
-6. Switch between Sidebar and Grid at roughly 1920×1080 and 1366×768. Check a smaller/mobile-sized browser window too.
-7. Confirm no console errors. Ensure all participating tabs are running the same v0.27.0 candidate; older copies do not understand the new reveal notification.
+1. In the host tab, right-click one card in your hand and choose **Reveal to everyone**. In the opponent tab, expect that exact card to turn face-up in its normal spot in the hand fan; the rest remain face-down.
+2. Repeat from the joining player's hand. Both players should see that card revealed in the opponent's hand area without opening the game log.
+3. Right-click the same card and choose **Hide from everyone**. It should turn back into a card back on the opponent's screen.
+4. Confirm the game log still records both the reveal/hide actions and no other card in the hand is exposed.
+5. Move a revealed card out of the hand, then return it to the hand if possible. It should no longer be revealed automatically.
+6. Try **Reveal my hand to everyone** separately. It should still reveal the entire hand; turning that option off should leave any individually revealed cards face-up.
+7. Switch between Sidebar and Grid at roughly 1920×1080 and 1366×768. Also test viewing the opponent's board large and a narrower/mobile-sized window.
+8. Confirm no console errors. Ensure participating tabs run the v0.27.0 candidate; older clients do not display individual reveals.
