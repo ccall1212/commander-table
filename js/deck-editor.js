@@ -160,6 +160,7 @@
     if (!deck) return;
     addViewer = UI.viewer({
       title: 'Add cards to ' + (deck.name || 'your deck'), cards: [],
+      searchPlaceholder: 'Type a card name to search Scryfall…',
       searchProvider: query => Deck.searchCards(query, 50),
       onCardClick: def => addCard(def),
       onHover: def => { if (onHover) onHover(def); },

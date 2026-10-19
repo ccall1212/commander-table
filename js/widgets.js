@@ -550,7 +550,7 @@
     const toolbar = h('div', 'w-v-toolbar');
     const search = h('input', 'w-input w-v-search');
     search.type = 'text';
-    search.placeholder = 'Search name, type or rules text…';
+    search.placeholder = opts.searchPlaceholder || 'Search name, type or rules text…';
     search.setAttribute('aria-label', 'Search cards');
     search.autocomplete = 'off';
     search.spellcheck = false;
@@ -706,7 +706,7 @@
       const d = r.d, fd = !!r.c.faceDown;
       const posText = opts.ordered ? String(r.pos + 1) : '';
       const posLabel = opts.ordered && r.pos === 0 && opts.orderLabel ? opts.orderLabel : '';
-      const sig = [d.id, d.name, d.img, fd ? 1 : 0, posText, posLabel].join('|');
+      const sig = [d.id, d.name, d.img, fd ? 1 : 0, posText, posLabel, opts.showQuantity ? r.c.qty : ''].join('|');
       const cached = elCache.get(r.iid);
       if (cached && cached.sig === sig) return cached.el;
 
