@@ -54,12 +54,14 @@ Add an optional **Touch mode** for iPad Safari, launched from the top-right hamb
 - Fit the game to the dynamic mobile viewport height. On narrow phones in portrait, show a dismissible landscape recommendation rather than trying to force orientation lock (ordinary mobile Safari pages cannot reliably force it).
 - Test in real iPhone/iPad Safari in portrait and landscape, including enabling/disabling Touch mode, host and joiner sessions, card inspection, card actions, dragging from the bottom edge of the hand, intentional group selection/movement, internal dialog scrolling, menu dismissal, and both Sidebar and Grid layouts. Desktop emulation alone is not sufficient for marking this complete.
 
-## 24. Browse deck and change card printings before starting a game — IN PROGRESS (PR under review)
+## 24. Pre-game Deck Builder — IN PROGRESS (PR #45 under review)
 
-After a player imports or selects a saved deck in the start menu, provide a **Browse / Edit deck** area where they can review the full deck and choose alternate printings for individual cards before hosting or joining a game.
+Use a large card-image gallery matching the in-game Search Library viewer so art is easy to see, and hover each card to display its enlarged preview.
 
-- Show the whole deck in a clear, scrollable list or gallery, including card names and their current printing/art, with an easy way to open a card's available printings.
-- Reuse the existing card-printing lookup/selection behavior where possible, including the ability to choose from available printings rather than limiting the choice to a small fixed number.
-- Save each card's selected printing with that deck in the browser, using the existing local saved-deck behavior, so choices persist after leaving or reopening the page and are used when the game starts.
-- Keep this as a pre-game deck-editing workflow; changing a printing should not change card counts, card rules, or other deck contents.
-- Test with a deck that has multiple alternate printings, reload the page and verify the choices persist, then start a game and confirm the chosen printings are used. Include both a newly imported deck and an already-saved deck.
+- Before hosting/joining/Practice, open **Deck Builder** for the selected saved deck. Show commanders and main-deck cards with visible images.
+- Support search and type filters (Artifacts, Creatures, Enchantments, Instants, Sorceries, Lands, Planeswalkers, and other recognized types), and sorting by name, card type, color identity, and mana value.
+- Remove one copy with a visible **×** button. Add cards by typing a partial name into Scryfall search and clicking a result. Let a main-deck card be set as a commander when it is a recognized commander candidate.
+- Reuse the existing print picker. Allow changing one selected copy or using a printing for **ALL copies** of that card, which is particularly useful for basic lands. A one-copy change must not modify the other copies.
+- Export a plain-text list that includes commander/main-deck sections and the selected set/collector number when available. Keep the format importable by Commander Table and usable as a general decklist.
+- Save all edits to the selected local deck, preserve selected printings after reload, and use the updated list when the game starts. Do not modify card rules when changing a printing.
+- Test new and already-saved decks, duplicates, set-as-commander, remove/add, export/re-import, filtering/sorting, reload persistence, and both desktop and narrow layouts.

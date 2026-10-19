@@ -209,22 +209,22 @@ Browser validation is required before publishing. If audio is blocked until a ge
 **Tested by Chris (2026-10-19):** confirmed the individually revealed card displays face-up in the opponent's hand. Found that its large preview remained visible when the pointer moved over other face-down cards, then disappeared on leaving the hand. A follow-up fix now clears that stale preview on anonymous card backs; retest step 8 after downloading the updated candidate.
 
 
-# Manual test checklist — browse and edit deck printings before a game (v0.28.0 candidate)
+# Manual test checklist — visual Deck Builder (v0.28.0 candidate)
 
 ## Start the app
 1. Extract this ZIP.
 2. In the extracted project folder, run `python -m http.server 8099 --bind 127.0.0.1`.
 3. Open `http://127.0.0.1:8099/index.html`.
 
-## Deck editor checks
-1. Import and save a deck with a commander and a main deck, then select it in the lobby. **Browse / Edit deck** should be enabled. Confirm the editor shows the commander(s), all main-deck cards, a small current-art thumbnail, and printing details. The number of displayed card copies should match the deck count.
-2. Click **Change printing…** on a card. Search the printing picker by set name, set code, collector number, and year. Choose a different printing and confirm that row's art/details update.
-3. Use a card that has at least three copies in the list. Change the printing of just one copy. Confirm its other copies still show the original printing, the deck card count stays unchanged, and another card row remains untouched.
-4. Change the printing of a commander and verify it updates too. Confirm none of the changes alter card names, quantities, commanders, or card rules.
-5. Close and reopen **Browse / Edit deck**. Confirm all choices remain. Reload the page, select the same saved deck, and confirm the new printings still appear.
-6. Start a game with that saved deck. Confirm the selected printings are used by the cards in the game.
-7. Repeat with a deck that was already saved before this feature, then test a newly imported deck. Check that decks without printing details still render safely.
-8. Test the editor at desktop widths around **1920×1080** and **1366×768**, plus a narrow/mobile-sized window. The list should scroll internally and remain usable; the existing lobby import and Host/Join/Practice buttons should still work.
-9. Disconnect from the network or simulate a Scryfall lookup failure, then open a printing picker. Expect a readable error and no loss of the saved deck. Check the browser console for errors.
+## Deck browsing, editing and export
+1. Open an existing saved deck and click **Deck Builder**. Confirm a large visual card grid opens like the in-game Search Library viewer, the art is easy to see, and hovering a card opens its enlarged preview.
+2. Use the type chips to filter for **Artifacts**, **Creatures**, **Lands**, and other available types. Change the **Sort** control between Name, Card type, Color identity, and Mana value. Verify the deck remains intact when the displayed list is filtered or sorted.
+3. Click the **×** on a card with a quantity greater than one. Exactly one copy should be removed; the remaining quantity and deck total decrease by one. Remove a single-copy entry; only that entry should disappear.
+4. Click **+ Add card**. Type at least two characters of a card name. Results should appear as card images; clicking a result adds one copy and leaves search available so more cards can be added. Add the same printing twice and verify the quantity increases. Try a name with several results and a name with no matches.
+5. Right-click a card and choose **Change printing…**. Verify the picker contains a visible **Use for ALL copies** option when the deck has duplicate copies of that card. Choose one printing for one copy and verify only that copy changes. Repeat and choose **Use for ALL copies**; confirm every copy of that card name, including basic lands, changes to the selected printing.
+6. Right-click a main-deck card and choose **Set as commander**. An eligible commander candidate should move into the Commander section; an ordinary non-commander card should show a clear warning. Confirm no more than two commanders can be set.
+7. Choose **Export deck**. Confirm a `.txt` downloads, contains deck name, Commander and Deck sections, quantities, and printing set/collector numbers where available. Import that text into a new saved deck and verify names/counts/commander parse correctly.
+8. Close the builder, reopen it, and reload the page. Confirm edits and printings persist. Start a game with the edited deck and spot-check that chosen printings are used.
+9. Test a newly imported deck and a deck saved before this feature. Repeat in desktop widths around **1920×1080** and **1366×768**, plus a narrow/mobile-sized window. Verify the existing lobby Import and Host/Join/Practice controls still work and the browser console has no errors.
 
-**Expected:** deck editing is optional before starting a game; changes are saved locally per browser and used by future games; changing one of several copies affects only that copy.
+**Expected:** one-copy changes stay isolated, **ALL copies** applies to matching copies of a card (including basic lands), additions/removals persist, filters and sorting affect only the view, and exported lists retain the selected printing where possible.

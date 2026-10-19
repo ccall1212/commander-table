@@ -9,7 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ## [0.28.0] - 2026-10-19
 
 ### Added
-- Add a pre-game deck browser so players can inspect saved decks and change the printing of an individual card copy before starting; choices are saved with the deck.
+- Add a visual pre-game **Deck Builder** using the in-game card gallery: search and add cards, remove copies, change printings for one or ALL copies, sort/filter by name, type, color identity and mana value, and export a plain-text decklist. Changes save to the deck in the browser.
 
 
 

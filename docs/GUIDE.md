@@ -33,7 +33,7 @@ Before starting a game, use **Your look** on the opening screen to choose from 1
 3. Click **Load cards**, then **Save**.
 4. If the export doesn't mark your commander, pick it from the dropdown. You can also set an optional partner or background.
 
-Decks are saved in your browser. Select a saved deck and choose **Browse / Edit deck** to view its commanders and every individual card copy before starting a game. Use **Change printing…** on a card to choose its artwork from Scryfall's available printings. If a deck has several copies of a card, you can change just one copy; the other copies and the deck's card count stay unchanged. Choices are saved with the deck in this browser and are used the next time you play it.
+Decks are saved in your browser. Select a saved deck and choose **Deck Builder** to browse its cards as a large image grid like the in-game Library search. Hover a card to see its enlarged preview. Use the card-type chips to filter (such as Artifacts or Creatures), or sort by name, type, color identity or mana value. Use the **×** on a card to remove one copy; **+ Add card** searches Scryfall as you type, and clicking a result adds it. Right-click a card for **Change printing…** or **Set as commander**. The printing picker can change one copy or use the selected printing for **ALL copies** of that card (useful for basic lands). **Export deck** downloads a plain-text decklist with selected set/collector numbers. Your edits are saved with that deck in this browser and are used in future games.
 
 ## Playing a game
 
