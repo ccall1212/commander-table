@@ -535,6 +535,10 @@
     let closed = false;
     let menuTimer = null;
     let hoverIid = null;
+    let remoteTimer = null;
+    let remoteSeq = 0;
+    let remoteLoading = false;
+    let remoteError = '';
     const typeOn = new Set();
     const useTabs = !!opts.tabs;
     let tabKey = 'all';       // 'all' | 'perm' | 'non' (only used when opts.tabs)
@@ -553,7 +557,7 @@
     const sortWrap = h('label', 'w-v-sortwrap');
     sortWrap.appendChild(h('span', 'w-v-sortlabel', 'Sort'));
     const sortSel = h('select', 'w-select w-v-sort');
-    [['zone', 'Zone order'], ['name', 'Name'], ['cmc', 'Mana value'], ['type', 'Type']].forEach(([v, l]) => {
+    [['zone', 'Deck order'], ['name', 'Name'], ['type', 'Card type'], ['color', 'Color identity'], ['cmc', 'Mana value']].forEach(([v, l]) => {
       const op = h('option', null, l);
       op.value = v;
       sortSel.appendChild(op);
@@ -655,6 +659,8 @@
         closed = true;
         document.removeEventListener('keydown', onDocKey);
         clearTimeout(menuTimer);
+        clearTimeout(remoteTimer);
+        remoteSeq++;
         closeMenu();
         if (typeof opts.onClose === 'function') opts.onClose();
       },
@@ -682,7 +688,7 @@
     }
 
     function searchMatches() {
-      const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
+      const terms = typeof opts.searchProvider === 'function' ? [] : query.toLowerCase().split(/\s+/).filter(Boolean);
       let base = recs;
       if (useTabs && tabKey !== 'all') base = recs.filter((r) => r.perm === (tabKey === 'perm'));
       return terms.length ? base.filter((r) => terms.every((t) => r.hay.includes(t))) : base.slice();
@@ -727,12 +733,25 @@
       }
       el.appendChild(art);
 
-      if (opts.ordered) {
-        const badge = h('div', 'w-vcard-pos', posText);
+      if (opts.ordered || (opts.showQuantity && Number(r.c.qty) > 1)) {
+        const badgeText = opts.ordered ? posText : '×' + String(r.c.qty);
+        const badge = h('div', 'w-vcard-pos', badgeText);
         if (posLabel) badge.appendChild(h('small', null, posLabel));
         el.appendChild(badge);
       }
       if (pick) el.appendChild(h('div', 'w-vcard-check', '✓'));
+      if (opts.removeKey) {
+        const remove = h('button', 'w-vcard-remove', '×');
+        remove.type = 'button';
+        remove.title = 'Remove one copy from the deck';
+        remove.setAttribute('aria-label', 'Remove one copy of ' + name);
+        remove.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (typeof opts.onAction === 'function') opts.onAction(opts.removeKey, r.iid);
+        });
+        el.appendChild(remove);
+      }
       el.appendChild(h('div', 'w-vcard-name', name));
 
       elCache.set(r.iid, { el, sig });
@@ -788,10 +807,15 @@
       chipBar.hidden = recs.length === 0;
 
       const list = typeOn.size ? searched.filter((r) => r.cats.some((c) => typeOn.has(c))) : searched;
+      const colorKey = d => {
+        const ci = Array.isArray(d.ci) ? d.ci : [];
+        return ['W', 'U', 'B', 'R', 'G'].filter(c => ci.indexOf(c) !== -1).join('') || '0';
+      };
       if (sortKey === 'name') list.sort((a, b) => cmpName(a, b) || a.pos - b.pos);
       else if (sortKey === 'cmc') list.sort((a, b) => ((a.d.cmc || 0) - (b.d.cmc || 0)) || cmpName(a, b) || a.pos - b.pos);
       else if (sortKey === 'type') list.sort((a, b) => (typeRank(a) - typeRank(b)) || cmpName(a, b) || a.pos - b.pos);
-      // 'zone': already in zone order
+      else if (sortKey === 'color') list.sort((a, b) => colorKey(a.d).localeCompare(colorKey(b.d)) || cmpName(a, b) || a.pos - b.pos);
+      // 'zone': already in deck order
       displayed = list;
 
       const total = recs.length, n = displayed.length;
@@ -802,7 +826,15 @@
       grid.textContent = '';
       grid.appendChild(frag);
       emptyEl.hidden = n > 0;
-      emptyEl.textContent = total === 0 ? 'No cards' : 'No matches';
+      if (n > 0) emptyEl.textContent = '';
+      else if (remoteLoading) emptyEl.textContent = 'Searching Scryfall…';
+      else if (remoteError) emptyEl.textContent = remoteError;
+      else if (typeof opts.searchProvider === 'function')
+        emptyEl.textContent = query.trim().length < 2 ? 'Type at least 2 characters to search.' : 'No matching cards';
+      else emptyEl.textContent = total === 0 ? 'No cards' : 'No matches';
+      if (typeof opts.searchProvider === 'function') {
+        countEl.textContent = remoteLoading ? 'Searching…' : (remoteError ? 'Search failed' : (n + (n === 1 ? ' result' : ' results')));
+      }
 
       if (hi >= n) hi = n - 1;
       scroller.scrollTop = keepScroll ? prevScroll : 0;
@@ -873,6 +905,10 @@
       hi = displayed.indexOf(r);
       syncMarks();
       if (pick) { toggleSel(r.iid); return; }
+      if (typeof opts.onCardClick === 'function') {
+        if (e.detail === 1) opts.onCardClick(r.d, r.iid, e);
+        return;
+      }
       if (!actions.length || e.detail > 1) return; // 2nd click of a double-click
       clearTimeout(menuTimer);
       const x = e.clientX, y = e.clientY;
@@ -932,7 +968,35 @@
     function onSearchInput() {
       query = search.value;
       hi = -1;
+      if (typeof opts.searchProvider !== 'function') { render(); return; }
+      clearTimeout(remoteTimer);
+      const seq = ++remoteSeq;
+      remoteError = '';
+      const needle = query.trim();
+      if (needle.length < 2) {
+        remoteLoading = false;
+        setCards([]);
+        render();
+        return;
+      }
+      remoteLoading = true;
+      setCards([]);
       render();
+      remoteTimer = setTimeout(() => {
+        Promise.resolve().then(() => opts.searchProvider(needle)).then((found) => {
+          if (closed || seq !== remoteSeq) return;
+          remoteLoading = false;
+          const items = Array.isArray(found) ? found : [];
+          setCards(items.map((d, i) => ({ iid: 'search-' + String(d.id || i), def: d } )));
+          render();
+        }).catch((err) => {
+          if (closed || seq !== remoteSeq) return;
+          remoteLoading = false;
+          remoteError = err && err.message ? err.message : 'Scryfall search failed. Try again.';
+          setCards([]);
+          render();
+        });
+      }, 280);
     }
     search.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowDown') {
@@ -1066,7 +1130,7 @@
       useBtn.addEventListener('click', () => pick(d, 'one'));
       btns.appendChild(useBtn);
       if (showAll) {
-        const allBtn = h('button', 'w-btn', 'Use for all copies');
+        const allBtn = h('button', 'w-btn', opts.allLabel || 'Use for all copies');
         allBtn.type = 'button';
         allBtn.addEventListener('click', () => pick(d, 'all'));
         btns.appendChild(allBtn);
