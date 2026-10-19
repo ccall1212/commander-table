@@ -819,7 +819,13 @@
       displayed = list;
 
       const total = recs.length, n = displayed.length;
-      countEl.textContent = n === total ? total + (total === 1 ? ' card' : ' cards') : 'Showing ' + n + ' of ' + total;
+      if (typeof opts.countItems === 'function') {
+        const countOf = list => Math.max(0, Number(opts.countItems(list)) || 0);
+        const totalItems = countOf(recs), visibleItems = countOf(displayed);
+        countEl.textContent = n === total ? totalItems + ' cards' : 'Showing ' + visibleItems + ' of ' + totalItems + ' cards';
+      } else {
+        countEl.textContent = n === total ? total + (total === 1 ? ' card' : ' cards') : 'Showing ' + n + ' of ' + total;
+      }
 
       const frag = document.createDocumentFragment();
       displayed.forEach((r) => frag.appendChild(cardEl(r)));

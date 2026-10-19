@@ -183,6 +183,7 @@
     deckViewer = UI.viewer({
       title: 'Deck Builder — ' + (deck.name || 'Untitled deck'),
       cards: makeViewerCards(deck), showQuantity: true, removeKey: 'remove',
+      countItems: list => list.reduce((n, card) => n + Math.max(1, Number(card.c.qty) || 1), 0),
       actions: [
         { key: 'printing', label: 'Change printing…' },
         { key: 'commander', label: 'Set as commander' },
