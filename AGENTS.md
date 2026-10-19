@@ -12,7 +12,7 @@ This is Chris's personal project. **ChatGPT (his personal account) is the main a
 |---|---|---|
 | Writes code on a branch / PR | ✅ main job | ✅ if asked |
 | Merges a PR / publishes to `main` | ✅ only when Chris says "publish" | ✅ if asked |
-| Creates annotated release tags | automatic (a GitHub Action does it when the version lands on `main`) | automatic, or by hand |
+| Creates annotated release tags | GitHub Actions does this automatically when the version lands on `main`; never hand-create as routine | same automatic workflow; manual recovery only if Chris explicitly authorizes it |
 | Runs the game in a browser, multi-player tests | ❌ | ✅ |
 | Fixes hard bugs, anything needing a real shell | tries first | ✅ if ChatGPT is stuck |
 
@@ -48,7 +48,7 @@ The normal flow is:
 - **Write the test list** in the PR or commit: the exact clicks and keys to try, how many players, which
   layout (Sidebar / Grid) and screen size, and what should happen.
 - **Be honest about what was checked by whom.** Never write "tested" for something only read in the code; do write "tested by Chris" for what he told you he tried.
-- Don't merge to `main`, tag, or bump past a version that's already tagged.
+- Don't merge to `main` without Chris's explicit approval, manually create/move release tags as part of the normal flow, or bump past a version that's already tagged.
 
 ## What this is
 
@@ -154,15 +154,14 @@ Read this before changing layout or anything that finds elements on the page. Se
    `docs: …`, `chore: …`, `feat(ui): …`. Include the version in the subject for releases, e.g.
    `fix(ui): piles keep their own size (v0.7.1)`. Say in the body what changed and why.
 9. **Push the branch** and/or open a pull request. **Stop here.** (Stop here and wait: Chris tests it himself and reports back. Only after he says "publish" go on to step 10.)
-10. **Publish (only on Chris's OK):**
-    ```bash
-    git switch main && git pull --ff-only
-    git merge --ff-only <branch>
-    git tag -a vX.Y.Z -m "vX.Y.Z — one-line summary"
-    git push --follow-tags
-    git branch -d <branch> && git push origin --delete <branch>   # if the branch was pushed
-    ```
-    Branches are not kept after release: once the work is merged and tagged, delete the branch (pull requests that are squash-merged leave their branch behind unless it is deleted, and GitHub's Settings > General > "Automatically delete head branches" can do this for you).
+10. **Publish (only on Chris's OK for this specific PR/version):**
+    - Re-check that the PR is open, targets `main`, and its current head is the exact version Chris approved. Merge that PR through GitHub; don't commit or push straight to `main`.
+    - **Do not create or push a release tag manually.** The workflow `.github/workflows/tag-release.yml` runs on a push to `main`, reads the version from `index.html`, and creates the annotated `vX.Y.Z` tag at the commit that triggered the workflow.
+    - Wait for the automatic tag creation, then verify both the tag and its target. Fetch `GET /repos/ccall1212/commander-table/git/ref/tags/vX.Y.Z`. For an annotated tag, follow the returned tag-object SHA with `GET /repos/ccall1212/commander-table/git/tags/<tag-object-sha>`; its `object.sha` must equal the actual merge commit SHA on `main`. Don't assume the PR branch head and the squash-merge commit are the same SHA.
+    - If the tag is missing or targets the wrong commit, inspect the Actions run/workflow result and report the blocker to Chris. **Do not manually create, move, or rewrite the tag** unless Chris separately authorizes that recovery.
+    - Verify `main` has the intended app version and release docs. Then check the live GitHub Pages site for that version; keep deployment marked pending/unverified until the live page confirms it.
+    - Delete the merged branch if your available GitHub tools support it. If they do not, tell Chris to use the PR's **Delete branch** button; don't imply it was deleted.
+    - Do not change the version badge in `README.md`: it follows the newest release tag automatically.
 11. **Verify the live site** about a minute later:
     - `https://ccall1212.github.io/commander-table/` shows `<meta name="app-version" content="X.Y.Z">`
       (and `js/app.js?v=X.Y.Z` loads).
