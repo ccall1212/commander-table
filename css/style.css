@@ -502,7 +502,7 @@ body.lens-on #pv { display: none; }
 .ctrrow .cn { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ctrrow b { background: #0a0d12; border-radius: 4px; padding: 1px 0; text-align: center; }
 .ctrrow.lethal b { background: var(--danger); color: #fff; }
-.lifeN.life-edit { cursor: pointer; border-radius: 5px; }
+.lifeN.life-edit { cursor: pointer; border: 0; padding: 0; background: transparent; line-height: inherit; color: inherit; }
 .lifeN.life-edit:hover, .lifeN.life-edit:focus-visible { outline: 1px solid var(--accent); background: var(--panel2); }
 .ctrrow button { padding: 0 8px; line-height: 18px; }
 
