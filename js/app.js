@@ -1697,24 +1697,63 @@ async function switchPrinting(iid) {
   });
 }
 function applyPrinting(iid, oldDef, nd, scope) {
+  const selected = findCard(iid);
+  const sourceZone = selected && selected.zone;
+  const isToken = !!(selected && selected.card && selected.card.tok);
+  const savedDef = Object.assign({}, nd, {
+    tokens: (oldDef.tokens && oldDef.tokens.length ? oldDef.tokens : nd.tokens) || []
+  });
   act(() => {
-    S.me.defs[nd.id] = Object.assign({}, nd, { tokens: (oldDef.tokens && oldDef.tokens.length ? oldDef.tokens : nd.tokens) || [] });
+    S.me.defs[nd.id] = savedDef;
     for (const z of ZONES) for (const c of S.me.zones[z]) {
       const same = scope === 'all' && !c.tok && S.me.defs[c.id] && S.me.defs[c.id].name === oldDef.name;
       if (c.iid === iid || same) c.id = nd.id;
     }
   });
-  // Remember it for future games: update the saved deck's copy of this card.
+  // Save to the deck using the exact prior printing, not every row with the same name.
+  // This matters when the deck builder stores different printings as separate rows.
+  if (isToken) return;
   try {
     const deck = Deck.get(S.deckId);
     if (deck) {
       let changed = false;
-      deck.commanders = deck.commanders.map(c => (c.name === oldDef.name ? (changed = true, nd) : c));
-      deck.cards.forEach(e => { if (e.def.name === oldDef.name && (scope === 'all' || e.qty === 1)) { e.def = nd; changed = true; } });
-      if (changed) { Deck.save(deck); UI.toast('Saved — your deck will use this printing next game too.', { ms: 3000 }); }
+      if (scope === 'all') {
+        deck.commanders = (deck.commanders || []).map(c =>
+          c.name === oldDef.name ? (changed = true, savedDef) : c);
+        (deck.cards || []).forEach(e => {
+          if (e.def && e.def.name === oldDef.name) { e.def = savedDef; changed = true; }
+        });
+      } else if (sourceZone === 'command') {
+        const index = (deck.commanders || []).findIndex(c => c.id === oldDef.id);
+        if (index >= 0) { deck.commanders[index] = savedDef; changed = true; }
+      } else {
+        const entry = (deck.cards || []).find(e => e.def && e.def.id === oldDef.id);
+        if (entry) {
+          const qty = Math.max(0, Math.floor(Number(entry.qty) || 0));
+          const index = deck.cards.indexOf(entry);
+          if (qty > 1) {
+            entry.qty = qty - 1;
+            const samePrinting = deck.cards.find(e => e !== entry && e.def && e.def.id === nd.id);
+            if (samePrinting) samePrinting.qty = Math.max(0, Math.floor(Number(samePrinting.qty) || 0)) + 1;
+            else deck.cards.splice(index + 1, 0, { def: savedDef, qty: 1 });
+          } else if (qty === 1) {
+            const samePrinting = deck.cards.find(e => e !== entry && e.def && e.def.id === nd.id);
+            if (samePrinting) {
+              samePrinting.qty = Math.max(0, Math.floor(Number(samePrinting.qty) || 0)) + 1;
+              deck.cards.splice(index, 1);
+            } else entry.def = savedDef;
+          }
+          changed = qty > 0;
+        }
+      }
+      if (changed) {
+        Deck.save(deck);
+        UI.toast('Saved — your deck will use this printing next game too.', { ms: 3000 });
+      }
     }
   } catch (e) { console.warn('could not save printing to deck', e); }
 }
+
 // Works from any zone (menu or drag-and-drop). `at` = where on their board it lands.
 function giveControl(iid, to, at) {
   const f = findCard(iid); if (!f) return;
