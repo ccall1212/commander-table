@@ -153,7 +153,32 @@
     const found = deck.cards.find(entry => entry.def && entry.def.id === def.id);
     if (found) found.qty = quantity(found) + 1;
     else deck.cards.push({ def, qty: 1 });
+    const tokenIds = Array.isArray(def.tokens) ? def.tokens.slice() : [];
+    const deckId = deck.id;
     saveDeck(deck, 'Added ' + nameOf(def) + ' to the deck.');
+    if (tokenIds.length) addRelatedTokens(deckId, tokenIds);
+  }
+  async function addRelatedTokens(deckId, tokenIds) {
+    const toLoad = [...new Set(tokenIds || [])].filter(Boolean);
+    const loaded = [];
+    for (const id of toLoad) {
+      const current = Deck.get(deckId);
+      const known = new Set((current && current.tokens || []).map(t => t && t.id).filter(Boolean));
+      if (known.has(id)) continue;
+      try { loaded.push(await Deck.fetchById(id)); }
+      catch (err) { console.warn('Could not load a related deck token', id, err); }
+    }
+    if (!loaded.length) return;
+    const deck = Deck.get(deckId);
+    if (!deck) return;
+    const known = new Set((deck.tokens || []).map(t => t && t.id).filter(Boolean));
+    const fresh = loaded.filter(t => t && t.id && !known.has(t.id));
+    if (!fresh.length) return;
+    deck.tokens = (deck.tokens || []).concat(fresh);
+    try {
+      Deck.save(deck);
+      if (activeDeckId === deckId) refresh();
+    } catch (err) { console.warn('Could not save related deck tokens', err); }
   }
   function openAddCard() {
     const deck = currentDeck();
