@@ -65,7 +65,7 @@ Add an optional **Touch mode** for iPad Safari, launched from the top-right hamb
 - Test in real iPhone/iPad Safari in portrait and landscape, including enabling/disabling Touch mode, host and joiner sessions, card inspection, card actions, dragging from the bottom edge of the hand, intentional group selection/movement, internal dialog scrolling, menu dismissal, and both Sidebar and Grid layouts. Desktop emulation alone is not sufficient for marking this complete.
 
 
-## 20. Poison counter lethal warning — IN PROGRESS (combined with objective #25 in PR)
+## 20. Poison counter lethal warning — IN PROGRESS in [PR #40](https://github.com/ccall1212/commander-table/pull/40) (combined with #25)
 
 When a player reaches **10 poison counters**, make their poison total turn red, using the same visual warning style as lethal Commander damage.
 
@@ -100,7 +100,7 @@ After a player imports or selects a saved deck in the start menu, provide a **Br
 - Keep this as a pre-game deck-editing workflow; changing a printing should not change card counts, card rules, or other deck contents.
 - Test with a deck that has multiple alternate printings, reload the page and verify the choices persist, then start a game and confirm the chosen printings are used. Include both a newly imported deck and an already-saved deck.
 
-## 25. Enter a life total directly — IN PROGRESS (combined with objective #20 in PR)
+## 25. Enter a life total directly — IN PROGRESS in [PR #40](https://github.com/ccall1212/commander-table/pull/40) (combined with #20)
 
 Allow a player to type the life total they want instead of repeatedly pressing the +/− controls to reach a number.
 
