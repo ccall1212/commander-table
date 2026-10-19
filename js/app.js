@@ -1721,6 +1721,7 @@ function giveControl(iid, to, at) {
   const d = defOf(f.card);
   act(() => {
     S.me.zones[f.zone].splice(f.idx, 1);
+    if (f.zone === 'hand') delete f.card.rvh;
     const orphans = f.zone === 'battlefield' ? detachFrom(S.pid, iid) : [];
     if (orphans.length) setTimeout(() => orphanToast(orphans), 0);
     const card = Object.assign({}, f.card); delete card.x; delete card.y; card.att = null;
@@ -3768,6 +3769,7 @@ function giveControlGroup(group, to, at, anchorIid) {
       if (!f) continue;
       const def = defOf(f.card);
       S.me.zones[f.zone].splice(f.idx, 1);
+      if (f.zone === 'hand') delete f.card.rvh;
       if (f.zone === 'battlefield') {
         const detached = detachFrom(S.pid, p.iid);
         if (detached.length) orphaned.push(...detached);
