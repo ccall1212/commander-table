@@ -4,7 +4,14 @@ All notable changes to Commander Table are listed here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/). Each release is tagged `vX.Y.Z` in git.
 
-## [Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.27.0...HEAD
+## [Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.28.0...HEAD
+
+## [0.28.0] - 2026-10-19
+
+### Added
+- Add a pre-game deck browser so players can inspect saved decks and change the printing of an individual card copy before starting; choices are saved with the deck.
+
+
 
 ## [0.27.0] - 2026-10-19
 
@@ -66,6 +73,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - In Touch mode, prevent accidental page scrolling during card drags, use the dynamic mobile viewport height, and recommend landscape on narrow phones without blocking portrait play.
 - Keep the standard desktop interaction path unchanged when Touch mode is off.
 
+[0.28.0]: https://github.com/ccall1212/commander-table/compare/v0.27.0...v0.28.0
 [0.27.0]: https://github.com/ccall1212/commander-table/compare/v0.26.0...v0.27.0
 [0.26.0]: https://github.com/ccall1212/commander-table/compare/v0.24.0...v0.26.0
 [0.24.0]: https://github.com/ccall1212/commander-table/compare/v0.23.0...v0.24.0

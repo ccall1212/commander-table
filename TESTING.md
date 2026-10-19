@@ -207,3 +207,24 @@ Browser validation is required before publishing. If audio is blocked until a ge
 9. Confirm no console errors. Ensure participating tabs run the v0.27.0 candidate; older clients do not display individual reveals.
 
 **Tested by Chris (2026-10-19):** confirmed the individually revealed card displays face-up in the opponent's hand. Found that its large preview remained visible when the pointer moved over other face-down cards, then disappeared on leaving the hand. A follow-up fix now clears that stale preview on anonymous card backs; retest step 8 after downloading the updated candidate.
+
+
+# Manual test checklist — browse and edit deck printings before a game (v0.28.0 candidate)
+
+## Start the app
+1. Extract this ZIP.
+2. In the extracted project folder, run `python -m http.server 8099 --bind 127.0.0.1`.
+3. Open `http://127.0.0.1:8099/index.html`.
+
+## Deck editor checks
+1. Import and save a deck with a commander and a main deck, then select it in the lobby. **Browse / Edit deck** should be enabled. Confirm the editor shows the commander(s), all main-deck cards, a small current-art thumbnail, and printing details. The number of displayed card copies should match the deck count.
+2. Click **Change printing…** on a card. Search the printing picker by set name, set code, collector number, and year. Choose a different printing and confirm that row's art/details update.
+3. Use a card that has at least three copies in the list. Change the printing of just one copy. Confirm its other copies still show the original printing, the deck card count stays unchanged, and another card row remains untouched.
+4. Change the printing of a commander and verify it updates too. Confirm none of the changes alter card names, quantities, commanders, or card rules.
+5. Close and reopen **Browse / Edit deck**. Confirm all choices remain. Reload the page, select the same saved deck, and confirm the new printings still appear.
+6. Start a game with that saved deck. Confirm the selected printings are used by the cards in the game.
+7. Repeat with a deck that was already saved before this feature, then test a newly imported deck. Check that decks without printing details still render safely.
+8. Test the editor at desktop widths around **1920×1080** and **1366×768**, plus a narrow/mobile-sized window. The list should scroll internally and remain usable; the existing lobby import and Host/Join/Practice buttons should still work.
+9. Disconnect from the network or simulate a Scryfall lookup failure, then open a printing picker. Expect a readable error and no loss of the saved deck. Check the browser console for errors.
+
+**Expected:** deck editing is optional before starting a game; changes are saved locally per browser and used by future games; changing one of several copies affects only that copy.

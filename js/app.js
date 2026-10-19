@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.27.0';
+const APP_VERSION = '0.28.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -4307,6 +4307,7 @@ function renderDeckList() {
       <input type="radio" name="deck" ${d.id === selDeck ? 'checked' : ''} tabindex="-1">
       <span class="dn">${esc(d.name)}</span><span class="dc">${esc(d.commanderNames.join(' + ') || 'no commander')} · ${d.count} cards</span>
       <button class="x" data-del="${esc(d.id)}" title="Delete deck">✕</button></div>`).join('');
+  $('#editDeckBtn').disabled = !selDeck || !Deck.get(selDeck);
 }
 function bindLobby() {
   $('#ver').textContent = APP_VERSION;
@@ -4316,16 +4317,26 @@ function bindLobby() {
   $('#customBackgroundFile').addEventListener('change', e => readCustomImage(e.target.files && e.target.files[0], 'background'));
   $('#resetCustomBack').addEventListener('click', () => resetCustomImage('cardBack'));
   $('#resetCustomBackground').addEventListener('click', () => resetCustomImage('background'));
+  $('#editDeckBtn').onclick = () => {
+    if (!selDeck) { UI.toast('Select or import a saved deck first.', { kind: 'warn' }); return; }
+    CTDeckEditor.open(selDeck, renderDeckList);
+  };
   $('#deckList').addEventListener('click', async e => {
     const del = e.target.closest('[data-del]');
     if (del) {
       e.stopPropagation();
       const d = Deck.get(del.dataset.del);
-      if (d && await UI.confirm(`Delete the deck “${d.name}”?`, { danger: true, okLabel: 'Delete' })) { Deck.remove(d.id); renderDeckList(); }
+      if (d && await UI.confirm(`Delete the deck “${d.name}”?`, { danger: true, okLabel: 'Delete' })) {
+        if (selDeck === d.id) CTDeckEditor.close();
+        Deck.remove(d.id); renderDeckList();
+      }
       return;
     }
     const row = e.target.closest('[data-deck]');
-    if (row) { selDeck = row.dataset.deck; LS.set('ct.selDeck', selDeck); renderDeckList(); }
+    if (row) {
+      if (selDeck !== row.dataset.deck) CTDeckEditor.close();
+      selDeck = row.dataset.deck; LS.set('ct.selDeck', selDeck); renderDeckList();
+    }
   });
   $('#importBtn').onclick = () => { $('#importBox').classList.remove('hidden'); $('#importBtn').classList.add('hidden'); $('#deckText').focus(); };
   $('#cancelImport').onclick = closeImport;
