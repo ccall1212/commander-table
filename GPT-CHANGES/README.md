@@ -12,9 +12,9 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 
 ## Current state
 
-- **Main version:** v0.23.0; [PR #40](https://github.com/ccall1212/commander-table/pull/40) merged to `main` at commit [2eda1b2](https://github.com/ccall1212/commander-table/commit/2eda1b24f7a440f5ac97e8fb63d5554cc537ad67). Chris tested the direct life-total entry and poison warning; the follow-up adds a lethal-poison concede prompt at 10+ poison counters.
-- **Release housekeeping:** create annotated tag `v0.23.0` pointing to `2eda1b24f7a440f5ac97e8fb63d5554cc537ad67` and delete merged branch `feat/direct-life-poison-warning` in GitHub.
-- **In progress:** Objective #23, T hotkey opens the existing Token menu on empty space on the current player's battlefield, on branch `feat/token-hotkey` ([PR #41](https://github.com/ccall1212/commander-table/pull/41)). The candidate branch is v0.24.0; do not merge until Chris has tested it and explicitly approves publishing.
+- **Main version:** v0.24.0; [PR #41](https://github.com/ccall1212/commander-table/pull/41) merged to `main` at commit [071e656](https://github.com/ccall1212/commander-table/commit/071e6563130595e9b62f4ba8129f7a53d048a291). Objective #23 shipped: **T** opens the existing Token menu on empty space on the current player's battlefield, preserving the card/hand shortcuts.
+- **Release housekeeping:** create annotated tag `v0.24.0` pointing to `071e6563130595e9b62f4ba8129f7a53d048a291` and delete merged branch `feat/token-hotkey` in GitHub. The older `v0.23.0` annotated tag is also still required at `2eda1b24f7a440f5ac97e8fb63d5554cc537ad67`; delete its merged branch `feat/direct-life-poison-warning` if it remains.
+- **Release:** v0.23.0 and v0.24.0 app code is merged to `main`; GitHub Pages deployment for v0.24.0 must be verified after the deployment job completes.
 - **Objective #21 shipped:** lethal Concede prompts and red zero-library count are included in v0.22.3. The required annotated tag `v0.22.3` must point to `1f667cb831be234225c22dbac07b08cf55e9bd31`.
 - **Objective #19 shipped:** compact white P/T badge with independently clickable power and toughness, separate adjustment menu controls, and a visible full-half-pill hover/focus highlight are included in v0.22.4 via PR #38.
 - **Touch mode:** v0.22.0 and the iOS Safari drag-viewport follow-up v0.22.1 are merged to `main` (PRs #32 and #33).
@@ -33,6 +33,8 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
   - `v0.22.2` → `66c611e93d393c40246fa51b21338758f22303eb`
   - `v0.22.3` → `1f667cb831be234225c22dbac07b08cf55e9bd31`
   - `v0.22.4` → `a0aac816d99caa37d89e414f028056e09ec35c2d`
+  - `v0.23.0` → `2eda1b24f7a440f5ac97e8fb63d5554cc537ad67`
+  - `v0.24.0` → `071e6563130595e9b62f4ba8129f7a53d048a291`
   Use annotated tags (for example, with Claude Code). Until the release tags exist, the GitHub version badge may not show the latest app version.
 ## How a change gets released
 
