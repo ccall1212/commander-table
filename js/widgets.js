@@ -557,7 +557,9 @@
     const sortWrap = h('label', 'w-v-sortwrap');
     sortWrap.appendChild(h('span', 'w-v-sortlabel', 'Sort'));
     const sortSel = h('select', 'w-select w-v-sort');
-    [['zone', 'Deck order'], ['name', 'Name'], ['type', 'Card type'], ['color', 'Color identity'], ['cmc', 'Mana value']].forEach(([v, l]) => {
+    const sortOptions = [['zone', 'Zone order'], ['name', 'Name'], ['cmc', 'Mana value'], ['type', 'Type']];
+    if (opts.colorSort) sortOptions.push(['color', 'Color identity']);
+    sortOptions.forEach(([v, l]) => {
       const op = h('option', null, l);
       op.value = v;
       sortSel.appendChild(op);
@@ -882,6 +884,7 @@
       const r = displayed[i];
       if (!r) return;
       if (pick) { toggleSel(r.iid); return; }
+      if (typeof opts.onCardClick === 'function') { opts.onCardClick(r.d, r.iid); return; }
       const el = elCache.get(r.iid).el.getBoundingClientRect();
       openMenu(r.iid, el.left + 24, el.top + 48);
     }
