@@ -196,11 +196,11 @@ Browser validation is required before publishing. If audio is blocked until a ge
 5. Stop the server with Ctrl+C when finished.
 
 ## Reveal checks
-1. In the host tab, right-click one card in your hand and choose **Reveal to everyone**. In the opponent tab, expect that exact card to turn face-up in its normal spot in the hand fan; the rest remain face-down.
+1. In the host tab, right-click one card in your hand and choose **Reveal to everyone**. In the opponent tab, expect that exact card to turn face-up in its normal spot in the hand fan, with the rest face-down. When you view that opponent's board, the same card must also be face-up in the larger bottom hand strip.
 2. Repeat from the joining player's hand. Both players should see that card revealed in the opponent's hand area without opening the game log.
 3. Right-click the same card and choose **Hide from everyone**. It should turn back into a card back on the opponent's screen.
 4. Confirm the game log still records both the reveal/hide actions and no other card in the hand is exposed.
 5. Move a revealed card out of the hand, then return it to the hand if possible. It should no longer be revealed automatically.
 6. Try **Reveal my hand to everyone** separately. It should still reveal the entire hand; turning that option off should leave any individually revealed cards face-up.
-7. Switch between Sidebar and Grid at roughly 1920×1080 and 1366×768. Also test viewing the opponent's board large and a narrower/mobile-sized window.
+7. Switch between Sidebar and Grid at roughly 1920×1080 and 1366×768. Check the compact opponent hand fan, the larger bottom hand strip while viewing an opponent, and the Grid miniature. Also try a narrower/mobile-sized window.
 8. Confirm no console errors. Ensure participating tabs run the v0.27.0 candidate; older clients do not display individual reveals.
