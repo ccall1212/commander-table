@@ -133,3 +133,15 @@ Expected: manual power-only changes never alter toughness; manual toughness-only
 8. Check Sidebar and Grid at approximately 1920×1080 and 1366×768.
 9. If possible, host in one tab and join from a second. Verify clicks on either stat update the same single stat for both players.
 10. Check the browser console for errors, then stop the server with Ctrl+C.
+
+
+# Manual test checklist — direct life totals and poison warning (v0.23.0 candidate)
+
+1. Extract the test ZIP and run `python -m http.server 8099 --bind 127.0.0.1` from the extracted folder, then open `http://127.0.0.1:8099/index.html`.
+2. In Practice solo, click the life number itself (not +/−), enter `70`, confirm, and verify the total becomes 70. Repeat with `12`. Confirm Cancel, Escape, and backdrop dismissal leave the total unchanged. Try a decimal and verify it is rejected with a clear message.
+3. With a second browser tab joined to the same room, click the first player's life number from the second tab and set it to 70; verify the owning player's total and both tabs update, then set it below 0 and confirm the existing lethal-life prompt still works. Check the action log records the change.
+4. Open the counters dropdown and adjust Poison to 9, 10, and 11. The poison total should be normal at 9 and red at 10 and 11. Decrease back to 9 and confirm the red warning clears.
+5. From a second player, increase/decrease the player's poison counters if the existing controls allow it; verify all players see the warning state update consistently.
+6. Repeat the poison and direct-life checks in Sidebar and Grid at 1920×1080 and 1366×768. Check the browser console for errors.
+7. Stop the local server with Ctrl+C.
+
