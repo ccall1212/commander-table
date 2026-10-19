@@ -14,7 +14,7 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 
 - **Main version:** v0.23.0; [PR #40](https://github.com/ccall1212/commander-table/pull/40) merged to `main` at commit [2eda1b2](https://github.com/ccall1212/commander-table/commit/2eda1b24f7a440f5ac97e8fb63d5554cc537ad67). Chris tested the direct life-total entry and poison warning; the follow-up adds a lethal-poison concede prompt at 10+ poison counters.
 - **Release housekeeping:** create annotated tag `v0.23.0` pointing to `2eda1b24f7a440f5ac97e8fb63d5554cc537ad67` and delete merged branch `feat/direct-life-poison-warning` in GitHub.
-- **In progress:** Objective #23, T hotkey opens the existing Token menu on empty space on the current player's battlefield, on branch `feat/token-hotkey`. The candidate branch is v0.24.0; do not merge until Chris has tested it and explicitly approves publishing.
+- **In progress:** Objective #23, T hotkey opens the existing Token menu on empty space on the current player's battlefield, on branch `feat/token-hotkey` ([PR #41](https://github.com/ccall1212/commander-table/pull/41)). The candidate branch is v0.24.0; do not merge until Chris has tested it and explicitly approves publishing.
 - **Objective #21 shipped:** lethal Concede prompts and red zero-library count are included in v0.22.3. The required annotated tag `v0.22.3` must point to `1f667cb831be234225c22dbac07b08cf55e9bd31`.
 - **Objective #19 shipped:** compact white P/T badge with independently clickable power and toughness, separate adjustment menu controls, and a visible full-half-pill hover/focus highlight are included in v0.22.4 via PR #38.
 - **Touch mode:** v0.22.0 and the iOS Safari drag-viewport follow-up v0.22.1 are merged to `main` (PRs #32 and #33).
