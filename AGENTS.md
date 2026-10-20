@@ -116,7 +116,7 @@ Read this before changing layout or anything that finds elements on the page. Se
 
 - Build the ZIP from the branch/commit being proposed in the PR, not from `main` and not from an older commit.
 - Include the complete runnable project source needed to test the change. Exclude `.git` history and local secrets.
-- Include a short `TESTING.md` in the ZIP with simple instructions to extract the archive, start the local server with `python -m http.server 8099 --bind 127.0.0.1`, and open `http://127.0.0.1:8099/index.html`.
+- Include a short `TESTING.md` in the ZIP. **Chris tests by downloading the ZIP, extracting it, and double-clicking `index.html`. He does not run Python, a terminal, or a local server.** Make this the normal test flow. If a particular test truly requires a hosted service, prepare that service or explain the specific requirement instead of assuming Chris will run commands.
 - Check the archive contains the intended files and matches the PR head commit before sharing it. Link the ZIP directly in the PR description and in the message to Chris.
 - Keep the ZIP as a test copy only; do not publish it or merge the PR. Wait for Chris's explicit approval before publishing.
 - If a ZIP cannot be generated, explain the blocker and do not claim that one was provided.
@@ -130,7 +130,7 @@ Read this before changing layout or anything that finds elements on the page. Se
    ```
 2. **Work on a branch:** `feat/<short-name>` or `fix/<short-name>` (or `docs/<short-name>` for documentation bundled with a game change). Never commit game changes straight to `main`; routine documentation-only updates use the exception above.
 3. **Make the change.**
-4. **Test it in a browser** (from the repo folder):
+4. **Test it in a browser.** Chris's test flow is to extract the ZIP and double-click `index.html`; do not ask him to run Python or a terminal. An assistant with browser access may optionally run a local server for its own HTTP-specific checks (from the repo folder):
    ```bash
    python -m http.server 8099 --bind 127.0.0.1
    ```
