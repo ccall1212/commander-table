@@ -2,7 +2,8 @@
 
 Read this before changing anything. It describes how every change has been made and released so far.
 The owner is Chris (GitHub `ccall1212`). He is not a programmer: explain things in plain language,
-and **never push to `main` or publish without his explicit OK** ("publish" / "push"). Also read [GPT-CHANGES/README.md](GPT-CHANGES/README.md): it lists the open work (feature backlog, the paused deck-import PR) and nothing else.
+and **never publish game changes to `main` without his explicit OK** ("publish" / "push").
+Routine documentation-only updates (including `AGENTS.md`, objectives, and handoff notes) may be committed directly to `main` without asking for approval. Also read [GPT-CHANGES/README.md](GPT-CHANGES/README.md): it lists the open work (feature backlog, the paused deck-import PR) and nothing else.
 
 ## Who does what
 
@@ -11,12 +12,19 @@ This is Chris's personal project. **ChatGPT (his personal account) is the main a
 | | ChatGPT (via GitHub) | Claude Code (backup) |
 |---|---|---|
 | Writes code on a branch / PR | ✅ main job | ✅ if asked |
-| Merges a PR / publishes to `main` | ✅ only when Chris says "publish" | ✅ if asked |
+| Merges a game PR / publishes game changes to `main` | ✅ only when Chris says "publish" / "push" | ✅ if asked |
+| Maintains documentation only on `main` | ✅ no extra approval required | ✅ if asked |
 | Creates annotated release tags | GitHub Actions does this automatically when the version lands on `main`; never hand-create as routine | same automatic workflow; manual recovery only if Chris explicitly authorizes it |
 | Runs the game in a browser, multi-player tests | ❌ | ✅ |
 | Fixes hard bugs, anything needing a real shell | tries first | ✅ if ChatGPT is stuck |
 
-The normal flow is:
+### Documentation-only updates
+
+Routine updates to `AGENTS.md`, `GPT-CHANGES/` (including objectives), and other documentation may go directly to `main` without a separate branch, PR, or approval request. Check the text for accuracy and summarize the changes in chat. No app version bump, release tag, test ZIP, or browser test is needed for documentation-only updates. This exception does not cover game code, styles, assets, networking, deployment configuration, or changes bundled with game changes; those follow the game workflow below.
+
+Keep review information in chat: describe what changed, what was checked, and anything Chris needs to decide, so he does not need to leave the chat to review routine work.
+
+The normal flow for game changes is:
 1. **ChatGPT** makes the change on a branch and opens a PR, following the routine below. It can't run a
    browser, so it does the checks it *can* do (below) and writes a short click list for Chris.
 2. **Chris tests it himself** in his own browser (usually the local or preview copy) and tells ChatGPT how it went.
@@ -48,7 +56,7 @@ The normal flow is:
 - **Write the test list** in the PR or commit: the exact clicks and keys to try, how many players, which
   layout (Sidebar / Grid) and screen size, and what should happen.
 - **Be honest about what was checked by whom.** Never write "tested" for something only read in the code; do write "tested by Chris" for what he told you he tried.
-- Don't merge to `main` without Chris's explicit approval, manually create/move release tags as part of the normal flow, or bump past a version that's already tagged.
+- Don't merge game changes to `main` without Chris's explicit approval, manually create/move release tags as part of the normal flow, or bump past a version that's already tagged. Routine documentation-only updates follow the exception above.
 
 ## What this is
 
@@ -113,14 +121,14 @@ Read this before changing layout or anything that finds elements on the page. Se
 - Keep the ZIP as a test copy only; do not publish it or merge the PR. Wait for Chris's explicit approval before publishing.
 - If a ZIP cannot be generated, explain the blocker and do not claim that one was provided.
 
-## The routine for every change
+## The routine for every game change
 
 1. **Start clean from the latest `main`**
    ```bash
    git switch main && git pull --ff-only
    git status            # must be clean
    ```
-2. **Work on a branch:** `feat/<short-name>`, `fix/<short-name>` or `docs/<short-name>`. Never commit straight to `main`.
+2. **Work on a branch:** `feat/<short-name>` or `fix/<short-name>` (or `docs/<short-name>` for documentation bundled with a game change). Never commit game changes straight to `main`; routine documentation-only updates use the exception above.
 3. **Make the change.**
 4. **Test it in a browser** (from the repo folder):
    ```bash
