@@ -18,7 +18,11 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 - **Open work:** see `OBJECTIVES.md`.
 - **Slam sound:** Chris wants to keep refining the Commander slam sound. Do that on a separate branch and leave the published behaviour alone until he approves.
 
-## How a change gets released
+## Documentation upkeep
+
+Routine documentation-only updates, including `AGENTS.md`, objectives, and handoff notes, may go directly to `main` without a separate branch, PR, or approval request. Check accuracy and report the changes in chat. No app version bump, release tag, test ZIP, or browser testing is required. Game changes still require the branch, testing, and approval process below; documentation bundled with a game change follows that same process.
+
+## How a game change gets released
 
 1. ChatGPT makes a focused branch and PR, includes the test ZIP and simple testing steps, and runs the available syntax/code checks.
 2. Chris tests the branch in his browser and reports what he tried. Record his testing accurately; don't claim tests he didn't perform.
