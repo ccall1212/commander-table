@@ -4,13 +4,7 @@ This ZIP is a preview for local testing. It does not publish the game.
 
 ## Start
 
-Extract the ZIP, open a terminal in the extracted project folder, and run:
-
-```text
-python -m http.server 8099 --bind 127.0.0.1
-```
-
-Open http://127.0.0.1:8099/index.html. Keep the terminal open; Ctrl+C stops it.
+Download this ZIP, extract it, and double-click **index.html** in the extracted folder. That is all—no Python, terminal, installation, or local server is needed. Keep internet access on for card images and online multiplayer.
 
 ## Check the arrow
 
@@ -30,6 +24,8 @@ Open http://127.0.0.1:8099/index.html. Keep the terminal open; Ctrl+C stops it.
 - Syntax-check `js/app.js` and `js/targeting.js`. These automated checks do not establish visual layout, touch behavior, or real multiplayer browser results.
 
 ---
+
+The older checklists below are historical reference. For this test, use the extract-and-open instructions above; you do not need their old local-server commands.
 
 # Manual test checklist — Commander slam animation (v0.20.5 candidate)
 
