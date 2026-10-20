@@ -25,7 +25,7 @@ The Commander-to-battlefield slam animation and synthesized impact sound are pub
 - Ordinary card placements and battlefield repositioning should use the softer tap; Commander casts use the heavier boom and longer color-identity ring.
 - **Where to look:** card moves go through `moveCard()` / `doMove()` in `js/app.js`. The draw-card animation (`animateDrawCard()` and the `drawfx` message) is a working example of a click-through overlay effect that other players also see.
 
-## 9. Choose a random deck from Archidekt or Moxfield — PAUSED
+## 9. Choose a random deck from Archidekt or Moxfield — IN PROGRESS (draft PR #11; separate test Worker/live checks still required)
 
 See [PR-11-DECK-IMPORT-INVESTIGATION.md](PR-11-DECK-IMPORT-INVESTIGATION.md). Draft PR #11. Do not merge or publish it until the live tests listed there pass.
 

@@ -1,3 +1,31 @@
+# Website import — v0.30.0 draft test copy
+
+Download this ZIP, extract it, and double-click **index.html**. No Python, terminal, installation or local server is needed.
+
+Normal plain-text import, saved decks and game entry work immediately. The collapsed **Website import — test preview** panel additionally needs the separate Cloudflare test service. See `deck-import-test/README.md` for the browser-only setup. Do not use the live game relay.
+
+## Website import checks (after the test service exists)
+
+1. Open the panel, paste the test service address and select **Use test service**. Use `https://archidekt.com/decks/27632092` as a public example: it had 103 cards, one commander and seven excluded Maybeboard cards when recorded. Live contents may change.
+2. Use `https://moxfield.com/decks/pdJTEzRX-EGD3kigoGdm5Q`. The recorded public deck had one commander plus 99 main-deck cards. If Moxfield blocks requests from Cloudflare, confirm a readable message and use its Plain Text export via **+ Import a deck**; report that outcome honestly.
+3. Review quantities/commander/printing in the ordinary import result and click **Save deck**. Open the saved deck in Deck Builder, inspect it, and start Practice solo.
+4. Try random Archidekt decks at brackets 1, 2, 3 and 4. A result must be a full 100-card Commander deck with an explicitly confirmed matching provider bracket. Unknown/mismatched brackets and incomplete decks must not be labeled matches. No-match is a valid result for a bounded sample.
+5. Try malformed links, a private/deleted deck, a refused test-service URL (the production relay), and unavailable service. Controls should recover and manual plain-text import should still work.
+6. Start a manual text import and then try website import. It must not overwrite the open manual list. Cancel the manual import and retry. No website result should save automatically.
+7. Check the lobby at 1920×1080 and 1366×768, normal saved Deck Builder, host/join with two players, Sidebar/Grid, and console errors. Both players should run the same test copy.
+
+## Checks already run
+
+- Real public HTTP provider responses recorded on 2026-10-20; minimized fixtures contain card names/quantities/categories/printings, without account data or rules text.
+- `tests/test_deck_import.cjs` checks those fixtures, strict bracket handling and pagination, public/complete-deck selection, URL/route/origin validation including local-file Origin null, refusal handling, non-JSON and oversized/streamed responses.
+- JavaScript syntax and version/cache-link checks; all 16 protocol tests against the local LAN reference server pass. These are not deployed Cloudflare or browser tests.
+
+This draft is not published. The test service has not been deployed by the assistant, so real Cloudflare/provider/CORS/browser results remain pending.
+
+---
+
+Historical checklists below are reference only. Use extract-and-open above; their old local-server commands are not needed for Chris's test flow.
+
 # Manual test checklist — Commander slam animation (v0.20.5 candidate)
 
 ## Start the app

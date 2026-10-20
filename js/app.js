@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.28.1';
+const APP_VERSION = '0.30.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -4380,6 +4380,14 @@ function bindLobby() {
   $('#importBtn').onclick = () => { $('#importBox').classList.remove('hidden'); $('#importBtn').classList.add('hidden'); $('#deckText').focus(); };
   $('#cancelImport').onclick = closeImport;
   $('#loadDeck').onclick = loadDeck;
+  CTDeckImport.bind(async text => {
+    if ($('#loadDeck').disabled || (!$('#importBox').classList.contains('hidden') && $('#deckText').value.trim()))
+      throw new Error('Finish or cancel your current plain-text import first, then try the website import again.');
+    $('#importBox').classList.remove('hidden'); $('#importBtn').classList.add('hidden');
+    $('#deckText').value = text; $('#impResult').innerHTML = '';
+    await loadDeck();
+    if (!$('#impResult').querySelector('#saveDeck')) throw new Error('Card lookup did not finish. The fetched text is available below to retry.');
+  });
   $('#nameIn').addEventListener('change', () => LS.set('ct.name', $('#nameIn').value.trim()));
   $('#hostBtn').onclick = () => begin('host');
   $('#soloBtn').onclick = () => begin('solo');

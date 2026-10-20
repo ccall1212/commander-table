@@ -4,7 +4,18 @@ All notable changes to Commander Table are listed here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/). Each release is tagged `vX.Y.Z` in git.
 
-## [Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.28.1...HEAD
+## [Unreleased]
+
+## [0.30.0] - 2026-10-20
+
+### Added
+- Draft website-import test panel for public Archidekt/Moxfield deck links and random Archidekt Commander decks with confirmed brackets 1–4. The panel requires a separate test service and is not approved for the live game yet.
+
+### Fixed
+- Accept numeric Archidekt deck IDs, preserve real main-deck cards in user categories named Tokens, and check the full deck's explicit bracket and 100-card count before accepting a random result.
+
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.30.0...HEAD
+[0.30.0]: https://github.com/ccall1212/commander-table/compare/v0.28.1...v0.30.0
 
 ## [0.28.1] - 2026-10-19
 

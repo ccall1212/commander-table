@@ -13,7 +13,7 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 ## Current state
 
 - **Version:** the newest entry in `CHANGELOG.md` (do not write a version number here; it goes stale).
-- **Paused:** draft [PR #11](https://github.com/ccall1212/commander-table/pull/11), random deck selection / website import. Do not merge until its listed live tests pass.
+- **In progress, still draft:** [PR #11](https://github.com/ccall1212/commander-table/pull/11), website import/random Archidekt decks. Recovery candidate v0.30.0 requires the separate HTTP-only test Worker and listed live checks. Do not merge/deploy to the live relay before Chris approves.
 - **Layouts:** Sidebar and Grid only.
 - **Open work:** see `OBJECTIVES.md`.
 - **Slam sound:** Chris wants to keep refining the Commander slam sound. Do that on a separate branch and leave the published behaviour alone until he approves.
@@ -31,6 +31,6 @@ Routine documentation-only updates, including `AGENTS.md`, objectives, and hando
 
 ## Known things that are not your problem
 
-- **A red ✗ on commits named "Workers Builds: commander-table-relay"** is a Cloudflare build for the online-play relay. It is a Cloudflare configuration issue on Chris's side (the build appears to fail at the very start, before running any of this repository's code), it does not affect the game website or the live relay, and the `relay/` code is unchanged. Ignore it unless you edited `relay/`.
+- **Historical red Workers Builds checks:** Chris identified failed branch previews running `npx wrangler preview` without previews configuration. Production deployments were successful, including the latest main commit. Chris disabled preview builds on 2026-10-20; old failed checks remain historical. New failures must be inspected rather than assumed harmless.
 - You cannot run a real browser or hear audio. Chris's testing is the browser test; don't describe code review as browser testing.
 - The GitHub connector cannot delete branches. After a merge, say which branch to delete or ask Chris to use GitHub's **Delete branch** button. (GitHub's setting "Automatically delete head branches" does this on its own.)

@@ -1,0 +1,7 @@
+{
+  "name": "commander-table-deck-import-test",
+  "main": "../relay/deck-test-worker.js",
+  "compatibility_date": "2025-09-01",
+  "workers_dev": true,
+  "preview_urls": false
+}

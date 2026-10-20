@@ -35,6 +35,16 @@ Before starting a game, use **Your look** on the opening screen to choose from 1
 
 Decks are saved in your browser. Select a saved deck and choose **Deck Builder** to browse its cards as a large image grid like the in-game Library search. Hover a card to see its enlarged preview. Use the card-type chips to filter (such as Artifacts or Creatures), or sort by name, type, color identity or mana value. Use the **×** on a card to remove one copy; **+ Add card** searches Scryfall as you type, and clicking a result adds it. Right-click a card for **Change printing…** or **Set as commander**. The printing picker can change one copy or use the selected printing for **ALL copies** of that card (useful for basic lands). **Export deck** opens **Export Options**: **Copy for Moxfield** keeps the current format including set/collector numbers, **Copy Plain Text** gives a simple names-and-quantities list, and **Download .txt** saves whichever format is selected. Arena and MTGO exports are not included. Your edits are saved with that deck in this browser and are used in future games.
 
+## Website import test preview (draft only)
+
+The draft test copy includes a collapsed **Website import — test preview** panel in the lobby. It needs the separately deployed test service described in `deck-import-test/README.md`; the live game relay is deliberately refused. Download the test ZIP, extract it and double-click `index.html`; no local server is needed.
+
+Paste the test service address, select **Use test service**, then import a public Archidekt or Moxfield deck link, or choose an Archidekt bracket 1–4 and **Find a random deck**. The result goes through the usual card lookup, commander review and **Save deck** flow. Nothing is saved automatically. Finish/cancel an existing plain-text import before replacing it with a website import.
+
+Random selection samples up to four recent public-deck pages and checks at most twelve full decks. It requires an explicitly reported matching bracket, Commander format, one or two commanders, and exactly 100 cards. Unknown brackets and incomplete decks are skipped. Brackets are provider/user labels, not a guarantee of power level. Moxfield random search is unavailable without approved API access. If any provider blocks a request, normal plain-text export/import remains available.
+
+This work is not released. Cloudflare-origin provider access, browser CORS, all four bracket searches, and normal lobby regressions still need live testing before the draft can be published.
+
 ## Playing a game
 
 - One person clicks **Host a game** and gets a 5-letter room code. Click the code in the top-left to copy an invite link, and send it to your friends. (☰ → **Copy invite link** does the same thing.)

@@ -4,6 +4,7 @@
 //   { id: string|null, key: string|null, links: { [lid]: otherPeerId }, dead?: true }
 
 import { DurableObject } from "cloudflare:workers";
+import { handleDeckApi } from "./deck-api.js";
 
 // ---- Config (edit here) ---------------------------------------------------------------------
 // Origins allowed to open a room socket. Strings = exact match; RegExps = tested against Origin.
@@ -38,7 +39,7 @@ function corsHeaders(origin) {
 
 // ---- Worker entry ----------------------------------------------------------------------------
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const origin = request.headers.get("Origin");
     const okOrigin = originAllowed(origin);
@@ -52,6 +53,8 @@ export default {
       if (okOrigin) Object.assign(headers, corsHeaders(origin));
       return new Response(JSON.stringify({ ok: true, v: VERSION }), { status: 200, headers });
     }
+
+    if (url.pathname === '/deck-api') return handleDeckApi(request, ctx);
 
     const m = /^\/room\/([^/]+)$/.exec(url.pathname);
     if (m && request.headers.get("Upgrade")?.toLowerCase() === "websocket") {
