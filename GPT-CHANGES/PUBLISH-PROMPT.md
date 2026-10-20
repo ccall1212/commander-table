@@ -1,6 +1,8 @@
 # Reusable prompt: prepare, test and publish a Commander Table release
 
-Copy the prompt below into ChatGPT whenever a release is wanted. Replace the bracketed parts.
+Copy the prompt below into ChatGPT whenever a game release is wanted. Replace the bracketed parts.
+
+Routine documentation-only updates (including `AGENTS.md`, objectives, and handoff notes) may go directly to `main` without a separate branch, PR, or approval request. They do not need an app version bump, release tag, test ZIP, or browser testing. The release workflow below applies to game changes, including documentation bundled with them.
 
 ---
 
