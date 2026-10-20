@@ -116,7 +116,7 @@ Read this before changing layout or anything that finds elements on the page. Se
 - **Practice solo skips the network path.** In solo, `toHost()` calls `hostRecv()` directly, and some effects run locally instead of going through the host. A new message must also be tested by sending it through `hostRecv()` (or with a second tab), otherwise a broken host check hides until someone plays online. The Commander slam shipped (v0.20.0 to v0.20.2) with a host check that rejected every card id because of this.
 - **Regex literals: write `\w`, not `\\w`.** Inside `/.../` a doubled backslash means "a literal backslash". Test a validation regex against a real id such as `p6u6wnase_1` before relying on it.
 - **Cache-busting:** after any CSS/JS change run `tools/bump-version.py`; the browser (and the live site, for about 10 minutes) otherwise serves old files.
-- **Tags and branches:** the release tag is created automatically (`.github/workflows/tag-release.yml`); delete a branch once its PR is merged.
+- **Tags and branches:** the release tag is created automatically (`.github/workflows/tag-release.yml`). Chris wants merged feature/fix/documentation branches deleted as the normal default, without another approval request. Keep GitHub's **Automatically delete head branches** setting enabled and verify cleanup after every merge. Preserve `main`, protected/long-lived branches, open or paused work (including PR #11), and any branch with additional unmerged commits.
 
 ## Required test ZIP for Chris
 
@@ -176,7 +176,7 @@ Read this before changing layout or anything that finds elements on the page. Se
     - Wait for the automatic tag creation, then verify both the tag and its target. Fetch `GET /repos/ccall1212/commander-table/git/ref/tags/vX.Y.Z`. For an annotated tag, follow the returned tag-object SHA with `GET /repos/ccall1212/commander-table/git/tags/<tag-object-sha>`; its `object.sha` must equal the actual merge commit SHA on `main`. Don't assume the PR branch head and the squash-merge commit are the same SHA.
     - If the tag is missing or targets the wrong commit, inspect the Actions run/workflow result and report the blocker to Chris. **Do not manually create, move, or rewrite the tag** unless Chris separately authorizes that recovery.
     - Verify `main` has the intended app version and release docs. Then check the live GitHub Pages site for that version; keep deployment marked pending/unverified until the live page confirms it.
-    - Delete the merged branch if your available GitHub tools support it. If they do not, tell Chris to use the PR's **Delete branch** button; don't imply it was deleted.
+    - Verify the merged PR's head branch was deleted automatically. If it remains, verify the PR is merged, the branch still points to the merged/approved head, and no open work depends on it; then delete it using an available authorized GitHub tool or authenticated Git CLI. Git's existing credential helper may work even when the connector lacks branch-deletion tools. Use an expected-head check/lease to avoid deleting new unmerged work. Do not install tools or expose credentials. If cleanup is blocked, report the specific blocker and remaining branch rather than treating cleanup as optional or claiming deletion.
     - Do not change the version badge in `README.md`: it follows the newest release tag automatically.
 11. **Verify the live site** about a minute later:
     - `https://ccall1212.github.io/commander-table/` shows `<meta name="app-version" content="X.Y.Z">`
