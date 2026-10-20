@@ -4,7 +4,15 @@ All notable changes to Commander Table are listed here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/). Each release is tagged `vX.Y.Z` in git.
 
-## [Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.28.1...HEAD
+## [Unreleased]
+
+## [0.28.2] - 2026-10-20
+
+### Fixed
+- Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
+
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.28.2...HEAD
+[0.28.2]: https://github.com/ccall1212/commander-table/compare/v0.28.1...v0.28.2
 
 ## [0.28.1] - 2026-10-19
 
