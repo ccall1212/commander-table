@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.28.1';
+const APP_VERSION = '0.29.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -123,7 +123,8 @@ const S = {
   regionDrag: null,
   viewers: new Set(),
   touchMode: !!LS.get('ct.touchMode', false),
-  touchPreview: null
+  touchPreview: null,
+  targetArrow: null, arrowPick: null
 };
 
 const pname = pid => (pid === S.pid && S.me) ? S.me.name : ((S.players[pid] && S.players[pid].name) || 'Someone');
@@ -334,10 +335,18 @@ function hostRecv(msg, from) {
       S.players[from] = p;
       seat(from);
       broadcast({ t: 'pub', p });
+      if (S.targetArrow && !CTTargeting.clean(S.targetArrow, S.players, S.table.seats)) broadcast({ t: 'arrow', arrow: null });
       break;
     }
     case 'log': { const e = cleanLog(msg, from); if (e) broadcast({ t: 'log', e }); break; }
     case 'chat': { const e = cleanChatMessage(msg, from); if (e) broadcast({ t: 'chat', e }); break; }
+    case 'arrow': {
+      if (!S.table.seats.includes(from)) return;
+      if (msg.arrow === null) { broadcast({ t: 'arrow', arrow: null }); break; }
+      const arrow = CTTargeting.clean({ by: from, from: msg.arrow && msg.arrow.from, to: msg.arrow && msg.arrow.to }, S.players, S.table.seats);
+      if (arrow) broadcast({ t: 'arrow', arrow });
+      break;
+    }
     case 'drawfx': {
       if (!S.table.seats.includes(from)) return;
       const count = clamp(Math.floor(num(msg.count, 1)), 1, 5);
@@ -688,6 +697,7 @@ function onBroadcast(msg) {
       }
       break;
     }
+    case 'arrow': S.targetArrow = CTTargeting.clean(msg.arrow, S.players, (S.table && S.table.seats) || []); refreshTargeting(); break;
     case 'drawfx': if (typeof msg.pid === 'string') animateDrawCard(msg.pid, clamp(Math.floor(num(msg.count, 1)), 1, 5)); break;
     case 'slamfx':
       if (typeof msg.pid === 'string' && typeof msg.iid === 'string') {
@@ -711,6 +721,7 @@ function clientRecv(msg) {
   if (msg.t === 'snap') {
     S.table = msg.table; S.players = msg.players || {}; S.log = msg.log || []; S.online = msg.online || {}; S.chat = cleanChatHistory(msg.chat);
     seedTurnNotice(S.table);
+    S.targetArrow = CTTargeting.clean(msg.arrow, S.players, (S.table && S.table.seats) || []);
     S.players[S.pid] = publicView();
     checkOrphans();
     afterTable(); saveSoon(); render();
@@ -719,7 +730,7 @@ function clientRecv(msg) {
   if (msg.t === 'req') { onReq(msg.req, msg.from); return; }
   onBroadcast(msg);
 }
-function snapFor() { return { t: 'snap', table: S.table, players: S.players, log: S.log.slice(-150), online: S.online, chat: S.chat.slice(-100) }; }
+function snapFor() { return { t: 'snap', table: S.table, players: S.players, log: S.log.slice(-150), online: S.online, chat: S.chat.slice(-100), arrow: S.targetArrow }; }
 
 // Requests from other players, applied to MY state.
 function onReq(req, from) {
@@ -854,6 +865,7 @@ function afterTable() {
   }
 }
 function resetForNewGame() {
+  S.targetArrow = null; endTargeting();
   const deck = Deck.get(S.deckId);
   if (!deck) { UI.toast('Your deck is missing from this browser — cannot restart.', { kind: 'error' }); return; }
   S.me = newPlayer(deck, S.me.name, S.me);
@@ -2064,6 +2076,7 @@ function cardMenu(x, y, iid) {
   const opps = ((S.table && S.table.seats) || []).filter(p => p !== S.pid && S.players[p]);
   const attachable = isAttachable(d);
   if (z === 'battlefield') {
+    items.push({ label: 'Send arrow to…', onClick: () => startTargeting({ kind: 'card', pid: S.pid, iid }) });
     items.push({ label: c.t ? 'Untap' : 'Tap', hint: 'T', onClick: () => toggleTap(iid) });
     if (c.att) items.push({ label: 'Unattach', onClick: () => unattach(iid) });
     items.push({ label: attachable ? (/Equipment/.test(d.type || '') ? 'Equip to…' : 'Enchant / attach to…') : 'Attach to…', hint: 'A', onClick: () => startAttach(iid) });
@@ -2115,6 +2128,8 @@ function oppCardMenu(x, y, pid, iid) {
   const f = oppCard(pid, iid);
   if (!f) return;
   const items = [];
+  if ((S.players[pid].zones.battlefield || []).some(c => c.iid === iid))
+    items.push({ label: 'Send arrow to…', onClick: () => startTargeting({ kind: 'card', pid, iid }) });
   // a card I own that another player controls (I gave it to them): I can always take it back
   if (f.c.own === S.pid && pid !== S.pid && (S.players[pid].zones.battlefield || []).some(x => x.iid === iid)) {
     items.push({ label: `Take back ${f.def ? dname(f.def) : 'this card'}`, hint: 'yours', onClick: () => takeBack(pid, iid) }, { sep: true });
@@ -2242,6 +2257,7 @@ function pileMenu(x, y, zone) {
 function playerMenu(x, y, pid) {
   const T = S.table; if (!T) return;
   const items = [
+    { label: 'Send arrow to…', onClick: () => startTargeting({ kind: 'player', pid }) },
     { label: T.monarch === pid ? 'Remove monarch' : 'Make monarch 👑', onClick: () => toHost({ t: 'op', op: { k: 'monarch', pid: T.monarch === pid ? null : pid } }) },
     { label: T.initiative === pid ? 'Remove initiative' : 'Give initiative 🏰', onClick: () => toHost({ t: 'op', op: { k: 'initiative', pid: T.initiative === pid ? null : pid } }) }
   ];
@@ -2322,6 +2338,8 @@ function mainMenu(x, y) {
     { label: 'Draw a card', hint: 'D', onClick: () => draw(1) },
     { label: 'Untap all', hint: 'U', onClick: untapAll },
     { label: 'Tokens…', onClick: () => tokensMenu(x, y) },
+    { label: 'Targeting arrow…', onClick: () => startTargeting() },
+    { label: 'Clear targeting arrow', disabled: !S.targetArrow, onClick: clearTargetArrow },
     { sep: true },
     { label: S.arrange ? 'Done arranging zones' : 'Arrange my zones', onClick: toggleArrange },
     { label: 'Tidy up my cards', onClick: () => act(() => { tidyBoard(); return ['tidied up their battlefield']; }) },
@@ -2486,6 +2504,7 @@ function renderBody() {
   renderTop(); renderOpps(idx); renderMine(idx); renderLog();
   fitBoards();
   renderOppPanel();
+  refreshTargeting();
   S.viewers.forEach(v => { try { v.refresh(); } catch (e) { console.error(e); } });
 }
 
@@ -2667,6 +2686,7 @@ function fitBoards() {
     b.style.setProperty('--bw', dw + 'px');
   });
   fitOppArea();
+  refreshTargeting();
 }
 // Opponents' boards keep their shape, so a tall opponents' area just leaves blank space under
 // them. Shrink that area to what the boards actually need (never more than the user's splitter).
@@ -2767,7 +2787,7 @@ function lifeBoxHTML(pid, noPanel) {
   const any = Object.keys(PLAYER_CTR_ICONS).filter(k => vals[k]).map(k => `${PLAYER_CTR_ICONS[k]}${vals[k]}`).join(' ');
   const cd = cmdDmgInfo(pid);
   const cdBadge = cd.max ? `<span class="cdbadge${cd.max >= 21 ? ' lethal' : ''}" title="Highest commander damage taken">⚔${cd.max}</span> ` : '';
-  return `<span class="lifebox" title="Life${mine ? ' (Shift-click: ±5)' : ` — changing it asks ${esc(p.name)}'s game to apply it`}">
+  return `<span class="lifebox" data-target-player="${esc(pid)}" title="Life${mine ? ' (Shift-click: ±5)' : ` — changing it asks ${esc(p.name)}'s game to apply it`}">
       <button class="life-adjust" type="button" data-a="${a}" data-pid="${esc(pid)}" data-d="-1" aria-label="Decrease life total">−</button><button class="lifeN life-edit" type="button" data-a="setlife" data-pid="${esc(pid)}" title="Click to set life total directly" aria-label="Set life total">${life}</button><button class="life-adjust" type="button" data-a="${a}" data-pid="${esc(pid)}" data-d="1" aria-label="Increase life total">+</button>
       <button class="more" data-a="ctrs" data-pid="${esc(pid)}" title="Commander damage, poison, energy, experience, rad, tickets">${cdBadge}${any ? esc(any) + ' ' : ''}▾</button></span>` +
     (open && !noPanel ? ctrPanelHTML(pid) : '');
@@ -3348,12 +3368,126 @@ function previewFromEl(cardEl) {
 }
 
 // =====================================================================
+//  Shared targeting arrow (transient public visual, outside saved game state)
+// =====================================================================
+let arrowFrame = 0, lastArrowPickAt = 0;
+function arrowSeats() { return (S.table && S.table.seats) || []; }
+function startTargeting(from) {
+  if (!S.me || !S.table) return;
+  if (S.role !== 'solo' && S.net.state !== 'online') { UI.toast('Reconnect before drawing an arrow.', { kind: 'warn' }); return; }
+  if (S.arrange) { UI.toast('Finish arranging zones before drawing an arrow.'); return; }
+  doPublish(); // solo and host validation must see freshly played cards too
+  const source = from ? CTTargeting.endpoint(from, S.players, arrowSeats()) : null;
+  if (from && !source) return;
+  endAttach(); hidePreview(); UI.closeMenu();
+  S.arrowPick = { from: source };
+  refreshTargeting();
+}
+function endTargeting() { S.arrowPick = null; refreshTargeting(); }
+function clearTargetArrow() {
+  if (S.role !== 'solo' && S.net.state !== 'online') { UI.toast('Reconnect before clearing the shared arrow.', { kind: 'warn' }); return; }
+  toHost({ t: 'arrow', arrow: null });
+  endTargeting();
+}
+function pickArrowEndpoint(target) {
+  const card = target.closest('.card');
+  const player = target.closest('[data-phead], [data-target-player]');
+  const raw = card && card.dataset.zone === 'battlefield'
+    ? { kind: 'card', pid: card.dataset.pid, iid: card.dataset.iid }
+    : !card && player ? { kind: 'player', pid: player.dataset.phead || player.dataset.targetPlayer } : null;
+  doPublish();
+  const ep = CTTargeting.endpoint(raw, S.players, arrowSeats());
+  if (!ep) { UI.toast('Choose a battlefield card or a player’s name/life total.'); return; }
+  if (!S.arrowPick.from) { S.arrowPick.from = ep; refreshTargeting(); return; }
+  if (CTTargeting.same(S.arrowPick.from, ep)) { UI.toast('Choose a different target.'); return; }
+  const from = CTTargeting.endpoint(S.arrowPick.from, S.players, arrowSeats());
+  if (!from) { endTargeting(); UI.toast('The starting card or player is no longer available.'); return; }
+  lastArrowPickAt = Date.now();
+  endTargeting();
+  if (S.role !== 'solo' && S.net.state !== 'online') { UI.toast('Connection lost. Draw the arrow again after reconnecting.', { kind: 'warn' }); return; }
+  toHost({ t: 'arrow', arrow: { from, to: ep } });
+}
+function arrowAnchor(ep) {
+  // A player/card may appear twice (large board and miniature). Choose the largest visible copy.
+  const nodes = ep.kind === 'card' ? document.querySelectorAll('#game .board .card[data-zone="battlefield"]')
+    : document.querySelectorAll('#game [data-phead], #game [data-target-player]');
+  let best = null;
+  nodes.forEach(el => {
+    const match = ep.kind === 'card' ? el.dataset.pid === ep.pid && el.dataset.iid === ep.iid
+      : (el.dataset.phead || el.dataset.targetPlayer) === ep.pid;
+    if (!match || getComputedStyle(el).visibility === 'hidden') return;
+    const r = el.getBoundingClientRect();
+    if (!r.width || !r.height || r.right <= 0 || r.bottom <= 0 || r.left >= innerWidth || r.top >= innerHeight) return;
+    if (!best || r.width * r.height > best.width * best.height) best = r;
+  });
+  return best;
+}
+function refreshTargeting() {
+  if (S.targetArrow && !CTTargeting.clean(S.targetArrow, S.players, arrowSeats())) S.targetArrow = null;
+  const active = S.me && !$('#game').classList.contains('hidden');
+  const picking = active && !!S.arrowPick;
+  document.body.classList.toggle('ct-arrow-picking', !!picking);
+  let controls = $('#ct-arrow-controls');
+  if (active && (picking || S.targetArrow)) {
+    if (!controls) {
+      controls = document.createElement('div'); controls.id = 'ct-arrow-controls';
+      controls.innerHTML = '<span role="status"></span><button type="button"></button>';
+      controls.querySelector('button').addEventListener('click', () => S.arrowPick ? endTargeting() : clearTargetArrow());
+      $('#game').appendChild(controls);
+    }
+    controls.querySelector('span').textContent = picking
+      ? (S.arrowPick.from ? 'Choose the target card or player.' : 'Choose the starting card or player.')
+      : `Targeting arrow · ${pname(S.targetArrow.by)}`;
+    controls.querySelector('button').textContent = picking ? 'Cancel' : 'Clear arrow';
+  } else if (controls) controls.remove();
+  if (!active || !S.targetArrow) {
+    if (arrowFrame) cancelAnimationFrame(arrowFrame);
+    arrowFrame = 0;
+    const svg = $('#ct-target-arrow'); if (svg) svg.remove();
+    return;
+  }
+  if (!arrowFrame) arrowFrame = requestAnimationFrame(drawTargetArrow);
+}
+function drawTargetArrow() {
+  arrowFrame = 0;
+  if (!S.me || !S.targetArrow || $('#game').classList.contains('hidden')) return;
+  let svg = $('#ct-target-arrow');
+  if (!svg) {
+    svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.id = 'ct-target-arrow'; svg.setAttribute('aria-hidden', 'true');
+    svg.innerHTML = '<defs><marker id="ct-arrow-tip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="currentColor"/></marker></defs><line class="ct-arrow-shadow"/><line class="ct-arrow-line" marker-end="url(#ct-arrow-tip)"/>';
+    $('#game').appendChild(svg);
+  }
+  const a = arrowAnchor(S.targetArrow.from), b = arrowAnchor(S.targetArrow.to);
+  const coords = a && b && CTTargeting.line(a, b);
+  svg.style.display = coords ? '' : 'none';
+  if (coords) {
+    svg.style.color = colorOf(S.targetArrow.by);
+    svg.querySelectorAll('line').forEach(el => Object.entries(coords).forEach(([k, v]) => el.setAttribute(k, v.toFixed(1))));
+  }
+  arrowFrame = requestAnimationFrame(drawTargetArrow);
+}
+
+// =====================================================================
 //  Events
 // =====================================================================
 let drag = null; // a card being dragged with the pointer
 let selectionDrag = null; // a temporary selection rectangle
 function bindGame() {
   const g = $('#game');
+  // Picking is handled before normal clicks/drags, including touch inspection and life buttons.
+  g.addEventListener('pointerdown', e => {
+    if (!S.arrowPick || e.target.closest('#ct-arrow-controls')) return;
+    e.stopImmediatePropagation();
+  }, true);
+  g.addEventListener('click', e => {
+    if (!S.arrowPick || e.target.closest('#ct-arrow-controls')) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    pickArrowEndpoint(e.target);
+  }, true);
+  g.addEventListener('dblclick', e => {
+    if (S.arrowPick || Date.now() - lastArrowPickAt < 400) { e.preventDefault(); e.stopImmediatePropagation(); }
+  }, true);
   const chatBtn = $('#chatBtn'), chatClose = $('#chatClose'), chatForm = $('#chatForm'), chatSoundToggle = $('#chatSoundToggle');
   if (chatBtn) chatBtn.addEventListener('click', () => setChatPanelOpen(!S.chatOpen));
   if (chatClose) chatClose.addEventListener('click', () => setChatPanelOpen(false));
@@ -3430,6 +3564,7 @@ function bindGame() {
   g.addEventListener('contextmenu', e => {
     if (e.target.closest('input,textarea')) return;
     e.preventDefault();
+    if (S.arrowPick) { endTargeting(); return; }
     if (S.attachFrom) { endAttach(); return; }
     // right-click = go back one step on tax, counters, P/T and commander damage
     const tax = e.target.closest('[data-a="tax"]');
@@ -3456,6 +3591,7 @@ function bindGame() {
   });
   g.addEventListener('mouseover', e => {
     const card = e.target.closest('.card');
+    if (S.arrowPick) return;
     if (card && !drag) { previewFromEl(card); return; }
     const ref = e.target.closest('.cref');
     if (ref) { const c = S.log[+ref.dataset.li] && S.log[+ref.dataset.li].cards[+ref.dataset.ci]; if (c) preview(c); return; }
@@ -3516,7 +3652,7 @@ function bindGame() {
   let touchHoldTimer = null, touchHoldTarget = null, touchHoldFired = false, touchHoldStart = null;
   const clearTouchHold = () => { if (touchHoldTimer) clearTimeout(touchHoldTimer); touchHoldTimer = null; touchHoldTarget = null; touchHoldStart = null; };
   g.addEventListener('pointerdown', e => {
-    if (e.button !== 0 || S.attachFrom) return;
+    if (e.button !== 0 || S.attachFrom || S.arrowPick) return;
     if (S.touchMode && e.pointerType === 'touch') {
       const target = e.target.closest('.badges .pt-stat, .card, [data-pile], [data-phead], .ohead, [data-a="tax"], .ctrs .ctr, .badges .pt');
       if (target) {
@@ -3567,6 +3703,7 @@ function bindGame() {
     dragHighlight(e);
   });
   window.addEventListener('pointerup', e => {
+    if (S.arrowPick) { clearTouchHold(); return; }
     if (touchHoldFired) { touchHoldFired = false; clearTouchHold(); S.dragEndAt = Date.now(); return; }
     clearTouchHold();
     if (S.regionDrag) { regionEnd(); return; }
@@ -4139,6 +4276,7 @@ function showConnInfo() {
 }
 function onKey(e) {
   if (!S.me || $('#game').classList.contains('hidden')) return;
+  if (S.arrowPick) { if (e.key === 'Escape') { endTargeting(); e.preventDefault(); } return; }
   if (e.key === 'Escape' && S.attachFrom) { endAttach(); return; }
   if (e.key === 'Escape' && S.chatOpen) { setChatPanelOpen(false); e.preventDefault(); return; }
   if (e.target.closest && e.target.closest('input,textarea,select,[contenteditable]')) return;
@@ -4286,6 +4424,7 @@ function leaveGame() {
     setTimeout(() => {
       try { Net.stop(); } catch (e) { /* ignore */ }
       LS.del('ct.sess.' + S.pid); LS.del('ct.last');
+      S.targetArrow = null; endTargeting();
       S.me = null; S.table = null; S.players = {}; S.log = []; S.undo = []; S.selected.clear();
       S.viewers.forEach(v => v.v.close());
       showLobby();
@@ -4298,6 +4437,7 @@ function leaveGame() {
 // =====================================================================
 let selDeck = null;
 function showLobby() {
+  S.targetArrow = null; endTargeting();
   $('#game').classList.add('hidden'); $('#lobby').classList.remove('hidden');
   refreshTouchOrientationHint();
   document.title = 'Commander Table';

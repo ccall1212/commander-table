@@ -29,7 +29,7 @@ The Commander-to-battlefield slam animation and synthesized impact sound are pub
 
 See [PR-11-DECK-IMPORT-INVESTIGATION.md](PR-11-DECK-IMPORT-INVESTIGATION.md). Draft PR #11. Do not merge or publish it until the live tests listed there pass.
 
-## 12. Targeting arrows between cards (Forge-inspired) — QUEUED
+## 12. Targeting arrows between cards (Forge-inspired) — IN PROGRESS (v0.29.0 candidate, `feat/targeting-arrows`)
 
 Let a player draw an arrow from one card (or player) to another so the table can see what an effect targets.
 

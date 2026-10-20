@@ -15,7 +15,7 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 - **Version:** the newest entry in `CHANGELOG.md` (do not write a version number here; it goes stale).
 - **Paused:** draft [PR #11](https://github.com/ccall1212/commander-table/pull/11), random deck selection / website import. Do not merge until its listed live tests pass.
 - **Layouts:** Sidebar and Grid only.
-- **Open work:** see `OBJECTIVES.md`.
+- **Open work:** see `OBJECTIVES.md`. Targeting arrows (#12) are a v0.29.0 candidate on `feat/targeting-arrows`, awaiting Chris’s browser test and publishing approval.
 - **Slam sound:** Chris wants to keep refining the Commander slam sound. Do that on a separate branch and leave the published behaviour alone until he approves.
 
 ## Documentation upkeep

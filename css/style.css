@@ -1232,3 +1232,12 @@ body.touch-mode #myBar .ctrpanel {
   .ct-turn-notice, .ct-chat-popup, #chatBtn.ct-chat-pulse, .ct-chat-panel.ct-chat-new-message, .ct-chat-entry.is-new { animation: none !important; transition: none !important; }
   .ct-turn-notice { opacity: 1; transform: none; }
 }
+
+/* Shared targeting cue. The SVG never captures card or touch input. */
+#ct-target-arrow { position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:600; overflow:visible; }
+#ct-target-arrow .ct-arrow-shadow { stroke:#080b10; stroke-width:7; opacity:.85; }
+#ct-target-arrow .ct-arrow-line { stroke:currentColor; stroke-width:3; opacity:.95; }
+#ct-arrow-controls { position:fixed; top:58px; left:50%; transform:translateX(-50%); z-index:610; display:flex; align-items:center; gap:10px; max-width:calc(100vw - 24px); padding:5px 8px; border:1px solid #566176; border-radius:8px; background:#141a24ee; color:#eef1f6; font-size:13px; }
+#ct-arrow-controls button { min-height:36px; white-space:nowrap; }
+.touch-mode #ct-arrow-controls button { min-height:44px; }
+.ct-arrow-picking #game .card[data-zone="battlefield"], .ct-arrow-picking #game [data-phead], .ct-arrow-picking #game [data-target-player] { cursor:crosshair; outline:1px dashed #e0a33a; outline-offset:2px; }

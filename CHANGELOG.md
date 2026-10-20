@@ -4,7 +4,15 @@ All notable changes to Commander Table are listed here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/). Each release is tagged `vX.Y.Z` in git.
 
-## [Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.28.1...HEAD
+## [Unreleased]
+
+## [0.29.0] - 2026-10-20
+
+### Added
+- Draw one shared targeting arrow between battlefield cards or players. Start from a card/player menu or the touch-accessible table menu, cancel with Escape or Cancel, and let any seated player clear the arrow. Arrows follow the displayed cards across layouts and disappear when an endpoint leaves the battlefield or table.
+
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.29.0...HEAD
+[0.29.0]: https://github.com/ccall1212/commander-table/compare/v0.28.1...v0.29.0
 
 ## [0.28.1] - 2026-10-19
 

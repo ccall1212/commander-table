@@ -1,3 +1,36 @@
+# Targeting arrows — v0.29.0 test copy
+
+This ZIP is a preview for local testing. It does not publish the game.
+
+## Start
+
+Extract the ZIP, open a terminal in the extracted project folder, and run:
+
+```text
+python -m http.server 8099 --bind 127.0.0.1
+```
+
+Open http://127.0.0.1:8099/index.html. Keep the terminal open; Ctrl+C stops it.
+
+## Check the arrow
+
+1. Practice solo: put two cards on the battlefield. Right-click one → **Send arrow to…**, then click the other. An arrow connects them; the second card must not tap. Repeat with a face-down source/target; no identity is revealed.
+2. Right-click your name → **Send arrow to…**, then choose a battlefield card. Repeat card → your life total. The life total must not change.
+3. Use **☰ → Targeting arrow…** to select both endpoints. Cancel with Escape, Cancel, and right-click. Try a hand/library card: it should be refused and should not move/draw/tap anything.
+4. Start another arrow: it replaces the first. Clear it with the on-table **Clear arrow** and the table menu. Drag/reposition/tap cards afterward; normal controls must work.
+5. Host a room, open its invite in a separate browser profile/private window, and join with a second player. Draw card → opponent card and card → opponent player. Both players should see the same endpoints in their own layouts. The joiner must also be able to create/clear it.
+6. At 1920×1080 and 1366×768, switch both clients between Sidebar and Grid, focus another player, resize the window/splitter, and drag an endpoint. The arrow should track visible endpoints and never block clicks. A target hidden by focusing another board can hide the line until visible again.
+7. Move an endpoint to Graveyard/Hand/Exile or give it to another player: the old arrow should disappear. Join/reload a guest while an arrow exists: the current arrow should be received. Start a new game or reload the host: the arrow should clear.
+8. With Touch mode on (preferably real iPad Safari), use **Actions → Send arrow to…** and the table-menu flow. Taps select endpoints without opening previews, changing life, or starting drags. Cancel and clear should be comfortably tappable. Confirm ordinary touch card inspection/dragging still works afterward.
+9. Check the browser console for errors. Try three players if available, including one joining after the arrow was drawn.
+
+## Automated/source checks
+
+- Run `node tests/test_targeting.cjs` where Node is already available. It checks the actual host/solo message path, rejects unseated senders, hidden/invalid endpoints and forged authors, and verifies clear/removal and scaled geometry.
+- Syntax-check `js/app.js` and `js/targeting.js`. These automated checks do not establish visual layout, touch behavior, or real multiplayer browser results.
+
+---
+
 # Manual test checklist — Commander slam animation (v0.20.5 candidate)
 
 ## Start the app
