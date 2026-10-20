@@ -1233,7 +1233,7 @@ body.touch-mode #myBar .ctrpanel {
   .ct-turn-notice { opacity: 1; transform: none; }
 }
 
-/* Shared targeting cue. The SVG never captures card or touch input. */
+/* Only arrow strokes/tips capture input; the rest of the SVG is click-through. */
 #ct-target-arrow { position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:600; overflow:visible; }
 #ct-target-arrow .ct-arrow-shadow { stroke:#080b10; stroke-width:7; opacity:.85; }
 #ct-target-arrow .ct-arrow-line { stroke:currentColor; stroke-width:3; opacity:.95; }
@@ -1243,3 +1243,10 @@ body.touch-mode #myBar .ctrpanel {
 .ct-arrow-picking #game .card[data-zone="battlefield"], .ct-arrow-picking #game [data-phead], .ct-arrow-picking #game .boardwrap { cursor:crosshair; outline:1px dashed #e0a33a; outline-offset:2px; }
 
 #ct-target-arrow .ct-arrow-player-target { fill:currentColor; stroke:#080b10; stroke-width:2; }
+
+#ct-target-arrow .ct-arrow-hit { stroke:transparent; stroke-width:20; fill:none; pointer-events:stroke; cursor:pointer; touch-action:none; }
+#ct-target-arrow .ct-arrow-player-target { pointer-events:all; cursor:pointer; }
+#ct-target-arrow .ct-arrow-item:focus-visible .ct-arrow-shadow { stroke:#fff; }
+.touch-mode #ct-target-arrow .ct-arrow-hit { stroke-width:28; }
+.ct-arrow-picking #ct-target-arrow .ct-arrow-hit, .ct-arrow-picking #ct-target-arrow .ct-arrow-player-target { pointer-events:none; }
+#ct-arrow-controls [data-arrow-dismiss] { min-width:36px; font-size:20px; }

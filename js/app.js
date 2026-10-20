@@ -124,7 +124,7 @@ const S = {
   viewers: new Set(),
   touchMode: !!LS.get('ct.touchMode', false),
   touchPreview: null,
-  targetArrow: null, arrowPick: null
+  targetArrows: [], arrowPick: null, arrowControlsDismissed: false
 };
 
 const pname = pid => (pid === S.pid && S.me) ? S.me.name : ((S.players[pid] && S.players[pid].name) || 'Someone');
@@ -335,16 +335,30 @@ function hostRecv(msg, from) {
       S.players[from] = p;
       seat(from);
       broadcast({ t: 'pub', p });
-      if (S.targetArrow && !CTTargeting.clean(S.targetArrow, S.players, S.table.seats)) broadcast({ t: 'arrow', arrow: null });
+      const arrows = CTTargeting.cleanList(S.targetArrows, S.players, S.table.seats);
+      if (arrows.length !== S.targetArrows.length) broadcast({ t: 'arrows', arrows });
       break;
     }
     case 'log': { const e = cleanLog(msg, from); if (e) broadcast({ t: 'log', e }); break; }
     case 'chat': { const e = cleanChatMessage(msg, from); if (e) broadcast({ t: 'chat', e }); break; }
-    case 'arrow': {
+    case 'arrows': {
       if (!S.table.seats.includes(from)) return;
-      if (msg.arrow === null) { broadcast({ t: 'arrow', arrow: null }); break; }
-      const arrow = CTTargeting.clean({ by: from, from: msg.arrow && msg.arrow.from, to: msg.arrow && msg.arrow.to }, S.players, S.table.seats);
-      if (arrow) broadcast({ t: 'arrow', arrow });
+      let arrows = CTTargeting.cleanList(S.targetArrows, S.players, S.table.seats);
+      if (msg.k === 'clear') arrows = [];
+      else if (msg.k === 'remove') {
+        if (typeof msg.id !== 'string' || !arrows.some(a => a.id === msg.id)) return;
+        arrows = arrows.filter(a => a.id !== msg.id);
+      } else if (msg.k === 'add') {
+        if (arrows.length >= CTTargeting.MAX_ARROWS) return; // never erase an older arrow to make room
+        const source = CTTargeting.endpoint(msg.arrow && msg.arrow.from, S.players, S.table.seats);
+        const target = CTTargeting.endpoint(msg.arrow && msg.arrow.to, S.players, S.table.seats);
+        if (!source || !target || CTTargeting.same(source, target)) return;
+        if (arrows.some(a => a.by === from && CTTargeting.same(a.from, source) && CTTargeting.same(a.to, target))) return;
+        const arrow = CTTargeting.clean({ id: 'a' + (++arrowSerial) + '_' + uid(), by: from, from: source, to: target }, S.players, S.table.seats);
+        if (!arrow) return;
+        arrows = arrows.concat(arrow);
+      } else return;
+      broadcast({ t: 'arrows', arrows });
       break;
     }
     case 'drawfx': {
@@ -697,7 +711,7 @@ function onBroadcast(msg) {
       }
       break;
     }
-    case 'arrow': S.targetArrow = CTTargeting.clean(msg.arrow, S.players, (S.table && S.table.seats) || []); refreshTargeting(); break;
+    case 'arrows': S.targetArrows = CTTargeting.cleanList(msg.arrows, S.players, (S.table && S.table.seats) || []); refreshTargeting(); break;
     case 'drawfx': if (typeof msg.pid === 'string') animateDrawCard(msg.pid, clamp(Math.floor(num(msg.count, 1)), 1, 5)); break;
     case 'slamfx':
       if (typeof msg.pid === 'string' && typeof msg.iid === 'string') {
@@ -721,7 +735,7 @@ function clientRecv(msg) {
   if (msg.t === 'snap') {
     S.table = msg.table; S.players = msg.players || {}; S.log = msg.log || []; S.online = msg.online || {}; S.chat = cleanChatHistory(msg.chat);
     seedTurnNotice(S.table);
-    S.targetArrow = CTTargeting.clean(msg.arrow, S.players, (S.table && S.table.seats) || []);
+    S.targetArrows = CTTargeting.cleanList(msg.arrows, S.players, (S.table && S.table.seats) || []);
     S.players[S.pid] = publicView();
     checkOrphans();
     afterTable(); saveSoon(); render();
@@ -730,7 +744,7 @@ function clientRecv(msg) {
   if (msg.t === 'req') { onReq(msg.req, msg.from); return; }
   onBroadcast(msg);
 }
-function snapFor() { return { t: 'snap', table: S.table, players: S.players, log: S.log.slice(-150), online: S.online, chat: S.chat.slice(-100), arrow: S.targetArrow }; }
+function snapFor() { return { t: 'snap', table: S.table, players: S.players, log: S.log.slice(-150), online: S.online, chat: S.chat.slice(-100), arrows: S.targetArrows }; }
 
 // Requests from other players, applied to MY state.
 function onReq(req, from) {
@@ -865,7 +879,7 @@ function afterTable() {
   }
 }
 function resetForNewGame() {
-  S.targetArrow = null; endTargeting();
+  S.targetArrows = []; S.arrowControlsDismissed = false; endTargeting();
   const deck = Deck.get(S.deckId);
   if (!deck) { UI.toast('Your deck is missing from this browser — cannot restart.', { kind: 'error' }); return; }
   S.me = newPlayer(deck, S.me.name, S.me);
@@ -2339,7 +2353,8 @@ function mainMenu(x, y) {
     { label: 'Untap all', hint: 'U', onClick: untapAll },
     { label: 'Tokens…', onClick: () => tokensMenu(x, y) },
     { label: 'Targeting arrow…', onClick: () => startTargeting() },
-    { label: 'Clear targeting arrow', disabled: !S.targetArrow, onClick: clearTargetArrow },
+    { label: 'Show arrow controls', disabled: !S.targetArrows.length, onClick: showTargetingControls },
+    { label: 'Clear all targeting arrows', disabled: !S.targetArrows.length, onClick: clearTargetArrows },
     { sep: true },
     { label: S.arrange ? 'Done arranging zones' : 'Arrange my zones', onClick: toggleArrange },
     { label: 'Tidy up my cards', onClick: () => act(() => { tidyBoard(); return ['tidied up their battlefield']; }) },
@@ -3368,9 +3383,9 @@ function previewFromEl(cardEl) {
 }
 
 // =====================================================================
-//  Shared targeting arrow (transient public visual, outside saved game state)
+//  Shared targeting arrows (transient public visuals, outside saved game state)
 // =====================================================================
-let arrowFrame = 0, lastArrowPickAt = 0;
+let arrowFrame = 0, lastArrowPickAt = 0, arrowSerial = 0, lastArrowPaint = 0;
 function arrowSeats() { return (S.table && S.table.seats) || []; }
 function startTargeting(from) {
   if (!S.me || !S.table) return;
@@ -3380,14 +3395,32 @@ function startTargeting(from) {
   const source = from ? CTTargeting.endpoint(from, S.players, arrowSeats()) : null;
   if (from && !source) return;
   endAttach(); hidePreview(); UI.closeMenu();
+  if (S.targetArrows.length >= CTTargeting.MAX_ARROWS) { UI.toast('Clear some arrows before adding more.'); return; }
+  S.arrowControlsDismissed = false;
   S.arrowPick = { from: source };
   refreshTargeting();
 }
 function endTargeting() { S.arrowPick = null; refreshTargeting(); }
-function clearTargetArrow() {
-  if (S.role !== 'solo' && S.net.state !== 'online') { UI.toast('Reconnect before clearing the shared arrow.', { kind: 'warn' }); return; }
-  toHost({ t: 'arrow', arrow: null });
+function hideTargetingControls() { S.arrowControlsDismissed = true; endTargeting(); }
+function showTargetingControls() { S.arrowControlsDismissed = false; refreshTargeting(); }
+function clearTargetArrows() {
+  if (S.role !== 'solo' && S.net.state !== 'online') { UI.toast('Reconnect before clearing shared arrows.', { kind: 'warn' }); return; }
+  toHost({ t: 'arrows', k: 'clear' });
   endTargeting();
+}
+function removeTargetArrow(id) {
+  if (S.role !== 'solo' && S.net.state !== 'online') { UI.toast('Reconnect before removing a shared arrow.', { kind: 'warn' }); return; }
+  S.dragEndAt = Date.now(); // a double-click must not activate a card underneath the removed line
+  lastArrowPickAt = Date.now();
+  toHost({ t: 'arrows', k: 'remove', id });
+}
+function handleArrowRemoval(e) {
+  if (S.arrowPick || (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ')) return false;
+  const item = e.target.closest('[data-arrow-id]');
+  if (!item) return false;
+  e.preventDefault(); e.stopImmediatePropagation();
+  removeTargetArrow(item.dataset.arrowId);
+  return true;
 }
 function arrowEndpointAt(target) {
   const card = target.closest('.card');
@@ -3417,7 +3450,7 @@ function pickArrowEndpoint(target) {
   lastArrowPickAt = Date.now();
   endTargeting();
   if (S.role !== 'solo' && S.net.state !== 'online') { UI.toast('Connection lost. Draw the arrow again after reconnecting.', { kind: 'warn' }); return; }
-  toHost({ t: 'arrow', arrow: { from, to: ep } });
+  toHost({ t: 'arrows', k: 'add', arrow: { from, to: ep } });
 }
 function arrowAnchor(ep) {
   // A player/card may appear twice (large board and miniature). Choose the largest visible copy.
@@ -3441,52 +3474,78 @@ function arrowAnchor(ep) {
   return best;
 }
 function refreshTargeting() {
-  if (S.targetArrow && !CTTargeting.clean(S.targetArrow, S.players, arrowSeats())) S.targetArrow = null;
+  S.targetArrows = CTTargeting.cleanList(S.targetArrows, S.players, arrowSeats());
   const active = S.me && !$('#game').classList.contains('hidden');
   const picking = active && !!S.arrowPick;
   document.body.classList.toggle('ct-arrow-picking', !!picking);
   let controls = $('#ct-arrow-controls');
-  if (active && (picking || S.targetArrow)) {
+  if (active && (picking || (S.targetArrows.length && !S.arrowControlsDismissed))) {
     if (!controls) {
       controls = document.createElement('div'); controls.id = 'ct-arrow-controls';
-      controls.innerHTML = '<span role="status"></span><button type="button"></button>';
-      controls.querySelector('button').addEventListener('click', () => S.arrowPick ? endTargeting() : clearTargetArrow());
+      controls.innerHTML = '<span role="status"></span><button type="button" data-arrow-clear></button><button type="button" data-arrow-dismiss aria-label="Hide arrow controls" title="Hide controls without removing arrows; reopen from the table menu">×</button>';
+      controls.querySelector('[data-arrow-clear]').addEventListener('click', () => S.arrowPick ? endTargeting() : clearTargetArrows());
+      controls.querySelector('[data-arrow-dismiss]').addEventListener('click', hideTargetingControls);
       $('#game').appendChild(controls);
     }
     controls.querySelector('span').textContent = picking
       ? (S.arrowPick.from ? 'Choose a target card, empty board, or name.' : 'Choose a starting card, empty board, or name.')
-      : `Targeting arrow · ${pname(S.targetArrow.by)}`;
-    controls.querySelector('button').textContent = picking ? 'Cancel' : 'Clear arrow';
+      : `${S.targetArrows.length} targeting arrow${S.targetArrows.length === 1 ? '' : 's'} · click a line to remove it`;
+    controls.querySelector('[data-arrow-clear]').textContent = picking ? 'Cancel' : 'Clear all';
   } else if (controls) controls.remove();
-  if (!active || !S.targetArrow) {
+  if (!active || !S.targetArrows.length) {
     if (arrowFrame) cancelAnimationFrame(arrowFrame);
     arrowFrame = 0;
     const svg = $('#ct-target-arrow'); if (svg) svg.remove();
     return;
   }
-  if (!arrowFrame) arrowFrame = requestAnimationFrame(drawTargetArrow);
+  if (!arrowFrame) arrowFrame = requestAnimationFrame(drawTargetArrows);
 }
-function drawTargetArrow() {
+function drawTargetArrows(time) {
   arrowFrame = 0;
-  if (!S.me || !S.targetArrow || $('#game').classList.contains('hidden')) return;
+  if (!S.me || !S.targetArrows.length || $('#game').classList.contains('hidden')) return;
+  // One shared painter, capped near 30fps, with endpoint rectangles reused within each frame.
+  if (time - lastArrowPaint < 32) { arrowFrame = requestAnimationFrame(drawTargetArrows); return; }
+  lastArrowPaint = time;
   let svg = $('#ct-target-arrow');
   if (!svg) {
     svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.id = 'ct-target-arrow'; svg.setAttribute('aria-hidden', 'true');
-    svg.innerHTML = '<defs><marker id="ct-arrow-tip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="currentColor"/></marker></defs><line class="ct-arrow-shadow"/><line class="ct-arrow-line" marker-end="url(#ct-arrow-tip)"/><circle class="ct-arrow-player-target" r="7"/>';
+    svg.id = 'ct-target-arrow'; svg.setAttribute('role', 'group'); svg.setAttribute('aria-label', 'Targeting arrows. Select an arrow to remove it.');
+    svg.addEventListener('keydown', handleArrowRemoval);
     $('#game').appendChild(svg);
   }
-  const a = arrowAnchor(S.targetArrow.from), b = arrowAnchor(S.targetArrow.to);
-  const coords = a && b && CTTargeting.line(a, b);
-  svg.style.display = coords ? '' : 'none';
-  if (coords) {
-    svg.style.color = colorOf(S.targetArrow.by);
-    const dot = svg.querySelector('circle');
-    dot.style.display = S.targetArrow.to.kind === 'player' ? '' : 'none';
-    dot.setAttribute('cx', b.left + b.width / 2); dot.setAttribute('cy', b.top + b.height / 2);
-    svg.querySelectorAll('line').forEach(el => Object.entries(coords).forEach(([k, v]) => el.setAttribute(k, v.toFixed(1))));
-  }
-  arrowFrame = requestAnimationFrame(drawTargetArrow);
+  const present = new Map([...svg.querySelectorAll('[data-arrow-id]')].map(el => [el.dataset.arrowId, el]));
+  const anchors = new Map();
+  const anchor = ep => {
+    const key = JSON.stringify(ep);
+    if (!anchors.has(key)) anchors.set(key, arrowAnchor(ep));
+    return anchors.get(key);
+  };
+  S.targetArrows.forEach((arrow, index) => {
+    let item = present.get(arrow.id); present.delete(arrow.id);
+    if (!item) {
+      item = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      item.dataset.arrowId = arrow.id; item.classList.add('ct-arrow-item'); item.setAttribute('role', 'button'); item.setAttribute('tabindex', '0');
+      item.innerHTML = '<title></title><defs><marker viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z"/></marker></defs><line class="ct-arrow-shadow"/><line class="ct-arrow-line"/><circle class="ct-arrow-player-target" r="7"/><line class="ct-arrow-hit"/>';
+      const markerId = 'ct-arrow-tip-' + arrow.id;
+      item.querySelector('marker').id = markerId;
+      item.querySelector('.ct-arrow-line').setAttribute('marker-end', 'url(#' + markerId + ')');
+      svg.appendChild(item);
+    }
+    const label = `Remove targeting arrow ${index + 1} by ${pname(arrow.by)}`;
+    item.setAttribute('aria-label', label); item.querySelector('title').textContent = label;
+    const a = anchor(arrow.from), b = anchor(arrow.to), coords = a && b && CTTargeting.line(a, b);
+    item.style.display = coords ? '' : 'none';
+    if (coords) {
+      item.style.color = colorOf(arrow.by);
+      item.querySelector('marker path').setAttribute('fill', colorOf(arrow.by));
+      const dot = item.querySelector('circle');
+      dot.style.display = arrow.to.kind === 'player' ? '' : 'none';
+      dot.setAttribute('cx', b.left + b.width / 2); dot.setAttribute('cy', b.top + b.height / 2);
+      item.querySelectorAll('line').forEach(el => Object.entries(coords).forEach(([k, v]) => el.setAttribute(k, v.toFixed(1))));
+    }
+  });
+  present.forEach(el => el.remove());
+  arrowFrame = requestAnimationFrame(drawTargetArrows);
 }
 
 // =====================================================================
@@ -3498,10 +3557,12 @@ function bindGame() {
   const g = $('#game');
   // Picking is handled before normal clicks/drags, including touch inspection and life buttons.
   g.addEventListener('pointerdown', e => {
+    if (!S.arrowPick && e.target.closest('[data-arrow-id]')) { e.stopImmediatePropagation(); return; }
     if (!S.arrowPick || e.target.closest('#ct-arrow-controls')) return;
     e.stopImmediatePropagation();
   }, true);
   g.addEventListener('click', e => {
+    if (handleArrowRemoval(e)) return;
     if (!S.arrowPick || e.target.closest('#ct-arrow-controls')) return;
     e.preventDefault(); e.stopImmediatePropagation();
     pickArrowEndpoint(e.target);
@@ -4445,7 +4506,7 @@ function leaveGame() {
     setTimeout(() => {
       try { Net.stop(); } catch (e) { /* ignore */ }
       LS.del('ct.sess.' + S.pid); LS.del('ct.last');
-      S.targetArrow = null; endTargeting();
+      S.targetArrows = []; S.arrowControlsDismissed = false; endTargeting();
       S.me = null; S.table = null; S.players = {}; S.log = []; S.undo = []; S.selected.clear();
       S.viewers.forEach(v => v.v.close());
       showLobby();
@@ -4458,7 +4519,7 @@ function leaveGame() {
 // =====================================================================
 let selDeck = null;
 function showLobby() {
-  S.targetArrow = null; endTargeting();
+  S.targetArrows = []; S.arrowControlsDismissed = false; endTargeting();
   $('#game').classList.add('hidden'); $('#lobby').classList.remove('hidden');
   refreshTouchOrientationHint();
   document.title = 'Commander Table';

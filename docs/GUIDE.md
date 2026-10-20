@@ -214,11 +214,12 @@ For a hovered card, **+ / =** adds a +1/+1 counter and **− / _** adds a −1/�
 
 ## Targeting arrows
 
-- Right-click a battlefield card or a player's name, choose **Send arrow to…**, then click a different battlefield card or empty space on a player's battlefield to target that player. Clicking their name also works, which is useful on small screens. Everyone sees one shared arrow, colored for the player who drew it; a new arrow replaces the previous one.
-- On touch, use the card preview's **Actions → Send arrow to…**, or **☰ → Targeting arrow…** and tap the starting card/player, then the target. Picking endpoints does not tap, drag, or change the life total.
-- Press **Escape**, right-click, or tap **Cancel** to cancel picking. Use **Clear arrow** near the top of the table or **☰ → Clear targeting arrow** to remove the shared arrow. Any seated player can clear it.
-- Arrows are visual only. Player targets land at a small marker inside their board. They follow cards and boards when boards resize or layouts change, and are hidden if an endpoint is not currently visible. They disappear when a referenced card leaves the battlefield, a player leaves the table, or a new game begins. Joining/reconnecting receives the current arrow from the host; arrows are not saved across a host reload.
-- Only battlefield card instance IDs and player IDs are shared. Cards in hands/libraries cannot be arrow endpoints; face-down battlefield cards can be used without revealing their identities.
+- Right-click a battlefield card or a player's name, choose **Send arrow to…**, then click a different battlefield card or empty space on a player's battlefield to target that player. Clicking their name also works on small screens. Repeat for more attackers or effects: existing arrows remain visible. Everyone sees the shared arrows, colored for the player who drew them.
+- On touch, use the card preview's **Actions → Send arrow to…**, or **☰ → Targeting arrow…** and tap the starting card/player, then the target. Picking endpoints does not tap, drag, or change life totals. Press **Escape**, right-click, or tap **Cancel** to cancel picking.
+- Click or tap anywhere along an arrow line, or its player-target marker, to remove only that arrow. You can also focus an arrow with Tab and press Enter or Space. Any seated player can remove an arrow. Use **Clear all** near the top of the table or **☰ → Clear all targeting arrows** to remove all arrows.
+- Click **×** on the floating controls to hide them locally without removing arrows. If you are still picking an endpoint, this also cancels that pick. **☰ → Show arrow controls** reopens them; starting another arrow also brings them back.
+- Arrows are visual only. Player targets land at a small marker inside their board. Arrows follow cards and boards when boards resize or layouts change, and hide if an endpoint is not currently visible. When a card leaves the battlefield or a player leaves the table, only the affected arrows disappear. A new game or host reload clears them all; joining/reconnecting receives the current collection from the host.
+- Only battlefield card instance IDs and player IDs are shared. Cards in hands/libraries cannot be arrow endpoints; face-down battlefield cards can be used without revealing their identities. The table supports up to 128 arrows; reaching that limit asks you to clear some instead of erasing an existing arrow.
 
 ## Room chat and turn notifications
 

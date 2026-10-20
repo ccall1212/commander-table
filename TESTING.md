@@ -1,31 +1,31 @@
-# Targeting arrows — v0.29.0 test copy
+# Multiple targeting arrows — v0.29.0 test copy
 
 This ZIP is a preview for local testing. It does not publish the game.
 
 ## Start
 
-Download this ZIP, extract it, and double-click **index.html** in the extracted folder. That is all—no Python, terminal, installation, or local server is needed. Keep internet access on for card images and online multiplayer.
+Download this ZIP, extract it, and double-click **index.html** in the extracted folder. No Python, terminal, installation, or local server is needed. Keep internet access on for card images and online multiplayer. Both players should use this updated ZIP when testing together.
 
-## Check the arrow
+## Check the arrows
 
-1. Practice solo: put two cards on the battlefield. Right-click one → **Send arrow to…**, then click the other. An arrow connects them; the second card must not tap. Repeat with a face-down source/target; no identity is revealed.
-2. Right-click your name → **Send arrow to…**, then choose a battlefield card. Repeat card → empty space on your battlefield. The arrow should point inside the board; your name remains a fallback target. Life controls must not change while picking.
-3. Use **☰ → Targeting arrow…** to select both endpoints. Cancel with Escape, Cancel, and right-click. Try a hand/library card: it should be refused and should not move/draw/tap anything.
-4. Start another arrow: it replaces the first. Clear it with the on-table **Clear arrow** and the table menu. Drag/reposition/tap cards afterward; normal controls must work.
-5. Host a room, open its invite in a separate browser profile/private window, and join with a second player. Draw card → opponent card and card → empty opponent battlefield space. Repeat using the opponent’s name as the fallback target. Both players should see the same endpoints in their own layouts. The joiner must also be able to create/clear it.
-6. At 1920×1080 and 1366×768, switch both clients between Sidebar and Grid, focus another player, resize the window/splitter, and drag an endpoint. The arrow should track visible endpoints and never block clicks. A target hidden by focusing another board can hide the line until visible again.
-7. Move an endpoint to Graveyard/Hand/Exile or give it to another player: the old arrow should disappear. Join/reload a guest while an arrow exists: the current arrow should be received. Start a new game or reload the host: the arrow should clear.
-8. With Touch mode on (preferably real iPad Safari), use **Actions → Send arrow to…** and the table-menu flow. Taps select endpoints without opening previews, changing life, or starting drags. Cancel and clear should be comfortably tappable. Confirm ordinary touch card inspection/dragging still works afterward.
-9. Check the browser console for errors. Try three players if available, including one joining after the arrow was drawn.
+1. Practice solo: put four creatures on the battlefield. Right-click the first → **Send arrow to…**, then click empty battlefield space to target the player. Repeat for the other three. All four arrows should remain. In a room, aim all four at the opponent's empty board; their name remains a fallback on small screens.
+2. Click one line near its start, middle, or tip: only that arrow should disappear. Try the other positions on the remaining arrows, then the player-target marker. Cards underneath must not tap or move, and life totals must not change. Draw a card-to-card arrow too; clicking that line should remove it independently.
+3. Draw several arrows again, then click **×** on the floating controls. The controls should disappear while the arrows remain clickable. Use **☰ → Show arrow controls** to reopen them. Starting a new arrow should also reopen them. **Clear all** and **☰ → Clear all targeting arrows** should remove every arrow.
+4. Use **☰ → Targeting arrow…** to choose both endpoints. Cancel with Escape, Cancel, right-click, and **×** while picking: existing arrows should remain. Try hand/library cards and life controls: they should not become endpoints, and should not draw/move cards or change life while picking. Face-down battlefield cards should work without revealing identities.
+5. Host a room and join from a separate browser profile/private window with a second player. Both players should see multiple arrows. Either player can add arrows, remove just one, and clear all. Hiding controls should affect only that browser. Join/reload a guest while several arrows exist: all current arrows should arrive.
+6. Switch between Sidebar and Grid at 1920×1080 and 1366×768, focus another player, resize the window/splitter, and drag an endpoint. All visible arrows should track their endpoints. A hidden endpoint can hide its line until visible again. Normal card actions should work when clicking away from an arrow.
+7. Move one source card to Graveyard/Hand/Exile or give it to another player: only its arrows should disappear; unrelated arrows remain. A new game or host reload should clear all arrows.
+8. With Touch mode on (preferably real iPad Safari), use **Actions → Send arrow to…** and the table-menu flow. Tap lines to remove them individually, dismiss/reopen controls, cancel a pick, and clear all. Ordinary touch inspection/dragging should still work afterward.
+9. Check the browser console for errors. If available, try three players, including one who joins after several arrows were drawn. Tab to an arrow and press Enter or Space: it should remove only that arrow without passing the turn.
 
-## Chris’s feedback
+## Chris's feedback
 
-Tested by Chris: he tested the first arrow ZIP and liked it. He requested clicking the opponent’s empty board to target the player, retaining the name as a fallback for small screens. This updated copy implements that request; its board-targeting adjustment still needs his check.
+Tested by Chris: he tested the first arrow ZIP and liked the arrows. He requested empty-board player targeting with the name retained as a fallback. After further testing, he reported that new arrows erased previous ones and requested multiple simultaneous arrows, a way to dismiss the controls, and click-anywhere removal of individual arrows. This updated copy implements those requests; the revised multiple-arrow behavior awaits his check.
 
 ## Automated/source checks
 
-- Run `node tests/test_targeting.cjs` where Node is already available. It checks the actual host/solo message path, rejects unseated senders, hidden/invalid endpoints and forged authors, and verifies clear/removal and scaled geometry.
-- Syntax-check `js/app.js` and `js/targeting.js`. These automated checks do not establish visual layout, touch behavior, or real multiplayer browser results.
+- `node tests/test_targeting.cjs` passes: four attackers remain independent; IDs are unique; click/keyboard removal affects one arrow; dismiss/reopen keeps arrows; join snapshots contain the collection; endpoint invalidation removes only affected arrows; unseated senders, hidden endpoints and forged authors are rejected; the capacity limit preserves existing arrows; scaled geometry is checked.
+- Syntax checks pass for `js/app.js` and `js/targeting.js`. Visual alignment, real touch input and multiplayer browser behavior are covered by the manual checklist above.
 
 ---
 

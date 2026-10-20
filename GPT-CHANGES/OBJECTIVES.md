@@ -37,7 +37,7 @@ Let a player draw an arrow from one card (or player) to another so the table can
 - Arrows are visual only: they must never move cards or change game state. Keep the existing right-click menus, dragging and touch behaviour working.
 - Provide an equivalent touch-accessible action flow (see objective #18); right-click must not be the only way to start targeting.
 - **Where to look:** cross-player actions are messages relayed by the host, which validates the sender (see how `drawfx` is validated in `hostRecv`). Arrows need the same treatment, and must survive layout changes and board scaling, so anchor them to card ids (`data-iid`), not pixel positions, and redraw after each render (`setHTML()` patches the DOM in place and cards are matched by `data-iid`).
-- Start with one simple arrow at a time; decide colours/labels and exact menu wording during implementation.
+- Chris requested multiple simultaneous arrows (for example, several attacking creatures targeting one player), individual click-to-remove, and dismissible controls. The updated v0.29.0 candidate implements these, plus **Clear all** and a table-menu action to reopen controls; awaiting his check of this revised ZIP.
 
 ## 18. iPad and touch-friendly browser support — PARTLY SHIPPED (Touch mode in v0.22.0 and v0.22.1; real-device testing and refinements remain)
 
