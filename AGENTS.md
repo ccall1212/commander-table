@@ -15,8 +15,18 @@ This is Chris's personal project. **ChatGPT (his personal account) is the main a
 | Merges a game PR / publishes game changes to `main` | ✅ only when Chris says "publish" / "push" | ✅ if asked |
 | Maintains documentation only on `main` | ✅ no extra approval required | ✅ if asked |
 | Creates annotated release tags | GitHub Actions does this automatically when the version lands on `main`; never hand-create as routine | same automatic workflow; manual recovery only if Chris explicitly authorizes it |
-| Runs the game in a browser, multi-player tests | ❌ | ✅ |
-| Fixes hard bugs, anything needing a real shell | tries first | ✅ if ChatGPT is stuck |
+| Runs the game in a browser, multi-player tests | ✅ when browser tools and access are available; report what actually ran | ✅ if asked and tooling is available |
+| Fixes hard bugs, anything needing a real shell | ✅ using available shell/tools; delegate independent investigation when useful | ✅ if ChatGPT is stuck |
+
+### Delegation and browser testing
+
+Chris has authorized routine use of sub-agents. Use them by default when independent work benefits from parallel attention: repository/history exploration, routine documentation, focused code review, regression tests, and separate bug investigations. Keep short or dependent tasks with the primary assistant. The primary assistant coordinates edits, reviews findings, integrates fixes, and reports results in chat; do not have agents edit the same files without coordination.
+
+Chris prefers lighter models for routine sub-agent tasks rather than inheriting the primary assistant's model. Choose an available Luna or Terra model for routine documentation, repository searches, focused review, and straightforward tests; give it a bounded task with the needed context. Reserve stronger models for work whose complexity justifies them. Do not claim a model is available without checking the session's supported choices, and report the model actually used when describing delegation.
+
+Use available, permitted browser automation to test actual user flows when practical, including separate player sessions and Sidebar/Grid layouts. Sub-agents can perform browser checks only with tools and access actually available to them. Shared browser sessions need coordination. A sub-agent does not bypass a denied permission or provide missing browser access. If access is blocked, state the exact limitation and continue other checks; do not describe source inspection or a simulated DOM as a real browser test.
+
+Keep automated/code checks, assistant-run browser observations, and Chris's hands-on results distinct. Real-device touch behavior and subjective sound still need appropriate device or human checks when tools cannot establish them. Do not install tooling on Chris's work laptop without his authorization. His normal test flow remains download ZIP, extract, double-click `index.html`; game publication still needs his explicit approval.
 
 ### Documentation-only updates
 
@@ -25,20 +35,18 @@ Routine updates to `AGENTS.md`, `GPT-CHANGES/` (including objectives), and other
 Keep review information in chat: describe what changed, what was checked, and anything Chris needs to decide, so he does not need to leave the chat to review routine work.
 
 The normal flow for game changes is:
-1. **ChatGPT** makes the change on a branch and opens a PR, following the routine below. It can't run a
-   browser, so it does the checks it *can* do (below) and writes a short click list for Chris.
+1. **ChatGPT/Codex** makes the change on a branch and opens a PR, following the routine below. Use sub-agents for useful independent work and run automated checks plus browser tests when permitted tools and access are available. Include a short click list and test ZIP for Chris.
 2. **Chris tests it himself** in his own browser (usually the local or preview copy) and tells ChatGPT how it went.
-   **Chris's hands-on testing is the browser test.** Treat what he reports as tested:
+   **Chris's hands-on testing counts as browser testing.** Treat what he reports as tested:
    - Record it as *"Tested by Chris: <what he said he tried / that it looked good>"*. Do not keep writing
-     that the feature is "not browser-tested" or add notes like "ChatGPT did not independently run a
-     browser": that is true of every change and only confuses the record.
+     that the feature is "not browser-tested" after he has tested it. Record any assistant-run browser tests separately, with the actions and results actually observed.
    - Only list things as unverified when Chris did not mention them (for example "multiplayer with a second
      player was not mentioned"). If it is unclear what he tried, ask one short question instead of guessing.
 3. **Chris says "publish"** for a named version. ChatGPT merges, checks that the release tag appeared (a GitHub Action creates it),
    deletes the branch and updates the docs.
 4. **Only if Chris asks**, Claude Code tests with several players or fixes what ChatGPT couldn't.
 
-### Checks ChatGPT does itself (it can't run a browser)
+### Checks ChatGPT/Codex does itself
 - Keep each branch **small and focused** on one feature or fix. Big rewrites can't be reviewed safely.
 - **Syntax:** if your environment has Node, run `node --check js/<file>.js` on every changed file.
   If not, re-read each changed function and check that braces, brackets, parentheses and template
@@ -116,7 +124,7 @@ Read this before changing layout or anything that finds elements on the page. Se
 
 - Build the ZIP from the branch/commit being proposed in the PR, not from `main` and not from an older commit.
 - Include the complete runnable project source needed to test the change. Exclude `.git` history and local secrets.
-- Include a short `TESTING.md` in the ZIP with simple instructions to extract the archive, start the local server with `python -m http.server 8099 --bind 127.0.0.1`, and open `http://127.0.0.1:8099/index.html`.
+- Include a short `TESTING.md` in the ZIP. **Chris tests by downloading the ZIP, extracting it, and double-clicking `index.html`. He does not run Python, a terminal, or a local server.** Make this the normal test flow. If a particular test truly requires a hosted service, prepare that service or explain the specific requirement instead of assuming Chris will run commands.
 - Check the archive contains the intended files and matches the PR head commit before sharing it. Link the ZIP directly in the PR description and in the message to Chris.
 - Keep the ZIP as a test copy only; do not publish it or merge the PR. Wait for Chris's explicit approval before publishing.
 - If a ZIP cannot be generated, explain the blocker and do not claim that one was provided.
@@ -130,7 +138,7 @@ Read this before changing layout or anything that finds elements on the page. Se
    ```
 2. **Work on a branch:** `feat/<short-name>` or `fix/<short-name>` (or `docs/<short-name>` for documentation bundled with a game change). Never commit game changes straight to `main`; routine documentation-only updates use the exception above.
 3. **Make the change.**
-4. **Test it in a browser** (from the repo folder):
+4. **Test it in a browser.** Chris's test flow is to extract the ZIP and double-click `index.html`; do not ask him to run Python or a terminal. An assistant with browser access may optionally run a local server for its own HTTP-specific checks (from the repo folder):
    ```bash
    python -m http.server 8099 --bind 127.0.0.1
    ```

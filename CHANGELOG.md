@@ -11,8 +11,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - Draw multiple shared targeting arrows between battlefield cards or players, including several attackers pointing at one player. Click empty battlefield space to target that player, with their name available as a fallback. Click any arrow line to remove just that arrow, or use **Clear all**. Hide the floating controls with **×** without clearing arrows; reopen them from the table menu. Start from a card/player menu or the touch-accessible table menu, and cancel picking with Escape or Cancel. Arrows follow the displayed cards across layouts; only arrows whose endpoints leave the battlefield or table disappear.
 
+## [0.28.2] - 2026-10-20
+
+### Fixed
+- Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
+
 [Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.29.0...HEAD
-[0.29.0]: https://github.com/ccall1212/commander-table/compare/v0.28.1...v0.29.0
+[0.29.0]: https://github.com/ccall1212/commander-table/compare/v0.28.2...v0.29.0
+[0.28.2]: https://github.com/ccall1212/commander-table/compare/v0.28.1...v0.28.2
 
 ## [0.28.1] - 2026-10-19
 
