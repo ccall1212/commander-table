@@ -1,6 +1,6 @@
 # Reusable prompt: prepare, test and publish a Commander Table release
 
-Copy the prompt below into ChatGPT whenever a release is wanted. Replace the bracketed parts.
+Copy the prompt below into ChatGPT Codex whenever a release is wanted. Replace the bracketed parts.
 
 ---
 
@@ -32,7 +32,7 @@ Chris's authorization applies only to the named change and version.
 
 - [ ] Change implemented and reviewed
 - [ ] Tested by Chris (note what he tried) and anything he did not mention is listed as unverified
-- [ ] `index.html` and `js/app.js` versions agree; all 14 `?v=` references match
+- [ ] `index.html` and `js/app.js` versions agree; every `?v=` reference matches
 - [ ] `CHANGELOG.md` entry and compare links correct; `docs/GUIDE.md` accurate
 - [ ] Merged into `main`
 - [ ] GitHub Actions created annotated `vX.Y.Z`; verify its resolved target SHA exactly matches the merge commit (do not create tags manually)

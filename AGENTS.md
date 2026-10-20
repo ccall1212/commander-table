@@ -6,34 +6,35 @@ and **never push to `main` or publish without his explicit OK** ("publish" / "pu
 
 ## Who does what
 
-This is Chris's personal project. **ChatGPT (his personal account) is the main assistant.** Claude Code runs on his work account, so it is only the **backup**: Chris will call on it when ChatGPT can't do something or gets stuck, not by default. Don't plan around Claude Code being available, and don't hand work to it that you can finish yourself. When Chris does call on it, a headless-browser pass (Playwright + Chromium) of the click list is a quick way to catch bugs before he tests by hand, but it cannot hear sound or use a real mouse hover.
+This is Chris's personal project. **ChatGPT Codex (his personal account) is the main assistant.** Claude Code runs on his work account, so it is only the **backup**: Chris will call on it when Codex can't do something or gets stuck, not by default. Don't plan around Claude Code being available, and don't hand work to it that you can finish yourself.
 
-| | ChatGPT (via GitHub) | Claude Code (backup) |
+| | Codex / ChatGPT (via GitHub) | Claude Code (backup) |
 |---|---|---|
 | Writes code on a branch / PR | ✅ main job | ✅ if asked |
 | Merges a PR / publishes to `main` | ✅ only when Chris says "publish" | ✅ if asked |
 | Creates annotated release tags | GitHub Actions does this automatically when the version lands on `main`; never hand-create as routine | same automatic workflow; manual recovery only if Chris explicitly authorizes it |
-| Runs the game in a browser, multi-player tests | ❌ | ✅ |
-| Fixes hard bugs, anything needing a real shell | tries first | ✅ if ChatGPT is stuck |
+| Runs the game in a real browser, multi-player tests | if your environment can (see below); otherwise Chris does | ✅ (Browser pane, several tabs as players) |
+| Fixes hard bugs, anything needing a real shell | tries first | ✅ if Codex is stuck |
 
 The normal flow is:
-1. **ChatGPT** makes the change on a branch and opens a PR, following the routine below. It can't run a
-   browser, so it does the checks it *can* do (below) and writes a short click list for Chris.
-2. **Chris tests it himself** in his own browser (usually the local or preview copy) and tells ChatGPT how it went.
+1. **Codex** makes the change on a branch and opens a PR, following the routine below, runs every check its environment allows (below), and writes a short click list for Chris.
+2. **Chris tests it himself** in his own browser (usually the local or preview copy) and tells Codex how it went.
    **Chris's hands-on testing is the browser test.** Treat what he reports as tested:
    - Record it as *"Tested by Chris: <what he said he tried / that it looked good>"*. Do not keep writing
-     that the feature is "not browser-tested" or add notes like "ChatGPT did not independently run a
+     that the feature is "not browser-tested" or add notes like "Codex did not independently run a
      browser": that is true of every change and only confuses the record.
    - Only list things as unverified when Chris did not mention them (for example "multiplayer with a second
      player was not mentioned"). If it is unclear what he tried, ask one short question instead of guessing.
-3. **Chris says "publish"** for a named version. ChatGPT merges, checks that the release tag appeared (a GitHub Action creates it),
+3. **Chris says "publish"** for a named version. Codex merges, checks that the release tag appeared (a GitHub Action creates it),
    deletes the branch and updates the docs.
-4. **Only if Chris asks**, Claude Code tests with several players or fixes what ChatGPT couldn't.
+4. **Only if Chris asks**, Claude Code tests with several players or fixes what Codex couldn't.
 
-### Checks ChatGPT does itself (it can't run a browser)
+### Checks Codex does itself
+Use whatever your environment really has, and say in the PR which of these you actually ran. Never claim a check you only read the code for.
 - Keep each branch **small and focused** on one feature or fix. Big rewrites can't be reviewed safely.
-- **Syntax:** if your environment has Node, run `node --check js/<file>.js` on every changed file.
-  If not, re-read each changed function and check that braces, brackets, parentheses and template
+- **Run the game if you can.** If you have a shell, serve the repo (`python -m http.server 8099 --bind 127.0.0.1`) and load `index.html`; if you can also drive a headless browser (for example Playwright + Chromium in your own sandbox), do a pass of the click list and check the console for errors. A headless browser cannot hear sound or use a real mouse hover (`S`/`X` over the Library, card hotkeys), so mark those "needs a human".
+- **Syntax:** run `node --check js/<file>.js` on every changed file if your environment has Node. If not,
+  re-read each changed function and check that braces, brackets, parentheses and template
   literals (backticks, `${…}`) are balanced, and that no `const`/`let` is declared twice in the same scope.
 - **Python:** run `python -m py_compile lan-server.py tools/bump-version.py tests/test_relay_protocol.py`
   if you changed any of them.
@@ -44,8 +45,8 @@ The normal flow is:
   ≈ 1920×1080). Prefer separate files over sprite atlases, and always keep a fallback so a missing
   image never makes cards or the board invisible.
 - **Don't guess at behaviour you can't see.** If a change depends on layout, sizes or timing, say so
-  and leave it for the browser test.
-- **Write the test list** in the PR or commit: the exact clicks and keys to try, how many players, which
+  and leave it for Chris's test.
+- **Write the test list** in the PR: the exact clicks and keys to try, how many players, which
   layout (Sidebar / Grid) and screen size, and what should happen.
 - **Be honest about what was checked by whom.** Never write "tested" for something only read in the code; do write "tested by Chris" for what he told you he tried.
 - Don't merge to `main` without Chris's explicit approval, manually create/move release tags as part of the normal flow, or bump past a version that's already tagged.
@@ -81,7 +82,7 @@ The normal flow is:
   own state and publishes a public view; the **host owns the table** (turns, seats, log) and relays.
   Cross-player effects are requests to the card's owner. Don't add a second rendering system.
 - **No secrets** in code, commits or chat (API keys, tokens, passwords). The relay URL is public.
-- Don't install Node/npm or other tooling on Chris's work laptop (SentinelOne EDR). Python 3 and git are available.
+- If you run on Chris's own computer (Codex CLI or IDE extension), don't install Node/npm or other tooling there (his work laptop has SentinelOne EDR, which deletes aggressively); Python 3 and git are available. In your own cloud sandbox you may install what you need for testing, but never commit `node_modules`, lock files or other tooling to this repo (it has no build step).
 - Keyboard shortcuts already in use (don't reuse these letters without checking the in-game Hotkey list): T taps/untaps a battlefield card or plays a hovered hand card onto the battlefield tapped, F flip, Z face-down, G graveyard, E exile, H hand, B battlefield, A attach, J counter, D draw, U untap all, S shuffles when hovering your Library, X mills one card when hovering your Library, L opens Search Library, I info, V magnifier, Space pass turn, Ctrl+Z undo.
 - UI preferences Chris has stated: subdued, readable, nothing that scrolls on the table, no card-specific
   buttons, EDHPlay is the reference look.
@@ -108,7 +109,8 @@ Read this before changing layout or anything that finds elements on the page. Se
 
 - Build the ZIP from the branch/commit being proposed in the PR, not from `main` and not from an older commit.
 - Include the complete runnable project source needed to test the change. Exclude `.git` history and local secrets.
-- Include a short `TESTING.md` in the ZIP with simple instructions to extract the archive, start the local server with `python -m http.server 8099 --bind 127.0.0.1`, and open `http://127.0.0.1:8099/index.html`.
+- Put a short `TESTING.md` **inside the ZIP only** (do not commit it to the repo; the old per-release `TESTING.md` was removed because it only collected stale checklists) with simple instructions to extract the archive, start the local server with `python -m http.server 8099 --bind 127.0.0.1`, and open `http://127.0.0.1:8099/index.html`.
+- GitHub's own branch archive (`https://github.com/ccall1212/commander-table/archive/refs/heads/<branch>.zip`) always matches the branch head and is an acceptable ZIP; if you use it, put the click list in the PR description instead of a `TESTING.md`.
 - Check the archive contains the intended files and matches the PR head commit before sharing it. Link the ZIP directly in the PR description and in the message to Chris.
 - Keep the ZIP as a test copy only; do not publish it or merge the PR. Wait for Chris's explicit approval before publishing.
 - If a ZIP cannot be generated, explain the blocker and do not claim that one was provided.
@@ -139,7 +141,7 @@ Read this before changing layout or anything that finds elements on the page. Se
    ```bash
    python tools/bump-version.py 0.7.6
    ```
-   This updates `<meta name="app-version">` in `index.html`, the `?v=` on all 14 css/js links, and
+   This updates `<meta name="app-version">` in `index.html`, the `?v=` on every css/js link, and
    `APP_VERSION` in `js/app.js`. **Never edit those by hand.** The `?v=` links stop browsers mixing
    cached old files with a new release, because GitHub Pages caches files for 10 minutes.
 6. **Update `CHANGELOG.md`** ([Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format): add a
@@ -180,4 +182,4 @@ Read this before changing layout or anything that finds elements on the page. Se
   passes), `T.rev` = table revision (newer copies win on host reload). Keep these semantics.
 - **Handoff patches:** if you prepare a patch for someone else to apply, make it a script that checks
   exact source anchors and the current version, refuses a dirty tree, and works on a new branch.
-  Since ChatGPT has repo access, a branch + pull request is simpler still.
+  Since Codex has repo access, a branch + pull request is simpler still.
