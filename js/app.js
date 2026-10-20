@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.28.1';
+const APP_VERSION = '0.28.2';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -1632,11 +1632,14 @@ async function customCounter(iid) {
 function effPT(c, def) {
   if (c.fd) return { text: '2/2', modified: false };
   const base = c.pb || (def && def.pt) || '';
-  const m = /^(-?\d+)\/(-?\d+)$/.exec(base);
+  const parts = String(base).split('/').map(v => v.trim());
+  // Symbolic printed stats use a manual baseline of zero; numeric sides keep their value.
+  const stats = parts.length === 2 && parts.every(Boolean)
+    ? parts.map(v => /^-?\d+$/.test(v) ? +v : 0) : null;
   const cnt = ((c.c && c.c['+1/+1']) || 0) - ((c.c && c.c['-1/-1']) || 0);
   const dp = (c.dp || 0) + cnt, dt = (c.dt || 0) + cnt;
   const modified = !!(c.pb || dp || dt);
-  if (m) return { text: `${+m[1] + dp}/${+m[2] + dt}`, modified };
+  if (stats) return { text: `${stats[0] + dp}/${stats[1] + dt}`, modified };
   if (!modified) return { text: base, modified };
   const sg = v => (v >= 0 ? '+' + v : String(v));
   return { text: base ? `${base} (${sg(dp)}/${sg(dt)})` : `${sg(dp)}/${sg(dt)}`, modified };
