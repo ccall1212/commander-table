@@ -2,27 +2,43 @@
 
 Read this before changing anything. It describes how every change has been made and released so far.
 The owner is Chris (GitHub `ccall1212`). He is not a programmer: explain things in plain language,
-and **never push to `main` or publish without his explicit OK** ("publish" / "push").
+and **never publish game changes to `main` without his explicit OK** ("publish" / "push").
+Routine documentation-only updates (including `AGENTS.md`, objectives, and handoff notes) may be committed directly to `main` without asking for approval. Also read [GPT-CHANGES/README.md](GPT-CHANGES/README.md): it lists the open work (feature backlog, the paused deck-import PR) and nothing else.
 
 ## Who does what
 
-Two assistants work on this repo, and they have different abilities:
+This is Chris's personal project. **ChatGPT (his personal account) is the main assistant.** Claude Code runs on his work account, so it is only the **backup**: Chris will call on it when ChatGPT can't do something or gets stuck, not by default. Don't plan around Claude Code being available, and don't hand work to it that you can finish yourself. When Chris does call on it, a headless-browser pass (Playwright + Chromium) of the click list is a quick way to catch bugs before he tests by hand, but it cannot hear sound or use a real mouse hover.
 
-| | ChatGPT (via GitHub) | Claude Code (on Chris's laptop) |
+| | ChatGPT (via GitHub) | Claude Code (backup) |
 |---|---|---|
-| Writes code on a branch / PR | ✅ main job | ✅ |
-| Runs the game in a real browser, multiplayer tabs, test suites | ❌ assume not available | ✅ |
-| Publishes to `main` / tags / checks the live site | ❌ never | ✅ only when Chris says "publish" |
+| Writes code on a branch / PR | ✅ main job | ✅ if asked |
+| Merges a game PR / publishes game changes to `main` | ✅ only when Chris says "publish" / "push" | ✅ if asked |
+| Maintains documentation only on `main` | ✅ no extra approval required | ✅ if asked |
+| Creates annotated release tags | GitHub Actions does this automatically when the version lands on `main`; never hand-create as routine | same automatic workflow; manual recovery only if Chris explicitly authorizes it |
+| Runs the game in a browser, multi-player tests | ❌ | ✅ |
+| Fixes hard bugs, anything needing a real shell | tries first | ✅ if ChatGPT is stuck |
 
-So the normal flow is:
-1. **ChatGPT** makes the change on a branch, following steps 1–3 and 5–8 of the routine below.
-   It can't browser-test, so it does the **checks without a browser** (below) and pushes the branch.
-   It writes the manual test list in the commit message or pull-request description.
-2. **Chris** tells Claude: *"Test and publish branch `<name>`"* (or just "test branch `<name>`").
-3. **Claude** pulls the branch, runs the browser tests, fixes anything broken, and reports. On Chris's
-   OK it publishes (steps 10–11).
+### Documentation-only updates
 
-### If you can't run a browser (ChatGPT)
+Routine updates to `AGENTS.md`, `GPT-CHANGES/` (including objectives), and other documentation may go directly to `main` without a separate branch, PR, or approval request. Check the text for accuracy and summarize the changes in chat. No app version bump, release tag, test ZIP, or browser test is needed for documentation-only updates. This exception does not cover game code, styles, assets, networking, deployment configuration, or changes bundled with game changes; those follow the game workflow below.
+
+Keep review information in chat: describe what changed, what was checked, and anything Chris needs to decide, so he does not need to leave the chat to review routine work.
+
+The normal flow for game changes is:
+1. **ChatGPT** makes the change on a branch and opens a PR, following the routine below. It can't run a
+   browser, so it does the checks it *can* do (below) and writes a short click list for Chris.
+2. **Chris tests it himself** in his own browser (usually the local or preview copy) and tells ChatGPT how it went.
+   **Chris's hands-on testing is the browser test.** Treat what he reports as tested:
+   - Record it as *"Tested by Chris: <what he said he tried / that it looked good>"*. Do not keep writing
+     that the feature is "not browser-tested" or add notes like "ChatGPT did not independently run a
+     browser": that is true of every change and only confuses the record.
+   - Only list things as unverified when Chris did not mention them (for example "multiplayer with a second
+     player was not mentioned"). If it is unclear what he tried, ask one short question instead of guessing.
+3. **Chris says "publish"** for a named version. ChatGPT merges, checks that the release tag appeared (a GitHub Action creates it),
+   deletes the branch and updates the docs.
+4. **Only if Chris asks**, Claude Code tests with several players or fixes what ChatGPT couldn't.
+
+### Checks ChatGPT does itself (it can't run a browser)
 - Keep each branch **small and focused** on one feature or fix. Big rewrites can't be reviewed safely.
 - **Syntax:** if your environment has Node, run `node --check js/<file>.js` on every changed file.
   If not, re-read each changed function and check that braces, brackets, parentheses and template
@@ -39,8 +55,8 @@ So the normal flow is:
   and leave it for the browser test.
 - **Write the test list** in the PR or commit: the exact clicks and keys to try, how many players, which
   layout (Sidebar / Grid) and screen size, and what should happen.
-- **State clearly what you did NOT test.** Never write "tested" for something you only read.
-- Don't merge to `main`, tag, or bump past a version that's already tagged.
+- **Be honest about what was checked by whom.** Never write "tested" for something only read in the code; do write "tested by Chris" for what he told you he tried.
+- Don't merge game changes to `main` without Chris's explicit approval, manually create/move release tags as part of the normal flow, or bump past a version that's already tagged. Routine documentation-only updates follow the exception above.
 
 ## What this is
 
@@ -64,7 +80,7 @@ So the normal flow is:
 | `js/lens.js` | Magnifier (hold V) |
 | `js/net-config.js` | Relay URL (public, not a secret) |
 | `tools/bump-version.py` | Sets the version everywhere in one step |
-| `CHANGELOG.md`, `README.md` | Release notes and the player-facing guide |
+| `CHANGELOG.md`, `docs/GUIDE.md`, `README.md` | Release notes; the full player guide; a short overview of the game |
 | `tests/net-harness.html`, `tests/test_relay_protocol.py` | Automated tests |
 
 ## Ground rules
@@ -78,16 +94,43 @@ So the normal flow is:
 - UI preferences Chris has stated: subdued, readable, nothing that scrolls on the table, no card-specific
   buttons, EDHPlay is the reference look.
 
-## The routine for every change
+## How the table is built (things that commonly break)
+
+Read this before changing layout or anything that finds elements on the page. Several shipped features broke only because a layout change moved an element another feature was looking for.
+
+- **Layouts:** only **Sidebar** and **Grid** exist. (A table with nobody else at it, such as Practice solo, uses an internal full-width layout.) Check both, plus a player watching from a second tab.
+- **Opponents are miniature tiles** (`.opp.tile`). Their hand fan, Library, Graveyard, Exile and Command are drawn *inside* the scaled board (`.tstrip`, `.thand`, `.tpile`), not in a header. In Grid your own quadrant is also a tile (`.opp.mytile`, real interactive cards); the normal hand/piles strip (`#myRow`, `#myHand`, `#myZones`) is hidden there. Viewing another player swaps *their* hand and piles into that same bottom strip, hiding yours.
+- **`#myHand` is zero-width by design** (its cards overflow it), so never decide an element is "hidden" from its own size; look at its cards or its computed `visibility`/`display`.
+- **Boards are drawn in a scaled, sometimes auto-fitted display space.** Positions are stored in a fixed 1000-wide board (`BW`, height `bh`) but Grid and miniatures draw the board in a different size (`computeFit()`, `boardHTML(... mode)`). Convert pointer positions with `boardPoint()` then `storedPos()`; never treat screen pixels as board units.
+- **Rendering patches the DOM in place** (`setHTML()`): elements are reused and cards are matched by `data-iid`. Do not assign `innerHTML` on those containers, do not keep references to card elements across renders, and expect `render()` to run often.
+- **Hover shortcuts** (`S`/`X` over the Library, card hotkeys) rely on real mouse position (`:hover`, `S.hover`); scripted events cannot test them. Mark such features "needs a human with a mouse".
+- **Cross-player actions are messages relayed by the host**, which validates the sender (see the `drawfx` message and the `give`, `take`, `life` requests in `onReq`/`hostRecv`). A new message must be validated on the host, must never carry hidden information (card identities), and must be tolerated by older clients.
+- **Practice solo skips the network path.** In solo, `toHost()` calls `hostRecv()` directly, and some effects run locally instead of going through the host. A new message must also be tested by sending it through `hostRecv()` (or with a second tab), otherwise a broken host check hides until someone plays online. The Commander slam shipped (v0.20.0 to v0.20.2) with a host check that rejected every card id because of this.
+- **Regex literals: write `\w`, not `\\w`.** Inside `/.../` a doubled backslash means "a literal backslash". Test a validation regex against a real id such as `p6u6wnase_1` before relying on it.
+- **Cache-busting:** after any CSS/JS change run `tools/bump-version.py`; the browser (and the live site, for about 10 minutes) otherwise serves old files.
+- **Tags and branches:** the release tag is created automatically (`.github/workflows/tag-release.yml`); delete a branch once its PR is merged.
+
+## Required test ZIP for Chris
+
+**Every feature or fix pull request must include a downloadable ZIP of the exact pull-request branch so Chris can test it locally.** Do this every time; do not wait for him to ask.
+
+- Build the ZIP from the branch/commit being proposed in the PR, not from `main` and not from an older commit.
+- Include the complete runnable project source needed to test the change. Exclude `.git` history and local secrets.
+- Include a short `TESTING.md` in the ZIP. **Chris tests by downloading the ZIP, extracting it, and double-clicking `index.html`. He does not run Python, a terminal, or a local server.** Make this the normal test flow. If a particular test truly requires a hosted service, prepare that service or explain the specific requirement instead of assuming Chris will run commands.
+- Check the archive contains the intended files and matches the PR head commit before sharing it. Link the ZIP directly in the PR description and in the message to Chris.
+- Keep the ZIP as a test copy only; do not publish it or merge the PR. Wait for Chris's explicit approval before publishing.
+- If a ZIP cannot be generated, explain the blocker and do not claim that one was provided.
+
+## The routine for every game change
 
 1. **Start clean from the latest `main`**
    ```bash
    git switch main && git pull --ff-only
    git status            # must be clean
    ```
-2. **Work on a branch:** `feat/<short-name>`, `fix/<short-name>` or `docs/<short-name>`. Never commit straight to `main`.
+2. **Work on a branch:** `feat/<short-name>` or `fix/<short-name>` (or `docs/<short-name>` for documentation bundled with a game change). Never commit game changes straight to `main`; routine documentation-only updates use the exception above.
 3. **Make the change.**
-4. **Test it in a browser** (from the repo folder):
+4. **Test it in a browser.** Chris's test flow is to extract the ZIP and double-click `index.html`; do not ask him to run Python or a terminal. An assistant with browser access may optionally run a local server for its own HTTP-specific checks (from the repo folder):
    ```bash
    python -m http.server 8099 --bind 127.0.0.1
    ```
@@ -104,7 +147,7 @@ So the normal flow is:
    ```bash
    python tools/bump-version.py 0.7.6
    ```
-   This updates `<meta name="app-version">` in `index.html`, the `?v=` on all 13 css/js links, and
+   This updates `<meta name="app-version">` in `index.html`, the `?v=` on all 14 css/js links, and
    `APP_VERSION` in `js/app.js`. **Never edit those by hand.** The `?v=` links stop browsers mixing
    cached old files with a new release, because GitHub Pages caches files for 10 minutes.
 6. **Update `CHANGELOG.md`** ([Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format): add a
@@ -114,20 +157,19 @@ So the normal flow is:
    [Unreleased]: https://github.com/ccall1212/commander-table/compare/vX.Y.Z...HEAD
    [X.Y.Z]: https://github.com/ccall1212/commander-table/compare/vPREVIOUS...vX.Y.Z
    ```
-7. **Update `README.md`** for anything a player would notice (controls, menus, layouts, shortcuts).
-   Don't write the version number in the README; the badge at the top reads it from the git tags.
+7. **Update `docs/GUIDE.md`** for anything a player would notice (controls, menus, layouts, shortcuts). The `README.md` is only a short overview of the game and rarely needs to change; do not add feature detail or a version number to it. Its version badge follows the latest Git tag by itself (`https://img.shields.io/github/v/tag/...`); never replace it with fixed text. A GitHub Action creates the `vX.Y.Z` tag automatically when a new version reaches `main`, so you do not need to ask for one (check that the tag appeared).
 8. **Commit** with [Conventional Commits](https://www.conventionalcommits.org/): `feat: …`, `fix: …`,
    `docs: …`, `chore: …`, `feat(ui): …`. Include the version in the subject for releases, e.g.
    `fix(ui): piles keep their own size (v0.7.1)`. Say in the body what changed and why.
-9. **Push the branch** and/or open a pull request. **Stop here.** (ChatGPT stops here every time; Claude tests and, on Chris's OK, publishes.)
-10. **Publish (only on Chris's OK):**
-    ```bash
-    git switch main && git pull --ff-only
-    git merge --ff-only <branch>
-    git tag -a vX.Y.Z -m "vX.Y.Z — one-line summary"
-    git push --follow-tags
-    git branch -d <branch> && git push origin --delete <branch>   # if the branch was pushed
-    ```
+9. **Push the branch** and/or open a pull request. **Stop here.** (Stop here and wait: Chris tests it himself and reports back. Only after he says "publish" go on to step 10.)
+10. **Publish (only on Chris's OK for this specific PR/version):**
+    - Re-check that the PR is open, targets `main`, and its current head is the exact version Chris approved. Merge that PR through GitHub; don't commit or push straight to `main`.
+    - **Do not create or push a release tag manually.** The workflow `.github/workflows/tag-release.yml` runs on a push to `main`, reads the version from `index.html`, and creates the annotated `vX.Y.Z` tag at the commit that triggered the workflow.
+    - Wait for the automatic tag creation, then verify both the tag and its target. Fetch `GET /repos/ccall1212/commander-table/git/ref/tags/vX.Y.Z`. For an annotated tag, follow the returned tag-object SHA with `GET /repos/ccall1212/commander-table/git/tags/<tag-object-sha>`; its `object.sha` must equal the actual merge commit SHA on `main`. Don't assume the PR branch head and the squash-merge commit are the same SHA.
+    - If the tag is missing or targets the wrong commit, inspect the Actions run/workflow result and report the blocker to Chris. **Do not manually create, move, or rewrite the tag** unless Chris separately authorizes that recovery.
+    - Verify `main` has the intended app version and release docs. Then check the live GitHub Pages site for that version; keep deployment marked pending/unverified until the live page confirms it.
+    - Delete the merged branch if your available GitHub tools support it. If they do not, tell Chris to use the PR's **Delete branch** button; don't imply it was deleted.
+    - Do not change the version badge in `README.md`: it follows the newest release tag automatically.
 11. **Verify the live site** about a minute later:
     - `https://ccall1212.github.io/commander-table/` shows `<meta name="app-version" content="X.Y.Z">`
       (and `js/app.js?v=X.Y.Z` loads).

@@ -1,163 +1,55 @@
-# Commander Table — Objectives Backlog
+# Commander Table — Objectives backlog
 
-This is the working list of the next UI and gameplay improvements requested by Chris. Keep the original numbering so we can work through them one at a time. Objectives 1–3, 8, 10, and 13 are complete and deployed. Objective 4 (larger cards) is intentionally deferred for now. Objective #9 is temporarily paused with its random-deck and website URL controls disabled; Objective #6 is next once the paused work is settled. Objectives 5, 7, 11, and 12 remain queued.
+Features Chris has asked for that are **not built yet or remain open**. The numbers are Chris's original numbering; finished ones (1, 2, 3, 6, 8, 10, 11, 13, 14, 15, 16, 17, 19, 20, 21, 22, 23, 24, 25, 26, 27) were removed, and #7 (opponent boards looking dim) was dropped: the dimming only applies to players who are reconnecting or out, on purpose. Objective #15 (custom image uploads and pointer fixes) shipped in v0.21.4 via [PR #30](https://github.com/ccall1212/commander-table/pull/30). Objective #22 (Grid pile drops) shipped in v0.22.2 via [PR #35](https://github.com/ccall1212/commander-table/pull/35). Objective #19 (compact P/T badge and independent stat adjustments) shipped in v0.22.4 via [PR #38](https://github.com/ccall1212/commander-table/pull/38). Objective #23 (T hotkey opens the Token menu on empty battlefield space) shipped in v0.24.0 via [PR #41](https://github.com/ccall1212/commander-table/pull/41). Objectives #20 and #25 shipped in v0.23.0 via [PR #40](https://github.com/ccall1212/commander-table/pull/40). Objectives #17 (room chat and notifications) and #26 (turn-start banner) shipped together in v0.26.0 via [PR #42](https://github.com/ccall1212/commander-table/pull/42). Objective #27 (revealing a hand card to everyone) shipped in v0.27.0 via [PR #43](https://github.com/ccall1212/commander-table/pull/43). Objective #24 (the pre-game Deck Builder) shipped in v0.28.0; see [CHANGELOG.md](../CHANGELOG.md#0280---2026-10-19). Objective #18 (iPad/touch support) remains partly shipped, with real-device testing and refinements still open. Work on one at a time on its own branch and pull request, and read `AGENTS.md` first.
 
-## Current priorities
+Status key: **Queued** = requested, not started. **In progress** = a branch / PR exists (see `README.md`). **Paused** = started, waiting on something. **Deferred** = on purpose not now.
 
-1. **Objective #9 — Choose a random deck from Archidekt or Moxfield.** Temporarily paused. The random-deck and website URL controls are disabled for now, but the code is retained for a later fix. Normal plain-text import remains available.
-2. **Objective #6 — Animate drawing a card.** Next: design a short Library-to-hand motion that is visible to the player and their opponents without blocking interactions or animating unrelated card movements.
+Layouts that exist: **Sidebar** and **Grid** only. Every feature must be checked in both, at roughly 1920×1080 and 1366×768, with a second player watching if other players see it.
 
-These are priority order, not renumbering. Objective numbers remain stable for references and tracking.
+---
 
-## Status key
+## 4. Larger battlefield cards on big displays — DEFERRED
 
-- **In progress** — active implementation / PR.
-- **Queued** — requested, not yet implemented.
-- **Needs decision** — a design or existing-shortcut conflict must be resolved before implementation.
+Cards feel a little small when the browser is maximized on a 2K display (the size is fine at 1920×1080).
 
-## 1. Restore the yellow active-player outline — COMPLETE (v0.14.2 merged to main)
+- Aim for roughly 15–20% larger cards at larger resolutions, where space allows; do not change how it looks at 1920×1080 and below.
+- **Where to look:** in Sidebar your own board is drawn at its natural scale (limited by width). In Grid and in the opponent miniatures the board is auto-fitted: `computeFit()` in `js/app.js` picks the card size, and its `capPx` caps card width (56 px in miniatures, 150 px for a big board). Changing those numbers is the likely lever, but check that crowded boards still fit.
+- Avoid clipping or overlapping cards more than today.
 
-Show a clear yellow/gold outline around the player whose turn it is. The existing "Pass Turn" button changes color, but the player board outline appears to have been lost.
+## 5. One-time "slam" animation when a card is played — SHIPPED; SOUND REFINEMENT OPEN
 
-- Apply correctly in Sidebar and Grid layouts, including the active player's own board and opponents' boards.
-- When the turn passes, the highlight should move to the new active player.
-- Focused opponent views must not show an outline around the wrong / transparent overlay.
-- **Pull request:** [PR #3 — Restore yellow outline for the active player](https://github.com/ccall1212/commander-table/pull/3) — merged in [commit `78b6d5a`](https://github.com/ccall1212/commander-table/commit/78b6d5ae99e0ef95f0e5b644f1aa27f716211f84).
-- **Status:** Chris previewed the change locally, confirmed it looked good, and approved publication. The app source is now on `main` at version `0.14.2`. GitHub Pages deployment and the missing annotated release tags are tracked in `GPT-CHANGES/README.md`.
+The Commander-to-battlefield slam animation and synthesized impact sound are published in v0.20.5 (PR #28). Chris wants to keep refining the sound, so any further audio work should be a separate focused change and must not disturb the currently published v0.20.6 version while under review.
 
-## 2. Animate the opening turn-order dice roll — COMPLETE (v0.15.0 merged and deployed)
+- Trigger on the play event only, never on later dragging or repositioning.
+- Keep it short, click-through, and respectful of `prefers-reduced-motion`.
+- Ordinary card placements and battlefield repositioning should use the softer tap; Commander casts use the heavier boom and longer color-identity ring.
+- **Where to look:** card moves go through `moveCard()` / `doMove()` in `js/app.js`. The draw-card animation (`animateDrawCard()` and the `drawfx` message) is a working example of a click-through overlay effect that other players also see.
 
-When the host presses **Start game**, automatically roll a d20 for each seated player and show a clear animated result on everyone's screen before the game board is revealed.
+## 9. Choose a random deck from Archidekt or Moxfield — IN PROGRESS (draft PR #11; separate test Worker/live checks still required)
 
-- Each player's number changes inside a circular badge for about 2.4 seconds, then settles on the synchronized final roll.
-- The highest roll is highlighted with a prominent **GOES FIRST** label that remains visible for 3 full seconds after the last result settles.
-- Ties reroll automatically, and the highest roller becomes the first active player. The separate Dice-menu roll option was removed.
-- The overlay does not block clicks and respects reduced-motion preferences.
-- **Pull request:** [PR #4 — Start game with readable animated D20 roll](https://github.com/ccall1212/commander-table/pull/4), merged as [`3974eb4`](https://github.com/ccall1212/commander-table/commit/3974eb49453cbe55dedcac87f46fb720b07d0583).
-- **Deployment:** GitHub Pages run [`38993645238`](https://github.com/ccall1212/commander-table/actions/runs/38993645238) succeeded.
-- **Release housekeeping:** the annotated `v0.15.0` tag is still pending because tag creation is not available through the current GitHub connection; instructions are in `GPT-CHANGES/README.md`.
-- **Test status:** ChatGPT verified JavaScript syntax and source-level invariants, but did not run a real-browser multiplayer test.
+See [PR-11-DECK-IMPORT-INVESTIGATION.md](PR-11-DECK-IMPORT-INVESTIGATION.md). Draft PR #11. Do not merge or publish it until the live tests listed there pass.
 
-## 3. Make life-total +/- controls easier to click — COMPLETE (v0.15.1 merged and deployed)
+## 12. Targeting arrows between cards (Forge-inspired) — QUEUED
 
-Make the minus/plus controls reliably clickable across their intended button areas without accidentally activating the board or counters menu.
+Let a player draw an arrow from one card (or player) to another so the table can see what an effect targets.
 
-- Uses consistent 30–32px hit targets with clear hover/focus feedback and accessible labels.
-- Preserves the separate ▾ counters button sizing and Shift-click ±5 behavior.
-- **Pull request:** [PR #6 — Make life-total +/- buttons easier to click](https://github.com/ccall1212/commander-table/pull/6), merged as [`5927f82`](https://github.com/ccall1212/commander-table/commit/5927f82caf2e6ff82a9e065535044f27c653294b).
-- **Deployment:** GitHub Pages run [`38994671583`](https://github.com/ccall1212/commander-table/actions/runs/38994671583) succeeded.
-- **Browser checks:** Chris reviewed the preview and authorized publication. ChatGPT did not independently run real-browser hit testing or multiplayer opponent-life requests; see PR #6 for manual test cases.
+- Right-click a card → **Send arrow to…**, then click the target (any player's battlefield). Everyone sees the same arrow. Make cancelling and clearing easy.
+- Arrows are visual only: they must never move cards or change game state. Keep the existing right-click menus, dragging and touch behaviour working.
+- Provide an equivalent touch-accessible action flow (see objective #18); right-click must not be the only way to start targeting.
+- **Where to look:** cross-player actions are messages relayed by the host, which validates the sender (see how `drawfx` is validated in `hostRecv`). Arrows need the same treatment, and must survive layout changes and board scaling, so anchor them to card ids (`data-iid`), not pixel positions, and redraw after each render (`setHTML()` patches the DOM in place and cards are matched by `data-iid`).
+- Start with one simple arrow at a time; decide colours/labels and exact menu wording during implementation.
 
-## 4. Increase battlefield card size on larger displays — QUEUED (deferred for now)
+## 18. iPad and touch-friendly browser support — PARTLY SHIPPED (Touch mode in v0.22.0 and v0.22.1; real-device testing and refinements remain)
 
-Cards feel a little too small when the browser is maximized on a 2K display, although the current size is acceptable at 1920×1080.
+Add an optional **Touch mode** for iPad Safari, launched from the top-right hamburger menu (☰ → **Touch mode**). Keep the existing desktop board and mouse interaction path as intact as possible: touch-specific controls and behavior should live behind this opt-in mode rather than forcing a broad redesign of the main battlefield. This is a mode for the existing website, not a separate native iPad app.
 
-- Aim for roughly 15–20% larger cards at larger/full-screen resolutions, where space allows.
-- Preserve the current readability and usable layout at 1920×1080 and smaller screens.
-- Check Sidebar and Grid and avoid unnecessarily clipping or overlapping cards.
-
-## 5. Add a dramatic one-time card-play “slam” animation — QUEUED
-
-When a Commander is moved from the Command Zone onto the battlefield, play a satisfying slam animation with a glow matching the card's color identity / colors.
-
-- Potentially trigger a similar effect when a card with mana value 8 or greater is first played onto the battlefield.
-- Trigger on the play event only, not when the card is subsequently dragged or repositioned.
-- Keep the effect brief and avoid distracting from gameplay; respect reduced-motion preferences if practical.
-
-## 6. Animate drawing a card — PRIORITY 2 (queued)
-
-Whenever a player draws a card, animate the card moving from the Library toward their hand and flipping over as it arrives.
-
-- Other players should see an appropriate version of the draw animation too.
-- Avoid playing the animation for unrelated card movement, such as rearranging a card already in hand.
-- Ensure the animation does not block clicks, dragging, or normal game play.
-
-## 7. Keep opponent boards vibrant in Sidebar view — QUEUED
-
-Opponent board previews in Sidebar view currently look darker / greyer than the user's main board. Keep opponent board art and card colors as vibrant as the main board.
-
-- Find and remove or adjust the styling/filter/opacity causing the washed-out look.
-- Retain clear layout boundaries and any intentional status indications (for example, genuinely offline or conceded players) without dimming a normal opponent board.
-- Verify the effect on both large/focused boards and the miniature opponent tiles, if they use different styling.
-
-## 8. Add Library-hover shortcuts and animations for shuffle / mill — COMPLETE (v0.16.0 merged and deployed)
-
-When hovering over your own Library:
-
-- **S** shuffles the Library and plays a small card-riffle animation plus a short synthesized sound; no external sound file is required.
-- **X** mills exactly one card from the top of the Library into the Graveyard and plays a short visual cue.
-- **L** opens Search Library from anywhere; **S** only shuffles while hovering the Library. Ctrl+F is left to the browser's Find-on-page feature.
-- The ☰ Options menu includes a **Hotkey list…** modal with the game's current shortcuts.
-- **Exile moves to E** so X is free for milling. **G remains Graveyard** and **B remains Battlefield**.
-- **PR / merge:** [PR #8](https://github.com/ccall1212/commander-table/pull/8), merge commit [`5840ed1`](https://github.com/ccall1212/commander-table/commit/5840ed166e1759fb249bfe0b855817640e23412e). **GitHub Pages deployment succeeded** ([run `38996909975`](https://github.com/ccall1212/commander-table/actions/runs/38996909975)).
-- **Browser testing:** ChatGPT checked source only; hands-on testing of audio, animations, and shortcuts in Sidebar/Grid is still recommended.
-
-
-## 9. Choose a random deck from Archidekt or Moxfield — TEMPORARILY PAUSED (v0.17.0 preview)
-
-Add a **Choose Random Deck** option on the opening/join screen for quick testing and fun random games.
-
-- Let the player choose Archidekt or Moxfield as the source.
-- Let the player choose deck bracket **1, 2, 3, or 4** before selecting a random deck.
-- Load the chosen deck into the lobby using the existing deck import flow wherever source access allows.
-- The feature code is present, but the random-deck controls are temporarily disabled in the preview while the feature is being fixed.
-- Website URL import is also temporarily disabled. Its code is retained for a later fix.
-- **Investigation findings:** the original browser code called provider endpoints directly, so browser CORS rules could block the result before the app could read it. The preview now routes requests through an allowlisted `/deck-api` endpoint in `relay/worker.js`. This helper route must be deployed before it can be tested live; it is not deployed from this draft branch.
-- **Archidekt:** server-side retrieval through the relay is a plausible fix for browser CORS, but still needs a live test of deck JSON, card categories/quantities, and the random-search response.
-- **Moxfield:** current unofficial API docs mark deck reads and search as requiring Bearer authorization, and public tools report intermittent automated-request blocks. We must not pretend a proxy bypasses that restriction. Moxfield random search now returns an explicit unavailable message; direct URL import is best-effort and must fall back to plain text if denied.
-- **New reference found in Card-Forge/forge:** [`MoxfieldDeckUrlProvider.java`](https://github.com/Card-Forge/forge/blob/master/forge-gui/src/main/java/forge/deck/MoxfieldDeckUrlProvider.java) reads public deck URLs from `https://api.moxfield.com/v2/decks/all/{deckId}` using its ordinary HTTP loader in [`DeckUrlLoader.java`](https://github.com/Card-Forge/forge/blob/master/forge-gui/src/main/java/forge/deck/DeckUrlLoader.java). The preview relay now tries this legacy host/version after the two `api2.moxfield.com` endpoints. This is a promising fallback for direct URL import, but needs live testing and may still be blocked or change. Do not collect or hard-code personal tokens.
-- **Not verified:** live calls to either provider could not be made from this environment, and the deployed Cloudflare relay has not been changed. The provider controls remain hidden/disabled until Claude Code can test after a deliberate relay deployment.
-- These providers have unofficial / changing public interfaces; browser CORS, anti-bot checks, private decks, or missing bracket metadata may prevent direct retrieval. The UI explains the plain-text export fallback, and a deck with an unknown bracket is not selected as a random match.
-- **Source research:** Moxfield's public endpoints are undocumented and recent community reports indicate that unauthenticated fetches may be blocked; see the [unofficial API notes](https://github.com/wildfire111/moxfield_api_docs/blob/main/docs.json) and [recent report](https://www.reddit.com/r/Moxfield/comments/1ubbry2/deck_api_no_longer_works/). Archidekt's public deck detail endpoint has been used by other community integrations, but it is not a guaranteed, stable public API.
-- **Source-level tests completed:** JavaScript parses; URL parsing accepts the supplied Moxfield URL and a sample Archidekt URL; synthetic Moxfield/Archidekt response fixtures preserve the deck name, commander, quantities, and exclude sideboard/maybeboard cards; numeric and named bracket values are recognized. These fixtures do not prove the live provider endpoints work.
-- **Next step:** fix and test these provider features before turning their controls back on. Do not mark Objective #9 complete until live browser tests pass.
-- **Current preview:** [Draft PR #11](https://github.com/ccall1212/commander-table/pull/11) on branch `feat/random-commander-deck-picker-preview`; it is not merged or published.
-- The earlier docs-only [PR #10](https://github.com/ccall1212/commander-table/pull/10) was closed as superseded; its priority notes are included here and in PR #11.
-
-## 10. Spell out the Auto-Draw label — COMPLETE (v0.16.0 merged and deployed)
-
-Replace the tiny **AD** label in the top controls with **Auto-Draw** so it is clear what the toggle does.
-
-- The branch now uses the full **Auto-Draw** label, keeps the text on one line, and trims a little extra letter spacing to help it fit.
-- Included in [PR #8](https://github.com/ccall1212/commander-table/pull/8), merged in [`5840ed1`](https://github.com/ccall1212/commander-table/commit/5840ed166e1759fb249bfe0b855817640e23412e); the Pages deployment succeeded ([run `38996909975`](https://github.com/ccall1212/commander-table/actions/runs/38996909975)). Visual fit at 1920×1080 and 1366×768 in Sidebar and Grid still merits hands-on confirmation.
-
-## 11. Drag a selection rectangle to move multiple cards — QUEUED
-
-Add a click-and-drag selection square, similar to EDHPlay or StarCraft, to select multiple cards and move them together.
-
-- Draw a visible selection rectangle while dragging across the battlefield.
-- Select cards intersecting the rectangle and allow the selected group to be moved as one operation.
-- Keep normal single-card dragging, tapping, counters, and other click actions working as before.
-- Respect card ownership/permissions and test different zoom levels and board layouts.
-
-
-## 12. Draw targeting arrows between players' cards — QUEUED (Forge-inspired)
-
-Add a visual way to show which card or player an effect is targeting, inspired by [Forge](https://github.com/Card-Forge/forge).
-
-- Right-click a card on any player's battlefield to open its context menu, with an option such as **Connect arrow** / **Send arrow to…**; consider a separate **Attack** action when it fits the existing game model.
-- After choosing the arrow action, click a destination card (including cards on another player's battlefield) to draw a clear arrow connecting source to destination.
-- Everyone in the game should see the same arrow so a player can communicate, for example, which creature their removal spell is targeting.
-- Provide an easy way to cancel arrow placement and clear/remove arrows after the table has understood the intent.
-- Keep arrows visual-only: they should not move cards or automatically perform game actions. Preserve normal right-click menus, card dragging, and touch-friendly interactions.
-- Decide on multiple simultaneous arrows, colors/labels, and exact menu wording during implementation; start with the simplest reliable targeting arrow.
-
-## 13. Play a hovered hand card onto the battlefield tapped — COMPLETE (v0.16.0 merged and deployed)
-
-- When the cursor is over one of your cards in hand, pressing **T** moves it onto the battlefield with its tapped state set. It should land in the battlefield area that matches the card's type, using the existing automatic placement logic.
-- When a card already on the battlefield is hovered, **T** keeps its existing tap/untap behavior.
-- Added **T** to the in-game Hotkey list and player guide. The hand-card right-click menu explicitly labels the action **Play tapped (T)**.
-- Included in [PR #8](https://github.com/ccall1212/commander-table/pull/8), merged in [`5840ed1`](https://github.com/ccall1212/commander-table/commit/5840ed166e1759fb249bfe0b855817640e23412e); the Pages deployment succeeded ([run `38996909975`](https://github.com/ccall1212/commander-table/actions/runs/38996909975)).
-- **Browser testing:** ChatGPT verified source-level behavior only. Hands-on check a creature, land, and artifact/enchantment, confirm each enters tapped in the correct area, verify the right-click menu label, and confirm T still taps/untaps cards already on the battlefield.
-
-## Suggested workflow
-
-1. Work on one objective at a time, beginning with the next incomplete objective.
-2. Make a small feature/fix branch and pull request.
-3. Run source-level checks, then browser-test Sidebar and Grid at 1920×1080 and 1366×768 where applicable.
-4. Update `README.md`, `CHANGELOG.md`, app version/cache references and this folder's handoff notes as appropriate.
-5. Only publish after Chris explicitly approves the specific release. Verify the release tag and GitHub Pages deployment and report any item that remains incomplete.
-
-## Separate release housekeeping
-
-- The last checked GitHub tag lookup did not find `v0.14.1`. Confirm and create/push that annotated tag at the intended release commit before treating the 0.14.1 release housekeeping as complete.
+- **Entry and scope:** provide a clear on/off **Touch mode** item in the hamburger menu. Make the preference local to that player's browser/device (do not broadcast it to opponents). Consider remembering the choice on that device. Do not alter the default desktop UI when the mode is off.
+- **Separate implementation:** keep touch-only UI, styles, and interaction handlers scoped to the mode—for example, using a mode class/state and small isolated helpers—rather than spreading iPad-specific exceptions through the standard board code. Reuse existing game actions and state so touch controls invoke the same behavior as desktop actions.
+- Replace hover-only card inspection with a clear tap-to-inspect/zoom interaction that works for touch and does not accidentally move a card.
+- Provide an obvious touch-friendly **Actions** menu for the selected card, with the useful actions currently reachable by right-click. Right-click remains available on desktop; long-press may be an optional shortcut, but must not be the only route.
+- Make card dragging reliable with touch, avoid accidental text/image selection, and make controls comfortably tappable. Explore explicit selection mode or tap-to-select for multi-card operations if drag-select is awkward on touch.
+- Ensure menus and previews can be dismissed by tapping elsewhere and don't depend on hover states. Avoid browser-native callouts or selection handles interfering with game actions.
+- Preserve the existing Sidebar/Grid layouts and desktop mouse behavior wherever possible. Do not break scrolling, zooming, rotation, stylus input, or existing card interactions while adding touch support.
+- In Touch mode, lock page gestures on the hand row and draggable board surfaces so a bottom-edge hand drag stays on the table. Use the live visual viewport height and safe-area insets, while leaving internal menu, log and dialog scrolling enabled.
+- Fit the game to the dynamic mobile viewport height. On narrow phones in portrait, show a dismissible landscape recommendation rather than trying to force orientation lock (ordinary mobile Safari pages cannot reliably force it).
+- Test in real iPhone/iPad Safari in portrait and landscape, including enabling/disabling Touch mode, host and joiner sessions, card inspection, card actions, dragging from the bottom edge of the hand, intentional group selection/movement, internal dialog scrolling, menu dismissal, and both Sidebar and Grid layouts. Desktop emulation alone is not sufficient for marking this complete.

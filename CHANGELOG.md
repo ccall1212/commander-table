@@ -6,19 +6,178 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.30.0] - 2026-10-20
+
 ### Added
-- `AGENTS.md`: how changes are made, tested, versioned and released (for AI assistants and humans).
+- Draft website-import test panel for public Archidekt/Moxfield deck links and random Archidekt Commander decks with confirmed brackets 1–4. The panel requires a separate test service and is not approved for the live game yet.
+
+### Fixed
+- Accept numeric Archidekt deck IDs, preserve real main-deck cards in user categories named Tokens, and check the full deck's explicit bracket and 100-card count before accepting a random result.
+
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.30.0...HEAD
+[0.30.0]: https://github.com/ccall1212/commander-table/compare/v0.28.1...v0.30.0
+
+## [0.28.1] - 2026-10-19
+
+### Changed
+- Replace the Knight's Vigil table background (and its picker thumbnail) with new artwork.
+
+## [0.28.0] - 2026-10-19
+
+### Added
+- Add a visual pre-game **Deck Builder** using the in-game card gallery: search and add cards, remove copies, change printings for one or ALL copies, sort/filter by name, type, color identity and mana value, and export through options to copy for Moxfield or plain text, or download a `.txt` file. Changes save to the deck in the browser.
+
+### Fixed
+- Keep saved printing changes isolated to the selected copy when switching one card's artwork during a game; choosing all copies still updates the full card name.
+
+
+
+## [0.27.0] - 2026-10-19
+
+### Added
+- Make **Reveal to everyone** show just the selected card face-up in its normal spot in the opponent's hand fan, while the rest of the hand stays face-down.
+
+### Fixed
+- Clear a stale floating card preview when the pointer moves from a revealed card to a face-down card in an opponent's hand.
+
+
+## [0.26.0] - 2026-10-19
+
+### Added
+- Add room chat with synchronized messages, recent history, pulsing/unread visual notifications, in-panel new-message highlights, and an optional quiet two-note sound that is off by default.
+- Show a brief “YOUR TURN” or “NAME’S TURN” banner over the active player’s board when each new turn begins.
+
+## [0.24.0] - 2026-10-18
+
+### Added
+- Open the existing Token menu by pressing **T** over empty space on your own battlefield, while preserving **T** for tapping/untapping cards and playing a hand card tapped.
+
+## [0.23.0] - 2026-10-18
+
+### Added
+- Let players click a life total and set it directly, with the same life-change logging and multiplayer synchronization as the existing controls.
+- Highlight poison totals in red at 10 or more counters, clearing the warning below 10 in both Sidebar and Grid views.
+- Prompt the player to concede when their poison total first reaches 10 or more, matching the existing lethal-life and commander-damage prompts.
+
+
+## [0.22.4] - 2026-10-18
+
+### Changed
+- Add a compact white battlefield P/T badge with individually clickable power and toughness values, no slash separator, and left/right-click adjustments for only the selected stat.
+
+
+## [0.22.3] - 2026-10-18
+
+### Fixed
+- Restore the Concede confirmation when life reaches 0 or below or one commander deals 21 damage.
+- Warn again when a player attempts to draw from an empty library, and highlight the zero library count in red.
+
+## [0.22.2] - 2026-10-18
+
+### Fixed
+- Fix Grid view drops so battlefield cards can be moved to the Library, Graveyard, Exile, and Command zone instead of being repositioned on the battlefield.
+
+## [0.22.1] - 2026-10-17
+
+### Fixed
+- Prevent Safari from taking over touch drags started around the overflowing hand and tabletop edges.
+- Fit Touch mode to Safari's visible viewport and respect the device safe area without adding extra height.
+- Keep menus, the game log and dialogs independently scrollable while the page stays fixed.
+
+## [0.22.0] - 2026-10-17
+
+### Added
+- Add optional Touch mode from the hamburger menu for iPad, iPhone, and other touch screens, saved locally per browser/device.
+- Let touch players tap cards to inspect them and open an **Actions** menu, or press and hold cards and piles to open their context menu.
+- In Touch mode, prevent accidental page scrolling during card drags, use the dynamic mobile viewport height, and recommend landscape on narrow phones without blocking portrait play.
+- Keep the standard desktop interaction path unchanged when Touch mode is off.
+
+[0.28.1]: https://github.com/ccall1212/commander-table/compare/v0.28.0...v0.28.1
+[0.28.0]: https://github.com/ccall1212/commander-table/compare/v0.27.0...v0.28.0
+[0.27.0]: https://github.com/ccall1212/commander-table/compare/v0.26.0...v0.27.0
+[0.26.0]: https://github.com/ccall1212/commander-table/compare/v0.24.0...v0.26.0
+[0.24.0]: https://github.com/ccall1212/commander-table/compare/v0.23.0...v0.24.0
+[0.23.0]: https://github.com/ccall1212/commander-table/compare/v0.22.4...v0.23.0
+[0.22.4]: https://github.com/ccall1212/commander-table/compare/v0.22.3...v0.22.4
+[0.22.3]: https://github.com/ccall1212/commander-table/compare/v0.22.2...v0.22.3
+[0.22.2]: https://github.com/ccall1212/commander-table/compare/v0.22.1...v0.22.2
+[0.22.1]: https://github.com/ccall1212/commander-table/compare/v0.22.0...v0.22.1
+[0.22.0]: https://github.com/ccall1212/commander-table/compare/v0.21.4...v0.22.0
+
+## [0.21.4] - 2026-10-17
+
+### Added
+- Add custom card-back and play-area uploads behind a compact, collapsed control so the appearance picker stays uncluttered.
+- Show saved custom images as selectable tiles with a clear selected state; keep uploads in browser storage for later reuse even when switching back to a preset.
+- Validate formats, dimensions, and file sizes; optimize images to WebP and keep custom files local to the player's browser.
+
+### Fixed
+- Dismiss context menus when clicking or tapping outside them.
+- Prevent browser text and image dragging on the tabletop from interfering with card dragging and accidentally selecting multiple cards.
+
+[0.21.4]: https://github.com/ccall1212/commander-table/compare/v0.20.5...v0.21.4
+
+## [0.20.5] - 2026-10-17
+
+### Changed
+- Sharpen the Commander cast sound into a punchier boom-crack, with a bright initial snap over a deeper impact.
+
+## [0.20.4] - 2026-10-17
+
+### Changed
+- Add a subtle card-placement sound when cards enter the battlefield or are repositioned on it.
+- Give Commander casts a heavier, layered boom and keep the color-identity ring visible longer.
+
+## [0.20.3] - 2026-10-17
+
+### Added
+- When a Commander is cast from the command zone, a brief slam-and-glow effect plays on the battlefield card in its color identity, with a short impact sound. Everyone at the table sees it, it never blocks clicking, and it only plays when the card is cast (not when it is moved around afterwards).
+- Two-color identities split the ring top and bottom; three to five colors use equal radial segments; colorless Commanders get a neutral glow. With reduced motion turned on you get a brief static flash instead of movement.
+
+
+## [0.19.1] - 2026-10-17
+
+### Changed
+- Show the newest game-log entries at the top, with older actions below.
+
+### Fixed
+- Stop recording card-printing changes in the game log; changing art still updates the table and saved deck.
+
+
+## [0.19.0] - 2026-10-17
+
+### Added
+- Show all available card printings and search them by set, product, collector number, or year when switching a card's art.
+
+
+## [0.18.2] - 2026-10-17
+
+### Fixed
+- Smooth the draw-card animation with a lifted arc and gentler deceleration, then blend each card into its hand slot as it arrives instead of revealing the whole group after the last flight.
+
+## [0.18.1] - 2026-10-17
+
+### Added
+- Drag on empty battlefield space to select several cards, then drag any selected card to move the group together.
+- Hold **Shift** while drawing a selection rectangle to add cards; **Shift-click** toggles one card, and clicking empty space or pressing **Esc** clears the selection.
+- Dropping a selected group on a zone pile moves the whole group; dropping it on another player's board gives that player control of the group.
+
+### Fixed
+- When dragging a selected group, show a layered preview of every selected card and keep their relative positions visible.
+
+## [0.17.1] - 2026-10-17
+
+### Fixed
+- The draw-card animation never played in the Sidebar layout (your hand's box has no width there, so it was skipped), and opponents never saw it at all (it looked for their hand in a header that no longer exists). Your own draws now fly from your Library and flip over in both Sidebar and Grid, and everyone else sees a face-down card fly from that player's Library to their hand fan.
 
 ## [0.17.0] - 2026-10-16
 
 ### Added
-- Added the random-deck picker and website URL import code for a future release.
-
-### Changed
-- Temporarily disabled the random-deck picker and website URL import controls while they are being fixed. The code is retained; normal plain-text deck import remains available.
+- Animate a drawn card from the Library toward its owner's hand, with a short flip as it arrives.
+- Other players see the card-back version of the animation, so the draw cue does not reveal a hidden card.
 
 ### Notes
-- Archidekt and Moxfield endpoints used for public deck discovery/import are not guaranteed public APIs. Random selection requires a discoverable public deck and recognizable bracket metadata; unsupported requests should fail with a helpful fallback rather than selecting an unknown bracket.
+- The animation is visual-only, does not block clicks or dragging, and is skipped when reduced motion is preferred. Chris reviewed the preview; ChatGPT completed source-level checks but did not run a real-browser or multiplayer test.
 
 ## [0.16.0] - 2026-10-16
 
@@ -263,7 +422,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - First playable build: paste-import decks from Moxfield or Archidekt (via Scryfall), 2–4 player rooms over PeerJS with self-healing reconnects, a searchable zone viewer, commander damage tracking and automatic tokens.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.17.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.28.0...HEAD
+[0.20.5]: https://github.com/ccall1212/commander-table/compare/v0.20.4...v0.20.5
+[0.20.4]: https://github.com/ccall1212/commander-table/compare/v0.20.3...v0.20.4
+[0.20.3]: https://github.com/ccall1212/commander-table/compare/v0.19.1...v0.20.3
+[0.19.1]: https://github.com/ccall1212/commander-table/compare/v0.19.0...v0.19.1
+[0.19.0]: https://github.com/ccall1212/commander-table/compare/v0.18.2...v0.19.0
+[0.18.2]: https://github.com/ccall1212/commander-table/compare/v0.18.1...v0.18.2
+[0.18.1]: https://github.com/ccall1212/commander-table/compare/v0.17.1...v0.18.1
+[0.17.1]: https://github.com/ccall1212/commander-table/compare/v0.17.0...v0.17.1
 [0.17.0]: https://github.com/ccall1212/commander-table/compare/v0.16.0...v0.17.0
 [0.16.0]: https://github.com/ccall1212/commander-table/compare/v0.15.1...v0.16.0
 [0.15.1]: https://github.com/ccall1212/commander-table/compare/v0.15.0...v0.15.1

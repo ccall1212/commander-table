@@ -18,6 +18,7 @@ input, textarea, select { font: inherit; color: var(--text); background: #0a0d12
 input:focus, textarea:focus { outline: none; border-color: var(--accent); }
 kbd { background: var(--panel2); border: 1px solid var(--border); border-radius: 3px; padding: 0 4px; font-size: 11px; }
 .hidden { display: none !important; }
+.lib-empty { color: var(--danger) !important; }
 .muted { color: var(--muted); }
 .small { font-size: 12px; }
 .row { display: flex; gap: 8px; align-items: center; }
@@ -45,20 +46,6 @@ kbd { background: var(--panel2); border: 1px solid var(--border); border-radius:
 .deck-row .x { padding: 2px 8px; }
 #deckList:empty::after { content: 'No decks yet — import one below.'; color: var(--muted); display: block; margin-bottom: 8px; }
 #impResult { margin-top: 10px; }
-.random-deck-box { margin-top: 10px; padding: 12px; border: 1px solid var(--border); border-radius: 6px; background: rgba(0,0,0,.12); }
-.random-deck-box > label { display: block; margin: 8px 0 4px; color: var(--muted); font-size: 12px; }
-.random-deck-box input, .random-deck-box select { width: 100%; min-width: 0; }
-.random-deck-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
-.random-deck-controls label { display: block; min-width: 0; color: var(--muted); font-size: 12px; }
-.random-deck-actions { margin-top: 10px; }
-.random-deck-actions button { white-space: normal; }
-#randomDeckStatus { min-height: 1.4em; margin: 8px 0 0; overflow-wrap: anywhere; }
-#randomDeckStatus.error { color: var(--danger); }
-#randomDeckStatus.success { color: var(--good); }
-#randomDeckResult { margin-top: 8px; }
-.random-deck-result { display: flex; align-items: flex-start; gap: 8px; flex-wrap: wrap; }
-.random-deck-result a { overflow-wrap: anywhere; }
-@media (max-width: 520px) { .random-deck-controls { grid-template-columns: minmax(0, 1fr); } }
 #impResult .warn { color: var(--danger); }
 #impResult label { display: block; margin: 8px 0 4px; color: var(--muted); font-size: 12px; }
 #impResult input, #impResult select { width: 100%; max-width: 420px; }
@@ -278,6 +265,9 @@ body.side-open #side { display: grid; }
 /* ---------- Free-form boards (logical 1400x430, scaled to fit) ---------- */
 .boardwrap { position: relative; width: 100%; height: 100%; overflow: hidden; }
 .board { position: absolute; left: 0; top: 0; width: 1400px; height: 430px; transform-origin: 0 0; --cw: 80px; }
+/* Cards are manipulated with pointer gestures; prevent accidental browser text/image selection while dragging. */
+.board, .board * { -webkit-user-select: none; user-select: none; }
+.board img { -webkit-user-drag: none; }
 /* Zones: quiet outlines + small labels. --inv (set by JS = 1/scale) keeps label text ~12px on screen at any zoom. */
 .region { position: absolute; border: 1px solid rgba(255,255,255,.12); border-radius: 12px; background: rgba(255,255,255,.025);
   pointer-events: none; }
@@ -305,12 +295,18 @@ body.side-open #side { display: grid; }
 .board.arrange .region .grip.sw { left: -2px; bottom: -2px; cursor: nesw-resize; border-radius: 0 8px 0 10px; }
 .board.arrange .region .grip.se { right: -2px; bottom: -2px; cursor: nwse-resize; border-radius: 8px 0 10px 0; }
 .board .card { position: absolute; touch-action: none; }
+.board .card.selected { outline: 3px solid var(--accent) !important; outline-offset: 2px; }
+.ct-selection-rectangle { position: fixed; display: none; pointer-events: none; z-index: 2500;
+  border: 1px solid var(--accent); background: rgba(212,167,44,.14); box-shadow: 0 0 0 1px rgba(0,0,0,.35); }
 .board .card.tapped { margin: 0; }
 .board .card:hover { z-index: 900 !important; }
 .board .card.att { filter: brightness(.92); }
 .card.dragging { opacity: .25; }
 .card.ghost { position: fixed; pointer-events: none; z-index: 3000; opacity: .92; margin: 0; transition: none;
   box-shadow: 0 12px 30px rgba(0,0,0,.6); }
+/* A selected group uses one fixed preview layer with one clone per card. */
+.ct-group-ghost { position: fixed; pointer-events: none; z-index: 3000; opacity: .92; margin: 0; transition: none; }
+.ct-group-ghost > .card { box-shadow: 0 12px 30px rgba(0,0,0,.6); transition: none !important; }
 .card.dropattach { outline: 4px solid #7c4dff !important; outline-offset: 2px; }
 .boardwrap.dropok { outline: 2px dashed var(--accent); outline-offset: -3px; }
 body.attaching .board .card { cursor: crosshair; }
@@ -324,6 +320,12 @@ body.attaching .board .card:hover { outline: 3px solid #7c4dff; }
   border: 1px solid var(--accent); border-radius: 6px; font-size: 13px;
   position: absolute; bottom: calc(100% + 26px); left: 50%; transform: translateX(-50%); z-index: 40; white-space: nowrap;
   box-shadow: 0 8px 24px rgba(0,0,0,.5); }
+
+/* Optional iPad touch mode: keep card previews actionable and suppress Safari callouts. */
+body.touch-mode #pv.floatpv { pointer-events: auto; width: min(320px, calc(100vw - 24px)); max-height: calc(var(--ct-viewport-height, 100dvh) - 24px); overflow-y: auto; }
+body.touch-mode .ct-touch-actions { display: block; width: 100%; min-height: 44px; margin-top: 8px; border: 1px solid var(--accent); border-radius: 8px; background: var(--accent); color: #17130a; font: 700 15px/1.2 system-ui, sans-serif; }
+body.touch-mode .card, body.touch-mode .board, body.touch-mode .w-menu { -webkit-touch-callout: none; }
+body.touch-mode .card:hover { transform: none; }
 
 /* ---------- Lanes & cards ---------- */
 .lane { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-height: 6px; }
@@ -499,6 +501,9 @@ body.lens-on #pv { display: none; }
 .ctrrow .ci { text-align: center; }
 .ctrrow .cn { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ctrrow b { background: #0a0d12; border-radius: 4px; padding: 1px 0; text-align: center; }
+.ctrrow.lethal b { background: var(--danger); color: #fff; }
+.lifeN.life-edit { cursor: pointer; border: 0; padding: 0; background: transparent; line-height: inherit; color: inherit; }
+.lifeN.life-edit:hover, .lifeN.life-edit:focus-visible { outline: 1px solid var(--accent); background: var(--panel2); }
 .ctrrow button { padding: 0 8px; line-height: 18px; }
 
 /* ---- Commander damage tags ---- */
@@ -689,7 +694,7 @@ body.lens-on #pv { display: none; }
 .ohhand .card .w-cardback { position: absolute; inset: 0; border-radius: inherit; }
 .ohhand .card .badges, .ohhand .card .ctrs, .ohhand .card .pips { display: none; }
 .ohhand .ohn { margin-left: 7px; font-weight: 800; font-size: 13px; color: var(--text); }
-.ohhand.revealed { border-color: var(--accent); }
+.ohhand.revealed, .ohhand.partial-reveal { border-color: var(--accent); }
 .ohhand.revealed .ohn::after { content: ' revealed'; font-size: 10px; font-weight: 600; color: var(--accent); text-transform: uppercase; }
 .ohhand.empty .ohn { margin-left: 2px; color: var(--muted); }
 @media (prefers-reduced-motion: reduce) { .ohhand .card { transition: none; } }
@@ -747,11 +752,27 @@ body.lens-on #pv { display: none; }
 .appearance-choice .cardback-thumb { aspect-ratio: 5 / 7; }
 .appearance-choice .background-thumb { aspect-ratio: 16 / 9; }
 .appearance-choice .appearance-name { font-size: 11px; line-height: 1.2; min-height: 26px; display: flex; align-items: center; justify-content: center; text-align: center; }
+.custom-appearance-panel { margin: 10px 0 14px; }
+.custom-appearance-panel summary { display: inline-flex; align-items: center; gap: 7px; width: fit-content; padding: 6px 10px; border: 1px solid var(--border); border-radius: 7px; background: rgba(0,0,0,.2); color: var(--text); cursor: pointer; font-size: 12px; font-weight: 600; list-style-position: inside; }
+.custom-appearance-panel summary:hover { border-color: var(--accent); }
+.custom-appearance-panel[open] { padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: rgba(0,0,0,.12); }
+.custom-appearance-panel > p { margin: 9px 0 12px; }
+.custom-appearance-controls { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 7px; margin: 0 0 16px; }
+.custom-appearance-controls:last-child { margin-bottom: 0; }
+.custom-appearance-controls label { font-weight: 600; }
+.custom-appearance-controls p { margin: 0; }
+.custom-appearance-controls input[type="file"] { max-width: 100%; font-size: 12px; }
+.custom-appearance-controls button { padding: 5px 9px; font-size: 12px; }
+.custom-appearance-controls button:disabled { opacity: .45; cursor: not-allowed; }
+.appearance-choice .custom-saved-label { display: block; margin-top: -3px; color: var(--muted); font-size: 10px; line-height: 1.1; text-align: center; }
+.custom-upload-choice .appearance-thumb { border-color: var(--accent); }
+.custom-upload-choice.selected .custom-saved-label { color: var(--text); }
 .boardwrap { background-color: #0b1018; background-repeat: no-repeat; background-size: cover; background-position: center; }
 @media (max-width: 620px) {
   .cardback-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .background-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .appearance-choice .appearance-name { font-size: 10px; }
+
 }
 
 /* ---- Opponent miniature tiles (Sidebar / Grid): slim title, board + life + hand/piles drawn inside the scaled board ---- */
@@ -908,6 +929,306 @@ body.lens-on #pv { display: none; }
   [data-pile="graveyard"].mill-receive .tpcard { animation: none !important; }
 }
 
-/* Temporarily unavailable deck-provider controls remain visible but disabled. */
-#randomDeckBtn:disabled, .random-deck-box button:disabled, .random-deck-box input:disabled, .random-deck-box select:disabled { opacity: .45; cursor: not-allowed; }
-.random-deck-box { border-color: var(--border); }
+
+/* Commander slam: a bright, click-through color-identity impact ring. */
+.ct-slam-ring {
+  position: fixed;
+  z-index: 2147483647;
+  pointer-events: none;
+  border: 4px solid transparent;
+  background-clip: padding-box, border-box;
+  will-change: transform, opacity;
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, .45));
+}
+
+/* Draw animation: a click-through flight from a player's Library to their hand. */
+.ct-draw-flight {
+  position: fixed;
+  z-index: 6000;
+  pointer-events: none;
+  perspective: 900px;
+  transform-origin: center center;
+  will-change: transform, opacity;
+  filter: drop-shadow(0 5px 8px rgba(0, 0, 0, .42));
+}
+.ct-draw-flip {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  border-radius: 4px;
+  perspective: 800px;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+.ct-draw-face {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, .64);
+  border-radius: 4px;
+  background: #111722;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .32);
+}
+.ct-draw-face > img,
+.ct-draw-face > .ph,
+.ct-draw-face > .ct-draw-placeholder,
+.ct-draw-face > .w-cardback {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+.ct-draw-face > .w-cardback { overflow: hidden; }
+.ct-draw-face > .ct-draw-placeholder {
+  display: grid;
+  place-items: center;
+  padding: 5px;
+  color: #fff;
+  background: linear-gradient(145deg, #28374d, #111722);
+  font-size: 10px;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.ct-draw-front,
+.ct-draw-back-reverse { transform: rotateY(180deg); }
+@media (prefers-reduced-motion: reduce) {
+  .ct-draw-flight, .ct-draw-flip { animation: none !important; transition: none !important; }
+}
+
+
+/* Keep the actual drawn card invisible until its animated copy reaches the hand. */
+.ct-draw-pending {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+
+/* Touch mode uses the screen as a fixed tabletop, not a scrolling webpage. */
+html:has(body.touch-mode), body.touch-mode {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+body.touch-mode #lobby {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+body.touch-mode #game {
+  height: 100vh;
+  height: 100dvh;
+  height: var(--ct-viewport-height, 100dvh);
+  min-height: 0;
+  overflow: hidden;
+  /* Keep the grid inside device cutouts without adding height to the game. */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+/* The hand fan extends past its own box. Protect the surrounding tabletop too,
+   so a drag started on a card's bottom edge stays a tabletop gesture. */
+body.touch-mode #myBf,
+body.touch-mode #myRow,
+body.touch-mode #handWrap,
+body.touch-mode #myHand,
+body.touch-mode #myZones,
+body.touch-mode .boardwrap,
+body.touch-mode .board,
+body.touch-mode .tstrip,
+body.touch-mode .thand,
+body.touch-mode .tpile,
+body.touch-mode .card,
+body.touch-mode .bpile,
+body.touch-mode .pile,
+body.touch-mode .zbox,
+body.touch-mode .tpcard {
+  touch-action: none;
+}
+
+body.touch-mode #myRow,
+body.touch-mode #myHand,
+body.touch-mode .board,
+body.touch-mode .board * {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Keep intentional scrolling inside the log, previews, menus and dialogs. */
+body.touch-mode #side,
+body.touch-mode #log,
+body.touch-mode .oside,
+body.touch-mode #pv.floatpv,
+body.touch-mode .w-menu,
+body.touch-mode .w-dialog,
+body.touch-mode .w-modal-body,
+body.touch-mode .w-v-scroll,
+body.touch-mode .w-pp-list,
+body.touch-mode .conn-diag,
+body.touch-mode #oppPanel,
+body.touch-mode #myBar .ctrpanel {
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+#ct-touch-orientation-hint {
+  position: fixed;
+  z-index: 2147483000;
+  top: max(8px, env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: min(560px, calc(100vw - 20px));
+  padding: 10px 12px;
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  background: rgba(22, 27, 36, .97);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, .55);
+  color: var(--text);
+  font-size: 13px;
+}
+#ct-touch-orientation-hint span { flex: 1; min-width: 0; }
+#ct-touch-orientation-hint button { min-height: 40px; }
+
+
+
+
+/* Compact original-style white P/T pill with two independently clickable halves. */
+.card .badges .pt {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #f1f1f1;
+  color: #111;
+  box-shadow: 0 1px 3px rgba(0,0,0,.45);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 16px;
+  text-shadow: none;
+}
+.card .badges .pt .pt-stat {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  margin: 0;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #111;
+  font: inherit;
+  line-height: inherit;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: none;
+  transition: background-color .08s ease;
+}
+/* Fill the whole half-pill; the parent clips the rounded outside edge. */
+.card .badges .pt .pt-stat:hover,
+.card .badges .pt .pt-stat:focus,
+.card .badges .pt .pt-stat:focus-visible {
+  background: #b8b8b8;
+  outline: none;
+  box-shadow: none;
+}
+.card .badges .pt.mod { outline: 1px solid rgba(0,0,0,.35); }
+
+
+/* ---------- Shared table notices: turn banner + floating room-chat messages ---------- */
+.ct-turn-notice {
+  position: absolute; inset: 0; z-index: 850; display: flex; align-items: center; justify-content: center;
+  padding: 8px; overflow: hidden; pointer-events: none; color: #fff;
+  font-size: calc(34px * min(var(--inv, 1), 2.6)); line-height: 1.05; font-weight: 900;
+  letter-spacing: .08em; text-align: center; white-space: nowrap;
+  text-shadow: 0 3px 18px rgba(0,0,0,.95), 0 1px 3px rgba(0,0,0,.9);
+  background: radial-gradient(ellipse at center, rgba(212,167,44,.20), rgba(10,13,18,.04) 68%, transparent 100%);
+  animation: ct-turn-banner 1.8s linear both;
+}
+.board.tile-display .ct-turn-notice { bottom: 120px; }
+@keyframes ct-turn-banner {
+  0% { opacity: 0; transform: translateY(7px) scale(.97); }
+  16.67% { opacity: 1; transform: translateY(0) scale(1); }
+  72.22% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-3px) scale(1.01); }
+}
+#chatBtn { display: inline-flex; align-items: center; gap: 5px; position: relative; }
+#chatBtn.has-unread { border-color: var(--accent); }
+#chatBtn.ct-chat-pulse { animation: ct-chat-button-pulse 1.15s ease-out both; }
+@keyframes ct-chat-button-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(212,167,44,0); transform: none; }
+  18% { box-shadow: 0 0 0 3px rgba(212,167,44,.34), 0 0 16px rgba(212,167,44,.32); border-color: var(--accent); transform: scale(1.035); }
+  58% { box-shadow: 0 0 0 1px rgba(212,167,44,.16), 0 0 8px rgba(212,167,44,.17); }
+}
+.ct-chat-unread { display: inline-flex; align-items: center; justify-content: center; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 99px; background: var(--danger); color: #fff; font-size: 10px; font-weight: 800; line-height: 1; }
+.ct-chat-panel {
+  position: fixed; z-index: 880; top: 58px; right: 12px;
+  width: min(360px, calc(100vw - 24px)); height: min(480px, calc(100vh - 76px));
+  display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto;
+  background: rgba(22,27,36,.98); border: 1px solid var(--border);
+  border-radius: 10px; box-shadow: 0 16px 44px rgba(0,0,0,.58); overflow: hidden;
+}
+.ct-chat-panel.ct-chat-new-message { animation: ct-chat-panel-glow 1.25s ease-out both; }
+@keyframes ct-chat-panel-glow {
+  0%, 22% { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(212,167,44,.25), 0 0 25px rgba(212,167,44,.25), 0 16px 44px rgba(0,0,0,.58); }
+  100% { border-color: var(--border); box-shadow: 0 16px 44px rgba(0,0,0,.58); }
+}
+.ct-chat-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 12px; background: var(--panel2); border-bottom: 1px solid var(--border); }
+.ct-chat-head > div { min-width: 0; }
+.ct-chat-head strong { font-size: 14px; }
+.ct-chat-subtitle, .ct-chat-foot { color: var(--muted); font-size: 11px; }
+.ct-chat-head-actions { display: flex; align-items: center; gap: 5px; flex: none; }
+.ct-chat-head-actions button { padding: 0 7px; font-size: 18px; line-height: 24px; }
+.ct-chat-head-actions #chatSoundToggle { padding: 2px 6px; font-size: 11px; line-height: 22px; white-space: nowrap; }
+.ct-chat-history { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 7px 12px; }
+.ct-chat-entry { padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,.06); }
+.ct-chat-entry.is-new { animation: ct-chat-message-flash 2.25s ease-out both; }
+@keyframes ct-chat-message-flash {
+  0%, 18% { background: rgba(212,167,44,.20); box-shadow: inset 3px 0 rgba(212,167,44,.82); }
+  100% { background: transparent; box-shadow: inset 3px 0 rgba(212,167,44,0); }
+}
+.ct-chat-entry-head { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.ct-chat-entry-head strong { font-size: 12px; overflow-wrap: anywhere; }
+.ct-chat-entry-time { flex: none; margin-left: auto; color: var(--muted); font-size: 10px; }
+.ct-chat-entry-text { margin-top: 3px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; line-height: 1.4; }
+.ct-chat-empty { color: var(--muted); padding: 14px 2px; font-size: 12px; text-align: center; }
+.ct-chat-form { display: flex; align-items: center; gap: 7px; padding: 8px; border-top: 1px solid var(--border); }
+.ct-chat-form input { flex: 1 1 auto; min-width: 0; width: 0; }
+.ct-chat-form button { flex: none; }
+.ct-chat-foot { padding: 0 10px 8px; }
+.ct-chat-popups { position: fixed; z-index: 870; top: 58px; right: 14px; display: flex; flex-direction: column; align-items: stretch; gap: 7px; width: min(330px, calc(100vw - 28px)); pointer-events: none; }
+.ct-chat-popup {
+  display: flex; flex-direction: column; gap: 3px; min-width: 0; max-width: 100%;
+  padding: 9px 12px; border: 1px solid var(--border); border-left: 3px solid var(--accent);
+  border-radius: 8px; background: rgba(22,27,36,.97); color: var(--text);
+  box-shadow: 0 8px 24px rgba(0,0,0,.45); overflow-wrap: anywhere;
+  animation: ct-chat-in .22s ease-out both; transition: opacity .35s ease, transform .35s ease;
+}
+.ct-chat-popup-name { font-size: 12px; font-weight: 800; }
+.ct-chat-popup-text { font-size: 13px; line-height: 1.35; }
+.ct-chat-popup.is-leaving { opacity: 0; transform: translateY(-6px); }
+@keyframes ct-chat-in { from { opacity: 0; transform: translateY(-7px); } to { opacity: 1; transform: none; } }
+@media (max-width: 900px) { #chatBtn { padding: 3px 6px; gap: 3px; } .ct-chat-label { display: none; } }
+@media (max-width: 600px) {
+  .ct-chat-panel { top: 54px; right: 8px; width: calc(100vw - 16px); height: min(430px, calc(100vh - 64px)); }
+  .ct-chat-popups { top: 54px; right: 8px; width: calc(100vw - 16px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ct-turn-notice, .ct-chat-popup, #chatBtn.ct-chat-pulse, .ct-chat-panel.ct-chat-new-message, .ct-chat-entry.is-new { animation: none !important; transition: none !important; }
+  .ct-turn-notice { opacity: 1; transform: none; }
+}

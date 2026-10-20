@@ -212,6 +212,7 @@
       closed = true;
       clearTimeout(closeTimer);
       closeFrom(0);
+      window.removeEventListener('pointerdown', onDown, true);
       window.removeEventListener('mousedown', onDown, true);
       window.removeEventListener('keydown', onKey, true);
       window.removeEventListener('blur', onBlur);
@@ -222,6 +223,9 @@
 
     build(items, 0, x, y, null);
     menuState = state;
+    // Dismiss on pointerdown so mouse, pen, and touch interactions all close the menu
+    // before the outside target handles the same interaction. Keep mousedown as a fallback.
+    window.addEventListener('pointerdown', onDown, true);
     window.addEventListener('mousedown', onDown, true);
     window.addEventListener('keydown', onKey, true);
     window.addEventListener('blur', onBlur);
@@ -531,6 +535,10 @@
     let closed = false;
     let menuTimer = null;
     let hoverIid = null;
+    let remoteTimer = null;
+    let remoteSeq = 0;
+    let remoteLoading = false;
+    let remoteError = '';
     const typeOn = new Set();
     const useTabs = !!opts.tabs;
     let tabKey = 'all';       // 'all' | 'perm' | 'non' (only used when opts.tabs)
@@ -542,14 +550,16 @@
     const toolbar = h('div', 'w-v-toolbar');
     const search = h('input', 'w-input w-v-search');
     search.type = 'text';
-    search.placeholder = 'Search name, type or rules text…';
+    search.placeholder = opts.searchPlaceholder || 'Search name, type or rules text…';
     search.setAttribute('aria-label', 'Search cards');
     search.autocomplete = 'off';
     search.spellcheck = false;
     const sortWrap = h('label', 'w-v-sortwrap');
     sortWrap.appendChild(h('span', 'w-v-sortlabel', 'Sort'));
     const sortSel = h('select', 'w-select w-v-sort');
-    [['zone', 'Zone order'], ['name', 'Name'], ['cmc', 'Mana value'], ['type', 'Type']].forEach(([v, l]) => {
+    const sortOptions = [['zone', 'Zone order'], ['name', 'Name'], ['cmc', 'Mana value'], ['type', 'Type']];
+    if (opts.colorSort) sortOptions.push(['color', 'Color identity']);
+    sortOptions.forEach(([v, l]) => {
       const op = h('option', null, l);
       op.value = v;
       sortSel.appendChild(op);
@@ -651,6 +661,8 @@
         closed = true;
         document.removeEventListener('keydown', onDocKey);
         clearTimeout(menuTimer);
+        clearTimeout(remoteTimer);
+        remoteSeq++;
         closeMenu();
         if (typeof opts.onClose === 'function') opts.onClose();
       },
@@ -678,7 +690,7 @@
     }
 
     function searchMatches() {
-      const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
+      const terms = typeof opts.searchProvider === 'function' ? [] : query.toLowerCase().split(/\s+/).filter(Boolean);
       let base = recs;
       if (useTabs && tabKey !== 'all') base = recs.filter((r) => r.perm === (tabKey === 'perm'));
       return terms.length ? base.filter((r) => terms.every((t) => r.hay.includes(t))) : base.slice();
@@ -696,7 +708,7 @@
       const d = r.d, fd = !!r.c.faceDown;
       const posText = opts.ordered ? String(r.pos + 1) : '';
       const posLabel = opts.ordered && r.pos === 0 && opts.orderLabel ? opts.orderLabel : '';
-      const sig = [d.id, d.name, d.img, fd ? 1 : 0, posText, posLabel].join('|');
+      const sig = [d.id, d.name, d.img, fd ? 1 : 0, posText, posLabel, opts.showQuantity ? r.c.qty : ''].join('|');
       const cached = elCache.get(r.iid);
       if (cached && cached.sig === sig) return cached.el;
 
@@ -723,12 +735,25 @@
       }
       el.appendChild(art);
 
-      if (opts.ordered) {
-        const badge = h('div', 'w-vcard-pos', posText);
+      if (opts.ordered || (opts.showQuantity && Number(r.c.qty) > 1)) {
+        const badgeText = opts.ordered ? posText : '×' + String(r.c.qty);
+        const badge = h('div', 'w-vcard-pos', badgeText);
         if (posLabel) badge.appendChild(h('small', null, posLabel));
         el.appendChild(badge);
       }
       if (pick) el.appendChild(h('div', 'w-vcard-check', '✓'));
+      if (opts.removeKey) {
+        const remove = h('button', 'w-vcard-remove', '×');
+        remove.type = 'button';
+        remove.title = 'Remove one copy from the deck';
+        remove.setAttribute('aria-label', 'Remove one copy of ' + name);
+        remove.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (typeof opts.onAction === 'function') opts.onAction(opts.removeKey, r.iid);
+        });
+        el.appendChild(remove);
+      }
       el.appendChild(h('div', 'w-vcard-name', name));
 
       elCache.set(r.iid, { el, sig });
@@ -772,7 +797,11 @@
 
       // Chip counts reflect the current search; active chips stay visible so they can be un-toggled.
       const counts = {};
-      searched.forEach((r) => r.cats.forEach((c) => { counts[c] = (counts[c] || 0) + 1; }));
+      searched.forEach((r) => {
+        const weight = typeof opts.countItems === 'function'
+          ? Math.max(1, Number(opts.countItems([r])) || 1) : 1;
+        r.cats.forEach((c) => { counts[c] = (counts[c] || 0) + weight; });
+      });
       chips.forEach((ch) => {
         const n = counts[ch.type] || 0;
         const on = typeOn.has(ch.type);
@@ -784,21 +813,40 @@
       chipBar.hidden = recs.length === 0;
 
       const list = typeOn.size ? searched.filter((r) => r.cats.some((c) => typeOn.has(c))) : searched;
+      const colorKey = d => {
+        const ci = Array.isArray(d.ci) ? d.ci : [];
+        return ['W', 'U', 'B', 'R', 'G'].filter(c => ci.indexOf(c) !== -1).join('') || '0';
+      };
       if (sortKey === 'name') list.sort((a, b) => cmpName(a, b) || a.pos - b.pos);
       else if (sortKey === 'cmc') list.sort((a, b) => ((a.d.cmc || 0) - (b.d.cmc || 0)) || cmpName(a, b) || a.pos - b.pos);
       else if (sortKey === 'type') list.sort((a, b) => (typeRank(a) - typeRank(b)) || cmpName(a, b) || a.pos - b.pos);
-      // 'zone': already in zone order
+      else if (sortKey === 'color') list.sort((a, b) => colorKey(a.d).localeCompare(colorKey(b.d)) || cmpName(a, b) || a.pos - b.pos);
+      // 'zone': already in deck order
       displayed = list;
 
       const total = recs.length, n = displayed.length;
-      countEl.textContent = n === total ? total + (total === 1 ? ' card' : ' cards') : 'Showing ' + n + ' of ' + total;
+      if (typeof opts.countItems === 'function') {
+        const countOf = list => Math.max(0, Number(opts.countItems(list)) || 0);
+        const totalItems = countOf(recs), visibleItems = countOf(displayed);
+        countEl.textContent = n === total ? totalItems + ' cards' : 'Showing ' + visibleItems + ' of ' + totalItems + ' cards';
+      } else {
+        countEl.textContent = n === total ? total + (total === 1 ? ' card' : ' cards') : 'Showing ' + n + ' of ' + total;
+      }
 
       const frag = document.createDocumentFragment();
       displayed.forEach((r) => frag.appendChild(cardEl(r)));
       grid.textContent = '';
       grid.appendChild(frag);
       emptyEl.hidden = n > 0;
-      emptyEl.textContent = total === 0 ? 'No cards' : 'No matches';
+      if (n > 0) emptyEl.textContent = '';
+      else if (remoteLoading) emptyEl.textContent = 'Searching Scryfall…';
+      else if (remoteError) emptyEl.textContent = remoteError;
+      else if (typeof opts.searchProvider === 'function')
+        emptyEl.textContent = query.trim().length < 2 ? 'Type at least 2 characters to search.' : 'No matching cards';
+      else emptyEl.textContent = total === 0 ? 'No cards' : 'No matches';
+      if (typeof opts.searchProvider === 'function') {
+        countEl.textContent = remoteLoading ? 'Searching…' : (remoteError ? 'Search failed' : (n + (n === 1 ? ' result' : ' results')));
+      }
 
       if (hi >= n) hi = n - 1;
       scroller.scrollTop = keepScroll ? prevScroll : 0;
@@ -840,6 +888,7 @@
       const r = displayed[i];
       if (!r) return;
       if (pick) { toggleSel(r.iid); return; }
+      if (typeof opts.onCardClick === 'function') { opts.onCardClick(r.d, r.iid); return; }
       const el = elCache.get(r.iid).el.getBoundingClientRect();
       openMenu(r.iid, el.left + 24, el.top + 48);
     }
@@ -869,6 +918,10 @@
       hi = displayed.indexOf(r);
       syncMarks();
       if (pick) { toggleSel(r.iid); return; }
+      if (typeof opts.onCardClick === 'function') {
+        if (e.detail === 1) opts.onCardClick(r.d, r.iid, e);
+        return;
+      }
       if (!actions.length || e.detail > 1) return; // 2nd click of a double-click
       clearTimeout(menuTimer);
       const x = e.clientX, y = e.clientY;
@@ -928,7 +981,35 @@
     function onSearchInput() {
       query = search.value;
       hi = -1;
+      if (typeof opts.searchProvider !== 'function') { render(); return; }
+      clearTimeout(remoteTimer);
+      const seq = ++remoteSeq;
+      remoteError = '';
+      const needle = query.trim();
+      if (needle.length < 2) {
+        remoteLoading = false;
+        setCards([]);
+        render();
+        return;
+      }
+      remoteLoading = true;
+      setCards([]);
       render();
+      remoteTimer = setTimeout(() => {
+        Promise.resolve().then(() => opts.searchProvider(needle)).then((found) => {
+          if (closed || seq !== remoteSeq) return;
+          remoteLoading = false;
+          const items = Array.isArray(found) ? found : [];
+          setCards(items.map((d, i) => ({ iid: 'search-' + String(d.id || i), def: d } )));
+          render();
+        }).catch((err) => {
+          if (closed || seq !== remoteSeq) return;
+          remoteLoading = false;
+          remoteError = err && err.message ? err.message : 'Scryfall search failed. Try again.';
+          setCards([]);
+          render();
+        });
+      }, 280);
     }
     search.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowDown') {
@@ -999,9 +1080,20 @@
     let hi = Math.max(0, prints.findIndex((d) => d.id === opts.currentId));
     const rows = [];
 
+    const content = h('div', 'w-pp-content');
+    const search = document.createElement('input');
+    search.type = 'search';
+    search.className = 'w-pp-search';
+    search.placeholder = 'Search sets, products, collector numbers, or years…';
+    search.setAttribute('aria-label', 'Search card printings by set, product, collector number, or year');
+    search.autocomplete = 'off';
+    if (prints.length) content.appendChild(search);
+
     const list = h('div', 'w-pp-list');
     list.setAttribute('role', 'list');
-    if (!prints.length) list.appendChild(h('div', 'w-v-empty', 'No other printings found'));
+    const empty = h('div', 'w-v-empty', prints.length ? 'No printings match that search.' : 'No other printings found');
+    empty.hidden = !!prints.length;
+    list.appendChild(empty);
 
     function pick(def, scope) {
       try { if (typeof opts.onPick === 'function') opts.onPick(def, scope); }
@@ -1013,6 +1105,10 @@
       const name = d.name || 'Unknown card';
       const row = h('div', 'w-pp-row' + (isCur ? ' w-pp-cur' : ''));
       row.setAttribute('role', 'listitem');
+      row.dataset.search = [
+        d.name, d.setName, d.set, d.cn, d.year, d.rarity,
+        Array.isArray(d.finishes) ? d.finishes.join(' ') : ''
+      ].filter(Boolean).join(' ').toLowerCase();
 
       const art = h('div', 'w-pp-art');
       const hasImg = typeof d.img === 'string' && d.img.indexOf(IMG_PREFIX) === 0;
@@ -1047,7 +1143,7 @@
       useBtn.addEventListener('click', () => pick(d, 'one'));
       btns.appendChild(useBtn);
       if (showAll) {
-        const allBtn = h('button', 'w-btn', 'Use for all copies');
+        const allBtn = h('button', 'w-btn', opts.allLabel || 'Use for all copies');
         allBtn.type = 'button';
         allBtn.addEventListener('click', () => pick(d, 'all'));
         btns.appendChild(allBtn);
@@ -1056,19 +1152,35 @@
 
       if (d.year) row.appendChild(h('span', 'w-pp-year', d.year));
       row.append(art, info);
-      row.addEventListener('mouseenter', () => { hi = i; sync(false); });
+      row.addEventListener('mouseenter', () => { if (!row.hidden) { hi = i; sync(false); } });
       list.appendChild(row);
       rows.push(row);
     });
 
-    function sync(scroll) {
-      rows.forEach((r, i) => r.classList.toggle('w-pp-hi', i === hi));
-      if (scroll && rows[hi]) rows[hi].scrollIntoView({ block: 'nearest' });
+    function visibleIndexes() {
+      return rows.map((r, i) => r.hidden ? -1 : i).filter((i) => i >= 0);
     }
 
+    function sync(scroll) {
+      rows.forEach((r, i) => r.classList.toggle('w-pp-hi', !r.hidden && i === hi));
+      const visible = visibleIndexes();
+      empty.hidden = visible.length > 0;
+      if (scroll && rows[hi] && !rows[hi].hidden) rows[hi].scrollIntoView({ block: 'nearest' });
+    }
+
+    function filterPrints() {
+      const query = search.value.trim().toLowerCase();
+      rows.forEach((row) => { row.hidden = !!query && !row.dataset.search.includes(query); });
+      const visible = visibleIndexes();
+      if (visible.length && !visible.includes(hi)) hi = visible[0];
+      sync(false);
+    }
+    search.addEventListener('input', filterPrints);
+
+    content.appendChild(list);
     const modal = makeModal({
       title: opts.title || 'Switch printing',
-      el: list,
+      el: content,
       wide: true,
       className: 'w-pp-dialog',
       onClose() { document.removeEventListener('keydown', onKey); },
@@ -1076,9 +1188,12 @@
 
     function onKey(e) {
       if (modalStack[modalStack.length - 1] !== modal || e.defaultPrevented) return;
-      if (e.ctrlKey || e.metaKey || e.altKey || !rows.length) return;
-      if (e.key === 'ArrowDown') { e.preventDefault(); hi = Math.min(rows.length - 1, hi + 1); sync(true); }
-      else if (e.key === 'ArrowUp') { e.preventDefault(); hi = Math.max(0, hi - 1); sync(true); }
+      if (e.ctrlKey || e.metaKey || e.altKey || !rows.length || e.target === search) return;
+      const visible = visibleIndexes();
+      if (!visible.length) return;
+      const current = visible.indexOf(hi);
+      if (e.key === 'ArrowDown') { e.preventDefault(); hi = visible[Math.min(visible.length - 1, Math.max(0, current) + 1)]; sync(true); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); hi = visible[Math.max(0, current < 0 ? 0 : current - 1)]; sync(true); }
       else if (e.key === 'Enter') {
         const t = e.target;
         if (t && t.tagName === 'BUTTON') return; // a focused button handles Enter itself
@@ -1091,7 +1206,6 @@
     sync(true);
     return { close() { modal.close(); } };
   };
-
   /* ------------------------------------------------------------------ */
   /* Card info                                                           */
   /* ------------------------------------------------------------------ */
