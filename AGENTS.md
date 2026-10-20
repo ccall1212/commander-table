@@ -32,7 +32,7 @@ The normal flow is:
 ### Checks Codex does itself
 Use whatever your environment really has, and say in the PR which of these you actually ran. Never claim a check you only read the code for.
 - Keep each branch **small and focused** on one feature or fix. Big rewrites can't be reviewed safely.
-- **Run the game if you can.** If you have a shell, serve the repo (`python -m http.server 8099 --bind 127.0.0.1`) and load `index.html`; if you can also drive a headless browser (for example Playwright + Chromium in your own sandbox), do a pass of the click list and check the console for errors. A headless browser cannot hear sound or use a real mouse hover (`S`/`X` over the Library, card hotkeys), so mark those "needs a human".
+- **Test the change yourself before asking Chris to.** Codex can run commands and sub-agents, so don't just read the code. Serve the repo, (`python -m http.server 8099 --bind 127.0.0.1`), load `index.html`, and drive a headless browser (for example Playwright + Chromium in your own sandbox; use several pages as several players for multiplayer features) through the click list, checking the console for errors. If your environment truly can't, say so in the PR. A headless browser cannot hear sound or use a real mouse hover (`S`/`X` over the Library, card hotkeys), so mark those "needs a human".
 - **Syntax:** run `node --check js/<file>.js` on every changed file if your environment has Node. If not,
   re-read each changed function and check that braces, brackets, parentheses and template
   literals (backticks, `${…}`) are balanced, and that no `const`/`let` is declared twice in the same scope.
@@ -105,7 +105,7 @@ Read this before changing layout or anything that finds elements on the page. Se
 
 ## Required test ZIP for Chris
 
-**Every feature or fix pull request must include a downloadable ZIP of the exact pull-request branch so Chris can test it locally.** Do this every time; do not wait for him to ask.
+**Every feature or fix pull request must include a downloadable ZIP of the exact pull-request branch so Chris can test it locally too.** Your own testing comes first, but Chris wants the ZIP every time as a backup so he can try it himself. Do this every time; do not wait for him to ask.
 
 - Build the ZIP from the branch/commit being proposed in the PR, not from `main` and not from an older commit.
 - Include the complete runnable project source needed to test the change. Exclude `.git` history and local secrets.
