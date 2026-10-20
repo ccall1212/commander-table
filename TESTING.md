@@ -1,23 +1,26 @@
-# Symbolic power/toughness — v0.28.2 test copy
+# Commander Table v0.29.0 — release checks
 
-Download the ZIP, extract it, then double-click **index.html**. No Python, terminal, installation or local server is needed. Keep internet access on for card images and online play.
+For a downloaded copy: extract the ZIP and double-click **index.html**. No Python, terminal, installation or local server is needed. Keep internet access on for card images and online play.
 
-This is a separate test copy for the power/toughness fix, based on the published game. The targeting-arrow candidate remains in its own ZIP/PR.
+## Recorded approval
 
-## Quick check
+Tested by Chris: he reviewed the multiple-arrow test copy and symbolic power/toughness test copy and said, “Both of these look good to me. Please push both of them.” Publication was authorized on 2026-10-20. Do not infer specific multiplayer/device checks beyond that report.
 
-1. Start Practice solo with a creature whose printed power/toughness is `*/5` (or `*/` another number), one with `*/*`, and an ordinary numeric creature. You can use your existing deck or the deck builder.
-2. Put them on the battlefield. Expect `0/5` for `*/5`, `0/0` for `*/*`, and the usual stats for the numeric creature. Each should have the same power and toughness adjustment buttons.
-3. Click power to raise only power; right-click it to lower only power. Repeat for toughness. From `0/5`, try `1/5`, `-1/5` and `-1/4`. The card must not tap or move when using the buttons.
-4. Try the card menu's Power/Toughness actions and Alt+1/Alt+3 for power, Alt+2/Alt+4 for toughness. Add real +1/+1 and -1/-1 counters; they should affect both stats on top of manual changes. Undo should restore the preceding values.
-5. Use **Set power/toughness…** for a numeric base, then **Reset power/toughness**. Reset should restore zero for symbolic sides and the printed number for numeric sides; real counters remain. The printed `*` value should still be visible in the badge tooltip/card information.
-6. Check Sidebar and Grid, including a smaller window. A creature face down should retain the usual face-down behavior without revealing its printed stats. Hand cards and non-creatures without P/T should not gain battlefield P/T buttons.
-7. If testing online, have both players use this updated ZIP. Change the symbolic creature's stats and confirm the other player sees the same values. Try giving control of it to the other player and adjusting it there.
+## Included changes
 
-## Checks already run
+- Multiple shared arrows remain at once. Click a line to remove only that arrow. **×** hides the controls without removing arrows; **☰ → Show arrow controls** reopens them, and **Clear all** clears the collection. Empty battlefield space targets that player; names remain a fallback.
+- Symbolic P/T components start at zero for manual adjustment: `*/5 → 0/5`, `*/* → 0/0`, `3/* → 3/0`. Both stats use the usual +/- controls; real counters, base overrides and reset continue to apply. Printed definitions remain available.
 
-- JavaScript syntax checks and the regression test in `tests/test_power_toughness.cjs`.
-- The regression checks exercise actual app helpers and generated card HTML: symbolic/numeric baselines, both buttons, independent +/- changes, counters, overrides/reset, public-state serialization, undo snapshots and hidden/non-creature exclusions.
-- A Luna sub-agent independently reviews the change. Browser click/visual checks remain for this revised copy; Chris's reported bug is recorded, not a test pass for the fix.
+## Automated integration checks
 
-Do not publish this candidate until Chris approves it.
+- `tests/test_targeting.cjs`: four attackers, unique IDs, individual click/keyboard removal, local controls dismissal/reopen, full join snapshots, independent endpoint pruning, sender authorization, privacy and scaled geometry.
+- `tests/test_power_toughness.cjs`: symbolic/numeric baselines, generated adjustment controls, independent changes, counters, overrides/reset, public-state roundtrip, undo snapshots and hidden/non-creature exclusions.
+- JavaScript syntax, all 16 local asset cache links and app/meta version agreement.
+
+## Future regression checks
+
+1. Draw four creature-to-player arrows; remove one by its line and confirm the other three remain. Hide/reopen controls, cancel a pick and clear all. Check card/pile/life actions away from a line.
+2. Adjust a starred creature's power and toughness separately, add counters, set a base and reset. Check ordinary numeric creatures and face-down behavior.
+3. In Sidebar and Grid, resize the window, move an arrow endpoint and change focus. Join another player using the same version and compare all arrows and adjusted stats. Use real touch hardware when checking Touch mode.
+
+The deck randomizer/import draft remains paused at Chris's request; it is not part of this release.

@@ -13,7 +13,7 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 ## Current state
 
 - **Version:** the newest entry in `CHANGELOG.md` (do not write a version number here; it goes stale).
-- **In progress, still draft:** [PR #11](https://github.com/ccall1212/commander-table/pull/11), website import/random Archidekt decks. Recovery candidate v0.30.0 requires the separate HTTP-only test Worker and listed live checks. Do not merge/deploy to the live relay before Chris approves.
+- **Paused again at Chris's request (2026-10-20):** draft [PR #11](https://github.com/ccall1212/commander-table/pull/11), website import/random deck picker. Preserve the branch and recovery checkpoint. Do not resume implementation, deploy its test Worker, merge, or publish until Chris asks to resume; see the investigation note.
 - **Layouts:** Sidebar and Grid only.
 - **Open work:** see `OBJECTIVES.md`.
 - **Slam sound:** Chris wants to keep refining the Commander slam sound. Do that on a separate branch and leave the published behaviour alone until he approves.
