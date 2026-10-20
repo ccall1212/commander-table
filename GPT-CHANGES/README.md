@@ -24,7 +24,7 @@ Routine documentation-only updates, including `AGENTS.md`, objectives, and hando
 
 ## How a game change gets released
 
-1. ChatGPT makes a focused branch and PR, includes the test ZIP and simple testing steps, and runs the available syntax/code checks.
+1. ChatGPT/Codex makes a focused branch and PR, delegates useful independent tasks to sub-agents, includes the test ZIP and simple testing steps, and runs available syntax/code checks and permitted browser tests.
 2. Chris tests the branch in his browser and reports what he tried. Record his testing accurately; don't claim tests he didn't perform.
 3. Stop and wait for Chris to say **publish** for the specific PR/version. Only then merge the approved PR, update release docs (`CHANGELOG.md`, `docs/GUIDE.md`), verify the automatic release tag and live site, and delete the branch if possible.
 4. **Tags are automatic — never manually tag as part of the normal release flow.** The GitHub Action (`.github/workflows/tag-release.yml`) creates the annotated `vX.Y.Z` tag on a push to `main`. After publishing, verify the tag exists and that its final target commit SHA exactly matches the merge commit on `main`. For annotated tags, follow the tag-object SHA to the tag object and compare its `object.sha`. If the tag is missing or points elsewhere, inspect/report the workflow result to Chris; do not create, move, or rewrite it manually unless Chris separately authorizes recovery. Do not write tag targets or "tag still needed" lists in this folder.
@@ -32,5 +32,5 @@ Routine documentation-only updates, including `AGENTS.md`, objectives, and hando
 ## Known things that are not your problem
 
 - **Historical red Workers Builds checks:** Chris identified failed branch previews running `npx wrangler preview` without previews configuration. Production deployments were successful, including the latest main commit. Chris disabled preview builds on 2026-10-20; old failed checks remain historical. New failures must be inspected rather than assumed harmless.
-- You cannot run a real browser or hear audio. Chris's testing is the browser test; don't describe code review as browser testing.
+- Chris authorizes routine sub-agent delegation for useful independent tasks. Use available, permitted browser tools for real user-flow checks; access and tooling vary by session and sub-agents cannot bypass a denial. Record code/automated checks, actual browser observations, and Chris's hands-on results separately. His extract-and-open ZIP test flow and publication approval remain required.
 - The GitHub connector cannot delete branches. After a merge, say which branch to delete or ask Chris to use GitHub's **Delete branch** button. (GitHub's setting "Automatically delete head branches" does this on its own.)
