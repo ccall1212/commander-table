@@ -9,7 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ## [0.29.0] - 2026-10-20
 
 ### Added
-- Draw one shared targeting arrow between battlefield cards or players. Start from a card/player menu or the touch-accessible table menu, cancel with Escape or Cancel, and let any seated player clear the arrow. Arrows follow the displayed cards across layouts and disappear when an endpoint leaves the battlefield or table.
+- Draw one shared targeting arrow between battlefield cards or players. Click empty battlefield space to target that player, with their name available as a fallback. Start from a card/player menu or the touch-accessible table menu, cancel with Escape or Cancel, and let any seated player clear the arrow. Arrows follow the displayed cards across layouts and disappear when an endpoint leaves the battlefield or table.
 
 [Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.29.0...HEAD
 [0.29.0]: https://github.com/ccall1212/commander-table/compare/v0.28.1...v0.29.0

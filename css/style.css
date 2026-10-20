@@ -1240,4 +1240,6 @@ body.touch-mode #myBar .ctrpanel {
 #ct-arrow-controls { position:fixed; top:58px; left:50%; transform:translateX(-50%); z-index:610; display:flex; align-items:center; gap:10px; max-width:calc(100vw - 24px); padding:5px 8px; border:1px solid #566176; border-radius:8px; background:#141a24ee; color:#eef1f6; font-size:13px; }
 #ct-arrow-controls button { min-height:36px; white-space:nowrap; }
 .touch-mode #ct-arrow-controls button { min-height:44px; }
-.ct-arrow-picking #game .card[data-zone="battlefield"], .ct-arrow-picking #game [data-phead], .ct-arrow-picking #game [data-target-player] { cursor:crosshair; outline:1px dashed #e0a33a; outline-offset:2px; }
+.ct-arrow-picking #game .card[data-zone="battlefield"], .ct-arrow-picking #game [data-phead], .ct-arrow-picking #game .boardwrap { cursor:crosshair; outline:1px dashed #e0a33a; outline-offset:2px; }
+
+#ct-target-arrow .ct-arrow-player-target { fill:currentColor; stroke:#080b10; stroke-width:2; }

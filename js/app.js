@@ -2787,7 +2787,7 @@ function lifeBoxHTML(pid, noPanel) {
   const any = Object.keys(PLAYER_CTR_ICONS).filter(k => vals[k]).map(k => `${PLAYER_CTR_ICONS[k]}${vals[k]}`).join(' ');
   const cd = cmdDmgInfo(pid);
   const cdBadge = cd.max ? `<span class="cdbadge${cd.max >= 21 ? ' lethal' : ''}" title="Highest commander damage taken">⚔${cd.max}</span> ` : '';
-  return `<span class="lifebox" data-target-player="${esc(pid)}" title="Life${mine ? ' (Shift-click: ±5)' : ` — changing it asks ${esc(p.name)}'s game to apply it`}">
+  return `<span class="lifebox" title="Life${mine ? ' (Shift-click: ±5)' : ` — changing it asks ${esc(p.name)}'s game to apply it`}">
       <button class="life-adjust" type="button" data-a="${a}" data-pid="${esc(pid)}" data-d="-1" aria-label="Decrease life total">−</button><button class="lifeN life-edit" type="button" data-a="setlife" data-pid="${esc(pid)}" title="Click to set life total directly" aria-label="Set life total">${life}</button><button class="life-adjust" type="button" data-a="${a}" data-pid="${esc(pid)}" data-d="1" aria-label="Increase life total">+</button>
       <button class="more" data-a="ctrs" data-pid="${esc(pid)}" title="Commander damage, poison, energy, experience, rad, tickets">${cdBadge}${any ? esc(any) + ' ' : ''}▾</button></span>` +
     (open && !noPanel ? ctrPanelHTML(pid) : '');
@@ -3389,15 +3389,27 @@ function clearTargetArrow() {
   toHost({ t: 'arrow', arrow: null });
   endTargeting();
 }
-function pickArrowEndpoint(target) {
+function arrowEndpointAt(target) {
   const card = target.closest('.card');
-  const player = target.closest('[data-phead], [data-target-player]');
-  const raw = card && card.dataset.zone === 'battlefield'
-    ? { kind: 'card', pid: card.dataset.pid, iid: card.dataset.iid }
-    : !card && player ? { kind: 'player', pid: player.dataset.phead || player.dataset.targetPlayer } : null;
+  if (card) return card.dataset.zone === 'battlefield' ? { kind: 'card', pid: card.dataset.pid, iid: card.dataset.iid } : null;
+  const player = target.closest('[data-phead]');
+  if (player) return { kind: 'player', pid: player.dataset.phead };
+  if (target.closest('[data-pile], .tstrip, .thand, .tpile, #myRow, .lifebox, button, input, textarea, .rlabel, .grip')) return null;
+  const board = target.closest('.board'), wrap = target.closest('.boardwrap');
+  const pid = board && board.dataset.pid || (wrap && wrap.firstElementChild && wrap.firstElementChild.dataset.pid);
+  if (pid) return { kind: 'player', pid };
+  const opp = target.closest('.obf');
+  if (opp) {
+    const tile = opp.closest('.opp');
+    if (tile) return { kind: 'player', pid: tile.dataset.opp || S.pid };
+  }
+  return target.closest('#myBf') ? { kind: 'player', pid: S.pid } : null;
+}
+function pickArrowEndpoint(target) {
+  const raw = arrowEndpointAt(target);
   doPublish();
   const ep = CTTargeting.endpoint(raw, S.players, arrowSeats());
-  if (!ep) { UI.toast('Choose a battlefield card or a player’s name/life total.'); return; }
+  if (!ep) { UI.toast('Choose a battlefield card, empty battlefield space, or a player’s name.'); return; }
   if (!S.arrowPick.from) { S.arrowPick.from = ep; refreshTargeting(); return; }
   if (CTTargeting.same(S.arrowPick.from, ep)) { UI.toast('Choose a different target.'); return; }
   const from = CTTargeting.endpoint(S.arrowPick.from, S.players, arrowSeats());
@@ -3410,16 +3422,22 @@ function pickArrowEndpoint(target) {
 function arrowAnchor(ep) {
   // A player/card may appear twice (large board and miniature). Choose the largest visible copy.
   const nodes = ep.kind === 'card' ? document.querySelectorAll('#game .board .card[data-zone="battlefield"]')
-    : document.querySelectorAll('#game [data-phead], #game [data-target-player]');
+    : document.querySelectorAll('#game .boardwrap');
   let best = null;
   nodes.forEach(el => {
     const match = ep.kind === 'card' ? el.dataset.pid === ep.pid && el.dataset.iid === ep.iid
-      : (el.dataset.phead || el.dataset.targetPlayer) === ep.pid;
+      : el.firstElementChild && el.firstElementChild.dataset.pid === ep.pid;
     if (!match || getComputedStyle(el).visibility === 'hidden') return;
     const r = el.getBoundingClientRect();
     if (!r.width || !r.height || r.right <= 0 || r.bottom <= 0 || r.left >= innerWidth || r.top >= innerHeight) return;
     if (!best || r.width * r.height > best.width * best.height) best = r;
   });
+  if (ep.kind === 'player') {
+    // Player arrows land inside the board, independent of where it was clicked.
+    if (best) return { left: best.left + best.width / 2 - 6, top: best.top + best.height / 2 - 6, width: 12, height: 12 };
+    const name = [...document.querySelectorAll('#game [data-phead]')].find(el => el.dataset.phead === ep.pid && el.getBoundingClientRect().width);
+    return name ? name.getBoundingClientRect() : null;
+  }
   return best;
 }
 function refreshTargeting() {
@@ -3436,7 +3454,7 @@ function refreshTargeting() {
       $('#game').appendChild(controls);
     }
     controls.querySelector('span').textContent = picking
-      ? (S.arrowPick.from ? 'Choose the target card or player.' : 'Choose the starting card or player.')
+      ? (S.arrowPick.from ? 'Choose a target card, empty board, or name.' : 'Choose a starting card, empty board, or name.')
       : `Targeting arrow · ${pname(S.targetArrow.by)}`;
     controls.querySelector('button').textContent = picking ? 'Cancel' : 'Clear arrow';
   } else if (controls) controls.remove();
@@ -3455,7 +3473,7 @@ function drawTargetArrow() {
   if (!svg) {
     svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.id = 'ct-target-arrow'; svg.setAttribute('aria-hidden', 'true');
-    svg.innerHTML = '<defs><marker id="ct-arrow-tip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="currentColor"/></marker></defs><line class="ct-arrow-shadow"/><line class="ct-arrow-line" marker-end="url(#ct-arrow-tip)"/>';
+    svg.innerHTML = '<defs><marker id="ct-arrow-tip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="currentColor"/></marker></defs><line class="ct-arrow-shadow"/><line class="ct-arrow-line" marker-end="url(#ct-arrow-tip)"/><circle class="ct-arrow-player-target" r="7"/>';
     $('#game').appendChild(svg);
   }
   const a = arrowAnchor(S.targetArrow.from), b = arrowAnchor(S.targetArrow.to);
@@ -3463,6 +3481,9 @@ function drawTargetArrow() {
   svg.style.display = coords ? '' : 'none';
   if (coords) {
     svg.style.color = colorOf(S.targetArrow.by);
+    const dot = svg.querySelector('circle');
+    dot.style.display = S.targetArrow.to.kind === 'player' ? '' : 'none';
+    dot.setAttribute('cx', b.left + b.width / 2); dot.setAttribute('cy', b.top + b.height / 2);
     svg.querySelectorAll('line').forEach(el => Object.entries(coords).forEach(([k, v]) => el.setAttribute(k, v.toFixed(1))));
   }
   arrowFrame = requestAnimationFrame(drawTargetArrow);

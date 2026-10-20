@@ -17,7 +17,9 @@ const context = vm.createContext({
 });
 context.window = context;
 vm.runInContext(fs.readFileSync(path.join(root, 'js/targeting.js'), 'utf8'), context);
-vm.runInContext(fs.readFileSync(path.join(root, 'js/app.js'), 'utf8'), context);
+// Expose only the real endpoint picker to this unit harness; production exports stay unchanged.
+const appSource = fs.readFileSync(path.join(root, 'js/app.js'), 'utf8').replace('window.CT = { S,', 'window.CT = { arrowEndpointAt, S,');
+vm.runInContext(appSource, context);
 const { S, hostRecv } = context.CT, T = context.CTTargeting;
 S.pid = 'p1'; S.role = 'host'; S.me = {};
 S.table = { seats: ['p1', 'p2'] };
@@ -25,6 +27,14 @@ S.players = {
   p1: { zones: { battlefield: [{ iid: 'p6u6wnase_1', fd: true }] } },
   p2: { zones: { battlefield: [{ iid: 'p2_2' }], hand: [{ iid: 'secret_1' }] } }
 };
+const element = matches => ({ closest: selector => matches[selector] || null });
+const wrap = { firstElementChild: { dataset: { pid: 'p2' } } };
+assert.equal(context.CT.arrowEndpointAt(element({'.boardwrap':wrap})).pid, 'p2', 'empty opponent board targets player');
+assert.equal(context.CT.arrowEndpointAt(element({'#myBf':{}})).pid, 'p1', 'empty own board targets player');
+assert.equal(context.CT.arrowEndpointAt(element({'[data-phead]':{dataset:{phead:'p2'}}})).pid, 'p2', 'name remains a fallback');
+assert.equal(context.CT.arrowEndpointAt(element({'.card':{dataset:{zone:'hand',pid:'p1',iid:'hidden'}},'.boardwrap':wrap})),null,'hand never falls back to player board');
+assert.equal(context.CT.arrowEndpointAt(element({'.boardwrap':wrap,'[data-pile], .tstrip, .thand, .tpile, #myRow, .lifebox, button, input, textarea, .rlabel, .grip':{}})),null,'life/pile/interactive controls are excluded');
+assert.equal(context.CT.arrowEndpointAt(element({'.card':{dataset:{zone:'battlefield',pid:'p2',iid:'p2_2'}},'.boardwrap':wrap})).kind,'card','battlefield cards take priority over board target');
 const card = { kind: 'card', pid: 'p1', iid: 'p6u6wnase_1' };
 const player = { kind: 'player', pid: 'p2' };
 const send = (arrow, from = 'p1') => hostRecv({ t: 'arrow', arrow }, from);
@@ -66,4 +76,4 @@ assert.equal(T.line(a, a), null);
 assert.equal(T.line(a, { ...a, left: 30 }), null, 'overlapping targets do not produce reversed lines');
 const scaled = T.line({ left: 5, top: 10, width: 40, height: 56 }, { left: 105, top: 10, width: 40, height: 56 });
 assert.equal(scaled.x1, line.x1 / 2); assert.equal(scaled.x2, line.x2 / 2);
-console.log('PASS targeting: host/solo authorization, public endpoints, spoof stripping, clear, removal and scaled geometry');
+console.log('PASS targeting: empty-board/name/card endpoint picking, hidden/interactive exclusions, host/solo authorization, public endpoints, spoof stripping, clear, removal and scaled geometry');

@@ -9,14 +9,18 @@ Download this ZIP, extract it, and double-click **index.html** in the extracted 
 ## Check the arrow
 
 1. Practice solo: put two cards on the battlefield. Right-click one → **Send arrow to…**, then click the other. An arrow connects them; the second card must not tap. Repeat with a face-down source/target; no identity is revealed.
-2. Right-click your name → **Send arrow to…**, then choose a battlefield card. Repeat card → your life total. The life total must not change.
+2. Right-click your name → **Send arrow to…**, then choose a battlefield card. Repeat card → empty space on your battlefield. The arrow should point inside the board; your name remains a fallback target. Life controls must not change while picking.
 3. Use **☰ → Targeting arrow…** to select both endpoints. Cancel with Escape, Cancel, and right-click. Try a hand/library card: it should be refused and should not move/draw/tap anything.
 4. Start another arrow: it replaces the first. Clear it with the on-table **Clear arrow** and the table menu. Drag/reposition/tap cards afterward; normal controls must work.
-5. Host a room, open its invite in a separate browser profile/private window, and join with a second player. Draw card → opponent card and card → opponent player. Both players should see the same endpoints in their own layouts. The joiner must also be able to create/clear it.
+5. Host a room, open its invite in a separate browser profile/private window, and join with a second player. Draw card → opponent card and card → empty opponent battlefield space. Repeat using the opponent’s name as the fallback target. Both players should see the same endpoints in their own layouts. The joiner must also be able to create/clear it.
 6. At 1920×1080 and 1366×768, switch both clients between Sidebar and Grid, focus another player, resize the window/splitter, and drag an endpoint. The arrow should track visible endpoints and never block clicks. A target hidden by focusing another board can hide the line until visible again.
 7. Move an endpoint to Graveyard/Hand/Exile or give it to another player: the old arrow should disappear. Join/reload a guest while an arrow exists: the current arrow should be received. Start a new game or reload the host: the arrow should clear.
 8. With Touch mode on (preferably real iPad Safari), use **Actions → Send arrow to…** and the table-menu flow. Taps select endpoints without opening previews, changing life, or starting drags. Cancel and clear should be comfortably tappable. Confirm ordinary touch card inspection/dragging still works afterward.
 9. Check the browser console for errors. Try three players if available, including one joining after the arrow was drawn.
+
+## Chris’s feedback
+
+Tested by Chris: he tested the first arrow ZIP and liked it. He requested clicking the opponent’s empty board to target the player, retaining the name as a fallback for small screens. This updated copy implements that request; its board-targeting adjustment still needs his check.
 
 ## Automated/source checks
 

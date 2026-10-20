@@ -214,10 +214,10 @@ For a hovered card, **+ / =** adds a +1/+1 counter and **− / _** adds a −1/�
 
 ## Targeting arrows
 
-- Right-click a battlefield card or a player's name, choose **Send arrow to…**, then click a different battlefield card or a player's name/life total. Everyone sees one shared arrow, colored for the player who drew it; a new arrow replaces the previous one.
+- Right-click a battlefield card or a player's name, choose **Send arrow to…**, then click a different battlefield card or empty space on a player's battlefield to target that player. Clicking their name also works, which is useful on small screens. Everyone sees one shared arrow, colored for the player who drew it; a new arrow replaces the previous one.
 - On touch, use the card preview's **Actions → Send arrow to…**, or **☰ → Targeting arrow…** and tap the starting card/player, then the target. Picking endpoints does not tap, drag, or change the life total.
 - Press **Escape**, right-click, or tap **Cancel** to cancel picking. Use **Clear arrow** near the top of the table or **☰ → Clear targeting arrow** to remove the shared arrow. Any seated player can clear it.
-- Arrows are visual only. They follow cards and player panels when boards resize or layouts change, and are hidden if an endpoint is not currently visible. They disappear when a referenced card leaves the battlefield, a player leaves the table, or a new game begins. Joining/reconnecting receives the current arrow from the host; arrows are not saved across a host reload.
+- Arrows are visual only. Player targets land at a small marker inside their board. They follow cards and boards when boards resize or layouts change, and are hidden if an endpoint is not currently visible. They disappear when a referenced card leaves the battlefield, a player leaves the table, or a new game begins. Joining/reconnecting receives the current arrow from the host; arrows are not saved across a host reload.
 - Only battlefield card instance IDs and player IDs are shared. Cards in hands/libraries cannot be arrow endpoints; face-down battlefield cards can be used without revealing their identities.
 
 ## Room chat and turn notifications
