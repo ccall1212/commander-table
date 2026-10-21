@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.33.0] - 2026-10-21
+
+### Added
+- Pop room chat out into a movable panel over the game. Drag its heading, choose a completely transparent background with readable messages, reset its position, or dock it again. Drag the bottom-right corner to resize the panel. Position, size and presentation are saved locally; the panel stays on screen after resizing. Transparent mode hides helper labels and fades after eight idle seconds, leaving a small Chat button to resume typing. Incoming messages reveal chat, and unsent drafts keep it visible.
+
 ## [0.30.0] - 2026-10-21
 
 ### Added
@@ -21,7 +26,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.30.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.33.0...HEAD
+[0.33.0]: https://github.com/ccall1212/commander-table/compare/v0.30.0...v0.33.0
 [0.30.0]: https://github.com/ccall1212/commander-table/compare/v0.29.0...v0.30.0
 [0.29.0]: https://github.com/ccall1212/commander-table/compare/v0.28.2...v0.29.0
 [0.28.2]: https://github.com/ccall1212/commander-table/compare/v0.28.1...v0.28.2

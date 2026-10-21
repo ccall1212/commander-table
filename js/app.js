@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.30.0';
+const APP_VERSION = '0.33.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -3323,6 +3323,7 @@ function pulseChatButton() {
 function pulseChatPanel() {
   const panel = $('#chatPanel');
   if (!panel || !S.chatOpen) return;
+  if (window.CTChatPanel) CTChatPanel.wake(false);
   clearTimeout(chatPanelGlowTimer);
   panel.classList.remove('ct-chat-new-message');
   void panel.offsetWidth;
@@ -3359,6 +3360,7 @@ function setChatPanelOpen(open) {
   if (S.chatOpen) S.chatUnread = 0;
   const panel = $('#chatPanel');
   if (panel) panel.classList.toggle('hidden', !S.chatOpen);
+  if (window.CTChatPanel) CTChatPanel.setOpen(S.chatOpen);
   updateChatButton();
   if (S.chatOpen) {
     renderChatHistory(true);
@@ -3630,22 +3632,26 @@ function bindGame() {
   const g = $('#game');
   // Picking is handled before normal clicks/drags, including touch inspection and life buttons.
   g.addEventListener('pointerdown', e => {
+    if (e.target.closest('#chatPanel, #chatBtn')) return;
     if (!S.arrowPick && e.target.closest('[data-arrow-id]')) { e.stopImmediatePropagation(); return; }
     if (!S.arrowPick || e.target.closest('#ct-arrow-controls')) return;
     e.stopImmediatePropagation();
   }, true);
   g.addEventListener('click', e => {
+    if (e.target.closest('#chatPanel, #chatBtn')) return;
     if (handleArrowRemoval(e)) return;
     if (!S.arrowPick || e.target.closest('#ct-arrow-controls')) return;
     e.preventDefault(); e.stopImmediatePropagation();
     pickArrowEndpoint(e.target);
   }, true);
   g.addEventListener('dblclick', e => {
+    if (e.target.closest('#chatPanel, #chatBtn')) return;
     if (S.arrowPick || Date.now() - lastArrowPickAt < 400) { e.preventDefault(); e.stopImmediatePropagation(); }
   }, true);
+  if (window.CTChatPanel) CTChatPanel.init();
   const chatBtn = $('#chatBtn'), chatClose = $('#chatClose'), chatForm = $('#chatForm'), chatSoundToggle = $('#chatSoundToggle');
-  if (chatBtn) chatBtn.addEventListener('click', () => setChatPanelOpen(!S.chatOpen));
-  if (chatClose) chatClose.addEventListener('click', () => setChatPanelOpen(false));
+  if (chatBtn) chatBtn.addEventListener('click', e => { e.stopPropagation(); if (S.chatOpen && window.CTChatPanel && CTChatPanel.isFaded()) CTChatPanel.wake(true); else setChatPanelOpen(!S.chatOpen); });
+  if (chatClose) chatClose.addEventListener('click', () => { setChatPanelOpen(false); if (chatBtn) chatBtn.focus(); });
   if (chatForm) chatForm.addEventListener('submit', sendChatFromForm);
   if (chatSoundToggle) chatSoundToggle.addEventListener('click', toggleChatSound);
   document.addEventListener('pointerdown', function unlockSavedChatSound() {
@@ -4430,7 +4436,12 @@ function showConnInfo() {
   UI.modal({ title: 'Connection details', el: wrap });
 }
 function onKey(e) {
+  if (e.defaultPrevented) return;
   if (!S.me || $('#game').classList.contains('hidden')) return;
+  if (e.target.closest && e.target.closest('#chatPanel')) {
+    if (e.key === 'Escape' && S.chatOpen) { setChatPanelOpen(false); $('#chatBtn').focus(); e.preventDefault(); }
+    return;
+  }
   if (S.arrowPick) { if (e.key === 'Escape') { endTargeting(); e.preventDefault(); } return; }
   if (e.key === 'Escape' && S.attachFrom) { endAttach(); return; }
   if (e.key === 'Escape' && S.chatOpen) { setChatPanelOpen(false); e.preventDefault(); return; }

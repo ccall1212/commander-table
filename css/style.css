@@ -1250,3 +1250,75 @@ body.touch-mode #myBar .ctrpanel {
 .touch-mode #ct-target-arrow .ct-arrow-hit { stroke-width:28; }
 .ct-arrow-picking #ct-target-arrow .ct-arrow-hit, .ct-arrow-picking #ct-target-arrow .ct-arrow-player-target { pointer-events:none; }
 #ct-arrow-controls [data-arrow-dismiss] { min-width:36px; font-size:20px; }
+
+/* Local floating chat: the original fixed panel remains available with Dock. */
+.ct-chat-panel { grid-template-rows: auto auto minmax(0, 1fr) auto auto; }
+.ct-chat-head { padding: 6px 8px; }
+.ct-chat-move { flex: 1; min-width: 0; padding: 2px 4px; text-align: left; white-space: normal; background: transparent; border-color: transparent; cursor: default; }
+.ct-chat-move .ct-chat-subtitle { display: block; font-weight: normal; }
+.ct-chat-head > #chatClose { padding: 0 7px; font-size: 20px; }
+.ct-chat-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; padding: 5px 8px; border-bottom: 1px solid var(--border); }
+.ct-chat-tools button { padding: 3px 5px; font-size: 11px; }
+.ct-chat-tools button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+.ct-chat-floating .ct-chat-move { cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.ct-chat-moving .ct-chat-move { cursor: grabbing; }
+.ct-chat-move:focus-visible, .ct-chat-tools button:focus-visible, #chatClose:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+/* Transparency applies to surfaces, not text opacity. Empty space remains playable. */
+.ct-chat-panel.ct-chat-transparent { background: transparent; border-color: transparent; box-shadow: none; backdrop-filter: none; pointer-events: none; animation: none; }
+.ct-chat-transparent .ct-chat-head,
+.ct-chat-transparent .ct-chat-tools,
+.ct-chat-transparent .ct-chat-form,
+.ct-chat-transparent .ct-chat-foot,
+.ct-chat-transparent .ct-chat-entry,
+.ct-chat-transparent .ct-chat-head button,
+.ct-chat-transparent .ct-chat-tools button,
+.ct-chat-transparent .ct-chat-form input,
+.ct-chat-transparent .ct-chat-form button { background: transparent; border-color: transparent; box-shadow: none; backdrop-filter: none; }
+.ct-chat-transparent .ct-chat-history { pointer-events: none; scrollbar-color: var(--muted) transparent; }
+.ct-chat-transparent .ct-chat-head,
+.ct-chat-transparent .ct-chat-tools,
+.ct-chat-transparent .ct-chat-form,
+.ct-chat-transparent .ct-chat-entry { pointer-events: auto; }
+.ct-chat-transparent .ct-chat-entry { animation: none; }
+.ct-chat-transparent { text-shadow: 0 1px 2px #000, 1px 0 2px #000, -1px 0 2px #000; }
+.ct-chat-transparent .ct-chat-form button { color: var(--accent); }
+.ct-chat-transparent input { text-shadow: inherit; }
+.ct-chat-transparent .ct-chat-subtitle, .ct-chat-transparent .ct-chat-foot,
+.ct-chat-transparent .ct-chat-entry-time, .ct-chat-transparent .ct-chat-empty { color: #d0d6e0; }
+.ct-chat-transparent button:hover:not(:disabled), .ct-chat-transparent input:focus { border-color: transparent; }
+@media (max-height: 400px) { .ct-chat-floating .ct-chat-subtitle, .ct-chat-floating .ct-chat-foot { display: none; } }
+
+/* Quiet transparent chat: only conversation and a composer, with controls on interaction. */
+.ct-chat-wake { display: none; }
+.ct-chat-transparent .ct-chat-subtitle,
+.ct-chat-transparent .ct-chat-foot,
+.ct-chat-transparent .ct-chat-empty,
+.ct-chat-transparent .ct-chat-entry-time { display: none; }
+.ct-chat-transparent { grid-template-rows: auto auto minmax(0, 1fr) auto; }
+.ct-chat-transparent > .ct-chat-head,
+.ct-chat-transparent > .ct-chat-tools { opacity: 0; pointer-events: none; }
+.ct-chat-transparent:hover > .ct-chat-head,
+.ct-chat-transparent:hover > .ct-chat-tools,
+.ct-chat-transparent:focus-within > .ct-chat-head,
+.ct-chat-transparent:focus-within > .ct-chat-tools { opacity: 1; pointer-events: auto; }
+.ct-chat-transparent > :not(.ct-chat-wake) { visibility: visible; transition: opacity .45s ease, visibility 0s; }
+.ct-chat-transparent.ct-chat-idle > :not(.ct-chat-wake) { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .45s ease, visibility 0s .45s; }
+.ct-chat-transparent.ct-chat-idle .ct-chat-wake {
+  display: block; position: absolute; bottom: 8px; left: 8px; pointer-events: auto;
+  background: transparent; border-color: transparent; color: var(--muted); text-shadow: inherit;
+}
+.ct-chat-transparent .ct-chat-form input { border-bottom-color: rgba(208,214,224,.5); border-radius: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .ct-chat-transparent > :not(.ct-chat-wake),
+  .ct-chat-transparent.ct-chat-idle > :not(.ct-chat-wake) { transition: none; }
+}
+
+.ct-chat-resize { display: none; }
+.ct-chat-floating .ct-chat-resize {
+  display: block; position: absolute; right: 0; bottom: 0; width: 22px; height: 22px;
+  padding: 0; line-height: 20px; font-size: 15px; cursor: nwse-resize; touch-action: none;
+  user-select: none; color: var(--muted); background: transparent; border: 0; z-index: 1;
+}
+.ct-chat-floating .ct-chat-form { padding-right: 25px; }
+.ct-chat-transparent .ct-chat-resize { pointer-events: auto; }
+.ct-chat-resize:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }

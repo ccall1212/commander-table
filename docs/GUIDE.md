@@ -229,6 +229,13 @@ For a hovered card, **+ / =** adds a +1/+1 counter and **− / _** adds a −1/�
 
 ## Room chat and turn notifications
 
+- Open **💬 Chat → Pop out** to keep chat in a floating panel over the game. Drag the **Room chat** heading wherever it fits. **Dock** restores the normal top-right panel.
+- Choose **Transparent** for a completely clear floating background while messages and controls remain visible. Empty space passes clicks through to the table; message text stays selectable and scrollable. Helper labels, timestamps and the message-limit footer are hidden in this mode. Controls appear while interacting with chat. Toggle Transparent again to restore the solid background.
+- Transparent chat fades after eight seconds of inactivity, leaving a small **Chat…** button in its saved position. Click it (or the top-bar Chat button) to fade chat back in and start typing. New incoming messages also reveal chat without taking keyboard focus. An unsent draft keeps chat visible; solid chat does not fade.
+- Drag the floating chat’s **bottom-right corner** to resize it smaller or larger. The message area scrolls within the window; the composer stays visible. You can also Tab to the resize handle and use arrow keys (Shift for larger steps).
+- **Reset** returns floating chat to its default position and size. The position, size and floating/transparent preferences are saved only in your browser, not shared with other players. Chat stays within the visible screen after resizing.
+- For keyboard movement, Tab to the floating **Room chat** heading and use arrow keys (hold Shift for larger steps). Escape closes chat and returns focus to its top-bar button. Closing and reopening chat keeps its saved presentation.
+
 - Click **💬 Chat** in the top bar to open room chat. Type a message and press **Enter** or **Send** to share it with everyone in the room. Chat is separate from the game log; opening the chat panel shows the latest 100 messages for the room session, including after a reconnect.
 - When the panel is closed, messages from other players briefly appear as small notifications near the top-right of the table and then fade away. The **Chat** button gently pulses and shows an unread count until you open it. When chat is already open, the newest message and panel border briefly glow instead. Your own sent messages appear in history but do not create duplicate notifications.
 - **Sound off** is the default. Use the button in the chat header to turn the quiet two-note message chime on or off; the choice is saved on that browser. Sounds play only for other players' messages, with rapid messages throttled to avoid repeated chimes.
