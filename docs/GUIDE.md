@@ -204,6 +204,8 @@ Move your pointer over empty space on your own battlefield and press **T** to op
 
 Hover over your **Library** and press **S** to shuffle (the Library itself wiggles with a short sound), or **X** to mill the top card into your Graveyard. Press **L** anywhere during a game to open Search Library. **Ctrl+F** remains the browser's Find-on-page shortcut. You can also draw with **D**, untap all with **U**, pass the turn with **Space**, and undo with **Ctrl+Z** (or **⌘Z** on Mac).
 
+**Personal Undo and checkpoints:** the dropdown beside **↶ Undo** lists your recent actions. Choose a **Before:** entry and confirm to restore your board to before that action; later personal actions are discarded. During your turn, choose **Save phase checkpoint → Combat** (or another phase name) to mark your current board. Your turn's starting Main 1 checkpoint is saved after automatic draw/untap. Restoring a checkpoint changes only your board, leaving the shared turn, shared phase and other boards in place. The menu keeps up to 40 actions/checkpoints in this tab. History resets when the turn changes, cards change controller, you send another player an effect or receive one, a board handoff occurs, or the default board geometry automatically resizes. Reloading starts fresh. Card transfers and other players' effects cannot be rewound through an older local snapshot.
+
 For a hovered card, **+ / =** adds a +1/+1 counter and **− / _** adds a −1/−1 counter. **Shift+1 / Shift+2 / Shift+3** increments, doubles, or decrements all counters; **Alt+1 / Alt+2 / Alt+3 / Alt+4** adjusts power/toughness up or down. Hold **V** over the table for the magnifier.
 
 ## Life, damage, and counters
