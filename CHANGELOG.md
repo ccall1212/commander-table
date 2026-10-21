@@ -9,7 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ## [0.30.0] - 2026-10-21
 
 ### Added
-- Use **Create X Tokens** to create multiple deck-linked tokens at once from the Tokens menu, a card's related-token actions, or the token suggestion pop-up. Enter a whole number from 1 to 60; the suggestion pop-up still has its one-click **+ Token** action.
+- Browse deck-linked and related tokens in an image gallery matching token search. Choose a token picture, enter a quantity from 1 to 60, and use **Create X Tokens**. The gallery stays open for further choices; each batch undoes as one action. Token search uses the same flow, and single-token suggestions keep their quick **+ Token** action.
 
 ## [0.29.0] - 2026-10-20
 

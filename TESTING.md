@@ -1,46 +1,31 @@
-# Commander Table v0.30.0 — release checks
+# Commander Table v0.30.0 — token gallery test copy
 
-## Linked token quantities
+Download this branch ZIP, extract it, and double-click **index.html**. No terminal, installation, or local server is needed. Keep internet access on for token images and online play.
 
-Tested by Chris: he tested the token test copy and requested the label **Create X Tokens** instead of “Several.” The revised label is included in this copy. He has not yet approved publication.
+## Chris's testing and requested refinements
 
-Assistant Playwright browser checks were run against a local HTTP copy using Chromium and seeded deck fixtures. Human browser testing has not been done yet.
+Tested by Chris: he tested the earlier token copy, requested **Create X Tokens** instead of “Several,” then reported that the repeated token-menu entries looked cluttered. This revision replaces that menu with the same image gallery used by token search and lets him choose a quantity after clicking a picture. The new gallery revision has not yet been tested by Chris or approved for publication. His earlier device/multiplayer coverage was not stated.
 
-- From the Tokens menu, created 3 linked tokens and undid them with one Undo action. Quantity entries `0`, `61`, and `2.5` left the prompt open and created nothing; Cancel closed the prompt without changing state. The original direct linked-token choice still created one.
-- Played a card linked to two tokens. The suggestion chooser created one token and several tokens; the card's **Create related token** menu also created one and several.
-- Started a host and joined from a second browser context; both showed **Connected**. At 1920×1080 and 1366×768, clicked Sidebar and Grid and confirmed each selected view. With the host at 1366×768 in Grid, created 3 linked tokens and confirmed the joiner received all 3 on the host's public battlefield view.
-- No browser page errors or console errors were observed in these runs. Direct `file://` navigation was blocked by the managed browser with `net::ERR_BLOCKED_BY_ADMINISTRATOR`; therefore the normal extract-and-open flow remains unverified. The successful browser runs used `http://127.0.0.1`.
+## Click list
 
-1. Extract the test copy and double-click **index.html**. Start a two-player game and keep the second player open to check that token creation remains local to the player who created the tokens.
-2. At both 1920×1080 and 1366×768, test **Sidebar** and **Grid**. Open ☰ → **Tokens**, open a linked token, create 1 and several, then try 0, 61 and a decimal. Invalid entries should keep the prompt open; Cancel should create nothing.
-3. Right-click a battlefield card with a related token → **Create related token** → choose that token. Create one and several. Repeat on a card with multiple related tokens.
-4. Play a card with a token suggestion. Confirm **+ Token** still creates one immediately, then use **Create X Tokens** for a quantity. Repeat with a card that suggests multiple tokens and choose a token from the menu.
-5. Open **Search all tokens…**, select a result, and check **Create 1** and **Create X Tokens**, including invalid quantities and Cancel.
-6. On the second player, confirm the other player's battlefield token appears in the public game view and no private card information is exposed. Check both layouts and sizes above.
+1. Start a game with a deck that makes tokens. Open **☰ → Tokens**: see token pictures once each, with search/filter/sort controls and **Search all tokens…**. There should be no repeated create-one/create-X menu rows.
+2. Click a token picture: quantity starts at 1. Enter 3 and choose **Create X Tokens**. Exactly three tokens should appear, and the gallery should stay open. Close it and use Undo: the whole batch should disappear together.
+3. Repeat with 0, 61, a decimal, a blank field, and Cancel. Invalid entries should leave the quantity prompt open; Cancel should create nothing and return to the gallery. Try keyboard filtering and Enter as well.
+4. Right-click a battlefield token-making card → **Create related token…**: see only its related token pictures and use the same quantity flow. In Touch mode, use **Actions** instead of right-click.
+5. Play a card with related tokens and click **Choose tokens…** in its suggestion pop-up. For cards with only one linked token, check that the quick **+ Token** action still creates one directly.
+6. In the gallery, choose **Search all tokens…** and search Treasure. Click a result picture and create two. Close the search gallery to return to the deck's gallery. Cancel a search without losing the deck gallery.
+7. Test **Sidebar** and **Grid** at approximately **1920×1080** and **1366×768** with a second player watching. Pictures, quantity prompt and Close must remain reachable; the second player should see created tokens, with no private hand/library information revealed.
+8. If a deck has no linked tokens, its empty gallery should still offer **Search all tokens…**. A missing image should show the readable placeholder.
 
-## Previous release checks (v0.29.0)
+## Validation
 
-For a downloaded copy: extract the ZIP and double-click **index.html**. No Python, terminal, installation or local server is needed. Keep internet access on for card images and online play.
+Assistant Playwright/Chromium HTTP checks passed for this gallery revision:
 
-## Recorded approval
+- Real Scryfall token pictures loaded in Sidebar and Grid at 1920×1080 and 1366×768. Four batches of three tokens were created through the gallery, and the second connected player received all twelve.
+- Invalid 0, 61 and 2.5 stayed in the quantity prompt and created nothing. Cancel returned to the gallery. Keyboard filtering/Enter, default quantity 1, one-step batch Undo and keeping the gallery open after creation worked.
+- Related-card galleries and multi-token suggestion galleries opened the correct choices. The single-token suggestion still created one directly. Real Scryfall Treasure search used the same gallery flow and created a batch of two.
+- No page errors were observed. Changed JavaScript syntax, existing targeting and P/T regression suites, source reference checks, and diff checks passed. A GPT-6 Luna agent independently reviewed the gallery flow and lifecycle guards.
 
-Tested by Chris: he reviewed the multiple-arrow test copy and symbolic power/toughness test copy and said, “Both of these look good to me. Please push both of them.” Publication was authorized on 2026-10-20. Do not infer specific multiplayer/device checks beyond that report.
+The managed browser blocks direct `file://` navigation with `ERR_BLOCKED_BY_ADMINISTRATOR`; assistant browser checks use localhost HTTP. This does not substitute for Chris's normal extracted-copy check of this revision.
 
-## Included changes
-
-- Multiple shared arrows remain at once. Click a line to remove only that arrow. **×** hides the controls without removing arrows; **☰ → Show arrow controls** reopens them, and **Clear all** clears the collection. Empty battlefield space targets that player; names remain a fallback.
-- Symbolic P/T components start at zero for manual adjustment: `*/5 → 0/5`, `*/* → 0/0`, `3/* → 3/0`. Both stats use the usual +/- controls; real counters, base overrides and reset continue to apply. Printed definitions remain available.
-
-## Automated integration checks
-
-- `tests/test_targeting.cjs`: four attackers, unique IDs, individual click/keyboard removal, local controls dismissal/reopen, full join snapshots, independent endpoint pruning, sender authorization, privacy and scaled geometry.
-- `tests/test_power_toughness.cjs`: symbolic/numeric baselines, generated adjustment controls, independent changes, counters, overrides/reset, public-state roundtrip, undo snapshots and hidden/non-creature exclusions.
-- JavaScript syntax, all 16 local asset cache links and app/meta version agreement.
-
-## Future regression checks
-
-1. Draw four creature-to-player arrows; remove one by its line and confirm the other three remain. Hide/reopen controls, cancel a pick and clear all. Check card/pile/life actions away from a line.
-2. Adjust a starred creature's power and toughness separately, add counters, set a base and reset. Check ordinary numeric creatures and face-down behavior.
-3. In Sidebar and Grid, resize the window, move an arrow endpoint and change focus. Join another player using the same version and compare all arrows and adjusted stats. Use real touch hardware when checking Touch mode.
-
-The deck randomizer/import draft remains paused at Chris's request; it is not part of this release.
+The deck randomizer/import draft PR #11 remains paused. No publication is approved.

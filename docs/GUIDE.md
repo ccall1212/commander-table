@@ -209,12 +209,12 @@ For a hovered card, **+ / =** adds a +1/+1 counter and **− / _** adds a −1/�
 
 ## Tokens
 
-- When you import a deck, the tokens related to your cards are linked automatically.
-- When you play a card that makes tokens, a pop-up offers a one-click **+ Token** button.
-- The Tokens menu (☰ → **Tokens**) lists your deck's tokens.
-- Choose a linked token in that menu, or choose a card's **Create related token** action, to create one. Each also has a **Create X Tokens** option; quantities must be whole numbers from 1 to 60.
-- **Search all tokens** finds any token on Scryfall.
-- The token suggestion pop-up keeps its one-click **+ Token** button and also offers **Create X Tokens**.
+- When you import a deck, its related tokens are linked automatically.
+- **☰ → Tokens** opens an image gallery of your deck's tokens, using the same card viewer as token search. Filter by name, type, or rules text, or use the type chips and sort controls.
+- Click a token picture (or use the arrow keys and Enter), enter a whole-number quantity from **1 to 60**, then choose **Create X Tokens**. The quantity starts at 1. Cancel creates nothing, and the gallery stays open after creating or cancelling so you can choose another token. Each created batch undoes as one action.
+- Right-click a battlefield card → **Create related token…** opens the same gallery for that card. In Touch mode, use the card's **Actions** menu.
+- Playing a token-making card offers **Choose tokens…** to open its gallery. If the card makes just one kind of token, the pop-up also keeps its quick **+ Token** action.
+- **Search all tokens…** in your deck's gallery searches Scryfall for other tokens and uses the same picture-and-quantity flow. If an image cannot load, the viewer shows a readable name/type placeholder.
 
 ## Targeting arrows
 
