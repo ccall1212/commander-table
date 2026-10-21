@@ -169,7 +169,7 @@
     const input = el.querySelector('[data-backup-file]'), preview = el.querySelector('[data-backup-preview]'), apply = el.querySelector('[data-backup-restore]');
     el.querySelector('[data-backup-download]').onclick = () => {
       try {
-        const value = create(window.localStorage), url = URL.createObjectURL(new Blob([JSON.stringify(value, null, 2)], { type: 'application/json' }));
+        const value = create(window.localStorage), url = URL.createObjectURL(new Blob([JSON.stringify(value)], { type: 'application/json' }));
         const a = document.createElement('a'); a.href = url; a.download = 'commander-table-backup-' + new Date().toISOString().slice(0, 10) + '.json';
         document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
         UI.toast('Collection backup downloaded.');
