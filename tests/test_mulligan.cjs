@@ -3,7 +3,7 @@
 const assert = require('node:assert/strict');
 global.window = {};
 require('../js/mulligan.js');
-const { CAP, normalizeMode, canMulligan, bottomCount, canKeep, isLand, landCount, deal } = window.CTMulligan;
+const { CAP, MAX_EXTRA, normalizeMode, extraLimit, limit, canMulligan, bottomCount, canKeep, isLand, landCount, deal } = window.CTMulligan;
 
 const defs = {
   land: { type: 'Basic Land — Island' },
@@ -16,15 +16,25 @@ assert.equal(normalizeMode('broken'), 'london');
 assert.equal(CAP, 7);
 assert.equal(canMulligan(6), true);
 assert.equal(canMulligan(7), false);
+assert.equal(limit('three-lands'), 1, 'alternate rules start with one mulligan');
+assert.equal(limit('ten-bottom-three'), 1);
+assert.equal(canMulligan(0, 'three-lands'), true);
+assert.equal(canMulligan(1, 'three-lands'), false);
+assert.equal(limit('three-lands', 2), 3, 'each host grant adds one attempt');
+assert.equal(canMulligan(1, 'ten-bottom-three', 1), true);
+assert.equal(canMulligan(2, 'ten-bottom-three', 1), false);
+assert.equal(extraLimit(999), MAX_EXTRA, 'host grants are bounded');
+assert.equal(extraLimit(-2), 0);
 assert.equal(bottomCount('london', 0, 7), 0);
 assert.equal(bottomCount('london', 7, 7), 6);
 assert.equal(bottomCount('london', 99, 7), 6, 'legacy excessive mulligan counts respect the cap');
 assert.equal(bottomCount('three-lands', 6, 7), 0);
 assert.equal(bottomCount('ten-bottom-three', 6, 10), 3);
 assert.equal(bottomCount('ten-bottom-three', 6, 2), 1, 'short hands keep at least one card');
-assert.equal(canKeep('three-lands', 2, 30, 6), false);
+assert.equal(canKeep('three-lands', 2, 30, 0), false);
+assert.equal(canKeep('three-lands', 2, 30, 1), true, 'default mulligan limit always permits keeping');
 assert.equal(canKeep('three-lands', 2, 2, 0), true, 'an impossible deck can keep immediately');
-assert.equal(canKeep('three-lands', 2, 30, CAP), true, 'the cap always permits keeping');
+assert.equal(canKeep('three-lands', 2, 30, 1 + MAX_EXTRA, MAX_EXTRA), true, 'the largest granted limit permits keeping');
 assert.equal(isLand({ id: 'frontSpellLandBack' }, defs), false, 'a land back face does not count');
 assert.equal(isLand({ id: 'frontLand' }, defs), true);
 assert.equal(landCount(cards(['land', 'frontSpellLandBack', 'frontLand']), defs), 2);

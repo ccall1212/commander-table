@@ -9,6 +9,12 @@ const context = vm.createContext({
   document: { querySelector: () => null },
   setTimeout: () => 1, clearTimeout() {}, requestAnimationFrame: () => 1,
   CTAppearance: { normalizePrefs: p => p || {}, getCustom: () => ({}) },
+  CTMulligan: {
+    CAP: 7, MAX_EXTRA: 20, MAX_LIMIT: 21,
+    normalizeMode: mode => mode || 'london',
+    extraLimit: n => Math.max(0, Math.min(20, Math.floor(Number(n) || 0))),
+    limit: (mode, grants = 0) => mode === 'london' ? 7 : 1 + Math.max(0, Math.min(20, Math.floor(Number(grants) || 0)))
+  },
   UI: { cardBackHTML: () => '<div class="back"></div>' }
 });
 context.window = context;

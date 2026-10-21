@@ -9,7 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ## [0.35.0] - 2026-10-21
 
 ### Added
-- Let the host choose London, **At least 3 lands**, or **Draw 10, bottom 3** opening hands before hosting. The rule is shared with everyone, carries through new games and reconnects, and can be changed with a confirmed redeal. Mulligans stop after seven attempts, with keeping always available. Land selection uses front-face Land types and handles decks that cannot meet the three-land target.
+- Let the host choose London, **At least 3 lands**, or **Draw 10, bottom 3** opening hands before hosting. London keeps its seven-attempt limit and first free mulligan. The alternate rules allow one mulligan by default; before a player keeps, the host can grant that player another attempt. The host's rule carries through new games and reconnects, and can be changed with a confirmed redeal. Land selection uses front-face Land types and handles decks that cannot meet the three-land target.
 
 ## [0.33.1] - 2026-10-21
 

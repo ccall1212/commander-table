@@ -39,6 +39,8 @@ const isObj = o => o && typeof o === 'object' && !Array.isArray(o);
 const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
 const openingModeName = mode => ({ london: 'London (7; first free)', 'three-lands': 'At least 3 lands', 'ten-bottom-three': 'Draw 10, bottom 3' })[CTMulligan.normalizeMode(mode)];
 const openingModeShort = mode => ({ london: 'London', 'three-lands': '3 Lands', 'ten-bottom-three': '10 → 7' })[CTMulligan.normalizeMode(mode)];
+const openingMulliganLimit = pid => CTMulligan.limit((S.table && S.table.openingMode) || 'london',
+  (S.table && S.table.openingAllowances && S.table.openingAllowances[pid]) || 0);
 
 const ZONES = ['library', 'hand', 'battlefield', 'graveyard', 'exile', 'command'];
 const ZL = { library: 'library', hand: 'hand', battlefield: 'battlefield', graveyard: 'graveyard', exile: 'exile', command: 'command zone' };
@@ -169,7 +171,7 @@ function newPlayer(deck, name, prev, mode = 'london', dealId = null) {
 }
 // Bring older saved games up to the current shape (layout + card positions).
 function normalizeMe(m) {
-  m.mull = clamp(num(m.mull), 0, CTMulligan.CAP);
+  m.mull = clamp(num(m.mull), 0, CTMulligan.MAX_LIMIT);
   m.appearance = CTAppearance.normalizePrefs(m.appearance);
   if (!layoutOk(m.layout)) {
     // zones changed in this version: switch to the new layout and re-sort cards into it
@@ -281,7 +283,7 @@ function publicView() {
   });
   return {
     pid: m.pid, bw: BW, name: m.name, appearance: CTAppearance.normalizePrefs(m.appearance), life: m.life, poison: m.poison, ctr: m.ctr, cmdDmg: m.cmdDmg, cmdrs: m.cmdrs,
-    casts: m.casts, hand: z.hand.length, lib: z.library.length, kept: m.kept, layout: m.layout, bh: myBH(),
+    casts: m.casts, hand: z.hand.length, lib: z.library.length, kept: m.kept, mullCount: m.mull, layout: m.layout, bh: myBH(),
     zones: { battlefield: take(z.battlefield), graveyard: take(z.graveyard), exile: take(z.exile), command: take(z.command) },
     revHand: m.revealHand ? take(z.hand) : null,
     // An individually revealed card is public only while it remains in its owner's hand.
@@ -332,7 +334,7 @@ function sendChat(text) {
 function newTable(room, openingMode = 'london', openingDeal = uid()) {
   S.chat = []; S.chatOpen = false; S.chatUnread = 0;
   return { room, seats: [S.pid], order: [], active: null, turn: 0, turnSeq: 0, phase: 3, started: false, monarch: null, initiative: null, out: {},
-    openingMode: CTMulligan.normalizeMode(openingMode), openingDeal };
+    openingMode: CTMulligan.normalizeMode(openingMode), openingDeal, openingAllowances: {} };
 }
 function hostRecv(msg, from) {
   if (!msg || typeof msg.t !== 'string' || !S.table) return;
@@ -408,6 +410,7 @@ function hostRecv(msg, from) {
       // opening policy or advance its deal epoch.
       t.openingMode = S.table.openingMode;
       t.openingDeal = S.table.openingDeal;
+      t.openingAllowances = S.table.openingAllowances || {};
       S.table = t;
       sysLog(`Restored the latest table state (turn ${t.turn}) from ${pname(from)}.`);
       afterTable();
@@ -435,11 +438,15 @@ function cleanTable(t) {
   if (!isObj(t)) return null;
   const ids = a => (Array.isArray(a) ? a.filter(x => typeof x === 'string').slice(0, 8).map(x => x.slice(0, 40)) : []);
   const str = x => (typeof x === 'string' ? x.slice(0, 40) : null);
+  const seats = ids(t.seats);
+  const openingAllowances = isObj(t.openingAllowances)
+    ? Object.fromEntries(Object.entries(t.openingAllowances).filter(([pid]) => seats.includes(pid)).slice(0, 8)
+      .map(([pid, n]) => [pid.slice(0, 40), CTMulligan.extraLimit(n)])) : {};
   return {
-    room: String(t.room || '').slice(0, 8), seats: ids(t.seats), order: ids(t.order), active: str(t.active),
+    room: String(t.room || '').slice(0, 8), seats, order: ids(t.order), active: str(t.active),
     turn: Math.max(0, num(t.turn)), turnSeq: Math.max(0, num(t.turnSeq, num(t.turn))), phase: clamp(num(t.phase, 3), 0, PHASES.length - 1), started: !!t.started,
     monarch: str(t.monarch), initiative: str(t.initiative),
-    openingMode: CTMulligan.normalizeMode(t.openingMode), openingDeal: str(t.openingDeal),
+    openingMode: CTMulligan.normalizeMode(t.openingMode), openingDeal: str(t.openingDeal), openingAllowances,
     out: isObj(t.out) ? Object.fromEntries(Object.keys(t.out).slice(0, 8).map(k => [k.slice(0, 40), !!t.out[k]])) : {},
     rev: Math.max(0, num(t.rev))
   };
@@ -478,11 +485,23 @@ function tableOp(op, from) {
       if (mode === T.openingMode) return;
       T.openingMode = mode;
       T.openingDeal = uid();
+      T.openingAllowances = {};
       Object.assign(T, { order: [], active: null, turn: 0, turnSeq: 0, phase: 3, started: false, monarch: null, initiative: null, out: {} });
       pushTable();
       broadcast({ t: 'newgame', openingMode: T.openingMode, openingDeal: T.openingDeal });
       sysLog(`Opening-hand rule changed to ${openingModeName(mode)}. Everyone reshuffled and redealt.`);
       return;
+    }
+    case 'grantmull': {
+      if (!isHost || !T.seats.includes(op.pid) || T.openingMode === 'london') return;
+      const target = op.pid === S.pid ? null : S.players[op.pid];
+      if (op.pid === S.pid ? S.me.kept : !target || target.kept) return;
+      const grants = CTMulligan.extraLimit((T.openingAllowances || {})[op.pid]);
+      if (grants >= CTMulligan.MAX_EXTRA) return;
+      T.openingAllowances = T.openingAllowances || {};
+      T.openingAllowances[op.pid] = grants + 1;
+      sysLog(`${pname(op.pid)} was granted another mulligan by ${pname(S.pid)}.`);
+      break;
     }
     case 'start': {
       if (!isHost) return;
@@ -545,6 +564,7 @@ function tableOp(op, from) {
     case 'kick': {
       if (!isHost || op.pid === S.pid) return;
       T.seats = T.seats.filter(p => p !== op.pid); T.order = T.order.filter(p => p !== op.pid);
+      if (T.openingAllowances) delete T.openingAllowances[op.pid];
       if (T.active === op.pid) T.active = T.order[0] || null;
       sysLog(`${pname(op.pid)} was removed from the table.`);
       delete S.players[op.pid];
@@ -554,6 +574,7 @@ function tableOp(op, from) {
       if (!isHost) return;
       Object.assign(T, { order: [], active: null, turn: 0, turnSeq: 0, phase: 3, started: false, monarch: null, initiative: null, out: {} });
       T.openingDeal = uid();
+      T.openingAllowances = {};
       pushTable();
       broadcast({ t: 'newgame', openingMode: T.openingMode, openingDeal: T.openingDeal });
       sysLog(`New game — everyone reshuffled and used ${openingModeName(T.openingMode)}.`);
@@ -592,7 +613,7 @@ function cleanPub(p, from) {
     pid: from, name: String(p.name || 'Player').slice(0, 24), appearance: CTAppearance.normalizePrefs(p.appearance), life: num(p.life, 40), poison: num(p.poison),
     ctr: numMap(p.ctr), cmdDmg: numMap(p.cmdDmg), casts: numMap(p.casts),
     cmdrs: Array.isArray(p.cmdrs) ? p.cmdrs.slice(0, 3).filter(isObj).map(c => ({ iid: String(c.iid).slice(0, 40), name: String(c.name || '').slice(0, 80) })) : [],
-    hand: num(p.hand), lib: num(p.lib), kept: !!p.kept,
+    hand: num(p.hand), lib: num(p.lib), kept: !!p.kept, mullCount: clamp(num(p.mullCount), 0, CTMulligan.MAX_LIMIT),
     layout: cleanLayout(p.layout) || cloneLayout(DEFAULT_LAYOUT), bh: clamp(num(p.bh, BH), BH, BH_MAX),
     zones: { battlefield: cleanCards(z.battlefield), graveyard: cleanCards(z.graveyard), exile: cleanCards(z.exile), command: cleanCards(z.command, 4) },
     revHand: p.revHand ? cleanCards(p.revHand, 60) : null,
@@ -2017,7 +2038,9 @@ function changeCmdDmg(key, d) {
 
 // --- mulligan (London, first one free in Commander)
 function mulligan() {
-  if (!S.me || S.me.kept || !CTMulligan.canMulligan(S.me.mull)) return;
+  const mode = (S.table && S.table.openingMode) || 'london';
+  const grants = (S.table && S.table.openingAllowances && S.table.openingAllowances[S.pid]) || 0;
+  if (!S.me || S.me.kept || !CTMulligan.canMulligan(S.me.mull, mode, grants)) return;
   act(() => {
     const z = S.me.zones;
     z.library.push(...z.hand.splice(0).map(c => { delete c.rvh; return c; }));
@@ -2034,12 +2057,13 @@ function keepHand() {
   const mode = (S.table && S.table.openingMode) || 'london';
   const lands = CTMulligan.landCount(S.me.zones.hand, S.me.defs);
   const possibleLands = lands + CTMulligan.landCount(S.me.zones.library, S.me.defs);
-  if (!CTMulligan.canKeep(mode, lands, possibleLands, S.me.mull)) return;
+  const grants = (S.table && S.table.openingAllowances && S.table.openingAllowances[S.pid]) || 0;
+  if (!CTMulligan.canKeep(mode, lands, possibleLands, S.me.mull, grants)) return;
   const n = CTMulligan.bottomCount(mode, S.me.mull, S.me.zones.hand.length);
   if (!n) {
     act(() => { S.me.kept = true; return [`kept their opening hand${S.me.mull ? ` after ${plural(S.me.mull, 'mulligan')}` : ''}`]; });
     if (mode === 'three-lands' && lands < 3 && possibleLands < 3) UI.toast('This deck has fewer than 3 lands available. You may keep any hand.', { kind: 'warn', ms: 6000 });
-    else if (S.me.mull >= CTMulligan.CAP && mode === 'three-lands' && lands < 3) UI.toast('Mulligan limit reached. You may keep this hand even though it has fewer than 3 lands.', { kind: 'warn', ms: 6000 });
+    else if (S.me.mull >= openingMulliganLimit(S.pid) && mode === 'three-lands' && lands < 3) UI.toast('Mulligan limit reached. You may keep this hand even though it has fewer than 3 lands.', { kind: 'warn', ms: 6000 });
     return;
   }
   pushUndo();
@@ -2425,6 +2449,11 @@ function playerMenu(x, y, pid) {
     { label: T.initiative === pid ? 'Remove initiative' : 'Give initiative 🏰', onClick: () => toHost({ t: 'op', op: { k: 'initiative', pid: T.initiative === pid ? null : pid } }) }
   ];
   const p = S.players[pid];
+  const ownKept = pid === S.pid ? !!(S.me && S.me.kept) : !!(p && p.kept);
+  if (S.role !== 'client' && T.openingMode !== 'london' && T.seats.includes(pid) && !ownKept
+    && CTMulligan.extraLimit((T.openingAllowances || {})[pid]) < CTMulligan.MAX_EXTRA) {
+    items.push({ sep: true }, { label: 'Grant another mulligan', onClick: () => toHost({ t: 'op', op: { k: 'grantmull', pid } }) });
+  }
   if (pid !== S.pid && p) {
     items.push({ sep: true },
       { label: S.focus === pid ? 'Show all opponents' : 'Show this board large', onClick: () => toggleFocus(pid) },
@@ -3320,15 +3349,17 @@ function renderMine(idx) {
     const mode = (S.table && S.table.openingMode) || 'london';
     const lands = CTMulligan.landCount(z.hand, m.defs);
     const possibleLands = lands + CTMulligan.landCount(z.library, m.defs);
-    const landBlocked = !CTMulligan.canKeep(mode, lands, possibleLands, m.mull);
+    const grants = (S.table && S.table.openingAllowances && S.table.openingAllowances[S.pid]) || 0;
+    const limit = openingMulliganLimit(S.pid);
+    const landBlocked = !CTMulligan.canKeep(mode, lands, possibleLands, m.mull, grants);
     const bottom = CTMulligan.bottomCount(mode, m.mull, z.hand.length);
     const keepLabel = bottom ? `Keep ${z.hand.length} (bottom ${bottom})` : `Keep ${z.hand.length}`;
     const next = mode === 'london'
       ? (m.mull === 0 ? 'first mulligan is free' : `bottom ${Math.max(0, m.mull - 1)} after keeping`)
-      : mode === 'three-lands' ? `${lands}/3 lands${possibleLands < 3 ? ' · fewer than 3 in deck' : m.mull >= CTMulligan.CAP && lands < 3 ? ' · limit reached, keep allowed' : ''}`
+      : mode === 'three-lands' ? `${lands}/3 lands${possibleLands < 3 ? ' · fewer than 3 in deck' : m.mull >= limit && lands < 3 ? ' · limit reached, keep allowed' : ''}`
         : `bottom ${Math.min(3, Math.max(0, z.hand.length - 1))} after keeping`;
     mb.innerHTML = `<b>Opening hand</b> <button class="primary" data-a="keep"${landBlocked ? ' disabled' : ''}>${keepLabel}</button>
-      <button data-a="mull"${!CTMulligan.canMulligan(m.mull) ? ' disabled' : ''}>Mulligan (${m.mull}/${CTMulligan.CAP})</button><span class="muted small">${next}</span>`;
+      <button data-a="mull"${!CTMulligan.canMulligan(m.mull, mode, grants) ? ' disabled' : ''}>Mulligan (${m.mull}/${limit})</button><span class="muted small">${next}</span>`;
     mb.classList.remove('hidden');
     positionMulliganBar();
   } else mb.classList.add('hidden');
@@ -4677,9 +4708,10 @@ function loadSession(pid) {
 function resume(sess) {
   S.role = sess.role; S.room = sess.room; S.deckId = sess.deckId; S.me = sess.me;
   normalizeMe(S.me);
-  S.table = sess.table || null; S.players = sess.players || {}; S.log = sess.log || []; S.chat = cleanChatHistory(sess.chat); S.chatOpen = false; S.chatUnread = 0; S.online = {};
+  S.table = cleanTable(sess.table) || null; S.players = sess.players || {}; S.log = sess.log || []; S.chat = cleanChatHistory(sess.chat); S.chatOpen = false; S.chatUnread = 0; S.online = {};
   if (S.table) {
     S.table.openingMode = CTMulligan.normalizeMode(S.table.openingMode);
+    S.table.openingAllowances = S.table.openingAllowances || {};
     if (!S.table.openingDeal) S.table.openingDeal = uid();
     if (!S.me.openingDeal) S.me.openingDeal = S.table.openingDeal;
   }
