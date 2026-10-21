@@ -8,7 +8,7 @@
   const canMulligan = attempts => attempts < CAP;
   function bottomCount(mode, mulligans, handSize) {
     mode = normalizeMode(mode);
-    if (mode === 'london') return Math.min(handSize, Math.max(0, mulligans - 1));
+    if (mode === 'london') return Math.min(handSize, Math.max(0, Math.min(CAP, mulligans) - 1));
     if (mode === 'ten-bottom-three') return Math.min(3, Math.max(0, handSize - 1));
     return 0;
   }

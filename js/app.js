@@ -169,6 +169,7 @@ function newPlayer(deck, name, prev, mode = 'london', dealId = null) {
 }
 // Bring older saved games up to the current shape (layout + card positions).
 function normalizeMe(m) {
+  m.mull = clamp(num(m.mull), 0, CTMulligan.CAP);
   m.appearance = CTAppearance.normalizePrefs(m.appearance);
   if (!layoutOk(m.layout)) {
     // zones changed in this version: switch to the new layout and re-sort cards into it

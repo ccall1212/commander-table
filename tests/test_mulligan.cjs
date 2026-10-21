@@ -18,6 +18,7 @@ assert.equal(canMulligan(6), true);
 assert.equal(canMulligan(7), false);
 assert.equal(bottomCount('london', 0, 7), 0);
 assert.equal(bottomCount('london', 7, 7), 6);
+assert.equal(bottomCount('london', 99, 7), 6, 'legacy excessive mulligan counts respect the cap');
 assert.equal(bottomCount('three-lands', 6, 7), 0);
 assert.equal(bottomCount('ten-bottom-three', 6, 10), 3);
 assert.equal(bottomCount('ten-bottom-three', 6, 2), 1, 'short hands keep at least one card');
