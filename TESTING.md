@@ -4,7 +4,7 @@ Extract the ZIP and double-click **index.html**. Keep internet access on for car
 
 ## Chris's testing and approval
 
-Tested by Chris: he has just tested the previously shared Deck Builder checks and collection backup ZIPs. He directed that both be refreshed onto the published releases, then pushed and merged. The #30 ZIP he tested was the earlier branch head `9a60d15`; it did not contain the refreshed #29 integration or the preference additions below. His hands-on approval applies to the original ZIPs; the refreshed combined branch has assistant checks recorded separately here.
+Tested by Chris: he has just tested the previously shared Deck Builder checks and collection backup ZIPs. He directed that both be refreshed onto the published releases, then pushed and merged. The #30 ZIP he tested was the earlier branch head `9a60d15`; it did not contain the refreshed #29 integration or the preference additions below. He explicitly approved refreshing and publishing both features; his original-ZIP testing and the assistant’s refreshed-integration checks are recorded separately here.
 
 ## Click list
 
@@ -27,4 +27,6 @@ Active games, room and seat assignments, seat keys, recovery records, and networ
 - Actual Chromium over HTTP on port 8109 downloaded a backup in one browser context and restored it in another at 1366×768, with preferences off and on. It confirmed that destination preferences and the existing deck remain intact when preferences are off, then restored the source preferences, chat-panel settings and opening-hand rule when selected. After restore, the normal host color chooser appeared; chat rendered at its saved dimensions at 1366×768 and 1920×1080. The network start was stubbed for this entry-flow check; no multiplayer session was tested. No page errors were observed.
 - The app's published v0.37.0 recovery, chat, arrows, mulligan and color behavior and v0.38.0 Deck Builder checks were retained during integration. This refresh did not re-run the recovery Worker or multiplayer flows.
 
-The managed browser blocks `file://` navigation; assistant browser checks used localhost HTTP. Chris's extract-and-open test flow remains the final check of the ZIP on his browser.
+The managed browser blocks `file://` navigation; assistant browser checks used localhost HTTP. Chris reported testing the original ZIP through his browser; the refreshed integration checks above used HTTP. No real-device Safari result is claimed.
+
+Primary verification: the existing moderation, mulligan, player-color, power/toughness, targeting and token picker/printing Node suites also passed after integration.
