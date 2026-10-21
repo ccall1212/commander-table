@@ -318,8 +318,13 @@ body.attaching .board .card:hover { outline: 3px solid #7c4dff; }
 #myHand:empty::after { content: 'Hand is empty'; color: var(--muted); align-self: center; margin: auto; }
 #mullBar { display: flex; gap: 8px; align-items: center; padding: 4px 8px; background: var(--panel);
   border: 1px solid var(--accent); border-radius: 6px; font-size: 13px;
-  position: absolute; bottom: calc(100% + 26px); left: 50%; transform: translateX(-50%); z-index: 40; white-space: nowrap;
+  position: absolute; bottom: calc(100% + 26px); left: 50%; transform: translateX(-50%); z-index: 40;
+  flex-wrap: wrap; width: max-content; max-width: calc(100vw - 16px); box-sizing: border-box;
   box-shadow: 0 8px 24px rgba(0,0,0,.5); }
+#mullBar button { white-space: nowrap; }
+.ct-opening-rule { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); font-size: 12px; white-space: nowrap; }
+.ct-opening-rule select { max-width: 190px; padding: 2px 4px; font-size: 12px; }
+@media (max-width: 760px) { .ct-opening-rule select { max-width: 132px; } }
 
 /* Optional iPad touch mode: keep card previews actionable and suppress Safari callouts. */
 body.touch-mode #pv.floatpv { pointer-events: auto; width: min(320px, calc(100vw - 24px)); max-height: calc(var(--ct-viewport-height, 100dvh) - 24px); overflow-y: auto; }

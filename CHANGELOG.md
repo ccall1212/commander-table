@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.35.0] - 2026-10-21
+
+### Added
+- Let the host choose London, **At least 3 lands**, or **Draw 10, bottom 3** opening hands before hosting. The rule is shared with everyone, carries through new games and reconnects, and can be changed with a confirmed redeal. Mulligans stop after seven attempts, with keeping always available. Land selection uses front-face Land types and handles decks that cannot meet the three-land target.
+
 ## [0.33.1] - 2026-10-21
 
 ### Fixed
@@ -31,7 +36,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.33.1...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.35.0...HEAD
+[0.35.0]: https://github.com/ccall1212/commander-table/compare/v0.34.0...v0.35.0
 [0.33.1]: https://github.com/ccall1212/commander-table/compare/v0.33.0...v0.33.1
 [0.33.0]: https://github.com/ccall1212/commander-table/compare/v0.30.0...v0.33.0
 [0.30.0]: https://github.com/ccall1212/commander-table/compare/v0.29.0...v0.30.0
