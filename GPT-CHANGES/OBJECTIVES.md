@@ -46,7 +46,7 @@ Add an optional **Touch mode** for iPad Safari, launched from the top-right hamb
 
 ## 28. Create several linked tokens — IN PROGRESS (PR #51; v0.30.0 test copy)
 
-Chris selected this suggestion on 2026-10-21. [PR #51](https://github.com/ccall1212/commander-table/pull/51), branch `feat/linked-token-quantity`, adds quantity choices to linked-token menus, card related-token actions, and token suggestions while keeping create-one. Whole numbers 1–60 only; a batch undoes as one action. Automated checks and actual Chromium HTTP checks passed, including two-player token visibility. Extract/open and Chris's hands-on testing are pending. The PR links the exact-commit test ZIP and click list. Publication is not approved.
+Chris selected this suggestion on 2026-10-21. [PR #51](https://github.com/ccall1212/commander-table/pull/51), branch `feat/linked-token-quantity`, adds quantity choices to linked-token menus, card related-token actions, and token suggestions while keeping create-one. Whole numbers 1–60 only; a batch undoes as one action. Automated checks and actual Chromium HTTP checks passed, including two-player token visibility. Tested by Chris: he tested the token copy and requested **Create X Tokens** instead of “Several.” The revised label is in the updated PR/ZIP; his specific device/multiplayer coverage was not stated. Publication approval is pending. The PR links the exact-commit test ZIP and click list. Publication is not approved.
 
 ## 29. Optional Deck Builder checks — IN PROGRESS (PR #50; v0.31.0 test copy)
 
