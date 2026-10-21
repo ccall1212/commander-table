@@ -668,6 +668,7 @@
       },
     });
     modal.head.append(countEl);
+    if (opts.headerExtra && opts.headerExtra.nodeType === 1) modal.head.append(opts.headerExtra);
     if (pick) {
       pickPrompt.textContent = pick.prompt || '';
       modal.head.append(pickPrompt, pickCountEl);

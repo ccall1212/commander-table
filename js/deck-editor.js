@@ -3,6 +3,7 @@
   'use strict';
   let activeDeckId = null, deckViewer = null, addViewer = null, afterSave = null;
   let onHover = null, onLeave = null, recordMeta = new Map();
+  let healthSummary = null, healthDetails = null, healthCount = null, healthMessages = null;
   const quantity = entry => Math.max(0, Math.floor(Number(entry && entry.qty) || 0));
   const nameOf = def => String(def && def.name || '');
   const currentDeck = () => activeDeckId ? Deck.get(activeDeckId) : null;
@@ -38,7 +39,37 @@
     const deck = currentDeck();
     if (!deck) { close(); return; }
     if (afterSave) afterSave();
+    updateHealth(deck);
     if (deckViewer) deckViewer.update(makeViewerCards(deck));
+  }
+  function makeHealthSummary(deck) {
+    const box = document.createElement('div');
+    box.className = 'deck-health';
+    const details = document.createElement('details');
+    const summary = document.createElement('summary');
+    const count = document.createElement('span');
+    const messages = document.createElement('ul');
+    const dismiss = document.createElement('button');
+    details.append(summary, messages);
+    dismiss.type = 'button'; dismiss.textContent = '×'; dismiss.title = 'Dismiss deck checks';
+    dismiss.setAttribute('aria-label', 'Dismiss deck checks');
+    dismiss.addEventListener('click', () => { box.hidden = true; });
+    box.append(count, details, dismiss);
+    healthSummary = box; healthDetails = details; healthCount = count; healthMessages = messages;
+    updateHealth(deck);
+    return box;
+  }
+  function updateHealth(deck) {
+    if (!healthSummary) return;
+    const result = CTDeckHealth.checks(deck);
+    healthCount.textContent = result.total + ' cards including commander' + (result.commanderCount === 1 ? '' : 's') +
+      ' · ' + (result.messages.length ? result.messages.length + ' common issue' + (result.messages.length === 1 ? '' : 's') : 'no common issues found');
+    healthDetails.querySelector('summary').textContent = result.messages.length ? 'Review notes (not a full legality check)' : '';
+    healthMessages.textContent = '';
+    result.messages.forEach(message => {
+      const li = document.createElement('li'); li.textContent = message; healthMessages.appendChild(li);
+    });
+    healthDetails.hidden = !result.messages.length;
   }
   function entryLine(def, qty, includePrinting) {
     const set = includePrinting !== false && def && def.set && def.cn
@@ -306,10 +337,12 @@
     onHover = options && typeof options.onHover === 'function' ? options.onHover : null;
     onLeave = options && typeof options.onLeave === 'function' ? options.onLeave : null;
     const deck = currentDeck();
+    const summary = makeHealthSummary(deck);
     deckViewer = UI.viewer({
       title: 'Deck Builder — ' + (deck.name || 'Untitled deck'),
       cards: makeViewerCards(deck), showQuantity: true, removeKey: 'remove', colorSort: true,
       countItems: list => list.reduce((n, card) => n + Math.max(1, Number(card.c.qty) || 1), 0),
+      headerExtra: summary,
       actions: [
         { key: 'printing', label: 'Change printing…' },
         { key: 'commander', label: 'Set as commander' },
@@ -324,6 +357,7 @@
       onHover: def => { if (onHover) onHover(def); },
       onClose: () => {
         deckViewer = null;
+        healthSummary = null; healthDetails = null; healthCount = null; healthMessages = null;
         activeDeckId = null;
         recordMeta.clear();
         if (onLeave) onLeave();
@@ -334,6 +368,7 @@
   function close() {
     if (deckViewer) deckViewer.close();
     deckViewer = null; activeDeckId = null; recordMeta.clear();
+    healthSummary = null; healthDetails = null; healthCount = null; healthMessages = null;
     if (addViewer) addViewer.close();
     addViewer = null;
     if (onLeave) onLeave();
