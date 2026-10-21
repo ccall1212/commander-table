@@ -2,7 +2,7 @@
 
 Download the ZIP, extract it, and double-click **index.html**. No terminal or local server is needed. Keep internet access on. Use two players with the same test copy; chat is disabled in Practice solo.
 
-Tested by Chris: the initial floating/transparent test copy “looks good.” He also said the refined fade copy “looks good” and requested manual sizing. The resize refinement still needs his hands-on review. Publication is not approved. The published token release is included; the separate Deck Builder checks and backup/restore proposals are not included.
+Tested by Chris: the initial floating/transparent test copy “looks good.” He also said the refined fade copy “looks good” and requested manual sizing. Chris approved merging and publishing the complete resizing copy on 2026-10-21; PR #52 is merged as v0.33.0. He did not describe specific hands-on resize actions. The published token release is included; the separate Deck Builder checks and backup/restore proposals are not included.
 
 ## Click list
 
@@ -26,4 +26,4 @@ Tested by Chris: the initial floating/transparent test copy “looks good.” He
 - A fresh two-player Chromium HTTP resize pass verified real pointer shrink, movement retaining size, keyboard resizing, capture-loss cancellation, sending from the minimum 260×240 transparent panel, independent saved size/reload, Sidebar/Grid at both screen sizes, fade/wake, temporary viewport shrink/restore, Dock and Reset. No page errors observed. Focused Luna review found no concrete resize lifecycle bug.
 - These are assistant HTTP browser observations, not real-device touch/Safari or Chris's hands-on results. Managed browser policy blocks `file://` navigation, so Chris's normal extracted-copy flow still needs his review.
 
-PR #11 remains paused. Nothing in this test copy is approved for publication.
+PR #11 remains paused. Publication approval covered this chat release only; the separate Deck Builder checks and backup/restore proposals still need their own approval.
