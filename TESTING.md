@@ -1,23 +1,30 @@
-# Commander Table v0.32.0 test copy
+# Collection backup and restore — PR #49, v0.39.0 test copy
 
-Download this branch ZIP, extract it, and double-click **index.html**. No terminal, installation, or local server is needed. Keep internet access on for card images and online play.
+Extract the ZIP and double-click **index.html**. Keep internet access on for card images and online play. No terminal or installation is needed.
 
-## Token gallery — published in v0.30.0
+## Chris's testing and approval
 
-Tested by Chris on the final v0.30.0 test copy: “Perfect, push and merge and Publish.” He approved the token gallery, quantities, automatic return to the battlefield and matching artwork revision on 2026-10-21. His specific device and multiplayer coverage was not stated. This feature is included here because v0.32.0 builds on that published release.
+Tested by Chris: he has just tested the previously shared Deck Builder checks and collection backup ZIPs. He directed that both be refreshed onto the published releases, then pushed and merged. The #30 ZIP he tested was the earlier branch head `9a60d15`; it did not contain the refreshed #29 integration or the preference additions below. His hands-on approval applies to the original ZIPs; the refreshed combined branch has assistant checks recorded separately here.
 
-Assistant checks on the approved token revision used Playwright/Chromium over localhost HTTP. Equivalent Treasure artwork grouped together; same-name Soldier fixtures with different stats stayed separate. Creation closed the picker in Sidebar and Grid at 1920×1080 and 1366×768. A second connected player received four batches of three tokens. Gallery artwork selection and battlefield **Switch printing…** loaded real Scryfall token printings; switching preserved instance ID, tapped state, counters, position and ownership, and the other player saw the new art. **Use for all copies** changed matching tokens. No page errors were observed. These checks applied to v0.30.0, not Chris's testing of this backup branch.
+## Click list
 
-## Collection backup and restore — pending Chris's testing
+1. In one browser, save two decks and change a card printing. Select a card back/background, enter a saved name, set a host opening-hand rule, and in a game pop chat out, enable Transparent, move it and resize it.
+2. On the opening screen choose **Back up / restore… → Download backup**. Keep the downloaded JSON file.
+3. In a separate browser with an existing deck and different saved preferences, select the backup. Review the preview; leave the preference checkbox off and restore. The imported deck and printing should appear, the existing deck should stay, and the destination's preferences should remain unchanged.
+4. Select the same backup again, check **Also restore saved preferences and appearance**, and restore. Verify the name, appearance, display settings, host opening-hand choice, and floating chat position, transparency/fade behavior, width and height match the source browser.
+5. Change a restored deck and select the original backup again. Preview should offer a “(restored)” copy while keeping both the original local deck and other decks. Exact matches should be skipped.
+6. Select a plain `.txt` decklist or invalid JSON; an error should appear and Restore should stay disabled. Close a valid preview without restoring and confirm nothing changed.
+7. At 1920×1080 and 1366×768, start a normal host game after restoring preferences. The usual player-color chooser should still appear. Choose a color, open chat and check that its saved size fits; resize the viewport and confirm the panel stays on-screen.
 
-1. Save two decks. In Deck Builder, choose a recognizable printing for at least one card. Choose a card back and background, optionally upload an image, and enter a saved name.
-2. On the opening screen, click **Back up / restore… → Download backup** and keep the `.json` file.
-3. Open this extracted copy in a second browser, select that file in **Back up / restore…**, and review the preview. Leave the preferences checkbox off and click **Restore and reload**. Both decks and their selected printings should appear; this browser's name and appearance should stay as they were.
-4. Restore the same file again. Matching decks should be skipped. Check **Also restore saved preferences and appearance**, restore, and verify the saved name, appearance and display preferences now match the source browser.
-5. Change a restored deck, then select the original backup again. Preview should offer a restored copy; confirm and verify both versions remain available and other decks are unchanged.
-6. Select a plain decklist `.txt` file or invalid JSON. A clear error should appear and Restore should stay disabled. Close a valid preview without restoring and verify the collection remains unchanged.
-7. Check the dialog at 1920×1080 and 1366×768. Long previews should remain usable and Close should stay reachable. Start Practice solo after restore and verify the selected printing and linked token artwork still work. Sidebar/Grid in a two-player room should still work; backup controls only appear before a game.
+Active games, room and seat assignments, seat keys, recovery records, and network identities are excluded. Preference restore is optional. Existing decks are never replaced: matching decks are skipped and changed versions are added as copies. Collection backups must be version 1 and no larger than 20 MB.
 
-Chris has not tested backup and restore on this branch yet. Assistant automated and browser results will be reported separately. Publication of this branch still requires Chris's explicit approval.
+## Assistant checks
 
-The managed browser blocks direct `file://` navigation with `ERR_BLOCKED_BY_ADMINISTRATOR`; assistant browser checks use localhost HTTP. This does not replace Chris's normal extracted-copy check. The deck randomizer/import draft PR #11 remains paused.
+- `node tests/test_backup.cjs`: 12 checks passed, including round-trip and invalid-value coverage for chat-panel position, transparency/fade mode and size, plus the host opening-hand selection. The key whitelist excludes session, recovery and identity data.
+- `node tests/test_chat_panel.cjs`: chat-panel normalization and viewport geometry checks passed.
+- `node tests/test_deck_health.cjs`: 9 checks passed for the published Deck Builder review notes.
+- Actual Chromium Deck Builder regression passed at 1920×1080 and 1366×768: partner-color union, off-color warning, commander-inclusive total, duplicate grouping and printed exceptions, dismiss/edit/reopen updates; no page errors.
+- Actual Chromium over HTTP on port 8109 downloaded a backup in one browser context and restored it in another at 1366×768, with preferences off and on. It confirmed that destination preferences and the existing deck remain intact when preferences are off, then restored the source preferences, chat-panel settings and opening-hand rule when selected. After restore, the normal host color chooser appeared; chat rendered at its saved dimensions at 1366×768 and 1920×1080. The network start was stubbed for this entry-flow check; no multiplayer session was tested. No page errors were observed.
+- The app's published v0.37.0 recovery, chat, arrows, mulligan and color behavior and v0.38.0 Deck Builder checks were retained during integration. This refresh did not re-run the recovery Worker or multiplayer flows.
+
+The managed browser blocks `file://` navigation; assistant browser checks used localhost HTTP. Chris's extract-and-open test flow remains the final check of the ZIP on his browser.

@@ -4,7 +4,7 @@
   const FORMAT = 'commander-table-collection', VERSION = 1, MAX_BYTES = 20 * 1024 * 1024;
   const DECK_KEY = 'ct.decks.v1';
   const PREF_KEYS = ['ct.name', 'ct.appearance', 'ct.appearance.custom', 'ct.layout2', 'ct.view',
-    'ct.handCw', 'ct.split3', 'ct.touchMode', 'ct.chatSound', 'ct.lensRadius'];
+    'ct.handCw', 'ct.split3', 'ct.touchMode', 'ct.chatSound', 'ct.chatPanel', 'ct.openingMode', 'ct.lensRadius'];
   const obj = v => v && typeof v === 'object' && !Array.isArray(v);
   const fail = text => { throw new Error(text); };
   function string(v, max, label, empty) {
@@ -67,7 +67,21 @@
     switch (key) {
       case 'ct.name': return string(value, 24, 'player name', true);
       case 'ct.view': if (['side', 'grid'].includes(value)) return value; break;
+      case 'ct.openingMode': if (['london', 'three-lands', 'ten-bottom-three'].includes(value)) return value; break;
       case 'ct.touchMode': case 'ct.chatSound': if (typeof value === 'boolean') return value; break;
+      case 'ct.chatPanel': {
+        if (!obj(value)) fail('Invalid chat panel preference in backup.');
+        for (const key of ['floating', 'transparent']) {
+          if (Object.prototype.hasOwnProperty.call(value, key) && typeof value[key] !== 'boolean') fail('Invalid chat panel preference in backup.');
+        }
+        for (const key of ['x', 'y', 'width', 'height']) {
+          if (Object.prototype.hasOwnProperty.call(value, key) && value[key] !== null &&
+              (typeof value[key] !== 'number' || !Number.isFinite(value[key]) || (['width', 'height'].includes(key) && value[key] <= 0)))
+            fail('Invalid chat panel preference in backup.');
+        }
+        if (!window.CTChatPanel || typeof window.CTChatPanel.normalize !== 'function') fail('Chat panel preferences are unavailable.');
+        return window.CTChatPanel.normalize(value);
+      }
       case 'ct.handCw': if (integer(value, 60, 160)) return value; break;
       case 'ct.lensRadius': if (typeof value === 'number' && value >= 40 && value <= 260) return value; break;
       case 'ct.split3': if (typeof value === 'number' && value >= 0 && value <= 1) return value; break;
@@ -169,7 +183,7 @@
   function open() {
     const el = document.createElement('div');
     el.innerHTML = '<p>Save all decks, chosen printings, appearance (including uploaded images), saved name, and display preferences in one file.</p>' +
-      '<p class="muted small">Active games, room codes, and connection identities are excluded. Keep the file somewhere you can find it later.</p>' +
+      '<p class="muted small">Active games, room and seat assignments, recovery data, and connection identities are excluded. Keep the file somewhere you can find it later.</p>' +
       '<button type="button" data-backup-download>Download backup</button><hr>' +
       '<label>Restore a collection backup <input type="file" accept=".json,application/json" data-backup-file></label>' +
       '<div data-backup-preview role="status"></div><p><label><input type="checkbox" data-backup-prefs> Also restore saved preferences and appearance</label></p>' +

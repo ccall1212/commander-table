@@ -457,7 +457,7 @@
       const wrap = h('div', 'w-form');
       wrap.appendChild(h('p', 'w-confirm-text', text));
       const row = h('div', 'w-btnrow');
-      const cancel = h('button', 'w-btn', 'Cancel');
+      const cancel = h('button', 'w-btn', o.cancelLabel || 'Cancel');
       cancel.type = 'button';
       const ok = h('button', 'w-btn ' + (o.danger ? 'w-btn-danger' : 'w-btn-primary'), o.okLabel || 'OK');
       ok.type = 'button';
@@ -671,6 +671,7 @@
       },
     });
     modal.head.append(countEl);
+    if (opts.headerExtra && opts.headerExtra.nodeType === 1) modal.head.append(opts.headerExtra);
     if (pick) {
       pickPrompt.textContent = pick.prompt || '';
       modal.head.append(pickPrompt, pickCountEl);

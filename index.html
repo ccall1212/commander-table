@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="app-version" content="0.32.0">
+<meta name="app-version" content="0.39.0">
 <title>Commander Table</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='14' y='6' width='36' height='52' rx='5' fill='%23d4a72c'/%3E%3Crect x='19' y='11' width='26' height='42' rx='3' fill='%2312161e'/%3E%3C/svg%3E">
-<link rel="stylesheet" href="css/style.css?v=0.32.0">
-<link rel="stylesheet" href="css/widgets.css?v=0.32.0">
+<link rel="stylesheet" href="css/style.css?v=0.39.0">
+<link rel="stylesheet" href="css/widgets.css?v=0.39.0">
 </head>
 <body>
 
@@ -82,6 +82,12 @@
     <section class="box">
       <h2><span class="step">3</span> Play</h2>
       <div class="row wrap">
+        <label class="muted small" for="hostMulligan">Host opening hands</label>
+        <select id="hostMulligan" aria-label="Opening-hand rule">
+          <option value="london">London — 7, first free</option>
+          <option value="three-lands">At least 3 lands</option>
+          <option value="ten-bottom-three">Draw 10, bottom 3</option>
+        </select>
         <button id="hostBtn" class="primary">Host a game</button>
         <span class="or">or join:</span>
         <input id="joinIn" placeholder="ROOM CODE" maxlength="5" autocomplete="off" class="code">
@@ -119,9 +125,12 @@
   </header>
   <div id="banner" class="hidden"></div>
   <section id="chatPanel" class="ct-chat-panel hidden" role="dialog" aria-label="Room chat" aria-modal="false">
-    <div class="ct-chat-head"><div><strong>Room chat</strong><div class="ct-chat-subtitle">Messages for everyone at the table</div></div><div class="ct-chat-head-actions"><button id="chatSoundToggle" type="button" title="Enable chat notification sound" aria-label="Enable chat notification sound" aria-pressed="false">🔇 Sound off</button><button id="chatClose" type="button" title="Close chat" aria-label="Close chat">×</button></div></div>
+    <div class="ct-chat-head"><button id="chatMoveHandle" class="ct-chat-move" type="button" tabindex="-1" aria-label="Move floating chat with arrow keys" aria-disabled="true"><strong>Room chat</strong><span id="chatSubtitle" class="ct-chat-subtitle">Messages for everyone at the table</span></button><button id="chatClose" type="button" title="Close chat" aria-label="Close chat">×</button></div>
+    <div class="ct-chat-tools"><button id="chatFloatToggle" type="button" aria-pressed="false">Pop out</button><button id="chatTransparentToggle" type="button" aria-pressed="false">Transparent</button><button id="chatResetPosition" type="button" title="Reset floating chat position" aria-label="Reset floating chat position" disabled>Reset</button><button id="chatSoundToggle" type="button" title="Enable chat notification sound" aria-label="Enable chat notification sound" aria-pressed="false">🔇 Sound off</button></div>
     <div id="chatHistory" class="ct-chat-history"></div>
     <form id="chatForm" class="ct-chat-form"><input id="chatInput" type="text" maxlength="280" autocomplete="off" placeholder="Message everyone…" aria-label="Message everyone" required><button class="primary" type="submit">Send</button></form>
+    <button id="chatResizeHandle" class="ct-chat-resize" type="button" tabindex="-1" aria-label="Resize floating chat with arrow keys" title="Drag to resize chat; arrow keys resize 10px, Shift + arrows resize 50px">◢</button>
+    <button id="chatWake" class="ct-chat-wake" type="button" aria-label="Show chat and start typing">Chat…</button>
     <div class="ct-chat-foot">Enter sends · latest 100 messages retained</div>
   </section>
   <div id="chatPopups" class="ct-chat-popups" aria-live="polite" aria-relevant="additions"></div>
@@ -160,20 +169,24 @@
 <div id="pv" class="floatpv hidden"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
-<script src="js/lan-mode.js?v=0.32.0"></script>
-<script src="js/relay-peer.js?v=0.32.0"></script>
-<script src="js/lan.js?v=0.32.0"></script>
-<script src="js/widgets.js?v=0.32.0"></script>
-<script src="js/appearance.js?v=0.32.0"></script>
-<script src="js/deck.js?v=0.32.0"></script>
-<script src="js/deck-editor.js?v=0.32.0"></script>
-<script src="js/backup.js?v=0.32.0"></script>
-<script src="js/turn-config.js?v=0.32.0"></script>
-<script src="js/net-config.js?v=0.32.0"></script>
-<script src="js/net.js?v=0.32.0"></script>
-<script src="js/targeting.js?v=0.32.0"></script>
-<script src="js/app.js?v=0.32.0"></script>
-<script src="js/updates.js?v=0.32.0"></script>
-<script src="js/lens.js?v=0.32.0"></script>
+<script src="js/lan-mode.js?v=0.39.0"></script>
+<script src="js/relay-peer.js?v=0.39.0"></script>
+<script src="js/lan.js?v=0.39.0"></script>
+<script src="js/widgets.js?v=0.39.0"></script>
+<script src="js/appearance.js?v=0.39.0"></script>
+<script src="js/deck.js?v=0.39.0"></script>
+<script src="js/deck-health.js?v=0.39.0"></script>
+<script src="js/deck-editor.js?v=0.39.0"></script>
+<script src="js/backup.js?v=0.39.0"></script>
+<script src="js/turn-config.js?v=0.39.0"></script>
+<script src="js/net-config.js?v=0.39.0"></script>
+<script src="js/net.js?v=0.39.0"></script>
+<script src="js/targeting.js?v=0.39.0"></script>
+<script src="js/chat-panel.js?v=0.39.0"></script>
+<script src="js/player-colors.js?v=0.39.0"></script>
+<script src="js/mulligan.js?v=0.39.0"></script>
+<script src="js/app.js?v=0.39.0"></script>
+<script src="js/updates.js?v=0.39.0"></script>
+<script src="js/lens.js?v=0.39.0"></script>
 </body>
 </html>

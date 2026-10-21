@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const { webcrypto } = require('node:crypto');
 const window = { crypto: webcrypto, CTAppearance: { backOptions: [{ id: 'ruby-sigil' }], backgroundOptions: [{ id: 'haunted-ruins' }] } };
+vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname, '../js/chat-panel.js'), 'utf8'), { window });
 vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname, '../js/backup.js'), 'utf8'), { window, Blob, console });
 const api = window.CTBackup;
 const plain = v => JSON.parse(JSON.stringify(v));
@@ -21,7 +22,8 @@ class Store {
 }
 let checks = 0;
 function test(name, fn) { fn(); checks++; console.log('PASS', name); }
-const fixture = () => new Store({ 'ct.decks.v1': JSON.stringify([deck]), 'ct.name': '"Chris"', 'ct.handCw': '94', 'ct.chatSound': 'true', 'ct.appearance': JSON.stringify({ cardBack: 'ruby-sigil', background: 'haunted-ruins' }), 'ct.appearance.custom': JSON.stringify({ cardBack: 'data:image/webp;base64,UklGRg==', cardBackActive: false, background: '', backgroundActive: false }), 'ct.sess.player': '{"private":"secret"}', 'ct.last': '"player"', 'ct.pid': '"player"' });
+const chatPanel = { floating: true, transparent: true, x: 420, y: 90, width: 540, height: 410 };
+const fixture = () => new Store({ 'ct.decks.v1': JSON.stringify([deck]), 'ct.name': '"Chris"', 'ct.handCw': '94', 'ct.chatSound': 'true', 'ct.chatPanel': JSON.stringify(chatPanel), 'ct.appearance': JSON.stringify({ cardBack: 'ruby-sigil', background: 'haunted-ruins' }), 'ct.appearance.custom': JSON.stringify({ cardBack: 'data:image/webp;base64,UklGRg==', cardBackActive: false, background: '', backgroundActive: false }), 'ct.sess.player': '{"private":"secret","seatKeys":{"host":"seat-secret"},"boardVault":"vault-secret"}', 'ct.last': '"player"', 'ct.pid': '"player"', 'ct.nk.player': '"network-key-secret"', 'ct.recovery.player': '{"room":"ABC"}', 'ct.openingMode': '"three-lands"' });
 test('round trip preserves all saved card data, printings, tokens and preferences', () => {
   const source = fixture(), backup = api.create(source), dest = new Store();
   const loaded = api.parse(JSON.stringify(backup));
@@ -29,6 +31,8 @@ test('round trip preserves all saved card data, printings, tokens and preference
   assert.deepEqual(JSON.parse(dest.getItem('ct.decks.v1')), plain(backup.decks));
   assert.deepEqual(plain(backup.decks[0].commanders[0]), card);
   assert.deepEqual(plain(backup.decks[0].tokens[0]), token, 'token semantic identity and reverse-face metadata survive backup round trip');
+  assert.deepEqual(plain(backup.preferences['ct.chatPanel']), chatPanel, 'floating, transparent fade mode, position and custom size survive backup round trip');
+  assert.equal(backup.preferences['ct.openingMode'], 'three-lands', 'the selected opening-hand rule survives backup round trip');
   for (const [key, value] of Object.entries(backup.preferences)) assert.deepEqual(JSON.parse(dest.getItem(key)), plain(value));
 });
 test('older token definitions without semantic metadata remain supported', () => {
@@ -39,9 +43,11 @@ test('older token definitions without semantic metadata remain supported', () =>
   const backup = { format: 'commander-table-collection', version: 1, decks: [oldDeck], preferences: {} };
   assert.deepEqual(plain(api.parse(JSON.stringify(backup)).decks[0].tokens[0]), plain(oldDeck.tokens[0]));
 });
-test('excludes active sessions and player identities', () => {
+test('excludes active sessions, recovery records, room assignments and player identities', () => {
   const text = JSON.stringify(api.create(fixture()));
   assert(!text.includes('secret')); assert(!text.includes('ct.sess')); assert(!text.includes('ct.pid')); assert(!text.includes('ct.last'));
+  assert(!text.includes('ct.recovery')); assert(!text.includes('ct.seatKeys')); assert(!text.includes('ct.nk'));
+  assert(!text.includes('seat-secret')); assert(!text.includes('vault-secret')); assert(!text.includes('network-key-secret'));
 });
 test('preview never writes; repeat restore skips exact matching decks', () => {
   const storage = fixture(), before = [...storage.data], backup = api.create(storage);
@@ -69,10 +75,18 @@ test('quota failure rolls back decks, preferences and missing keys', () => {
 });
 test('malformed data and unsupported versions fail without writes', () => {
   const backup = plain(api.create(fixture())), storage = fixture(), before = [...storage.data];
-  for (const mutate of [b => b.version = 2, b => b.decks[0].cards[0].qty = 1.5, b => b.decks[0].commanders[0].img = 'javascript:alert(1)', b => b.preferences['ct.view'] = 'bogus', b => b.decks.push(b.decks[0]), b => b.decks[0].cards = null]) {
+  for (const mutate of [b => b.version = 2, b => b.decks[0].cards[0].qty = 1.5, b => b.decks[0].commanders[0].img = 'javascript:alert(1)', b => b.preferences['ct.view'] = 'bogus', b => b.preferences['ct.openingMode'] = 'unknown', b => b.decks.push(b.decks[0]), b => b.decks[0].cards = null]) {
     const bad = plain(backup); mutate(bad); assert.throws(() => api.restore(storage, bad, true)); assert.deepEqual([...storage.data], before);
   }
   assert.throws(() => api.parse('invalid'), /not valid JSON/); assert.throws(() => api.parse(' '.repeat(20 * 1024 * 1024 + 1)), /20 MB/);
+});
+test('invalid chat panel preferences are rejected before any restore writes', () => {
+  const backup = plain(api.create(fixture())), storage = fixture(), before = [...storage.data];
+  for (const value of [null, [], { floating: 'yes' }, { transparent: 1 }, { x: '20' }, { y: Infinity }, { width: 0 }, { height: -1 }]) {
+    const bad = plain(backup); bad.preferences['ct.chatPanel'] = value;
+    assert.throws(() => api.restore(storage, bad, true), /chat panel preference/);
+    assert.deepEqual([...storage.data], before);
+  }
 });
 test('malformed optional token semantic fields are rejected before restore', () => {
   const backup = plain(api.create(fixture())), storage = fixture(), before = [...storage.data];

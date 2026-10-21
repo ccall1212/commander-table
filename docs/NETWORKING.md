@@ -55,12 +55,14 @@ GitHub Pages (static site)                Cloudflare Worker "commander-table-rel
   index.html + js/*                          GET /health
   net.js  ── session logic, host authority   GET /room/<CODE>  (WebSocket upgrade)
      │                                          └─> Durable Object "Room" (one per room code)
-     ├─ transport 'relay' : js/relay-peer.js ──wss──┘   dumb broker: reg / conn / msg / cclose
+     ├─ transport 'relay' : js/relay-peer.js ──wss──┘   broker: reg / conn / msg / cclose + optional vault
      ├─ transport 'p2p'   : PeerJS (WebRTC) — fallback / home networks
      └─ transport 'lan'   : lan-server.py (same broker protocol, optional)
 ```
 
-- **Protocol:** `docs/relay-protocol.md` (v2). Same broker in `relay/worker.js` and `lan-server.py`.
+- **Protocol:** `docs/relay-protocol.md` (v2). The normal broker framing is shared by
+  `relay/worker.js` and `lan-server.py`; the Cloudflare Worker may additionally advertise
+  `room-vault-v1`, a host-authenticated private-board backup API. LAN does not support the vault.
 - **Authority:** unchanged — every player owns their own cards and publishes a public view; the host
   owns the table (turns, seats, log) and relays. The relay never interprets game messages.
 - **Route choice (`js/net-config.js`):** `mode:'auto'` = relay first; if the relay can't be reached
@@ -71,6 +73,11 @@ GitHub Pages (static site)                Cloudflare Worker "commander-table-rel
 - **No secrets in the client:** the relay URL is public. Room safety comes from a per-session random
   *key*: only the same browser session can take a room id back (instant host reload); anyone else
   gets "room code taken". WebSocket upgrades are only accepted from allowed origins.
+- **Private room backup:** on a Worker advertising `room-vault-v1`, the registered host can store and
+  retrieve full private board snapshots in Durable Object storage for up to 24 hours. The relay
+  returns a private snapshot only to that authenticated host socket; it is not broadcast. A room
+  binding prevents a different host key from claiming the saved data after disconnect. This is
+  server-side storage, not end-to-end encryption, and is not available in LAN mode.
 - **Cost (Workers Free plan, per Cloudflare's pricing page, Oct 2026):** Durable Objects with SQLite
   storage are included; 100,000 requests/day, incoming WebSocket messages count 20:1, 13,000 GB-s/day,
   idle (hibernated) rooms cost nothing; keepalive pings are auto-answered without waking the object.

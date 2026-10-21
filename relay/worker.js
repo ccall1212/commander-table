@@ -1,7 +1,9 @@
 // Commander Table relay: Cloudflare Worker + one Durable Object per room.
-// Protocol: docs/relay-protocol.md (v2). The relay is a dumb broker; it never inspects game data.
-// Uses the WebSocket Hibernation API, so ALL broker state lives in per-socket attachments:
-//   { id: string|null, key: string|null, links: { [lid]: otherPeerId }, dead?: true }
+// Protocol: docs/relay-protocol.md (v2). Normal game messages are opaque broker frames. The
+// host-mediated room vault is the sole exception: it stores explicitly submitted private boards.
+// Uses the WebSocket Hibernation API, so live broker links live in per-socket attachments;
+// private vault records live in Durable Object storage:
+//   { room: string|null, id: string|null, key: string|null, links: { [lid]: otherPeerId }, dead?: true }
 
 import { DurableObject } from "cloudflare:workers";
 
@@ -20,6 +22,11 @@ const MAX_LINKS = 64; // links per socket (keeps the attachment small)
 const MAX_ID = 64;
 const MAX_KEY = 64;
 const VERSION = 2;
+const VAULT_MAX_BYTES = 900000;
+const VAULT_CHUNK_BYTES = 60 * 1024;
+const VAULT_TTL_MS = 24 * 60 * 60 * 1000;
+const VAULT_MAX_OWNERS = 12;
+const VAULT_PID_RE = /^[\w-]{1,40}$/;
 
 function originAllowed(origin) {
   if (typeof origin !== "string") return false;
@@ -50,7 +57,7 @@ export default {
     if (url.pathname === "/health") {
       const headers = { "Content-Type": "application/json" };
       if (okOrigin) Object.assign(headers, corsHeaders(origin));
-      return new Response(JSON.stringify({ ok: true, v: VERSION }), { status: 200, headers });
+      return new Response(JSON.stringify({ ok: true, v: VERSION, features: ["room-vault-v1"] }), { status: 200, headers });
     }
 
     const m = /^\/room\/([^/]+)$/.exec(url.pathname);
@@ -74,6 +81,7 @@ export class Room extends DurableObject {
     this.ctx.setWebSocketAutoResponse(
       new WebSocketRequestResponsePair('{"op":"ping"}', '{"op":"pong"}'),
     );
+    this.vaultQueue = Promise.resolve();
   }
 
   async fetch(request) {
@@ -83,9 +91,10 @@ export class Room extends DurableObject {
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair);
     this.ctx.acceptWebSocket(server);
-    this.save(server, { id: null, key: null, links: {} });
+    const room = (new URL(request.url).pathname.match(/^\/room\/([^/]+)$/) || [])[1];
+    this.save(server, { room: room ? room.toUpperCase() : null, id: null, key: null, links: {} });
     try {
-      server.send(JSON.stringify({ op: "hello", v: VERSION, server: "cf-relay", maxMsg: MAX_MSG }));
+      server.send(JSON.stringify({ op: "hello", v: VERSION, server: "cf-relay", maxMsg: MAX_MSG, features: ["room-vault-v1"] }));
     } catch (e) {
       // socket already gone; webSocketClose/Error will clean up
     }
@@ -216,6 +225,9 @@ export class Room extends DurableObject {
       case "msg":
         this.onMsg(ws, msg, text);
         break;
+      case "vault":
+        await this.onVault(ws, msg);
+        break;
       case "cclose":
         this.onCclose(ws, msg);
         break;
@@ -341,5 +353,242 @@ export class Room extends DurableObject {
       }
     }
     if (otherWs) this.send(otherWs, { op: "cclose", lid });
+  }
+
+  // ---- Host-mediated private-board vault ---------------------------------------------------
+  // Vault data is stored as bounded binary chunks because a Durable Object storage value is
+  // limited to 128 KiB. The metadata row is the commit point for a new revision; incomplete
+  // chunk writes can never replace a previously committed backup.
+  isVaultHost(a) {
+    return !!a && typeof a.room === "string" && ROOM_RE.test(a.room) &&
+      typeof a.id === "string" && a.id === "ctable-v1-" + a.room.toLowerCase() &&
+      typeof a.key === "string" && a.key.length > 0 && !a.dead;
+  }
+
+  async hostKeyHash(key) {
+    const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(key));
+    return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
+  }
+
+  vaultMetaKey(pid) { return "vault:owner:" + pid; }
+  vaultRoomOwnerKey() { return "vault:room-owner"; }
+  vaultChunkPrefix(pid, rev) { return "vault:chunk:" + pid + ":" + rev + ":"; }
+  vaultStageKey(pid) { return "vault:staging:" + pid; }
+
+  queueVault(fn) {
+    const run = this.vaultQueue.then(fn, fn);
+    this.vaultQueue = run.catch(() => {});
+    return run;
+  }
+
+  async onVault(ws, msg) {
+    const rid = typeof msg.rid === "string" && msg.rid.length <= 80 ? msg.rid : null;
+    const a = this.att(ws);
+    if (!rid) return this.send(ws, { op: "vault", rid, ok: false, error: "bad-request" });
+    if (!this.isVaultHost(a)) return this.send(ws, { op: "vault", rid, ok: false, error: "unauthorized" });
+    try {
+      const result = await this.queueVault(() => this.vaultAction(a, msg));
+      this.send(ws, { op: "vault", rid, ok: true, result });
+    } catch (e) {
+      const error = typeof e === "string" ? e : "storage-error";
+      this.send(ws, { op: "vault", rid, ok: false, error });
+    }
+  }
+
+  async vaultAction(a, msg) {
+    const action = msg.action;
+    const pid = msg.pid;
+    if (!(["put", "get", "delete", "clear", "list"].includes(action))) throw "bad-action";
+    if ((action === "put" || action === "get" || action === "delete") && (typeof pid !== "string" || !VAULT_PID_RE.test(pid))) throw "bad-pid";
+
+    const now = Date.now();
+    await this.expireVault(now);
+    const hostHash = await this.hostKeyHash(a.key);
+    const roomOwner = await this.ctx.storage.get(this.vaultRoomOwnerKey());
+    if (roomOwner && roomOwner.hostHash !== hostHash) throw "unauthorized";
+    if (action === "put") return this.vaultPut(pid, msg.data, hostHash, now);
+    if (action === "get") return this.vaultGet(pid, hostHash);
+    if (action === "delete") return this.vaultDelete(pid, hostHash);
+    if (action === "clear") return this.vaultClear(hostHash);
+    return this.vaultList(hostHash);
+  }
+
+  async vaultOwners() {
+    return this.ctx.storage.list({ prefix: "vault:owner:" });
+  }
+
+  async readVault(pid, meta) {
+    if (!meta || !meta.hasData || !meta.rev || !Number.isInteger(meta.chunks) || meta.chunks < 1 || meta.chunks > 20) return null;
+    const parts = [];
+    let size = 0;
+    for (let i = 0; i < meta.chunks; i++) {
+      const part = await this.ctx.storage.get(this.vaultChunkPrefix(pid, meta.rev) + i);
+      if (!(part instanceof Uint8Array) || part.byteLength > VAULT_CHUNK_BYTES) return null;
+      parts.push(part); size += part.byteLength;
+      if (size > VAULT_MAX_BYTES) return null;
+    }
+    if (size !== meta.bytes) return null;
+    const bytes = new Uint8Array(size);
+    let offset = 0;
+    for (const part of parts) { bytes.set(part, offset); offset += part.byteLength; }
+    try { return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes)); }
+    catch (_) { return null; }
+  }
+
+  async vaultPut(pid, data, hostHash, now) {
+    if (!data || typeof data !== "object" || Array.isArray(data) || !data.me || typeof data.me !== "object" || Array.isArray(data.me) || !data.deck || typeof data.deck !== "object" || Array.isArray(data.deck)) throw "bad-data";
+    let json, bytes;
+    try { json = JSON.stringify(data); bytes = new TextEncoder().encode(json); } catch (_) { throw "bad-data"; }
+    if (!bytes.length || bytes.byteLength > VAULT_MAX_BYTES) throw "too-large";
+
+    const key = this.vaultMetaKey(pid);
+    const prior = await this.ctx.storage.get(key);
+    const owners = await this.vaultOwners();
+    if (prior && prior.hostHash !== hostHash) throw "unauthorized";
+    if (!prior && owners.size >= VAULT_MAX_OWNERS) throw "room-full";
+
+    // App state revisions are monotonic per seat. A host can have an older queued save
+    // arrive after a newer one (for example when retries overlap), including after a
+    // reconnect. Preserve the committed snapshot in that case. Older clients without a
+    // revision remain compatible; the guard applies only when both values are safe ints.
+    const incomingRevision = Number.isSafeInteger(data.revision) ? data.revision : null;
+    if (incomingRevision !== null && Number.isSafeInteger(prior && prior.revision) &&
+        incomingRevision <= prior.revision) {
+      return {
+        pid, updatedAt: prior.updatedAt, expiresAt: prior.expiresAt,
+        bytes: prior.bytes, revision: prior.revision, ignored: true,
+      };
+    }
+
+    // Bind the entire room on its first valid put, not only this pid. Otherwise a replacement
+    // host with a different key could claim a fresh pid and poison list/clear or consume slots.
+    // A valid put extends the binding; delete and clear deliberately leave its TTL untouched.
+    await this.ctx.storage.put(this.vaultRoomOwnerKey(), { hostHash, expiresAt: now + VAULT_TTL_MS });
+
+    const rev = crypto.randomUUID();
+    const prefix = this.vaultChunkPrefix(pid, rev);
+    const chunks = Math.ceil(bytes.byteLength / VAULT_CHUNK_BYTES);
+    const stageKey = this.vaultStageKey(pid);
+    const staleStage = await this.ctx.storage.get(stageKey);
+    let committed = false;
+    try {
+      // Register an expiring manifest before writing chunks. A process interruption can leave
+      // only these uniquely named chunks; the alarm will remove them even without an owner row.
+      if (staleStage && staleStage.rev) await this.deleteVaultChunks(pid, staleStage.rev, staleStage.chunks);
+      await this.ctx.storage.put(stageKey, { rev, chunks, expiresAt: now + VAULT_TTL_MS });
+      await this.scheduleVaultAlarm();
+      for (let i = 0; i < chunks; i++) {
+        await this.ctx.storage.put(prefix + i, bytes.slice(i * VAULT_CHUNK_BYTES, (i + 1) * VAULT_CHUNK_BYTES));
+      }
+      const meta = {
+        hostHash, rev, chunks, bytes: bytes.byteLength,
+        updatedAt: now, expiresAt: now + VAULT_TTL_MS, hasData: true,
+      };
+      if (incomingRevision !== null) meta.revision = incomingRevision;
+      await this.ctx.storage.put(key, meta); // atomic revision commit point
+      committed = true;
+      await this.ctx.storage.delete(stageKey);
+      if (prior && prior.rev) await this.deleteVaultChunks(pid, prior.rev, prior.chunks);
+      await this.scheduleVaultAlarm();
+      return { pid, updatedAt: meta.updatedAt, expiresAt: meta.expiresAt, bytes: meta.bytes, ...(incomingRevision !== null ? { revision: incomingRevision } : {}) };
+    } catch (e) {
+      // Once metadata points to the new revision it is committed; keep its chunks even if
+      // alarm scheduling or cleanup of the previous revision fails afterwards.
+      if (!committed) {
+        await this.deleteVaultChunks(pid, rev, chunks);
+        await this.ctx.storage.delete(stageKey);
+        await this.scheduleVaultAlarm();
+      }
+      throw e;
+    }
+  }
+
+  async vaultGet(pid, hostHash) {
+    const meta = await this.ctx.storage.get(this.vaultMetaKey(pid));
+    if (!meta || meta.hostHash !== hostHash) throw meta ? "unauthorized" : "not-found";
+    if (!meta.hasData) throw "not-found";
+    const data = await this.readVault(pid, meta);
+    if (!data) throw "corrupt-data";
+    return { pid, updatedAt: meta.updatedAt, expiresAt: meta.expiresAt, data };
+  }
+
+  async vaultDelete(pid, hostHash) {
+    const key = this.vaultMetaKey(pid), meta = await this.ctx.storage.get(key);
+    if (!meta) return { deleted: false };
+    if (meta.hostHash !== hostHash) throw "unauthorized";
+    if (meta.rev) await this.deleteVaultChunks(pid, meta.rev, meta.chunks);
+    await this.ctx.storage.put(key, { hostHash: meta.hostHash, updatedAt: meta.updatedAt, expiresAt: meta.expiresAt, hasData: false });
+    await this.scheduleVaultAlarm();
+    return { deleted: !!meta.hasData };
+  }
+
+  async vaultClear(hostHash) {
+    const owners = await this.vaultOwners();
+    for (const meta of owners.values()) if (!meta || meta.hostHash !== hostHash) throw "unauthorized";
+    for (const [key, meta] of owners) {
+      const pid = key.slice("vault:owner:".length);
+      if (meta.rev) await this.deleteVaultChunks(pid, meta.rev, meta.chunks);
+      await this.ctx.storage.put(key, { hostHash: meta.hostHash, updatedAt: meta.updatedAt, expiresAt: meta.expiresAt, hasData: false });
+    }
+    await this.scheduleVaultAlarm();
+    return { cleared: owners.size };
+  }
+
+  async vaultList(hostHash) {
+    const owners = await this.vaultOwners(), result = [];
+    for (const [key, meta] of owners) {
+      if (!meta || meta.hostHash !== hostHash) throw "unauthorized";
+      if (meta.hasData) result.push({ pid: key.slice("vault:owner:".length), updatedAt: meta.updatedAt, expiresAt: meta.expiresAt, bytes: meta.bytes });
+    }
+    result.sort((x, y) => x.pid.localeCompare(y.pid));
+    return result;
+  }
+
+  async deleteVaultChunks(pid, rev, count) {
+    if (typeof rev !== "string") return;
+    const n = Number.isInteger(count) ? Math.min(20, Math.max(0, count)) : 20;
+    const keys = [];
+    for (let i = 0; i < n; i++) keys.push(this.vaultChunkPrefix(pid, rev) + i);
+    if (keys.length) await this.ctx.storage.delete(keys);
+  }
+
+  async expireVault(now = Date.now()) {
+    const owners = await this.vaultOwners();
+    for (const [key, meta] of owners) {
+      if (meta && Number.isFinite(meta.expiresAt) && meta.expiresAt <= now) {
+        const pid = key.slice("vault:owner:".length);
+        if (meta.rev) await this.deleteVaultChunks(pid, meta.rev, meta.chunks);
+        await this.ctx.storage.delete(key);
+      }
+    }
+    const stages = await this.ctx.storage.list({ prefix: "vault:staging:" });
+    for (const [key, stage] of stages) {
+      if (stage && Number.isFinite(stage.expiresAt) && stage.expiresAt <= now) {
+        const pid = key.slice("vault:staging:".length);
+        if (stage.rev) await this.deleteVaultChunks(pid, stage.rev, stage.chunks);
+        await this.ctx.storage.delete(key);
+      }
+    }
+    const roomOwner = await this.ctx.storage.get(this.vaultRoomOwnerKey());
+    if (roomOwner && Number.isFinite(roomOwner.expiresAt) && roomOwner.expiresAt <= now) {
+      await this.ctx.storage.delete(this.vaultRoomOwnerKey());
+    }
+    await this.scheduleVaultAlarm();
+  }
+
+  async scheduleVaultAlarm() {
+    const owners = await this.vaultOwners();
+    let next = Infinity;
+    for (const meta of owners.values()) if (meta && Number.isFinite(meta.expiresAt)) next = Math.min(next, meta.expiresAt);
+    const stages = await this.ctx.storage.list({ prefix: "vault:staging:" });
+    for (const stage of stages.values()) if (stage && Number.isFinite(stage.expiresAt)) next = Math.min(next, stage.expiresAt);
+    const roomOwner = await this.ctx.storage.get(this.vaultRoomOwnerKey());
+    if (roomOwner && Number.isFinite(roomOwner.expiresAt)) next = Math.min(next, roomOwner.expiresAt);
+    if (Number.isFinite(next)) await this.ctx.storage.setAlarm(next);
+    else await this.ctx.storage.deleteAlarm();
+  }
+
+  async alarm() {
+    await this.queueVault(async () => this.expireVault(Date.now()));
   }
 }

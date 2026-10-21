@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.32.0';
+const APP_VERSION = '0.39.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -37,6 +37,10 @@ const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 const num = (v, d = 0) => (Number.isFinite(+v) ? clamp(Math.round(+v), -9999, 9999) : d);
 const isObj = o => o && typeof o === 'object' && !Array.isArray(o);
 const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+const openingModeName = mode => ({ london: 'London (7; first free)', 'three-lands': 'At least 3 lands', 'ten-bottom-three': 'Draw 10, bottom 3' })[CTMulligan.normalizeMode(mode)];
+const openingModeShort = mode => ({ london: 'London', 'three-lands': '3 Lands', 'ten-bottom-three': '10 → 7' })[CTMulligan.normalizeMode(mode)];
+const openingMulliganLimit = pid => CTMulligan.limit((S.table && S.table.openingMode) || 'london',
+  (S.table && S.table.openingAllowances && S.table.openingAllowances[pid]) || 0);
 
 const ZONES = ['library', 'hand', 'battlefield', 'graveyard', 'exile', 'command'];
 const ZL = { library: 'library', hand: 'hand', battlefield: 'battlefield', graveyard: 'graveyard', exile: 'exile', command: 'command zone' };
@@ -124,14 +128,22 @@ const S = {
   viewers: new Set(),
   touchMode: !!LS.get('ct.touchMode', false),
   touchPreview: null,
-  targetArrows: [], arrowPick: null, arrowControlsDismissed: false
+  targetArrows: [], arrowPick: null, arrowControlsDismissed: false,
+  colorFlow: false, colorRequestPending: false
 };
 
 const pname = pid => (pid === S.pid && S.me) ? S.me.name : ((S.players[pid] && S.players[pid].name) || 'Someone');
 function colorOf(pid) {
+  const selected = CTPlayerColors.color(S.table && S.table.colors && S.table.colors[pid]);
+  if (selected) return selected.value;
   const seats = (S.table && S.table.seats) || [];
   const i = seats.indexOf(pid);
-  if (i >= 0) return COLORS[i % COLORS.length];
+  if (i >= 0) {
+    const occupied = Object.values((S.table && S.table.colors) || {});
+    const available = CTPlayerColors.PALETTE.find(c => !occupied.includes(c.id));
+    if (available) return available.value;
+    return COLORS[i % COLORS.length];
+  }
   let h = 0; for (const ch of String(pid)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
   return COLORS[h % COLORS.length];
 }
@@ -139,9 +151,10 @@ function colorOf(pid) {
 // =====================================================================
 //  Player state
 // =====================================================================
-function newPlayer(deck, name, prev) {
+function newPlayer(deck, name, prev, mode = 'london', dealId = null) {
   const m = {
     pid: S.pid, name, appearance: CTAppearance.getPrefs(), life: 40, poison: 0, ctr: {}, cmdDmg: {}, casts: {}, mull: 0, kept: false,
+    openingDeal: dealId,
     revealHand: false, revealTop: false, revealTopOnce: null, seq: 0, lastTurn: 0, lastTurnSeq: 0,
     autoUntap: false, autoDraw: false, // always start a game with these off
     layout: prev && prev.layout ? cloneLayout(prev.layout) : defaultLayout(),
@@ -159,11 +172,14 @@ function newPlayer(deck, name, prev) {
   m.zones.library = shuffle(Deck.buildLibrary(deck).map(d => mk(d)));
   (deck.tokens || []).forEach(t => { m.defs[t.id] = t; });
   m.tokens = (deck.tokens || []).map(t => t.id);
-  m.zones.hand = m.zones.library.splice(0, 7);
+  const opening = CTMulligan.deal(m.zones.library, m.defs, mode);
+  m.zones.hand = opening.hand;
+  m.openingFallback = opening.fallback;
   return m;
 }
 // Bring older saved games up to the current shape (layout + card positions).
 function normalizeMe(m) {
+  m.mull = clamp(num(m.mull), 0, CTMulligan.MAX_LIMIT);
   m.appearance = CTAppearance.normalizePrefs(m.appearance);
   if (!layoutOk(m.layout)) {
     // zones changed in this version: switch to the new layout and re-sort cards into it
@@ -236,7 +252,7 @@ function tidyBoard() {
 function snapshot() { const { defs, ...rest } = S.me; return JSON.stringify(rest); }
 function pushUndo() { S.undo.push(snapshot()); if (S.undo.length > 40) S.undo.shift(); }
 function act(fn, opts) {
-  if (!S.me) return;
+  if (!S.me || boardTransferLock) return;
   if (!(opts && opts.noUndo)) pushUndo();
   const r = fn();
   if (Array.isArray(r) && r[0]) say(r[0], r[1]);
@@ -244,6 +260,7 @@ function act(fn, opts) {
 }
 function commit() { publish(); saveSoon(); render(); }
 function undo() {
+  if (boardTransferLock || !S.me) return;
   const s = S.undo.pop();
   if (!s) { UI.toast('Nothing to undo'); return; }
   const defs = S.me.defs;
@@ -275,7 +292,7 @@ function publicView() {
   });
   return {
     pid: m.pid, bw: BW, name: m.name, appearance: CTAppearance.normalizePrefs(m.appearance), life: m.life, poison: m.poison, ctr: m.ctr, cmdDmg: m.cmdDmg, cmdrs: m.cmdrs,
-    casts: m.casts, hand: z.hand.length, lib: z.library.length, kept: m.kept, layout: m.layout, bh: myBH(),
+    casts: m.casts, hand: z.hand.length, lib: z.library.length, kept: m.kept, mullCount: m.mull, layout: m.layout, bh: myBH(),
     zones: { battlefield: take(z.battlefield), graveyard: take(z.graveyard), exile: take(z.exile), command: take(z.command) },
     revHand: m.revealHand ? take(z.hand) : null,
     // An individually revealed card is public only while it remains in its owner's hand.
@@ -292,9 +309,9 @@ function publicView() {
 }
 let pubTimer = null;
 function publish(now) { clearTimeout(pubTimer); pubTimer = setTimeout(doPublish, now ? 0 : 120); }
-function doPublish() { if (!S.me) return; toHost({ t: 'pub', p: publicView() }); }
+function doPublish() { if (!S.me || boardTransferLock) return; toHost({ t: 'pub', p: publicView() }); }
 
-function toHost(msg) { if (S.role === 'client') Net.send(msg); else hostRecv(msg, S.pid); }
+function toHost(msg) { if (S.role === 'client') Net.send({ ...msg, seatKey: seatKey() }); else hostRecv(msg, S.pid); }
 function broadcast(msg) { if (S.role === 'host') Net.send(msg); onBroadcast(msg); }
 function sendReq(to, req) { if (to === S.pid) onReq(req, S.pid); else toHost({ t: 'req', to, req }); }
 function say(text, cards) {
@@ -323,21 +340,35 @@ function sendChat(text) {
 }
 
 // ----- host side -----
-function newTable(room) {
-  S.chat = []; S.chatOpen = false; S.chatUnread = 0;
-  return { room, seats: [S.pid], order: [], active: null, turn: 0, turnSeq: 0, phase: 3, started: false, monarch: null, initiative: null, out: {} };
+function newTable(room, openingMode = 'london', openingDeal = uid()) {
+  S.chat = []; S.chatOpen = false; S.chatUnread = 0; S.seatKeys = {}; S.pendingSeats = {}; S.boardBackups = {}; roomBackupSent.clear();
+  return { room, seats: [S.pid], colorVersion: 1, colors: {}, order: [], active: null, turn: 0, turnSeq: 0, phase: 3, started: false, monarch: null, initiative: null, out: {}, hostPid: S.pid, mods: [], kicked: [], handoffs: {},
+    openingMode: CTMulligan.normalizeMode(openingMode), openingDeal, openingAllowances: {} };
 }
 function hostRecv(msg, from) {
   if (!msg || typeof msg.t !== 'string' || !S.table) return;
+  if ((S.table.kicked || []).includes(from)) { directPlayer(from, { t: 'moderation-exit', reason: 'Your seat was removed by a moderator.' }); return; }
+  if (handleHostBoardTransfer(msg, from)) return;
   switch (msg.t) {
     case 'pub': {
       const p = cleanPub(msg.p, from); if (!p) return;
+      if (!S.table.seats.includes(from)) {
+        const duplicate = S.table.seats.find(pid => pid !== from && S.players[pid] && samePlayerName(S.players[pid].name, p.name));
+        if (duplicate) { S.pendingSeats = S.pendingSeats || {}; S.pendingSeats[from] = { p, claimSource: duplicate }; directPlayer(from, { t: 'seat-conflict', name: p.name, pid: duplicate }); return; }
+        if (S.table.colorVersion >= 1 && !S.table.colors?.[from]) { S.pendingSeats = S.pendingSeats || {}; S.pendingSeats[from] = { p, selectingColor: true }; return; }
+      }
       S.players[from] = p;
       seat(from);
       broadcast({ t: 'pub', p });
       const arrows = CTTargeting.cleanList(S.targetArrows, S.players, S.table.seats);
       if (arrows.length !== S.targetArrows.length) broadcast({ t: 'arrows', arrows });
       break;
+    }
+    case 'private-board': { if (S.table.seats.includes(from)) saveRoomBoard(from, msg.data, msg.revision); return; }
+    case 'recover-seat-request': {
+      if ((!S.table.seats.includes(from) && !(S.pendingSeats || {})[from]) || !S.table.seats.includes(msg.source) || msg.source === S.pid || msg.source === from) return;
+      const name = S.players[from]?.name || S.pendingSeats[from].p.name;
+      broadcast({ t: 'recovery-request', request: { from, source: msg.source, name } }); return;
     }
     case 'log': { const e = cleanLog(msg, from); if (e) broadcast({ t: 'log', e }); break; }
     case 'chat': { const e = cleanChatMessage(msg, from); if (e) broadcast({ t: 'chat', e }); break; }
@@ -393,10 +424,23 @@ function hostRecv(msg, from) {
       break;
     }
     case 'tsync': {
+      if (!S.table.seats.includes(from)) return;
       // A player reconnected with a copy of the table. If it's newer than ours (the host
       // reloaded before its last change was saved), adopt it; otherwise ignore it.
       const t = cleanTable(msg.table);
       if (!t || t.room !== S.table.room || t.rev <= (S.table.rev || 0) || !t.seats.includes(S.pid)) return;
+      t.seats = S.table.seats.slice(); t.out = { ...S.table.out };
+      t.hostPid = S.pid; t.mods = S.table.mods || []; t.kicked = S.table.kicked || []; t.handoffs = S.table.handoffs || {};
+      // Recovery can restore host table changes, but only the host may choose the
+      // opening policy or advance its deal epoch.
+      t.openingMode = S.table.openingMode;
+      t.openingDeal = S.table.openingDeal;
+      t.openingAllowances = S.table.openingAllowances || {};
+      // A guest's recovery copy is useful for turn and seat state, but confirmed
+      // player colors are assigned and persisted by the host only.
+      t.colors = CTPlayerColors.normalize(t.seats,
+        Object.fromEntries(Object.entries(S.table.colors || {}).filter(([pid]) => t.seats.includes(pid))), false);
+      t.colorVersion = 1;
       S.table = t;
       sysLog(`Restored the latest table state (turn ${t.turn}) from ${pname(from)}.`);
       afterTable();
@@ -405,10 +449,11 @@ function hostRecv(msg, from) {
     }
   }
 }
-function seat(pid) {
+function seat(pid, assignedColors) {
   const T = S.table;
   if (T.seats.includes(pid) || T.seats.length >= 6) return;
   T.seats.push(pid);
+  T.colors = CTPlayerColors.normalize(T.seats, assignedColors || T.colors, !(T.colorVersion >= 1));
   if (T.started && !T.order.includes(pid)) T.order.push(pid);
   sysLog(`${pname(pid)} joined the table.`);
   pushTable();
@@ -424,11 +469,20 @@ function cleanTable(t) {
   if (!isObj(t)) return null;
   const ids = a => (Array.isArray(a) ? a.filter(x => typeof x === 'string').slice(0, 8).map(x => x.slice(0, 40)) : []);
   const str = x => (typeof x === 'string' ? x.slice(0, 40) : null);
+  const seats = CTPlayerColors.cleanSeats(ids(t.seats)), colorVersion = Math.max(0, num(t.colorVersion));
+  const openingAllowances = isObj(t.openingAllowances)
+    ? Object.fromEntries(Object.entries(t.openingAllowances).filter(([pid]) => seats.includes(pid)).slice(0, 8)
+      .map(([pid, n]) => [pid.slice(0, 40), CTMulligan.extraLimit(n)])) : {};
   return {
-    room: String(t.room || '').slice(0, 8), seats: ids(t.seats), order: ids(t.order), active: str(t.active),
+    room: String(t.room || '').slice(0, 8), seats, colorVersion: 1,
+    colors: CTPlayerColors.normalize(seats, t.colors, colorVersion < 1), order: ids(t.order), active: str(t.active),
     turn: Math.max(0, num(t.turn)), turnSeq: Math.max(0, num(t.turnSeq, num(t.turn))), phase: clamp(num(t.phase, 3), 0, PHASES.length - 1), started: !!t.started,
     monarch: str(t.monarch), initiative: str(t.initiative),
+    openingMode: CTMulligan.normalizeMode(t.openingMode), openingDeal: str(t.openingDeal), openingAllowances,
     out: isObj(t.out) ? Object.fromEntries(Object.keys(t.out).slice(0, 8).map(k => [k.slice(0, 40), !!t.out[k]])) : {},
+    hostPid: str(t.hostPid), mods: ids(t.mods).filter(p => ids(t.seats).includes(p)),
+    kicked: Array.isArray(t.kicked) ? [...new Set(t.kicked.filter(p => typeof p === 'string').map(p => p.slice(0, 40)))].slice(0, 128) : [],
+    handoffs: cleanHandoffs(t.handoffs),
     rev: Math.max(0, num(t.rev))
   };
 }
@@ -452,12 +506,75 @@ function tableOp(op, from) {
   const T = S.table;
   if (!isObj(op) || typeof op.k !== 'string') return;
   const isHost = from === S.pid;
+  if (!T.seats.includes(from) && !(op.k === 'joincolor' && S.pendingSeats?.[from]?.selectingColor)) return;
+  const moderator = isHost || (T.mods || []).includes(from);
   switch (op.k) {
+    case 'color': {
+      if (!T.seats.includes(from)) return;
+      if (T.colors && T.colors[from]) return; // the first confirmed choice locks this seat
+      const colors = CTPlayerColors.claim(T.seats, T.colors, from, op.color);
+      if (!colors) {
+        broadcast({ t: 'colorerror', pid: from, reason: 'taken' });
+        return;
+      }
+      T.colors = colors;
+      pushTable();
+      return;
+    }
+    case 'joincolor': {
+      if (T.colors && T.colors[from]) return;
+      const alreadySeated = T.seats.includes(from);
+      if (!alreadySeated && T.seats.length >= 6) {
+        broadcast({ t: 'colorerror', pid: from, reason: 'full' });
+        return;
+      }
+      const seats = alreadySeated ? T.seats : T.seats.concat(from);
+      const colors = CTPlayerColors.claim(seats, T.colors, from, op.color);
+      if (!colors) {
+        broadcast({ t: 'colorerror', pid: from, reason: 'taken' });
+        return;
+      }
+      if (alreadySeated) { T.colors = colors; pushTable(); }
+      else {
+        const pending = S.pendingSeats?.[from];
+        if (!pending?.selectingColor) return;
+        // A name may have been claimed while this chooser was open.
+        const duplicate = T.seats.find(pid => S.players[pid] && samePlayerName(S.players[pid].name, pending.p.name));
+        if (duplicate) { S.pendingSeats[from] = { p: pending.p, claimSource: duplicate }; directPlayer(from, { t: 'seat-conflict', name: pending.p.name, pid: duplicate }); return; }
+        S.players[from] = pending.p; delete S.pendingSeats[from];
+        seat(from, colors); broadcast({ t: 'pub', p: S.players[from] });
+      }
+      return;
+    }
     case 'rollfirst': {
       if (T.started) return;
       const live = T.seats.filter(p => !T.out[p]);
       if (!live.length) return;
       rollFirstPlayer(T, live);
+      break;
+    }
+    case 'mulligan': {
+      if (!isHost || T.started) return;
+      const mode = CTMulligan.normalizeMode(op.mode);
+      if (mode === T.openingMode) return;
+      T.openingMode = mode;
+      T.openingDeal = uid();
+      T.openingAllowances = {};
+      Object.assign(T, { order: [], active: null, turn: 0, turnSeq: 0, phase: 3, started: false, monarch: null, initiative: null, out: {} });
+      pushTable();
+      broadcast({ t: 'newgame', openingMode: T.openingMode, openingDeal: T.openingDeal });
+      sysLog(`Opening-hand rule changed to ${openingModeName(mode)}. Everyone reshuffled and redealt.`);
+      return;
+    }
+    case 'grantmull': {
+      if (!isHost || !T.seats.includes(op.pid) || T.openingMode === 'london') return;
+      const target = op.pid === S.pid ? null : S.players[op.pid];
+      if (op.pid === S.pid ? S.me.kept : !target || target.kept) return;
+      const grants = CTMulligan.extraLimit((T.openingAllowances || {})[op.pid]);
+      if (grants >= CTMulligan.MAX_EXTRA) return;
+      T.openingAllowances = T.openingAllowances || {};
+      T.openingAllowances[op.pid] = grants + 1;
+      sysLog(`${pname(op.pid)} was granted another mulligan by ${pname(S.pid)}.`);
       break;
     }
     case 'start': {
@@ -518,20 +635,52 @@ function tableOp(op, from) {
       }
       break;
     }
+    case 'moderator': {
+      if (!isHost || !T.seats.includes(op.pid) || op.pid === S.pid || typeof op.enabled !== 'boolean') return;
+      T.mods = (T.mods || []).filter(p => p !== op.pid);
+      if (op.enabled) T.mods.push(op.pid);
+      sysLog(`${pname(op.pid)} ${op.enabled ? 'was granted' : 'lost'} moderator permissions.`);
+      break;
+    }
+    case 'reinstate': {
+      if (!moderator || !T.seats.includes(op.pid) || !T.out[op.pid]) return;
+      delete T.out[op.pid];
+      if (T.started && !T.order.includes(op.pid)) T.order.push(op.pid);
+      if (T.started && !T.active) { T.active = op.pid; T.turnSeq = Math.max(1, num(T.turnSeq)) + 1; }
+      sysLog(`${pname(op.pid)} was restored to the game by ${pname(from)}.`);
+      break;
+    }
+    case 'handoff': {
+      if (!moderator) return;
+      beginBoardTransfer(op.pid, op.to, from); return;
+    }
     case 'kick': {
-      if (!isHost || op.pid === S.pid) return;
+      if (!moderator || op.pid === S.pid || !T.seats.includes(op.pid)) return;
+      if (pendingBoardTransfer) abortBoardTransfer('The handoff was cancelled because a seat was removed.');
+      T.kicked = [...new Set([...(T.kicked || []), op.pid])].slice(-128);
+      T.mods = (T.mods || []).filter(p => p !== op.pid);
+      delete T.out[op.pid];
+      if (T.monarch === op.pid) T.monarch = null;
+      if (T.initiative === op.pid) T.initiative = null;
+      directPlayer(op.pid, { t: 'moderation-exit', reason: 'Your seat was removed by a moderator.' });
       T.seats = T.seats.filter(p => p !== op.pid); T.order = T.order.filter(p => p !== op.pid);
-      if (T.active === op.pid) T.active = T.order[0] || null;
+      if (T.colors) delete T.colors[op.pid];
+      if (T.openingAllowances) delete T.openingAllowances[op.pid];
+      if (T.active === op.pid) { T.active = T.order.find(p => !T.out[p]) || null; T.turnSeq = Math.max(1, num(T.turnSeq)) + 1; T.phase = 3; }
       sysLog(`${pname(op.pid)} was removed from the table.`);
       delete S.players[op.pid];
+      if (S.boardBackups) delete S.boardBackups[op.pid];
+      if (typeof Net.roomVault === 'function') Net.roomVault('delete', { pid: op.pid }).catch(() => {});
       break;
     }
     case 'newgame': {
       if (!isHost) return;
       Object.assign(T, { order: [], active: null, turn: 0, turnSeq: 0, phase: 3, started: false, monarch: null, initiative: null, out: {} });
+      T.openingDeal = uid();
+      T.openingAllowances = {};
       pushTable();
-      broadcast({ t: 'newgame' });
-      sysLog('New game — everyone reshuffled and drew 7.');
+      broadcast({ t: 'newgame', openingMode: T.openingMode, openingDeal: T.openingDeal });
+      sysLog(`New game — everyone reshuffled and used ${openingModeName(T.openingMode)}.`);
       return;
     }
     default: return;
@@ -567,7 +716,7 @@ function cleanPub(p, from) {
     pid: from, name: String(p.name || 'Player').slice(0, 24), appearance: CTAppearance.normalizePrefs(p.appearance), life: num(p.life, 40), poison: num(p.poison),
     ctr: numMap(p.ctr), cmdDmg: numMap(p.cmdDmg), casts: numMap(p.casts),
     cmdrs: Array.isArray(p.cmdrs) ? p.cmdrs.slice(0, 3).filter(isObj).map(c => ({ iid: String(c.iid).slice(0, 40), name: String(c.name || '').slice(0, 80) })) : [],
-    hand: num(p.hand), lib: num(p.lib), kept: !!p.kept,
+    hand: num(p.hand), lib: num(p.lib), kept: !!p.kept, mullCount: clamp(num(p.mullCount), 0, CTMulligan.MAX_LIMIT),
     layout: cleanLayout(p.layout) || cloneLayout(DEFAULT_LAYOUT), bh: clamp(num(p.bh, BH), BH, BH_MAX),
     zones: { battlefield: cleanCards(z.battlefield), graveyard: cleanCards(z.graveyard), exile: cleanCards(z.exile), command: cleanCards(z.command, 4) },
     revHand: p.revHand ? cleanCards(p.revHand, 60) : null,
@@ -693,6 +842,7 @@ function showFirstRoll(msg) {
 }
 
 function onBroadcast(msg) {
+  if (handleClientModeration(msg)) return;
   switch (msg.t) {
     case 'pub': if (msg.p && msg.p.pid) { S.players[msg.p.pid] = msg.p; if (msg.p.pid !== S.pid) checkOrphans(); } break;
     case 'log': S.log.push(msg.e); if (S.log.length > 300) S.log.splice(0, S.log.length - 300); break;
@@ -722,29 +872,48 @@ function onBroadcast(msg) {
     case 'placefx':
       if (typeof msg.pid === 'string' && typeof msg.iid === 'string' && msg.pid !== S.pid) playCardPlaceSound();
       break;
-    case 'table': S.table = msg.table; handleTurnNoticeUpdate(S.table); afterTable(); break;
+    case 'table': S.table = cleanTable(msg.table); applyCommittedHandoff(); if (handleRemovedSeat()) return; syncColorFlow(); reconcileOpeningDeal(S.table); handleTurnNoticeUpdate(S.table); afterTable(); break;
+    case 'colorerror': if (msg.pid === S.pid) {
+      S.colorRequestPending = false;
+      const reason = msg.reason === 'full' ? 'This room has no open color slots.' : 'That color was just taken. Choose another available color.';
+      UI.toast(reason, { kind: 'warn' });
+      if (S.colorFlow) showColorPicker(reason);
+    } break;
     case 'firstroll': showFirstRoll(msg); break;
     case 'online': S.online = msg.online || {}; break;
-    case 'newgame': resetForNewGame(); break;
+    case 'newgame':
+      if (S.table && msg.openingDeal) {
+        S.table.openingMode = CTMulligan.normalizeMode(msg.openingMode);
+        S.table.openingDeal = String(msg.openingDeal).slice(0, 40);
+      }
+      resetForNewGame(); break;
     default: return;
   }
   saveSoon(); render();
 }
 function clientRecv(msg) {
   if (!msg) return;
+  if (handleClientModeration(msg)) return;
   if (msg.t === 'snap') {
-    S.table = msg.table; S.players = msg.players || {}; S.log = msg.log || []; S.online = msg.online || {}; S.chat = cleanChatHistory(msg.chat);
+    S.table = msg.table; S.players = msg.players || {}; S.log = msg.log || []; S.online = msg.online || {}; S.boardBackups = msg.boardBackups || {}; S.chat = cleanChatHistory(msg.chat);
+    reconcileOpeningDeal(S.table);
     seedTurnNotice(S.table);
     S.targetArrows = CTTargeting.cleanList(msg.arrows, S.players, (S.table && S.table.seats) || []);
+    applyCommittedHandoff(); if (handleRemovedSeat()) return;
     S.players[S.pid] = publicView();
     checkOrphans();
+    if (ownColorLocked()) {
+      S.colorFlow = false; S.colorRequestPending = false;
+      closeColorModal();
+      publish(true);
+    } else if (S.colorFlow) showColorPicker();
     afterTable(); saveSoon(); render();
     return;
   }
   if (msg.t === 'req') { onReq(msg.req, msg.from); return; }
   onBroadcast(msg);
 }
-function snapFor() { return { t: 'snap', table: S.table, players: S.players, log: S.log.slice(-150), online: S.online, chat: S.chat.slice(-100), arrows: S.targetArrows }; }
+function snapFor() { return { t: 'snap', table: S.table, players: S.players, log: S.log.slice(-150), online: S.online, chat: S.chat.slice(-100), arrows: S.targetArrows, boardBackups: S.boardBackups || {} }; }
 
 // Requests from other players, applied to MY state.
 function onReq(req, from) {
@@ -880,10 +1049,19 @@ function afterTable() {
 }
 function resetForNewGame() {
   S.targetArrows = []; S.arrowControlsDismissed = false; endTargeting();
+  if (S.me && S.table && S.table.openingDeal && S.me.openingDeal === S.table.openingDeal) return;
   const deck = Deck.get(S.deckId);
   if (!deck) { UI.toast('Your deck is missing from this browser — cannot restart.', { kind: 'error' }); return; }
-  S.me = newPlayer(deck, S.me.name, S.me);
+  S.me = newPlayer(deck, S.me.name, S.me, (S.table && S.table.openingMode) || 'london', (S.table && S.table.openingDeal) || uid());
   S.selected.clear();
+  S.undo = [];
+  publish(true);
+}
+function reconcileOpeningDeal(table) {
+  if (!S.me || !table || !table.openingDeal || S.me.openingDeal === table.openingDeal) return;
+  const deck = Deck.get(S.deckId);
+  if (!deck) return;
+  S.me = newPlayer(deck, S.me.name, S.me, table.openingMode, table.openingDeal);
   S.undo = [];
   publish(true);
 }
@@ -1977,32 +2155,71 @@ function changeCmdDmg(key, d) {
 
 // --- mulligan (London, first one free in Commander)
 function mulligan() {
+  const mode = (S.table && S.table.openingMode) || 'london';
+  const grants = (S.table && S.table.openingAllowances && S.table.openingAllowances[S.pid]) || 0;
+  if (!S.me || S.me.kept || !CTMulligan.canMulligan(S.me.mull, mode, grants)) return;
   act(() => {
     const z = S.me.zones;
     z.library.push(...z.hand.splice(0).map(c => { delete c.rvh; return c; }));
     S.me.revealTopOnce = null;
     shuffle(z.library);
-    z.hand = z.library.splice(0, 7);
+    const opening = CTMulligan.deal(z.library, S.me.defs, (S.table && S.table.openingMode) || 'london');
+    z.hand = opening.hand;
+    S.me.openingFallback = opening.fallback;
     S.me.mull++;
-    return [`took a mulligan (#${S.me.mull}${S.me.mull === 1 ? ', free' : ''})`];
+    return [`took a mulligan (#${S.me.mull}${(S.table && S.table.openingMode || 'london') === 'london' && S.me.mull === 1 ? ', free' : ''})`];
   });
 }
 function keepHand() {
-  const n = Math.max(0, S.me.mull - 1);
-  if (!n) { act(() => { S.me.kept = true; return [`kept their opening hand${S.me.mull ? ` after ${plural(S.me.mull, 'mulligan')}` : ''}`]; }); return; }
+  const mode = (S.table && S.table.openingMode) || 'london';
+  const lands = CTMulligan.landCount(S.me.zones.hand, S.me.defs);
+  const possibleLands = lands + CTMulligan.landCount(S.me.zones.library, S.me.defs);
+  const grants = (S.table && S.table.openingAllowances && S.table.openingAllowances[S.pid]) || 0;
+  if (!CTMulligan.canKeep(mode, lands, possibleLands, S.me.mull, grants)) return;
+  const n = CTMulligan.bottomCount(mode, S.me.mull, S.me.zones.hand.length);
+  if (!n) {
+    act(() => { S.me.kept = true; return [`kept their opening hand${S.me.mull ? ` after ${plural(S.me.mull, 'mulligan')}` : ''}`]; });
+    if (mode === 'three-lands' && lands < 3 && possibleLands < 3) UI.toast('This deck has fewer than 3 lands available. You may keep any hand.', { kind: 'warn', ms: 6000 });
+    else if (S.me.mull >= openingMulliganLimit(S.pid) && mode === 'three-lands' && lands < 3) UI.toast('Mulligan limit reached. You may keep this hand even though it has fewer than 3 lands.', { kind: 'warn', ms: 6000 });
+    return;
+  }
   pushUndo();
   let picked = 0;
   UI.viewer({
     title: `Put ${plural(n, 'card')} on the bottom`,
     cards: S.me.zones.hand.map(c => ({ iid: c.iid, def: defOf(c) })),
     actions: [],
-    pick: { count: n, actionKey: 'bottom', prompt: `You took ${plural(S.me.mull, 'mulligan')} (first one free): choose ${n} to put on the bottom` },
+    pick: { count: n, actionKey: 'bottom', prompt: mode === 'london'
+      ? `You took ${plural(S.me.mull, 'mulligan')} (first one free): choose ${n} to put on the bottom`
+      : `Choose ${n} to put on the bottom` },
     onAction: (k, iid) => {
       moveCard(iid, 'library', { pos: 'bottom' });
       if (++picked === n) { S.me.kept = true; say(`kept ${S.me.zones.hand.length} cards after ${plural(S.me.mull, 'mulligan')}`); commit(); }
     },
     onHover: d => preview(d)
   });
+}
+
+async function changeOpeningMode(mode) {
+  mode = CTMulligan.normalizeMode(mode);
+  if (S.role === 'client') return;
+  const current = (S.table && S.table.openingMode) || 'london';
+  if (mode === current) return;
+  const confirmed = await UI.confirm(`Change the opening-hand rule to ${openingModeName(mode)}? Everyone will reshuffle and redeal.`, {
+    title: 'Reset opening hands for everyone', danger: true, okLabel: 'Redeal everyone'
+  });
+  if (!confirmed) { render(); return; }
+  if (S.role === 'solo') {
+    S.table.openingMode = mode; S.table.openingDeal = uid();
+    resetForNewGame(); render();
+  } else toHost({ t: 'op', op: { k: 'mulligan', mode } });
+}
+function openingRulesMenu(btn) {
+  const r = btn.getBoundingClientRect(), current = (S.table && S.table.openingMode) || 'london';
+  UI.menu(r.left, r.bottom + 4, CTMulligan.MODES.map(mode => ({
+    label: openingModeName(mode), checked: mode === current,
+    onClick: () => changeOpeningMode(mode)
+  })));
 }
 
 // =====================================================================
@@ -2349,6 +2566,11 @@ function playerMenu(x, y, pid) {
     { label: T.initiative === pid ? 'Remove initiative' : 'Give initiative 🏰', onClick: () => toHost({ t: 'op', op: { k: 'initiative', pid: T.initiative === pid ? null : pid } }) }
   ];
   const p = S.players[pid];
+  const ownKept = pid === S.pid ? !!(S.me && S.me.kept) : !!(p && p.kept);
+  if (S.role !== 'client' && T.openingMode !== 'london' && T.seats.includes(pid) && !ownKept
+    && CTMulligan.extraLimit((T.openingAllowances || {})[pid]) < CTMulligan.MAX_EXTRA) {
+    items.push({ sep: true }, { label: 'Grant another mulligan', onClick: () => toHost({ t: 'op', op: { k: 'grantmull', pid } }) });
+  }
   if (pid !== S.pid && p) {
     items.push({ sep: true },
       { label: S.focus === pid ? 'Show all opponents' : 'Show this board large', onClick: () => toggleFocus(pid) },
@@ -2359,12 +2581,76 @@ function playerMenu(x, y, pid) {
         if (d) sendReq(pid, { k: 'life', d });
       } });
   }
-  if (S.role !== 'client' && pid !== S.pid) {
-    items.push({ sep: true }, { label: 'Remove from table', danger: true, onClick: async () => {
-      if (await UI.confirm(`Remove ${pname(pid)} from the table? Use this only if they're not coming back.`, { danger: true, okLabel: 'Remove' })) toHost({ t: 'op', op: { k: 'kick', pid } });
-    } });
+  if (isModerator()) {
+    items.push({ sep: true });
+    if (T.out[pid]) items.push({ label: 'Restore to game (undo concede)', onClick: () => toHost({ t: 'op', op: { k: 'reinstate', pid } }) });
+    if (S.role !== 'client' && pid !== S.pid) items.push({ label: (T.mods || []).includes(pid) ? 'Revoke moderator permissions' : 'Grant moderator permissions', onClick: () => toHost({ t: 'op', op: { k: 'moderator', pid, enabled: !(T.mods || []).includes(pid) } }) });
+    if (pid !== T.hostPid && pid !== (S.role === 'host' ? S.pid : null)) {
+      items.push({ label: 'Transfer this board…', onClick: () => showBoardTransfer(pid) });
+      items.push({ label: 'Kick from game…', danger: true, onClick: async () => {
+        if (await UI.confirm(`Kick ${pname(pid)} from this game? Their current seat will be removed and cannot reconnect. Their local board is saved as a recovery copy.`, { danger: true, okLabel: 'Kick' })) toHost({ t: 'op', op: { k: 'kick', pid } });
+      } });
+    }
   }
   UI.menu(x, y, items);
+}
+let colorModal = null;
+function ownColorLocked() {
+  return !!(S.table && S.table.seats.includes(S.pid) && S.table.colors && CTPlayerColors.color(S.table.colors[S.pid]));
+}
+function closeColorModal() { if (colorModal) { colorModal.close(); colorModal = null; } }
+function showColorPicker(message) {
+  if (!S.colorFlow) return;
+  closeColorModal();
+  const T = S.table, colors = T ? CTPlayerColors.normalize(T.seats, T.colors, false) : {};
+  const taken = Object.keys(colors).filter(pid => pid !== S.pid).map(pid => colors[pid]);
+  const defaultId = CTPlayerColors.PALETTE.find(c => !taken.includes(c.id))?.id;
+  const hasRoom = !!(T && (T.seats.includes(S.pid) || T.seats.length < 6));
+  const status = message || (S.colorRequestPending ? 'Sending your choice to the host…' : !T ? 'Waiting for room details…' : !hasRoom || !defaultId ? 'This room has no open color slots.' : 'Choose an available color to finish joining the table.');
+  const options = T ? CTPlayerColors.PALETTE.map(c => {
+    const owner = Object.keys(colors).find(pid => pid !== S.pid && colors[pid] === c.id);
+    const available = !owner && hasRoom;
+    const hint = owner ? `Taken by ${pname(owner)}` : !hasRoom ? 'Room full' : c.id === defaultId ? 'Available · default' : 'Available';
+    return `<button type="button" class="ct-player-color-option" data-color="${c.id}"${available && !S.colorRequestPending ? '' : ' disabled'}><span class="ct-player-color-swatch" style="--pc:${c.value}"></span><span class="ct-player-color-name">${c.name}</span><span class="ct-player-color-state">${esc(hint)}</span></button>`;
+  }).join('') : '';
+  colorModal = UI.modal({
+    title: 'Choose your player color', className: 'ct-player-color-dialog',
+    html: `<p class="ct-player-color-intro">Each player has a different color. Your choice is saved to this room.</p><p class="ct-player-color-status" role="status">${esc(status)}</p><div class="ct-player-color-options">${options}</div><div class="ct-player-color-actions"><button type="button" data-a="cancel-color-flow">Cancel and return to lobby</button></div>`,
+    onEscape: () => true
+  });
+  const backdrop = colorModal.dialog.parentElement;
+  backdrop.addEventListener('click', e => { if (e.target === backdrop) { e.preventDefault(); e.stopImmediatePropagation(); } }, true);
+  colorModal.el.querySelectorAll('[data-color]').forEach(button => button.addEventListener('click', () => {
+    if (button.disabled || S.colorRequestPending) return;
+    const color = button.dataset.color;
+    if (S.role === 'client') {
+      if (!S.table) return;
+      S.colorRequestPending = true;
+      showColorPicker();
+      toHost({ t: 'op', op: { k: 'joincolor', color } });
+    } else {
+      toHost({ t: 'op', op: { k: 'color', color } });
+    }
+  }));
+  colorModal.el.querySelector('[data-a="cancel-color-flow"]').addEventListener('click', cancelColorFlow);
+}
+function cancelColorFlow() {
+  if (!S.colorFlow) return;
+  closeColorModal(); S.colorFlow = false; S.colorRequestPending = false;
+  try { Net.stop(); } catch (e) { /* ignore */ }
+  LS.del('ct.sess.' + S.pid); LS.del('ct.last');
+  S.role = 'solo'; S.room = ''; S.me = null; S.table = null; S.players = {}; S.log = []; S.undo = []; S.online = {};
+  S.targetArrows = []; S.arrowControlsDismissed = false; endTargeting();
+  showLobby();
+}
+function syncColorFlow() {
+  if (ownColorLocked()) {
+    const wasChoosing = S.colorFlow;
+    S.colorFlow = false; S.colorRequestPending = false;
+    if (wasChoosing) { closeColorModal(); publish(true); saveNow(); }
+    return;
+  }
+  if (S.colorFlow && S.role === 'client' && S.table) showColorPicker();
 }
 function diceMenu(x, y) {
   const roll = (sides) => { const v = rnd(sides) + 1; say(`rolled a d${sides}: ${v}`); };
@@ -2424,6 +2710,7 @@ function mainMenu(x, y) {
   const items = [
     { label: 'Draw a card', hint: 'D', onClick: () => draw(1) },
     { label: 'Untap all', hint: 'U', onClick: untapAll },
+    { label: 'Choose / recover a board…', onClick: () => showBoardRecovery() },
     { label: 'Tokens…', onClick: () => tokensMenu(x, y) },
     { label: 'Targeting arrow…', onClick: () => startTargeting() },
     { label: 'Show arrow controls', disabled: !S.targetArrows.length, onClick: showTargetingControls },
@@ -2446,7 +2733,7 @@ function mainMenu(x, y) {
     { sep: true }
   ];
   if (S.role !== 'client') items.push({ label: 'Start a new game (everyone)', onClick: async () => {
-    if (await UI.confirm('Start a new game? Everyone reshuffles their deck and draws 7.', { okLabel: 'New game' })) toHost({ t: 'op', op: { k: 'newgame' } });
+    if (await UI.confirm('Start a new game? Everyone reshuffles and receives a new opening hand.', { okLabel: 'New game' })) toHost({ t: 'op', op: { k: 'newgame' } });
   } });
   if (S.role !== 'solo') {
     items.push({ label: 'Copy invite link', onClick: copyRoom });
@@ -2942,15 +3229,20 @@ function renderTop() {
   pill.textContent = S.role === 'solo' ? 'Practice' : ({ online: 'Connected', connecting: 'Connecting…', reconnecting: 'Reconnecting…', offline: 'Offline', error: 'Error' }[st] || st);
   pill.title = S.net.text || '';
   let html;
+  const rule = T ? CTMulligan.normalizeMode(T.openingMode) : 'london';
+  const ruleControl = T ? (S.role === 'client' || T.started
+    ? `<span class="muted ct-opening-rule" title="${esc(openingModeName(rule))}">${esc(openingModeShort(rule))}</span>`
+    : `<button class="ct-opening-rule" data-a="openingrule" title="Change opening-hand rule">Opening: ${esc(openingModeShort(rule))}</button>`)
+    : '';
   if (!T) html = `<span class="muted">${esc(S.net.text || 'Connecting to the host…')}</span>`;
   else if (!T.started) {
-    html = `<span class="muted">Not started · ${plural(T.seats.length, 'player')} seated</span>` +
+    html = `${ruleControl}<span class="muted">Not started · ${plural(T.seats.length, 'player')} seated</span>` +
       (S.role !== 'client' ? ' <button class="primary" data-a="start" title="Uses the rolled order, or randomizes if you have not rolled">Start game</button>' : ' <span class="muted">— waiting for the host to start</span>');
   } else if (!T.active) {
-    html = `<span class="muted">No active player · everyone has conceded</span>`;
+    html = `${ruleControl}<span class="muted">No active player · everyone has conceded</span>`;
   } else {
     const mine = T.active === S.pid;
-    html = `<span>Round <b>${T.turn}</b> · <b style="color:${colorOf(T.active)}">${esc(mine ? 'Your' : pname(T.active) + "'s")}</b> turn</span>`;
+    html = `${ruleControl}<span>Round <b>${T.turn}</b> · <b style="color:${colorOf(T.active)}">${esc(mine ? 'Your' : pname(T.active) + "'s")}</b> turn</span>`;
   }
   $('#turnBox').innerHTML = html;
   updateChatButton();
@@ -3034,9 +3326,10 @@ function renderYouTile(el, idx) {
   el.classList.toggle('active', T.active === S.pid);
   el.querySelector('.ohead').innerHTML = `<span class="dot" style="--pc:${colorOf(S.pid)}"></span><span class="pname">${esc(S.me.name)}</span><span class="tag you">YOU</span>
     ${T.active === S.pid ? '<span class="tag">TURN</span>' : ''}<span class="life-ro">♥ <b>${S.me.life}</b></span>`;
-  // strip ids so the miniature never answers clicks/drags meant for my real board
+  // Keep separate arrow anchors while stripping gameplay ids from this read-only miniature.
   el.querySelector('.obf').innerHTML = viewingMe ? '<div class="viewing-note">👁 Viewing your board</div>'
-    : `<div class="boardwrap thumb" data-board="thumb:${esc(S.pid)}">${boardHTML(S.pid, idx).replace(/ data-(iid|pid|zone|region|c)="[^"]*"/g, '')}</div>`;
+    : `<div class="boardwrap thumb" data-board="thumb:${esc(S.pid)}">${boardHTML(S.pid, idx).replace(/ data-(iid|pid|zone|region|c)="([^"]*)"/g, (attr, key, value) =>
+        ['iid', 'pid', 'zone'].includes(key) ? ` data-arrow-${key}="${value}"` : '')}</div>`;
 }
 // Grid: my own quadrant is drawn exactly like the opponents' miniatures (hand fan, piles and life drawn inside the scaled board).
 function gridMine() { return !!S.me && curView() === 'grid' && !S.arrange && !S.focus && oppPids().length > 0; }
@@ -3235,11 +3528,29 @@ function renderMine(idx) {
   setHTML($('#myZones'), vo ? oppZonesHTML(vo) : myZonesHTML());
   const mb = $('#mullBar');
   if (!m.kept) {
-    const next = m.mull === 0 ? 'next mulligan is free' : `next mulligan: put ${m.mull} on the bottom`;
-    mb.innerHTML = `<b>Opening hand</b> <button class="primary" data-a="keep">Keep ${z.hand.length}${m.mull > 1 ? ` (bottom ${m.mull - 1})` : ''}</button>
-      <button data-a="mull">Mulligan</button><span class="muted small">${next}</span>`;
+    const mode = (S.table && S.table.openingMode) || 'london';
+    const lands = CTMulligan.landCount(z.hand, m.defs);
+    const possibleLands = lands + CTMulligan.landCount(z.library, m.defs);
+    const grants = (S.table && S.table.openingAllowances && S.table.openingAllowances[S.pid]) || 0;
+    const limit = openingMulliganLimit(S.pid);
+    const landBlocked = !CTMulligan.canKeep(mode, lands, possibleLands, m.mull, grants);
+    const bottom = CTMulligan.bottomCount(mode, m.mull, z.hand.length);
+    const keepLabel = bottom ? `Keep ${z.hand.length} (bottom ${bottom})` : `Keep ${z.hand.length}`;
+    const next = mode === 'london'
+      ? (m.mull === 0 ? 'first mulligan is free' : `bottom ${Math.max(0, m.mull - 1)} after keeping`)
+      : mode === 'three-lands' ? `${lands}/3 lands${possibleLands < 3 ? ' · fewer than 3 in deck' : m.mull >= limit && lands < 3 ? ' · limit reached, keep allowed' : ''}`
+        : `bottom ${Math.min(3, Math.max(0, z.hand.length - 1))} after keeping`;
+    mb.innerHTML = `<b>Opening hand</b> <button class="primary" data-a="keep"${landBlocked ? ' disabled' : ''}>${keepLabel}</button>
+      <button data-a="mull"${!CTMulligan.canMulligan(m.mull, mode, grants) ? ' disabled' : ''}>Mulligan (${m.mull}/${limit})</button><span class="muted small">${next}</span>`;
     mb.classList.remove('hidden');
+    positionMulliganBar();
   } else mb.classList.add('hidden');
+}
+function positionMulliganBar() {
+  const mb = $('#mullBar'), hand = $('#handWrap');
+  if (!mb || mb.classList.contains('hidden') || !hand) return;
+  const r = hand.getBoundingClientRect();
+  mb.style.top = Math.max(8, r.top - 26 - mb.offsetHeight) + 'px';
 }
 
 let logLen = -1, logLast = null;
@@ -3323,6 +3634,7 @@ function pulseChatButton() {
 function pulseChatPanel() {
   const panel = $('#chatPanel');
   if (!panel || !S.chatOpen) return;
+  if (window.CTChatPanel) CTChatPanel.wake(false);
   clearTimeout(chatPanelGlowTimer);
   panel.classList.remove('ct-chat-new-message');
   void panel.offsetWidth;
@@ -3359,6 +3671,7 @@ function setChatPanelOpen(open) {
   if (S.chatOpen) S.chatUnread = 0;
   const panel = $('#chatPanel');
   if (panel) panel.classList.toggle('hidden', !S.chatOpen);
+  if (window.CTChatPanel) CTChatPanel.setOpen(S.chatOpen);
   updateChatButton();
   if (S.chatOpen) {
     renderChatHistory(true);
@@ -3527,12 +3840,13 @@ function pickArrowEndpoint(target) {
 }
 function arrowAnchor(ep) {
   // A player/card may appear twice (large board and miniature). Choose the largest visible copy.
-  const nodes = ep.kind === 'card' ? document.querySelectorAll('#game .board .card[data-zone="battlefield"]')
+  const nodes = ep.kind === 'card' ? document.querySelectorAll('#game .board .card[data-zone="battlefield"], #game .board .card[data-arrow-zone="battlefield"]')
     : document.querySelectorAll('#game .boardwrap');
   let best = null;
   nodes.forEach(el => {
-    const match = ep.kind === 'card' ? el.dataset.pid === ep.pid && el.dataset.iid === ep.iid
-      : el.firstElementChild && el.firstElementChild.dataset.pid === ep.pid;
+    const match = ep.kind === 'card'
+      ? (el.dataset.pid === ep.pid && el.dataset.iid === ep.iid) || (el.dataset.arrowPid === ep.pid && el.dataset.arrowIid === ep.iid)
+      : el.firstElementChild && (el.firstElementChild.dataset.pid === ep.pid || el.firstElementChild.dataset.arrowPid === ep.pid);
     if (!match || getComputedStyle(el).visibility === 'hidden') return;
     const r = el.getBoundingClientRect();
     if (!r.width || !r.height || r.right <= 0 || r.bottom <= 0 || r.left >= innerWidth || r.top >= innerHeight) return;
@@ -3628,24 +3942,31 @@ let drag = null; // a card being dragged with the pointer
 let selectionDrag = null; // a temporary selection rectangle
 function bindGame() {
   const g = $('#game');
+  for (const type of ['pointerdown', 'click', 'dblclick', 'contextmenu']) g.addEventListener(type, e => {
+    if (boardTransferLock && !e.target.closest('#chatPanel, #chatBtn')) { e.preventDefault(); e.stopImmediatePropagation(); }
+  }, true);
   // Picking is handled before normal clicks/drags, including touch inspection and life buttons.
   g.addEventListener('pointerdown', e => {
+    if (e.target.closest('#chatPanel, #chatBtn')) return;
     if (!S.arrowPick && e.target.closest('[data-arrow-id]')) { e.stopImmediatePropagation(); return; }
     if (!S.arrowPick || e.target.closest('#ct-arrow-controls')) return;
     e.stopImmediatePropagation();
   }, true);
   g.addEventListener('click', e => {
+    if (e.target.closest('#chatPanel, #chatBtn')) return;
     if (handleArrowRemoval(e)) return;
     if (!S.arrowPick || e.target.closest('#ct-arrow-controls')) return;
     e.preventDefault(); e.stopImmediatePropagation();
     pickArrowEndpoint(e.target);
   }, true);
   g.addEventListener('dblclick', e => {
+    if (e.target.closest('#chatPanel, #chatBtn')) return;
     if (S.arrowPick || Date.now() - lastArrowPickAt < 400) { e.preventDefault(); e.stopImmediatePropagation(); }
   }, true);
+  if (window.CTChatPanel) CTChatPanel.init();
   const chatBtn = $('#chatBtn'), chatClose = $('#chatClose'), chatForm = $('#chatForm'), chatSoundToggle = $('#chatSoundToggle');
-  if (chatBtn) chatBtn.addEventListener('click', () => setChatPanelOpen(!S.chatOpen));
-  if (chatClose) chatClose.addEventListener('click', () => setChatPanelOpen(false));
+  if (chatBtn) chatBtn.addEventListener('click', e => { e.stopPropagation(); if (S.chatOpen && window.CTChatPanel && CTChatPanel.isFaded()) CTChatPanel.wake(true); else setChatPanelOpen(!S.chatOpen); });
+  if (chatClose) chatClose.addEventListener('click', () => { setChatPanelOpen(false); if (chatBtn) chatBtn.focus(); });
   if (chatForm) chatForm.addEventListener('submit', sendChatFromForm);
   if (chatSoundToggle) chatSoundToggle.addEventListener('click', toggleChatSound);
   document.addEventListener('pointerdown', function unlockSavedChatSound() {
@@ -3653,6 +3974,7 @@ function bindGame() {
     prepareChatAudio();
     if (chatAudioContext && chatAudioContext.state === 'running') document.removeEventListener('pointerdown', unlockSavedChatSound);
   });
+  window.addEventListener('resize', positionMulliganBar, { passive: true });
   // Native browser text/image dragging can steal pointer gestures from the tabletop's card drag logic.
   g.addEventListener('dragstart', e => {
     if (e.target.closest('.board, .card')) e.preventDefault();
@@ -4331,6 +4653,7 @@ function onButton(a, btn, e) {
     case 'dice': diceMenu(r.left, r.bottom + 4); break;
     case 'undo': undo(); break;
     case 'menu': mainMenu(r.right - 240, r.bottom + 4); break;
+    case 'openingrule': openingRulesMenu(btn); break;
     case 'copyroom': copyRoom(); break;
     case 'arrange': toggleArrange(); break;
     case 'tidy': act(() => { tidyBoard(); return ['tidied up their battlefield']; }); break;
@@ -4430,7 +4753,13 @@ function showConnInfo() {
   UI.modal({ title: 'Connection details', el: wrap });
 }
 function onKey(e) {
+  if (e.defaultPrevented) return;
   if (!S.me || $('#game').classList.contains('hidden')) return;
+  if (e.target.closest && e.target.closest('#chatPanel')) {
+    if (e.key === 'Escape' && S.chatOpen) { setChatPanelOpen(false); $('#chatBtn').focus(); e.preventDefault(); }
+    return;
+  }
+  if (boardTransferLock) return;
   if (S.arrowPick) { if (e.key === 'Escape') { endTargeting(); e.preventDefault(); } return; }
   if (e.key === 'Escape' && S.attachFrom) { endAttach(); return; }
   if (e.key === 'Escape' && S.chatOpen) { setChatPanelOpen(false); e.preventDefault(); return; }
@@ -4508,16 +4837,19 @@ function startNet() {
   Net.start({
     role: S.role, room: S.room, pid: S.pid, key: netKey(),
     onMessage: (msg, from) => {
-      if (S.role === 'host') hostRecv(msg, from);
+      if (S.role === 'host') { if (authorizeClientMessage(msg, from)) hostRecv(msg, from); }
       else clientRecv(msg);
     },
     onStatus: (state, text, code, transport) => {
       const was = S.net.state;
       S.net = { state, text: text || '', code: code || '', transport: transport || '' };
       if (state === 'online' && was !== 'online' && S.role === 'client') {
+        roomBackupSent.delete(S.room + ':' + S.pid);
         publish(true);
-        if (S.table && S.table.room === S.room) Net.send({ t: 'tsync', table: S.table });
+        queueRoomBackup();
+        if (S.table && S.table.room === S.room) toHost({ t: 'tsync', table: S.table });
       }
+      if (state === 'online' && was !== 'online' && S.role === 'host') { roomBackupSent.delete(S.room + ':' + S.pid); queueRoomBackup(); }
       render();
     },
     onDropped: msgs => {
@@ -4533,6 +4865,7 @@ function startNet() {
       broadcast({ t: 'online', online: S.online });
     },
     onLeave: pid => {
+      if (S.pendingSeats && !S.table.seats.includes(pid)) delete S.pendingSeats[pid];
       S.online[pid] = false;
       broadcast({ t: 'online', online: S.online });
       // brief blips reconnect within a few seconds — only log real outages
@@ -4544,6 +4877,318 @@ function startNet() {
   });
 }
 
+// Private room snapshots: status/roster metadata is public, saved card data is not.
+const roomBackupSent = new Map(), roomBackupQueues = new Map(), roomBackupVersion = new Map(), roomBackupAccepted = new Map();
+function queueRoomBackup() {
+  if (!S.me || boardTransferLock || S.role === 'solo' || !S.table || !S.table.seats.includes(S.pid) || S.net.state !== 'online') return;
+  const deck = Deck.get(S.deckId); if (!deck) return;
+  const { roomSaveRevision, ...me } = S.me;
+  const data = { me, deck }, serialized = JSON.stringify(data), key = S.room + ':' + S.pid;
+  if (roomBackupSent.get(key) === serialized) return;
+  roomBackupSent.set(key, serialized);
+  S.me.roomSaveRevision = Math.max(Date.now(), (Number(roomSaveRevision) || 0) + 1);
+  const revision = S.me.roomSaveRevision;
+  if (S.role === 'host') saveRoomBoard(S.pid, JSON.parse(serialized), revision);
+  else toHost({ t: 'private-board', data: JSON.parse(serialized), revision });
+}
+function roomBackupStatus(pid, status, at, error) {
+  S.boardBackups = S.boardBackups || {};
+  S.boardBackups[pid] = { status, at: at || 0, error: error || '' };
+  const label = document.querySelector(`[data-room-save="${CSS.escape(pid)}"]`);
+  if (label) label.textContent = roomBackupLabel(pid);
+}
+function roomBackupLabel(pid) {
+  const status = (S.boardBackups || {})[pid];
+  return status && status.status === 'saved' ? 'Saved to room ' + new Date(status.at).toLocaleTimeString() : status && status.status === 'pending' ? 'Saving to room…' : 'Room backup unavailable';
+}
+function saveRoomBoard(pid, data, revision) {
+  if (typeof Net.roomVault !== 'function') return;
+  const me = cleanPrivateBoard(data && data.me, pid, pid), deck = cleanTransferDeck(data && data.deck);
+  if (!me || !deck || !Number.isSafeInteger(revision) || revision <= (roomBackupAccepted.get(pid) || 0)) return;
+  roomBackupAccepted.set(pid, revision);
+  const room = S.room, version = (roomBackupVersion.get(pid) || 0) + 1; roomBackupVersion.set(pid, version);
+  roomBackupStatus(pid, 'pending');
+  broadcast({ t: 'backup-status', pid, status: 'pending' });
+  const previous = roomBackupQueues.get(pid) || Promise.resolve();
+  const task = previous.catch(() => {}).then(() => {
+    if (S.room !== room || S.role !== 'host' || !S.table.seats.includes(pid)) return;
+    return Net.roomVault('put', { pid, data: { me, deck, revision } }).then(result => {
+      if (roomBackupVersion.get(pid) === version && S.room === room && S.table && S.table.seats.includes(pid)) broadcast({ t: 'backup-status', pid, status: 'saved', at: result && result.updatedAt || Date.now() });
+    }).catch(error => {
+      if (roomBackupVersion.get(pid) === version && S.room === room && S.table) broadcast({ t: 'backup-status', pid, status: 'unavailable', error: error.message });
+    });
+  });
+  roomBackupQueues.set(pid, task);
+}
+function showBoardRecovery(preselect) {
+  const T = S.table; if (!T) return;
+  const rows = T.seats.map(pid => {
+    const p = S.players[pid];
+    const canChoose = pid !== S.pid && pid !== T.hostPid;
+    return `<div class="ct-recovery-seat"><b>${esc(p ? p.name : pid)}</b> <span class="muted small">${S.online[pid] || pid === T.hostPid ? 'Connected' : 'Disconnected'} · <span data-room-save="${esc(pid)}">${esc(roomBackupLabel(pid))}</span></span>${canChoose ? `<button type="button" data-recover-seat="${esc(pid)}">${isModerator() ? 'Assign board…' : 'Request this board'}</button>` : ''}</div>`;
+  }).join('');
+  let requested = false;
+  const waiting = !T.seats.includes(S.pid);
+  const modal = UI.modal({ title: 'Choose / recover a board', onClose: () => { if (waiting && !requested) exitModerated('No board was selected. Join with a different name or request your existing board again.'); }, html: `<p>Choose the board you need. A moderator must approve changing who controls it. Private hand and library are restored from the latest completed room save.</p>${rows}<button id="ctRetryRoomSave" type="button">Save my board now</button><p class="muted small">Room saves expire after 24 hours. A save still pending when the browser closes may miss the latest action. If room backup is unavailable, keep the original browser’s saved game.</p>` });
+  modal.el.querySelectorAll('[data-recover-seat]').forEach(button => {
+    button.onclick = () => {
+      const source = button.dataset.recoverSeat;
+      requested = true; modal.close();
+      if (isModerator()) showBoardTransfer(source);
+      else { toHost({ t: 'recover-seat-request', source }); UI.toast('Board request sent. A moderator must approve it.', { ms: 30000, action: { label: 'Cancel request', onClick: () => { if (waiting) exitModerated('Board request cancelled.'); } } }); }
+    };
+  });
+  modal.el.querySelector('#ctRetryRoomSave').onclick = () => { roomBackupSent.delete(S.room + ':' + S.pid); queueRoomBackup(); };
+  if (preselect) modal.el.querySelector(`[data-recover-seat="${CSS.escape(preselect)}"]`)?.focus();
+}
+function reviewSeatRequest(request) {
+  UI.confirm(`${request.name} requests control of ${pname(request.source)}'s board. Approve replacing their current empty board, including private hand/library?`, { title: 'Approve board claim', danger: true, okLabel: 'Assign board' }).then(ok => {
+    if (ok) toHost({ t: 'op', op: { k: 'handoff', pid: request.source, to: request.from } });
+  });
+}
+
+// Host-authorized moderation and private board handoffs. Private state is addressed
+// only to the host and the selected recipient, never included in room broadcasts.
+let boardTransferLock = false, pendingBoardTransfer = null, boardTransferTimer = null;
+function seatKey() {
+  const name = 'ct.seatKey.' + S.room + '.' + S.pid;
+  let key = LS.get(name, null);
+  if (!key) { key = Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join(''); LS.set(name, key); }
+  return key;
+}
+function authorizeClientMessage(msg, from) {
+  // Public seat IDs cannot grant host/moderator authority or claim an offline seat.
+  if (!isObj(msg) || from === S.pid || typeof from !== 'string' || !/^[\w-]{1,40}$/.test(from)) return false;
+  if (typeof msg.seatKey !== 'string' || !/^[a-f0-9]{32}$/.test(msg.seatKey)) return false;
+  S.seatKeys = S.seatKeys || {};
+  if (S.seatKeys[from]) return S.seatKeys[from] === msg.seatKey;
+  if (msg.t !== 'pub') return false;
+  S.seatKeys[from] = msg.seatKey; saveNow(); return true;
+}
+function samePlayerName(a, b) { return String(a || '').trim().toLocaleLowerCase() === String(b || '').trim().toLocaleLowerCase(); }
+function isModerator(pid = S.pid) {
+  return !!S.table && (pid === S.table.hostPid || (pid === S.pid && S.role !== 'client') || (S.table.mods || []).includes(pid));
+}
+function cleanHandoffs(raw) {
+  if (!isObj(raw)) return {};
+  return Object.fromEntries(Object.entries(raw).slice(-8).filter(([pid, r]) => /^[\w-]{1,40}$/.test(pid) && isObj(r) && typeof r.id === 'string' && typeof r.source === 'string').map(([pid, r]) => [pid, { id: r.id.slice(0, 40), source: r.source.slice(0, 40) }]));
+}
+function directPlayer(pid, msg) { if (pid === S.pid) handleClientModeration(msg); else Net.sendTo(pid, msg); }
+function transferNotice(pid, text) { directPlayer(pid, { t: 'moderation-notice', text }); }
+function boardPendingKey() { return 'ct.boardPending.' + S.room + '.' + S.pid; }
+function archiveBoard() {
+  if (!S.me) return true;
+  return LS.set('ct.recovery.' + S.pid, { at: Date.now(), room: S.room, role: S.role, deckId: S.deckId, me: S.me });
+}
+function savedRoomSession(room) {
+  try {
+    const entries = Object.keys(window.localStorage).filter(k => k.startsWith('ct.sess.')).map(k => ({ pid: k.slice(8), sess: loadSession(k.slice(8)) })).filter(e => e.sess && e.sess.role !== 'solo' && e.sess.room === room);
+    return entries.sort((a, b) => b.sess.at - a.sess.at)[0] || null;
+  } catch (_) { return null; }
+}
+function exitModerated(reason) {
+  if (!S.me) return;
+  archiveBoard(); clearTimeout(pubTimer); clearTimeout(saveT); clearTimeout(boardTransferTimer);
+  boardTransferLock = false; S.colorFlow = false; S.colorRequestPending = false; closeColorModal();
+  Net.stop(); LS.del('ct.sess.' + S.pid); if (LS.get('ct.last') === S.pid) LS.del('ct.last');
+  S.me = null; S.table = null; S.players = {}; S.log = []; S.undo = []; S.selected.clear(); S.focus = null;
+  S.viewers.forEach(v => v.v.close());
+  S.pid = 'p' + uid(); SS.set('ct.pid', S.pid);
+  showLobby(); UI.toast(reason, { kind: 'warn', ms: 14000 });
+}
+function handleRemovedSeat() {
+  if (S.table && (S.table.kicked || []).includes(S.pid)) { exitModerated('Your previous seat was removed or transferred by a moderator. A local recovery copy was kept.'); return true; }
+  return false;
+}
+function remapBoardReferences(me, source, target) {
+  if (!me) return;
+  const iid = value => typeof value === 'string' && value.startsWith(source + '_') ? target + value.slice(source.length) : value;
+  Object.values(me.zones || {}).forEach(list => { if (Array.isArray(list)) list.forEach(c => {
+    c.iid = iid(c.iid); if (c.own === source) c.own = target;
+    if (c.att) { c.att.i = iid(c.att.i); if (c.att.p === source) c.att.p = target; }
+  }); });
+  me.revealTopOnce = iid(me.revealTopOnce);
+  if (Array.isArray(me.cmdrs)) me.cmdrs.forEach(c => { c.iid = iid(c.iid); });
+  if (me.casts) me.casts = Object.fromEntries(Object.entries(me.casts).map(([k, v]) => [iid(k), v]));
+  if (me.cmdDmg) me.cmdDmg = Object.fromEntries(Object.entries(me.cmdDmg).map(([k, v]) => {
+    const [pid, card] = k.split(':'); return [(pid === source ? target : pid) + ':' + iid(card), v];
+  }));
+}
+function cleanPrivateBoard(raw, source, target) {
+  if (!isObj(raw) || raw.pid !== source || !isObj(raw.zones) || !isObj(raw.defs)) return null;
+  try { if (JSON.stringify(raw).length > 650000) return null; } catch (_) { return null; }
+  const ids = new Set();
+  for (const z of ZONES) {
+    if (!Array.isArray(raw.zones[z]) || raw.zones[z].length > 400) return null;
+    for (const c of raw.zones[z]) {
+      if (!isObj(c) || typeof c.iid !== 'string' || !/^[\w-]{1,40}$/.test(c.iid) || ids.has(c.iid)) return null;
+      ids.add(c.iid);
+      if (typeof c.id !== 'string' || !isObj(raw.defs[c.id]) || raw.defs[c.id].id !== c.id) return null;
+    }
+  }
+  if (ids.size > 600 || Object.keys(raw.defs).length > 800) return null;
+  const m = JSON.parse(JSON.stringify(raw));
+  // JSON data only; keep the complete owned state (including counters, P/T and reveals).
+  m.pid = target; m.name = String(m.name || 'Player').slice(0, 24);
+  m.cmdrs = Array.isArray(m.cmdrs) ? m.cmdrs.slice(0, 3).filter(c => isObj(c) && typeof c.iid === 'string').map(c => ({ iid: c.iid, name: String(c.name || '').slice(0, 80) })) : [];
+  m.tokens = Array.isArray(m.tokens) ? m.tokens.filter(id => typeof id === 'string' && m.defs[id]).slice(0, 100) : [];
+  m.seq = Math.max(num(m.seq), ids.size); m.mull = Math.max(0, num(m.mull));
+  m.life = num(m.life, 40); m.poison = num(m.poison); m.ctr = numMap(m.ctr); m.casts = numMap(m.casts); m.cmdDmg = numMap(m.cmdDmg);
+  m.defs = Object.fromEntries(Object.entries(m.defs).filter(([id, d]) => isObj(d) && d.id === id).map(([id, d]) => [id, Deck.slimDef(d)]));
+  if ([...ids].some(iid => !iid)) return null;
+  remapBoardReferences(m, source, target);
+  return m;
+}
+function cleanTransferDeck(raw) {
+  if (!isObj(raw) || !Array.isArray(raw.cards) || raw.cards.length > 400 || !Array.isArray(raw.commanders) || raw.commanders.length > 3) return null;
+  const def = d => isObj(d) && typeof d.id === 'string' ? Deck.slimDef(d) : null;
+  const cards = raw.cards.map(r => ({ def: def(r && r.def), qty: num(r && r.qty) }));
+  const commanders = raw.commanders.map(def);
+  if (cards.some(r => !r.def || r.qty < 1 || r.qty > 250) || commanders.some(d => !d) || cards.reduce((n, r) => n + r.qty, 0) > 600) return null;
+  return { name: String(raw.name || 'Transferred deck').slice(0, 100), cards, commanders, tokens: (Array.isArray(raw.tokens) ? raw.tokens.slice(0, 100).map(def).filter(Boolean) : []) };
+}
+function beginBoardTransfer(source, target, moderator) {
+  const T = S.table;
+  if (pendingBoardTransfer) { transferNotice(moderator, 'Finish the current board handoff first.'); return; }
+  if (!T.seats.includes(source) || (!T.seats.includes(target) && !(S.pendingSeats || {})[target]) || source === target || source === S.pid || (target !== S.pid && !S.online[target])) { transferNotice(moderator, 'Choose a connected recipient and a different non-host board.'); return; }
+  // Replacing a live battlefield would strand its attachments/borrowed cards.
+  const old = S.players[target] || S.pendingSeats?.[target]?.p;
+  if (!old || ['battlefield', 'graveyard', 'exile'].some(z => old.zones[z].length) || Object.entries(S.players).some(([pid, p]) => pid !== target && p.zones.battlefield.some(c => c.own === target || (c.att && c.att.p === target)))) { transferNotice(moderator, 'The recipient needs an empty battlefield, graveyard and exile, with no cards controlled by others. Their hand/command/library will be backed up and replaced.'); return; }
+  const id = 'h' + uid() + uid();
+  pendingBoardTransfer = { id, source, target, moderator, stage: 'capture' };
+  boardTransferTimer = setTimeout(() => abortBoardTransfer('Board handoff timed out. No seat was removed.'), 25000);
+  const recovery = !S.online[source];
+  if (recovery && typeof Net.roomVault === 'function') {
+    Net.roomVault('get', { pid: source }).then(result => {
+      if (pendingBoardTransfer?.id !== id) return;
+      handleHostBoardTransfer({ t: 'board-captured', id, me: result.data.me, deck: result.data.deck }, target);
+    }).catch(error => {
+      if (pendingBoardTransfer?.id !== id) return;
+      pendingBoardTransfer.recoveryError = error.message;
+      directPlayer(target, { t: 'board-capture', id, source, target, recovery: true });
+    });
+  } else directPlayer(recovery ? target : source, { t: 'board-capture', id, source, target, recovery });
+}
+function abortBoardTransfer(reason) {
+  const p = pendingBoardTransfer; if (!p) return;
+  pendingBoardTransfer = null; clearTimeout(boardTransferTimer);
+  for (const pid of new Set([p.source, p.target, p.moderator])) directPlayer(pid, { t: 'board-abort', id: p.id, text: reason });
+}
+function handleHostBoardTransfer(msg, from) {
+  if (!['board-captured', 'board-ready', 'board-failed'].includes(msg.t)) return false;
+  const p = pendingBoardTransfer;
+  if (!p || msg.id !== p.id || (!S.table.seats.includes(from) && !(from === p.target && S.pendingSeats?.[from])) || !isModerator(p.moderator)) return true;
+  if (msg.t === 'board-failed' && [p.source, p.target].includes(from)) { abortBoardTransfer(p.recoveryError ? `No room-server backup was available: ${p.recoveryError} The original browser's local save was also unavailable.` : 'The private saved board was unavailable or could not be saved. Check the room backup status or reconnect the original browser.'); return true; }
+  if (msg.t === 'board-captured' && p.stage === 'capture' && from === (S.online[p.source] ? p.source : p.target)) {
+    const me = cleanPrivateBoard(msg.me, p.source, p.target);
+    if (!me) { abortBoardTransfer('The saved board failed validation; no seat was removed.'); return true; }
+    p.stage = 'install';
+    const deck = cleanTransferDeck(msg.deck);
+    if (!deck) { abortBoardTransfer('The original saved deck is unavailable; restore it in the original browser first.'); return true; }
+    directPlayer(p.target, { t: 'board-prepare', id: p.id, source: p.source, me, deck });
+  } else if (msg.t === 'board-ready' && p.stage === 'install' && from === p.target) {
+    const T = S.table;
+    // Recipient has durably stored the private copy before public ownership changes.
+    T.handoffs = { ...(T.handoffs || {}), [p.target]: { id: p.id, source: p.source } };
+    T.kicked = [...new Set([...(T.kicked || []), p.source])].slice(-128);
+    T.seats = T.seats.filter(pid => pid !== p.target).map(pid => pid === p.source ? p.target : pid);
+    const oldOrder = T.order.filter(pid => pid !== p.target);
+    T.order = oldOrder.map(pid => pid === p.source ? p.target : pid);
+    if (T.active === p.source) T.active = p.target;
+    if (T.monarch === p.source) T.monarch = p.target;
+    if (T.initiative === p.source) T.initiative = p.target;
+    if (T.out[p.source]) T.out[p.target] = true; else delete T.out[p.target];
+    delete T.out[p.source]; T.mods = (T.mods || []).filter(pid => pid !== p.source);
+    const inheritedColor = T.colors && T.colors[p.source];
+    T.colors = { ...(T.colors || {}) }; delete T.colors[p.source]; delete T.colors[p.target];
+    if (inheritedColor) T.colors[p.target] = inheritedColor;
+    T.colors = CTPlayerColors.normalize(T.seats, T.colors, false);
+    if (T.openingAllowances) { T.openingAllowances[p.target] = T.openingAllowances[p.source] || 0; delete T.openingAllowances[p.source]; }
+    Object.values(S.players).forEach(player => remapBoardReferences(player, p.source, p.target));
+    const sourceName = pname(p.source), targetName = S.players[p.target]?.name || S.pendingSeats?.[p.target]?.p.name || pname(p.target);
+    delete S.players[p.source];
+    if (S.pendingSeats) delete S.pendingSeats[p.target];
+    if (typeof Net.roomVault === 'function') Net.roomVault('delete', { pid: p.source }).catch(() => {});
+    pendingBoardTransfer = null; clearTimeout(boardTransferTimer);
+    broadcast({ t: 'board-remap', source: p.source, target: p.target });
+    pushTable();
+    // Include the current public table for recipients even if table delivery was lost.
+    directPlayer(p.target, { t: 'board-activate', table: T });
+    directPlayer(p.source, { t: 'moderation-exit', reason: `Your board was transferred to ${targetName} by a moderator. A local recovery copy was kept.` });
+    broadcast({ t: 'arrows', arrows: [] });
+    sysLog(`${targetName} took control of ${sourceName}'s board (authorized by ${pname(p.moderator)}).`);
+  }
+  return true;
+}
+function applyCommittedHandoff() {
+  if (!S.table || !S.me) return;
+  const record = (S.table.handoffs || {})[S.pid], pending = LS.get(boardPendingKey(), null);
+  if (!record || !pending || pending.id !== record.id) return;
+  const me = cleanPrivateBoard(pending.me, S.pid, S.pid);
+  if (!me) return;
+  S.me = me; S.deckId = pending.deckId; S.undo = []; S.selected.clear(); S.focus = null; boardTransferLock = false;
+  normalizeMe(S.me); saveNow(); LS.del(boardPendingKey()); publish(true);
+  UI.toast('You now control the transferred board, including its hand and library. Your previous board is saved locally.', { ms: 12000 });
+}
+function handleClientModeration(msg) {
+  if (!msg || typeof msg.t !== 'string') return false;
+  if (msg.t === 'moderation-exit') { exitModerated(String(msg.reason || 'Your seat was removed.')); return true; }
+  if (msg.t === 'moderation-notice') { UI.toast(String(msg.text || ''), { kind: 'warn', ms: 12000 }); return true; }
+  if (msg.t === 'seat-conflict') {
+    if (!boardTransferLock) { boardTransferLock = true; S.colorFlow = false; S.colorRequestPending = false; closeColorModal(); UI.toast('That player already has a board. Request it below; a moderator must approve.', { ms: 10000 }); showBoardRecovery(msg.pid); } return true;
+  }
+  if (msg.t === 'backup-status') { roomBackupStatus(msg.pid, msg.status, msg.at, msg.error); return true; }
+  if (msg.t === 'recovery-request') { if (isModerator()) UI.toast(`${msg.request.name} requests ${pname(msg.request.source)}'s board.`, { ms: 20000, action: { label: 'Review', onClick: () => reviewSeatRequest(msg.request) } }); return true; }
+  if (msg.t === 'board-capture') {
+    if (!S.me || typeof msg.id !== 'string') return true;
+    let me = S.me, deckId = S.deckId;
+    if (msg.recovery) {
+      const sess = loadSession(msg.source);
+      if (!sess || sess.room !== S.room) { toHost({ t: 'board-failed', id: msg.id }); return true; }
+      me = sess.me; deckId = sess.deckId;
+    } else {
+      if (msg.source !== S.pid || boardTransferLock) return true;
+      saveNow(); boardTransferLock = true;
+      clearTimeout(boardTransferTimer); boardTransferTimer = setTimeout(() => { boardTransferLock = false; }, 30000);
+      UI.toast('A moderator is transferring this board. Actions are paused briefly.', { ms: 12000 });
+    }
+    toHost({ t: 'board-captured', id: msg.id, me, deck: Deck.get(deckId) }); return true;
+  }
+  if (msg.t === 'board-prepare') {
+    if (!S.me) return true;
+    const me = cleanPrivateBoard(msg.me, S.pid, S.pid), deck = cleanTransferDeck(msg.deck);
+    let savedDeck;
+    try { if (me && deck && archiveBoard()) savedDeck = Deck.save(deck); } catch (_) {}
+    if (!savedDeck || !LS.set(boardPendingKey(), { id: msg.id, me, deckId: savedDeck.id })) { toHost({ t: 'board-failed', id: msg.id }); return true; }
+    boardTransferLock = true;
+    clearTimeout(boardTransferTimer); boardTransferTimer = setTimeout(() => { boardTransferLock = false; }, 30000);
+    toHost({ t: 'board-ready', id: msg.id }); return true;
+  }
+  if (msg.t === 'board-activate') { S.table = cleanTable(msg.table); applyCommittedHandoff(); syncColorFlow(); render(); return true; }
+  if (msg.t === 'board-abort') {
+    const pending = LS.get(boardPendingKey(), null); if (pending && pending.id === msg.id) LS.del(boardPendingKey());
+    boardTransferLock = false; UI.toast(String(msg.text || 'Handoff cancelled.'), { kind: 'warn', ms: 10000 }); return true;
+  }
+  if (msg.t === 'board-remap') {
+    S.undo = [];
+    if (S.me) { remapBoardReferences(S.me, msg.source, msg.target); saveNow(); }
+    Object.values(S.players).forEach(p => remapBoardReferences(p, msg.source, msg.target));
+    delete S.players[msg.source]; return true;
+  }
+  return false;
+}
+function showBoardTransfer(source) {
+  const choices = [...new Set([...S.table.seats, ...Object.keys(S.pendingSeats || {})])].filter(pid => pid !== source && (pid === S.pid || S.online[pid]));
+  if (!choices.length) { UI.toast('A connected recipient is required.', { kind: 'warn' }); return; }
+  const modal = UI.modal({ title: `Transfer ${pname(source)}'s board`, html: `<p>Select the player who will control this board, including its private hand and library. Their previous board will be backed up locally and replaced. Use an empty replacement seat.</p><select id="ctTransferRecipient">${choices.map(pid => `<option value="${esc(pid)}">${esc(S.pendingSeats?.[pid]?.p.name || pname(pid))}</option>`).join('')}</select><p class="muted small">Disconnected boards use their latest completed room-server save. If server backup is unavailable, the original browser's saved session is needed.</p><button class="danger" id="ctTransferGo">Transfer board</button>` });
+  modal.el.querySelector('#ctTransferGo').onclick = async () => {
+    const to = modal.el.querySelector('select').value;
+    if (!await UI.confirm(`Transfer ${pname(source)}'s complete board to ${pname(to)} and replace their current board? The old owner's seat will be removed.`, { danger: true, okLabel: 'Transfer' })) return;
+    modal.close(); toHost({ t: 'op', op: { k: 'handoff', pid: source, to } });
+  };
+}
+
+
 // =====================================================================
 //  Session persistence (crash / reload recovery)
 // =====================================================================
@@ -4552,8 +5197,9 @@ function saveSoon() { clearTimeout(saveT); saveT = setTimeout(saveNow, 300); }
 function saveNow() {
   if (!S.me) return;
   const host = S.role !== 'client';
+  queueRoomBackup();
   LS.set('ct.sess.' + S.pid, {
-    v: 2, at: Date.now(), role: S.role, room: S.room, deckId: S.deckId, me: S.me,
+    v: 2, at: Date.now(), role: S.role, room: S.room, deckId: S.deckId, me: S.me, seatKeys: host ? S.seatKeys : null,
     table: host ? S.table : null, players: host ? S.players : null, log: host ? S.log.slice(-150) : null, chat: host ? S.chat.slice(-100) : null
   });
   LS.set('ct.last', S.pid);
@@ -4563,13 +5209,23 @@ function loadSession(pid) {
   return s && s.me && Date.now() - s.at < 24 * 3600e3 ? s : null;
 }
 function resume(sess) {
-  S.role = sess.role; S.room = sess.room; S.deckId = sess.deckId; S.me = sess.me;
+  S.role = sess.role; S.room = sess.room; S.deckId = sess.deckId; S.me = sess.me; S.seatKeys = isObj(sess.seatKeys) ? sess.seatKeys : {};
   normalizeMe(S.me);
-  S.table = sess.table || null; S.players = sess.players || {}; S.log = sess.log || []; S.chat = cleanChatHistory(sess.chat); S.chatOpen = false; S.chatUnread = 0; S.online = {};
+  S.table = cleanTable(sess.table) || null; S.players = sess.players || {}; S.log = sess.log || []; S.chat = cleanChatHistory(sess.chat); S.chatOpen = false; S.chatUnread = 0; S.online = {};
+  if (S.table && S.role === 'host') S.table.hostPid = S.pid;
+  if (S.table) {
+    S.table.openingMode = CTMulligan.normalizeMode(S.table.openingMode);
+    S.table.openingAllowances = S.table.openingAllowances || {};
+    if (!S.table.openingDeal) S.table.openingDeal = uid();
+    if (!S.me.openingDeal) S.me.openingDeal = S.table.openingDeal;
+  }
+  S.colorFlow = S.role !== 'solo' && !ownColorLocked(); S.colorRequestPending = false;
   if (S.role === 'host') Object.keys(S.players).forEach(p => { if (p !== S.pid) S.online[p] = false; });
   showGame();
   startNet();
-  publish(true);
+  if (S.role === 'client') showColorPicker();
+  else if (ownColorLocked()) publish(true);
+  else showColorPicker();
   UI.toast(S.role === 'solo' ? 'Practice game restored.' : `Rejoined room ${S.room} — your game was restored.`);
 }
 function leaveGame() {
@@ -4618,10 +5274,10 @@ function showLobby() {
   const rb = $('#resumeBox');
   if (sess) {
     rb.innerHTML = `<b>Resume your last game?</b><span class="muted">${sess.role === 'solo' ? 'Practice game' : `Room ${esc(sess.room)} (${sess.role === 'host' ? 'you were hosting' : 'joined'})`} · ${esc(sess.me.name)}</span>
-      <button class="primary" id="resumeBtn">Resume</button><button id="discardBtn">Discard</button>`;
+      <button class="primary" id="resumeBtn">Resume</button><button id="discardBtn" title="Keep the saved game and hide this reminder">Dismiss</button>`;
     rb.classList.remove('hidden');
     $('#resumeBtn').onclick = () => { SS.set('ct.pid', last); location.reload(); };
-    $('#discardBtn').onclick = () => { LS.del('ct.sess.' + last); LS.del('ct.last'); rb.classList.add('hidden'); };
+    $('#discardBtn').onclick = () => { rb.classList.add('hidden'); };
   } else rb.classList.add('hidden');
 }
 function showGame() {
@@ -4678,6 +5334,11 @@ function bindLobby() {
   $('#loadDeck').onclick = loadDeck;
   $('#nameIn').addEventListener('change', () => LS.set('ct.name', $('#nameIn').value.trim()));
   $('#hostBtn').onclick = () => begin('host');
+  const hostRule = $('#hostMulligan');
+  if (hostRule) {
+    hostRule.value = CTMulligan.normalizeMode(LS.get('ct.openingMode', 'london'));
+    hostRule.addEventListener('change', () => LS.set('ct.openingMode', CTMulligan.normalizeMode(hostRule.value)));
+  }
   $('#soloBtn').onclick = () => begin('solo');
   $('#joinBtn').onclick = () => begin('client');
   $('#joinIn').addEventListener('input', e => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); });
@@ -4806,7 +5467,7 @@ function showImportResult(res, source, parsed) {
     } catch (e) { UI.toast(e.message || 'Could not save the deck', { kind: 'error' }); }
   };
 }
-function begin(role) {
+async function begin(role) {
   const name = $('#nameIn').value.trim();
   if (!name) { UI.toast('Enter your name first.', { kind: 'warn' }); $('#nameIn').focus(); return; }
   LS.set('ct.name', name);
@@ -4817,6 +5478,14 @@ function begin(role) {
     room = $('#joinIn').value.trim().toUpperCase();
     if (room.length !== 5) { UI.toast('Enter the 5-character room code from the host.', { kind: 'warn' }); $('#joinIn').focus(); return; }
   }
+  if (role === 'client') {
+    const saved = savedRoomSession(room);
+    if (saved) {
+      const restore = await UI.confirm(`A saved seat for ${saved.sess.me.name} exists in room ${room}. Resume it to keep your board, hand and library?`, { title: 'Resume your existing seat', okLabel: 'Resume seat', cancelLabel: 'Different player' });
+      if (restore) { S.pid = saved.pid; SS.set('ct.pid', S.pid); resume(saved.sess); return; }
+      if (!await UI.confirm('Create a separate seat instead? Use a different name; your saved seat will remain available.', { okLabel: 'Join separately', cancelLabel: 'Cancel' })) return;
+    }
+  }
   if (role !== 'solo' && typeof Peer === 'undefined') { UI.toast('Online play needs an internet connection — try Practice solo.', { kind: 'error' }); return; }
   if (role === 'host') room = Net.makeRoomCode();
   try { // the invite has done its job; keep any ?net= override
@@ -4825,12 +5494,17 @@ function begin(role) {
   } catch (e) { /* ignore */ }
   S.role = role; S.room = room; S.deckId = deck.id;
   S.players = {}; S.log = []; S.online = {}; S.undo = [];
-  S.me = newPlayer(deck, name);
-  S.table = role === 'client' ? null : newTable(room);
+  const openingMode = role === 'host' ? CTMulligan.normalizeMode($('#hostMulligan').value) : 'london';
+  const openingDeal = role === 'client' ? null : uid();
+  S.me = newPlayer(deck, name, null, openingMode, openingDeal);
+  S.table = role === 'client' ? null : newTable(room, openingMode, openingDeal);
+  S.colorFlow = role !== 'solo'; S.colorRequestPending = false;
   S.net = { state: role === 'solo' ? 'online' : 'connecting', text: '' };
   showGame();
   startNet();
-  publish(true);
+  if (role === 'host') showColorPicker();
+  else if (role === 'client') showColorPicker();
+  else publish(true);
   saveNow();
   if (role === 'host') UI.toast(`You're hosting room ${room}. Click the code at the top-left to copy an invite link for your friends.`, { ms: 8000 });
   if (role === 'solo') sysLog('Practice game started. Use “Start game” to begin turn tracking.');
@@ -4840,6 +5514,7 @@ function begin(role) {
 //  Boot
 // =====================================================================
 function boot() {
+  window.addEventListener('beforeunload', e => { if (S.me && S.role !== 'solo') { e.preventDefault(); e.returnValue = ''; } });
   document.body.classList.toggle('touch-mode', S.touchMode);
   updateTouchViewportHeight();
   refreshTouchOrientationHint();
