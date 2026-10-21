@@ -229,6 +229,11 @@ For a hovered card, **+ / =** adds a +1/+1 counter and **− / _** adds a −1/�
 
 ## Room chat and turn notifications
 
+- Open **💬 Chat → Pop out** to keep chat in a floating panel over the game. Drag the **Room chat** heading wherever it fits. **Dock** restores the normal top-right panel.
+- Choose **Transparent** for a completely clear floating background while messages and controls remain visible. Empty space passes clicks through to the table; message text stays selectable and scrollable. Toggle Transparent again to restore the solid background.
+- **Reset** returns floating chat to its default position. The position and floating/transparent preferences are saved only in your browser, not shared with other players. Chat stays within the visible screen after resizing.
+- For keyboard movement, Tab to the floating **Room chat** heading and use arrow keys (hold Shift for larger steps). Escape closes chat and returns focus to its top-bar button. Closing and reopening chat keeps its saved presentation.
+
 - Click **💬 Chat** in the top bar to open room chat. Type a message and press **Enter** or **Send** to share it with everyone in the room. Chat is separate from the game log; opening the chat panel shows the latest 100 messages for the room session, including after a reconnect.
 - When the panel is closed, messages from other players briefly appear as small notifications near the top-right of the table and then fade away. The **Chat** button gently pulses and shows an unread count until you open it. When chat is already open, the newest message and panel border briefly glow instead. Your own sent messages appear in history but do not create duplicate notifications.
 - **Sound off** is the default. Use the button in the chat header to turn the quiet two-note message chime on or off; the choice is saved on that browser. Sounds play only for other players' messages, with rapid messages throttled to avoid repeated chimes.

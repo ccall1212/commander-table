@@ -1,33 +1,25 @@
-# Commander Table v0.30.0 — token gallery test copy
+# Floating and transparent chat — v0.33.0 test copy
 
-Download this branch ZIP, extract it, and double-click **index.html**. No terminal, installation, or local server is needed. Keep internet access on for token images and online play.
+Download the ZIP, extract it, and double-click **index.html**. No terminal or local server is needed. Keep internet access on. Use two players with the same test copy; chat is disabled in Practice solo.
 
-## Chris's testing and requested refinements
-
-Tested by Chris: he tested the final token test copy and said, “Perfect, push and merge and Publish.” He approved the current token gallery, quantities, automatic return to the battlefield and matching artwork revision on 2026-10-21. PR #51 was published as v0.30.0. His specific device/multiplayer coverage was not stated. Assistant automated and browser results are recorded separately below.
+Chris requested this feature but has not yet tested or approved publishing it. The published token release is included; the separate Deck Builder checks and backup/restore proposals are not included.
 
 ## Click list
 
-1. Start a game with a deck that makes tokens. Open **☰ → Tokens**: see token pictures once each, with search/filter/sort controls and **Search all tokens…**. There should be no repeated create-one/create-X menu rows.
-2. Click a token picture: quantity starts at 1. Enter 3 and choose **Create X Tokens**. Exactly three tokens should appear, the token galleries should close, and the battlefield should be visible. Use Undo: the whole batch should disappear together.
-3. Repeat with 0, 61, a decimal, a blank field, and Cancel. Invalid entries should leave the quantity prompt open; Cancel should create nothing and return to the gallery. Try keyboard filtering and Enter as well.
-4. Right-click a battlefield token-making card → **Create related token…**: see only its related token pictures and use the same quantity flow. In Touch mode, use **Actions** instead of right-click.
-5. Play a card with related tokens and click **Choose tokens…** in its suggestion pop-up. For cards with only one linked token, check that the quick **+ Token** action still creates one directly.
-6. In the gallery, choose **Search all tokens…** and search Treasure. Click a result picture and create two. Both the search and deck token galleries should close after creating the tokens. Cancel a search without losing the deck gallery.
-7. Test **Sidebar** and **Grid** at approximately **1920×1080** and **1366×768** with a second player watching. Pictures, quantity prompt and Close must remain reachable; the second player should see created tokens, with no private hand/library information revealed.
-8. If a deck has no linked tokens, its empty gallery should still offer **Search all tokens…**. A missing image should show the readable placeholder.
-9. Try a deck linked to different artwork versions of the same token: equivalent versions should share one gallery entry. Same-name tokens with different printed stats or abilities must remain separate. Right-click a gallery picture → **Choose artwork…**, choose another set/printing, then create a token and verify the chosen art.
-10. Right-click a token on the battlefield → **Switch printing…**. Matching artworks should appear. Change just one token, then try **Use for all copies** on equivalent tokens. Tapping, counters, position and ownership must stay unchanged, and different-stat/ability tokens must not change. Have the second player watch the new art. Check a copied regular card still offers the regular card's artwork.
+1. Host a shared game and join from a second player. Open **💬 Chat**, send messages in both directions, and confirm the normal panel still works. Close one player's chat, send them a message, and check the unread indicator; opening chat should clear it.
+2. Choose **Pop out**. Drag the **Room chat** heading to another part of the table. Chat should stay open, and dragging it should not tap, move or select cards. Buttons and the message input should remain usable.
+3. Choose **Transparent**. Panel, heading, message area and composer backgrounds should be completely clear while messages, input and controls remain visible. Click empty space in the transparent chat to interact with the table underneath; scroll over message text to scroll the history.
+4. Move transparent chat too. Send another message from the other player: it should appear without moving or closing the panel. Each player's mode and position should stay independent.
+5. Close/reopen chat, then reload your game and reopen chat: mode and position should be remembered. Choose **Dock** to restore the solid normal panel; **Pop out** restores floating mode. **Reset** returns it to the default position.
+6. Try Sidebar and Grid around 1920×1080 and 1366×768, then shrink/resize the window. The heading, Close, and composer must stay reachable. Check the panel after opening/closing the on-screen keyboard on a real touch device if available.
+7. Tab to the floating heading and move it with arrow keys; Shift moves farther. Escape should close chat and focus the top-bar Chat button. If another dialog is open, Escape should close that dialog first.
+8. While choosing a targeting arrow, try opening chat, moving it and typing: chat controls should work without selecting arrow endpoints. Close chat and continue/cancel picking normally.
 
-## Validation
+## Assistant verification
 
-Current-revision Playwright/Chromium HTTP browser checks passed:
+- Geometry/preferences Node checks cover malformed saved values, extreme coordinates, wide/narrow/short viewports, visible viewport offsets and recovering the saved position after a temporary resize.
+- Existing targeting, P/T, token picker and token-printing Node regressions passed; changed JavaScript syntax and diff/reference checks passed.
+- Chromium over localhost HTTP with two connected players passed sending/receiving, unread clearing, mouse drag, keyboard movement, local-only preferences, close/reopen/reload persistence, Dock/Pop out/Reset, completely clear computed backgrounds, pointer-through empty space, scrolling message text, receipt while open, both Sidebar/Grid at 1920×1080 and 1366×768, a 390×300 emulated viewport, and Escape focus. A focused two-player pass also verified Close-button focus, dialog Escape priority, and using/sending chat while picking a targeting arrow. No page errors were observed.
+- These are assistant HTTP browser observations, not real-device touch/Safari or Chris's hands-on results. Managed browser policy blocks `file://` navigation, so Chris's normal extracted-copy flow still needs his review.
 
-- Equivalent real Treasure artwork variants grouped into one gallery entry; same-name Soldier fixtures with different printed stats stayed separate.
-- Creation closed the picker in Sidebar and Grid at 1920×1080 and 1366×768. Four batches of three were received by a second connected player. Cancel left the gallery open, and successful creation from live Scryfall search closed both nested token galleries.
-- Gallery **Choose artwork…** loaded actual Scryfall token printings and created the selected printed version. Battlefield **Switch printing…** loaded matching artwork and changed a token while preserving its instance ID, tapped state, Charge counter, position and ownership. The second player received the new art. **Use for all copies** changed matching token instances.
-- No page errors were observed. JavaScript syntax and existing targeting/P/T regression suites passed. New automated token-printing tests cover pagination, different Oracle IDs, legacy/transferred metadata, stats, abilities, colors, reverse faces, and ordinary-card lookup. New picker tests cover cancellation/invalid quantities, owner changes, semantic grouping, normal versus actual token copies, and closing nested galleries on success. GPT-6 Luna handled the bounded token-lookup implementation and focused test/review work; the primary assistant reviewed and ran browser checks.
-
-The managed browser blocks direct `file://` navigation with `ERR_BLOCKED_BY_ADMINISTRATOR`; assistant browser checks use localhost HTTP. This does not substitute for Chris's normal extracted-copy check of this revision.
-
-The deck randomizer/import draft PR #11 remains paused. This release approval does not cover the separate Deck Builder checks or backup/restore proposals.
+PR #11 remains paused. Nothing in this test copy is approved for publication.
