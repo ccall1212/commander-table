@@ -30,3 +30,9 @@ Active games, room and seat assignments, seat keys, recovery records, and networ
 The managed browser blocks `file://` navigation; assistant browser checks used localhost HTTP. Chris reported testing the original ZIP through his browser; the refreshed integration checks above used HTTP. No real-device Safari result is claimed.
 
 Primary verification: the existing moderation, mulligan, player-color, power/toughness, targeting and token picker/printing Node suites also passed after integration.
+
+## Publication verification — 2026-10-21
+
+Chris explicitly approved refreshing and publishing both features after testing their earlier ZIPs. Objective #29 merged through PR #50 as v0.38.0 at `e0e4afd03c62803e31e0ad0f4aacbd7dd82a3f8f`; Objective #30 merged through PR #49 as v0.39.0 at `225e1d08f894ae10eecf0b7ec8346af6b26fed43`. The automatic annotated release tags were fetched and their targets verified against those exact merge commits. GitHub Pages deployment and Workers Builds succeeded for both releases. The v0.39.0 release includes both features.
+
+Live-page navigation was blocked here with `net::ERR_TUNNEL_CONNECTION_FAILED`, so deployment success is verified but the live footer was not observed. The merged feature branches and worktrees were removed after confirming they contained no unpublished commits. Paused draft PR #11 remains untouched. These publication checks do not imply that Chris tested the refreshed ZIPs.
