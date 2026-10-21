@@ -1167,6 +1167,21 @@ body.touch-mode #myBar .ctrpanel {
   animation: ct-turn-banner 1.8s linear both;
 }
 .board.tile-display .ct-turn-notice { bottom: 120px; }
+.ct-response-notice {
+  position: fixed; inset: 46px 0 0; z-index: 870; flex-direction: column; gap: 12px;
+  font-size: clamp(24px, 3.2vw, 44px); white-space: normal;
+  animation: ct-response-banner 1.8s ease-out both;
+}
+.ct-response-name { max-width: 90vw; font-size: .55em; letter-spacing: .04em; overflow-wrap: anywhere; }
+#responseBtn { white-space: nowrap; border-color: var(--accent); }
+@media (max-width: 1500px) { #topbar .brand { display: none; } }
+@media (max-width: 900px) { #responseBtn { padding: 3px 6px; font-size: 12px; } }
+@keyframes ct-response-banner {
+  0% { opacity: 1; transform: scale(.97); }
+  15%, 72% { opacity: 1; transform: scale(1); }
+  30% { opacity: 1; transform: scale(.995); }
+  100% { opacity: 0; transform: translateY(-3px); }
+}
 @keyframes ct-turn-banner {
   0% { opacity: 0; transform: translateY(7px) scale(.97); }
   16.67% { opacity: 1; transform: translateY(0) scale(1); }

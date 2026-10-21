@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.41.0';
+const APP_VERSION = '0.42.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -473,6 +473,12 @@ function hostRecv(msg, from) {
     }
     case 'log': { const e = cleanLog(msg, from); if (e) broadcast({ t: 'log', e }); break; }
     case 'chat': { const e = cleanChatMessage(msg, from); if (e) broadcast({ t: 'chat', e }); break; }
+    case 'response': {
+      const T = S.table;
+      if (!T.started || !T.seats.includes(from) || T.out[from] || msg.deal !== T.openingDeal) return;
+      broadcast({ t: 'response', pid: from, name: pname(from), deal: T.openingDeal, id: uid() + '_' + (++responseSerial) });
+      break;
+    }
     case 'arrows': {
       if (!S.table.seats.includes(from)) return;
       let arrows = CTTargeting.cleanList(S.targetArrows, S.players, S.table.seats);
@@ -964,6 +970,7 @@ function showFirstRoll(msg) {
 function onBroadcast(msg) {
   if (handleClientModeration(msg)) return;
   switch (msg.t) {
+    case 'response': showResponseNotice(msg); return; // transient; no save, log or Undo entry
     case 'pub': if (msg.p && msg.p.pid) { S.players[msg.p.pid] = msg.p; if (msg.p.pid !== S.pid) checkOrphans(); } break;
     case 'log': S.log.push(msg.e); if (S.log.length > 300) S.log.splice(0, S.log.length - 300); break;
     case 'chat': {
@@ -1106,6 +1113,44 @@ function applyPlayerRequest(req, from) {
 // Transient shared turn cue: seed snapshots/resumes so rejoining never replays the current turn.
 let turnNoticeInitialized = false, lastTurnNoticeKey = null, activeTurnNotice = null;
 let turnNoticeTimer = null, turnNoticeToken = 0;
+let responseTimer = null, responseSerial = 0;
+const seenResponses = new Set();
+function clearResponseNotice() {
+  clearTimeout(responseTimer); responseTimer = null;
+  const slot = $('#responseNotice');
+  if (slot) slot.replaceChildren();
+  seenResponses.clear();
+}
+function sendResponse() {
+  const T = S.table;
+  if (boardTransferLock || !S.me || !T || !T.started || !T.seats.includes(S.pid) || T.out[S.pid]) return;
+  if (S.role !== 'solo' && S.net.state !== 'online') {
+    UI.toast('Reconnect before calling a response.', { kind: 'warn' }); return;
+  }
+  toHost({ t: 'response', deal: T.openingDeal });
+}
+function showResponseNotice(msg) {
+  const T = S.table, slot = $('#responseNotice');
+  if (!slot || !S.me || !T || !T.started || !T.seats.includes(msg.pid) || T.out[msg.pid]
+    || msg.deal !== T.openingDeal || typeof msg.id !== 'string' || msg.id.length > 60 || seenResponses.has(msg.id)) return;
+  seenResponses.add(msg.id);
+  if (seenResponses.size > 64) seenResponses.delete(seenResponses.values().next().value);
+  const cue = document.createElement('div');
+  cue.className = 'ct-turn-notice ct-response-notice';
+  cue.dataset.responseId = msg.id;
+  const title = document.createElement('strong'); title.textContent = 'IN RESPONSE!';
+  const name = document.createElement('span'); name.className = 'ct-response-name';
+  name.textContent = String(msg.name || pname(msg.pid)).slice(0, 40);
+  cue.append(title, name);
+  // Replace the transient cue so every distinct press restarts its animation,
+  // even while the previous response is still visible.
+  clearTimeout(responseTimer);
+  slot.replaceChildren(cue);
+  responseTimer = setTimeout(() => {
+    if (slot.firstElementChild !== cue) return;
+    slot.replaceChildren(); responseTimer = null;
+  }, 1800);
+}
 function turnKey(t) {
   return t && t.started && t.active ? String(t.room || '') + '|' + Math.max(1, num(t.turnSeq, num(t.turn))) + '|' + String(t.active) : null;
 }
@@ -1116,6 +1161,7 @@ function cancelTurnNotice() {
   activeTurnNotice = null;
 }
 function seedTurnNotice(t) {
+  clearResponseNotice();
   cancelTurnNotice();
   turnNoticeInitialized = true;
   lastTurnNoticeKey = turnKey(t);
@@ -1187,6 +1233,7 @@ function afterTable() {
   recordPhaseCheckpoint();
 }
 function resetForNewGame() {
+  clearResponseNotice();
   S.targetArrows = []; S.arrowControlsDismissed = false; endTargeting();
   if (S.me && S.table && S.table.openingDeal && S.me.openingDeal === S.table.openingDeal) return;
   const deck = Deck.get(S.deckId);
@@ -1198,6 +1245,7 @@ function resetForNewGame() {
 }
 function reconcileOpeningDeal(table) {
   if (!S.me || !table || !table.openingDeal || S.me.openingDeal === table.openingDeal) return;
+  clearResponseNotice();
   const deck = Deck.get(S.deckId);
   if (!deck) return;
   S.me = newPlayer(deck, S.me.name, S.me, table.openingMode, table.openingDeal);
@@ -2790,6 +2838,7 @@ function showColorPicker(message) {
   colorModal.el.querySelector('[data-a="cancel-color-flow"]').addEventListener('click', cancelColorFlow);
 }
 function cancelColorFlow() {
+  clearResponseNotice();
   if (!S.colorFlow) return;
   closeColorModal(); S.colorFlow = false; S.colorRequestPending = false;
   try { Net.stop(); } catch (e) { /* ignore */ }
@@ -2925,6 +2974,7 @@ function showHotkeyList() {
       ['X', 'Mill the top card into your Graveyard']
     ] },
     { title: 'General', rows: [
+      ['R', 'In response! — alert everyone; press again to repeat'],
       ['D', 'Draw one card'], ['U', 'Untap all'], ['L', 'Open Search Library from anywhere'], ['T (empty battlefield)', 'Open the Token menu'],
       ['Space', 'Pass the turn'], ['Ctrl+Z / ⌘Z', 'Undo'], ['Hold V', 'Use the magnifier']
     ] }
@@ -3377,6 +3427,9 @@ function cardFace(c, defs, pid = S.pid) {
 
 function renderTop() {
   const T = S.table;
+  const responseBtn = $('#responseBtn');
+  if (responseBtn) responseBtn.disabled = !T || !T.started || !T.seats.includes(S.pid) || !!T.out[S.pid]
+    || boardTransferLock || (S.role !== 'solo' && S.net.state !== 'online');
   $('#roomBtn').textContent = S.role === 'solo' ? 'SOLO' : (S.room || '');
   $('#roomBtn').disabled = S.role === 'solo';
   const pill = $('#netPill');
@@ -4813,6 +4866,7 @@ function onButton(a, btn, e) {
     case 'phase': toHost({ t: 'op', op: { k: 'phase', v: num(btn.dataset.i) } }); break;
     case 'dice': diceMenu(r.left, r.bottom + 4); break;
     case 'undo': undo(); break;
+    case 'response': sendResponse(); break;
     case 'undohistory': undoHistoryMenu(btn); break;
     case 'menu': mainMenu(r.right - 240, r.bottom + 4); break;
     case 'openingrule': openingRulesMenu(btn); break;
@@ -4948,6 +5002,7 @@ function onKey(e) {
     e.preventDefault(); allCounters(h.iid, { Digit1: 'inc', Digit2: 'double', Digit3: 'dec' }[e.code]); return;
   }
   const k = e.key.toLowerCase();
+  if (k === 'r') { if (!e.repeat) { e.preventDefault(); sendResponse(); } return; }
   if (k === 't' && ownEmptyBattlefieldHovered()) {
     e.preventDefault();
     tokensMenu(pvMouse.x, pvMouse.y);
@@ -5410,6 +5465,7 @@ function leaveGame() {
 // =====================================================================
 let selDeck = null;
 function showLobby() {
+  clearResponseNotice();
   S.targetArrows = []; S.arrowControlsDismissed = false; endTargeting();
   $('#game').classList.add('hidden'); $('#lobby').classList.remove('hidden');
   refreshTouchOrientationHint();
