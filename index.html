@@ -81,6 +81,12 @@
     <section class="box">
       <h2><span class="step">3</span> Play</h2>
       <div class="row wrap">
+        <label class="muted small" for="hostMulligan">Host opening hands</label>
+        <select id="hostMulligan" aria-label="Opening-hand rule">
+          <option value="london">London — 7, first free</option>
+          <option value="three-lands">At least 3 lands</option>
+          <option value="ten-bottom-three">Draw 10, bottom 3</option>
+        </select>
         <button id="hostBtn" class="primary">Host a game</button>
         <span class="or">or join:</span>
         <input id="joinIn" placeholder="ROOM CODE" maxlength="5" autocomplete="off" class="code">
@@ -175,6 +181,7 @@
 <script src="js/targeting.js?v=0.36.0"></script>
 <script src="js/chat-panel.js?v=0.36.0"></script>
 <script src="js/player-colors.js?v=0.36.0"></script>
+<script src="js/mulligan.js?v=0.36.0"></script>
 <script src="js/app.js?v=0.36.0"></script>
 <script src="js/updates.js?v=0.36.0"></script>
 <script src="js/lens.js?v=0.36.0"></script>

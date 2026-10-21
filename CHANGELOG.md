@@ -6,10 +6,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.35.0] - 2026-10-21
+
+### Added
+- Let the host choose London, **At least 3 lands**, or **Draw 10, bottom 3** opening hands before hosting. London keeps its seven-attempt limit and first free mulligan. The alternate rules allow one mulligan by default; before a player keeps, the host can grant that player another attempt. The host's rule carries through new games and reconnects, and can be changed with a confirmed redeal. Land selection uses front-face Land types and handles decks that cannot meet the three-land target.
+
+- Add optional `room-vault-v1` support to the Cloudflare relay for host-authenticated private board backups, with 24-hour expiry and stale-save protection. Existing clients remain compatible; player-facing recovery is still a separate test proposal.
+
 ## [0.36.0] - 2026-10-21
 
 ### Added
-- Choose a unique player color from the table menu. Each seated player gets an available default; red is one of the choices. Colors remain with each seat through reloads and new games, and become available again when a player is removed.
+- Choose a unique player color immediately after hosting or joining a room. The picker labels available and taken colors, including red; the host locks your choice to your seat. Colors persist through reconnects and new games, and a removed player's color becomes available again.
 
 ## [0.33.1] - 2026-10-21
 
@@ -37,7 +44,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
 [Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.36.0...HEAD
-[0.36.0]: https://github.com/ccall1212/commander-table/compare/v0.33.1...v0.36.0
+[0.36.0]: https://github.com/ccall1212/commander-table/compare/v0.35.0...v0.36.0
+[0.35.0]: https://github.com/ccall1212/commander-table/compare/v0.33.1...v0.35.0
 [0.33.1]: https://github.com/ccall1212/commander-table/compare/v0.33.0...v0.33.1
 [0.33.0]: https://github.com/ccall1212/commander-table/compare/v0.30.0...v0.33.0
 [0.30.0]: https://github.com/ccall1212/commander-table/compare/v0.29.0...v0.30.0

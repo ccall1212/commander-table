@@ -15,13 +15,13 @@
   function cleanSeats(seats) {
     return Array.isArray(seats) ? [...new Set(seats.filter(p => typeof p === 'string' && p).map(p => p.slice(0, 40)))].slice(0, 8) : [];
   }
-  function normalize(seats, colors) {
+  function normalize(seats, colors, fillMissing = true) {
     const ids = cleanSeats(seats), source = colors && typeof colors === 'object' && !Array.isArray(colors) ? colors : {};
     const result = {}, used = new Set();
     for (const pid of ids) {
       const saved = source[pid];
       if (byId.has(saved) && !used.has(saved)) { result[pid] = saved; used.add(saved); }
-      else {
+      else if (fillMissing) {
         const next = PALETTE.find(c => !used.has(c.id));
         if (next) { result[pid] = next.id; used.add(next.id); }
       }
@@ -30,9 +30,10 @@
   }
   // Returns an updated map, or null when the authoritative host must reject the claim.
   function claim(seats, colors, pid, colorId) {
-    const ids = cleanSeats(seats), map = normalize(ids, colors);
+    const ids = cleanSeats(seats), map = normalize(ids, colors, false);
     if (!ids.includes(pid) || !byId.has(colorId)) return null;
     if (Object.keys(map).some(other => other !== pid && map[other] === colorId)) return null;
+    if (map[pid] && map[pid] !== colorId) return null;
     map[pid] = colorId;
     return map;
   }

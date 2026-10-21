@@ -160,7 +160,7 @@ Dropped connections and crashed tabs happen, and recovering from them is the mai
 - Counters stack down the top-right corner of a card; the P/T badge stays in the bottom-right corner. On both, **left-click goes up, right-click goes down**.
 - Cards in your hand show their mana cost along the top edge; your hand count shows above your hand and every opponent's hand count is in their header.
 - Your hand size is set in ☰ → **Display settings…** (see **Display settings** above).
-- In a shared game, open ☰ → **Choose player color…** to choose an available color. Each seated player has a different color; the menu marks colors as current, available or taken. Your current color also appears in the menu label, and stays with your seat when you reconnect or start a new game.
+- After you host or join a shared game, choose an available color in the picker before entering the table. Each player has a different color; taken colors show who chose them. Your choice stays with your seat when you reconnect or start a new game.
 
 **Counters, power/toughness & card info**
 
@@ -247,7 +247,7 @@ For a hovered card, **+ / =** adds a +1/+1 counter and **− / _** adds a −1/�
 - **Auto-untap and Auto-Draw** at the start of your turn are toggled with switches (green = on): Auto-untap is the switch next to **Untap All** in the top bar, and **Auto-Draw** is labeled clearly beside it. They're also still in the ☰ menu. Both start off in every game. In 1v1, the first player skips the first draw.
 - A **Pass turn** button in the top bar, next to **Round N**. The round goes up only after every player has had a turn. It's safe to click: if two players press it at the same moment, only one pass counts.
 - **Start game / turn order:** pressing **Start game** automatically rolls a d20 for every seated player. Everyone sees the animated results, ties re-roll automatically, and the highest roll goes first. 🎲 **Dice** remains available for other dice, a coin flip, and a random player picker.
-- London mulligan, with the first mulligan free.
+- **Opening hands:** the host chooses the rule in the lobby before hosting. London is the default: draw 7, with the first mulligan free and one fewer card kept for each later mulligan; it allows at most 7 mulligans. **At least 3 lands** deals three random front-face Land cards plus four random cards from the remaining deck; each mulligan gets a fresh hand, with no bottoming. If the deck has fewer than 3 lands, it deals as many as it can and fills the rest randomly. **Draw 10, bottom 3** deals up to 10 cards each time and asks you to put up to 3 on the bottom while keeping at least one. Both alternate rules allow one mulligan by default. Before a player keeps, the host can right-click their name and choose **Grant another mulligan**; each grant adds one attempt for that player. Double-faced cards count as lands only when their front face is a Land. The host can change the rule before the game starts after confirming a full redeal for everyone.
 - A game log where card names show the card when you hover over them.
 - **Undo** for your own actions.
 
