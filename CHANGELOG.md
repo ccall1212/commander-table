@@ -6,6 +6,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.34.0] - 2026-10-21
+
+### Added
+- The host can grant/revoke moderator permissions. Moderators can restore conceded players, kick a seat, or force a non-host board handoff into an empty replacement seat, including its private hand/library and saved deck. Disconnected board recovery requires the saved session in the recipient’s browser. Handoffs preserve the recipient’s previous board locally and clear undo/arrow history at the transfer boundary.
+
+### Fixed
+- Dismissing the resume reminder keeps the saved session. Joining a room with a local saved seat offers to resume it; duplicate player names are rejected instead of creating a second seat. Closing an active online tab asks for browser confirmation.
+
 ## [0.33.1] - 2026-10-21
 
 ### Fixed
@@ -31,7 +39,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.33.1...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.34.0...HEAD
+[0.34.0]: https://github.com/ccall1212/commander-table/compare/v0.33.1...v0.34.0
 [0.33.1]: https://github.com/ccall1212/commander-table/compare/v0.33.0...v0.33.1
 [0.33.0]: https://github.com/ccall1212/commander-table/compare/v0.30.0...v0.33.0
 [0.30.0]: https://github.com/ccall1212/commander-table/compare/v0.29.0...v0.30.0
