@@ -151,6 +151,50 @@ const deck = { id: 'response-deck', name: 'Response test deck', commanders: [com
         `menu opens within viewport: ${JSON.stringify(menuRect)}`);
       await guest.keyboard.press('Escape');
     }
+
+    // Exercise the actual focused-opponent board in both layouts and viewport sizes.
+    // Clicking the opponent tile here is important: changing the layout alone leaves
+    // the viewer on their own board and does not cover #40's reported state.
+    for (const size of [{ width: 1920, height: 1080 }, { width: 1366, height: 768 }]) {
+      await guest.setViewportSize(size);
+      for (const mode of ['side', 'grid']) {
+        await guest.locator(`[data-a="view"][data-v="${mode}"]`).click();
+        await guest.locator(`#opps .opp[data-opp="${hostPid}"]`).click();
+        assert.deepEqual(await guest.evaluate(() => ({ focus: CT.S.focus, pid: CT.S.pid })),
+          { focus: hostPid, pid: guestPid }, `guest is viewing host's actual focused board in ${mode} at ${size.width}x${size.height}`);
+
+        const buttonRect = await guest.locator('#responseBtn').evaluate(el => {
+          const r = el.getBoundingClientRect();
+          return { x: r.x, y: r.y, right: r.right, bottom: r.bottom, w: innerWidth, h: innerHeight, disabled: el.disabled };
+        });
+        assert.equal(buttonRect.disabled, false, 'response button remains enabled while viewing the opponent');
+        assert.ok(buttonRect.x >= 0 && buttonRect.y >= 0 && buttonRect.right <= buttonRect.w && buttonRect.bottom <= buttonRect.h,
+          `response button is reachable while viewing the opponent: ${JSON.stringify(buttonRect)}`);
+
+        for (const method of ['button', 'r key']) {
+          const oldId = await getId(guest);
+          hostBefore = await captureState(host); guestBefore = await captureState(guest);
+          if (method === 'button') await guest.locator('#responseBtn').click();
+          else {
+            await guest.evaluate(() => { document.activeElement?.blur(); document.body.tabIndex = -1; document.body.focus(); });
+            await guest.keyboard.press('r');
+          }
+          await guest.waitForFunction(id => document.querySelector('#responseNotice .ct-response-notice')?.dataset.responseId !== id, oldId);
+          const id = await getId(guest);
+          assert.notEqual(id, oldId, `${method} creates a fresh cue while focused on the opponent`);
+          await checkCue(guest, guestPid, 'Response guest', id);
+          await checkCue(host, guestPid, 'Response guest', id);
+          await assertNoMutation(host, hostBefore); await assertNoMutation(guest, guestBefore);
+          await guest.waitForTimeout(250);
+          assert.equal(await guest.evaluate(() => CT.S.focus), hostPid, `cue leaves focused board intact (${mode}, ${method})`);
+        }
+
+        // Return with the layout's rendered control, then confirm focus is local again.
+        if (mode === 'grid') await guest.locator('#opps [data-a="viewme"]').click();
+        else await guest.locator('#opps .opp.youtile').click();
+        await guest.waitForFunction(() => CT.S.focus == null);
+      }
+    }
     await guest.waitForFunction(() => !document.querySelector('#responseNotice').firstElementChild, { timeout: 5000 });
 
     // Editable focus, chat and dialogs suppress R; Ctrl+R remains available to the browser.
@@ -186,7 +230,7 @@ const deck = { id: 'response-deck', name: 'Response test deck', commanders: [com
 
     // Deliberate local transport shutdown confirms the disconnected UI disables the cue.
     await host.evaluate(() => Net.stop());
-    await guest.waitForFunction(() => CT.S.net.state !== 'online');
+    await guest.waitForFunction(() => CT.S.net.state !== 'online' && document.querySelector('#responseBtn')?.disabled);
     assert.equal(await guest.locator('#responseBtn').isDisabled(), true);
     const priorHost = await getId(host);
     await guest.keyboard.press('r');
