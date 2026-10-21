@@ -29,3 +29,5 @@ Use host, delegate, owner and replacement players. Check Sidebar and Grid at 192
 - Managed Chromium blocks `file://`; assistant tests used HTTP. Chris's extract/open and real-device checks remain pending. GPT-6 Luna performed bounded investigation/review/server tests; primary implemented and browser-tested.
 
 Includes published chat/arrows and v0.35.0 mulligans. Independent color, Deck Builder checks and Collection backup proposals are not bundled. PR #11 remains paused. Publication is not approved.
+
+Additional release regression: the published frontend’s live-relay harness cases 1–10 passed (two/four players, wrong/late room, guest/host reload, takeover, large snapshots, duplicate suppression and stale offline actions). The turn-order case exposed an old test expectation: Start intentionally rolls its own d20 order, as before this release. The corrected fixture in this proposal passes turn-order, duplicate-pass and table-sync checks. PeerJS host-registration diagnostics/fallback cases 12–13 timed out in this environment; those checks did not pass.
