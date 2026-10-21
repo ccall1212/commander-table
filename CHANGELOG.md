@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.39.0] - 2026-10-21
+
+### Added
+- Back up and restore saved decks, chosen printings, linked tokens, appearance and display preferences in one file. Preview restores, keep existing decks, skip exact matches, and add changed versions as restored copies. Preference restore is optional and includes the floating chat panel’s position, transparent/fade mode and size, plus the host’s selected opening-hand rule. Active games, room and seat assignments, seat keys and network identities stay out of the backup.
+
 ## [0.38.0] - 2026-10-21
 
 ### Added
@@ -56,7 +61,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.38.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.39.0...HEAD
+[0.39.0]: https://github.com/ccall1212/commander-table/compare/v0.38.0...v0.39.0
 [0.38.0]: https://github.com/ccall1212/commander-table/compare/v0.37.0...v0.38.0
 [0.37.0]: https://github.com/ccall1212/commander-table/compare/v0.36.0...v0.37.0
 [0.36.0]: https://github.com/ccall1212/commander-table/compare/v0.35.0...v0.36.0

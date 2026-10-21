@@ -1,20 +1,32 @@
-# Deck Builder checks — v0.38.0 test copy
+# Collection backup and restore — PR #49, v0.39.0 test copy
 
-Extract the ZIP and double-click **index.html**, with internet access for card images and online features. No terminal or installation is needed. This refresh carries forward the published moderation and recovery work, private room backups, entry colors, mulligan rules, room chat, and targeting arrows.
+Extract the ZIP and double-click **index.html**. Keep internet access on for card images and online play. No terminal or installation is needed.
 
 ## Chris's testing and approval
 
-Tested by Chris: he reports that he tested both previously supplied ZIPs (#29 Deck Builder checks at 7003363 and #30 collection backup at 9a60d15), then explicitly requested updating them and publishing. Assistant checks below cover the refreshed Deck Builder integration. His message did not specify device, browser, or individual click coverage.
+Tested by Chris: he has just tested the previously shared Deck Builder checks and collection backup ZIPs. He directed that both be refreshed onto the published releases, then pushed and merged. The #30 ZIP he tested was the earlier branch head `9a60d15`; it did not contain the refreshed #29 integration or the preference additions below. He explicitly approved refreshing and publishing both features; his original-ZIP testing and the assistant’s refreshed-integration checks are recorded separately here.
 
 ## Click list
 
-1. Open a saved deck in **Deck Builder**. Check the displayed total includes commander(s); remove a commander and set a Commander candidate to confirm the count and missing-commander note update.
-2. With partner commanders, verify a card matching either identity is accepted. Add a card outside the combined identity and confirm it appears in **Review notes**.
-3. Add a duplicate nonbasic card and confirm likely duplicates are noted. Basic lands, Seven Dwarves (up to seven), and Rat Colony (any number) should be treated as common printed exceptions.
-4. Expand/collapse **Review notes**, dismiss the summary with **×**, remove a card, close and reopen Deck Builder. Editing should update the count and notes; reopening should restore the summary.
+1. In one browser, save two decks and change a card printing. Select a card back/background, enter a saved name, set a host opening-hand rule, and in a game pop chat out, enable Transparent, move it and resize it.
+2. On the opening screen choose **Back up / restore… → Download backup**. Keep the downloaded JSON file.
+3. In a separate browser with an existing deck and different saved preferences, select the backup. Review the preview; leave the preference checkbox off and restore. The imported deck and printing should appear, the existing deck should stay, and the destination's preferences should remain unchanged.
+4. Select the same backup again, check **Also restore saved preferences and appearance**, and restore. Verify the name, appearance, display settings, host opening-hand choice, and floating chat position, transparency/fade behavior, width and height match the source browser.
+5. Change a restored deck and select the original backup again. Preview should offer a “(restored)” copy while keeping both the original local deck and other decks. Exact matches should be skipped.
+6. Select a plain `.txt` decklist or invalid JSON; an error should appear and Restore should stay disabled. Close a valid preview without restoring and confirm nothing changed.
+7. At 1920×1080 and 1366×768, start a normal host game after restoring preferences. The usual player-color chooser should still appear. Choose a color, open chat and check that its saved size fits; resize the viewport and confirm the panel stays on-screen.
 
-## Assistant-run checks
+Active games, room and seat assignments, seat keys, recovery records, and network identities are excluded. Preference restore is optional. Existing decks are never replaced: matching decks are skipped and changed versions are added as copies. Collection backups must be version 1 and no larger than 20 MB.
 
-- Actual Chromium (`/usr/bin/chromium`) over local HTTP at port 8108 passed `tests/test_deck_editor_browser.cjs`: commander-inclusive counts; partner color identity; out-of-identity warnings changing after a commander edit; duplicate grouping and printed exceptions; dismissal, card removal and reopening; 1920×1080 and 1366×768; no page errors.
-- `tests/test_deck_health.cjs` and the available moderation, mulligan, color, chat, targeting, power/toughness and token suites passed. JavaScript syntax, version metadata and all local asset cache versions passed.
-- The existing recovery browser suite and room-vault integration test were not rerun for this focused Deck Builder refresh. Recovery and relay code are unchanged by this feature. Their existing main-branch coverage and previously recorded results remain unchanged; Chris's ZIP testing is reported separately above.
+## Assistant checks
+
+- `node tests/test_backup.cjs`: 12 checks passed, including round-trip and invalid-value coverage for chat-panel position, transparency/fade mode and size, plus the host opening-hand selection. The key whitelist excludes session, recovery and identity data.
+- `node tests/test_chat_panel.cjs`: chat-panel normalization and viewport geometry checks passed.
+- `node tests/test_deck_health.cjs`: 9 checks passed for the published Deck Builder review notes.
+- Actual Chromium Deck Builder regression passed at 1920×1080 and 1366×768: partner-color union, off-color warning, commander-inclusive total, duplicate grouping and printed exceptions, dismiss/edit/reopen updates; no page errors.
+- Actual Chromium over HTTP on port 8109 downloaded a backup in one browser context and restored it in another at 1366×768, with preferences off and on. It confirmed that destination preferences and the existing deck remain intact when preferences are off, then restored the source preferences, chat-panel settings and opening-hand rule when selected. After restore, the normal host color chooser appeared; chat rendered at its saved dimensions at 1366×768 and 1920×1080. The network start was stubbed for this entry-flow check; no multiplayer session was tested. No page errors were observed.
+- The app's published v0.37.0 recovery, chat, arrows, mulligan and color behavior and v0.38.0 Deck Builder checks were retained during integration. This refresh did not re-run the recovery Worker or multiplayer flows.
+
+The managed browser blocks `file://` navigation; assistant browser checks used localhost HTTP. Chris reported testing the original ZIP through his browser; the refreshed integration checks above used HTTP. No real-device Safari result is claimed.
+
+Primary verification: the existing moderation, mulligan, player-color, power/toughness, targeting and token picker/printing Node suites also passed after integration.
