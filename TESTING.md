@@ -16,7 +16,7 @@ Download the ZIP, extract it, and double-click **index.html**. Keep internet acc
 - After the fix, a three-session Chromium HTTP pass kept four arrows visible through Sidebar focus switches between two opponents and back to your board, checked Grid overview/zoom return and Sidebar/Grid at 1920×1080 and 1366×768, confirmed miniature dragging does not move your real cards, and checked the second player still sees all four arrows. No page errors observed.
 - All five Node suites passed (targeting, chat sizing, P/T, token picker and printings), along with changed JavaScript syntax and diff checks. The targeting regression exercises the real YOU renderer and anchor resolver, including a hidden main board, largest-visible-copy selection, and the own-player miniature marker. A bounded GPT-6 Luna investigation and test contribution were used.
 - Source fix gives the YOU miniature separate drawing identifiers, while keeping gameplay identifiers stripped. No relay messages or card state format changed.
-- Chris supplied two screenshots and reported arrows not continuing when switching views; he has not yet reviewed this fix. Publication is not approved.
+- Chris supplied two screenshots and reported arrows not continuing when switching views; he replied “Perfect” and approved publishing this exact fix on 2026-10-21. PR #53 is merged as v0.33.1.
 - Assistant browser checks use HTTP: managed Chromium blocks `file://` navigation. Extract/open and real-device Safari/touch need appropriate hands-on checks.
 
 Includes the published floating/transparent/resizable chat. Deck Builder checks (#50) and collection backup (#49) remain independent proposals; deck randomizer/import PR #11 remains paused.
