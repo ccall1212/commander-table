@@ -146,7 +146,7 @@
       if (isTokenPart(p) && p.id && tokenIds.indexOf(p.id) === -1) tokenIds.push(p.id);
     });
 
-    return {
+    const def = {
       id: c.id || '',
       name: c.name || '',
       face: (f0 && f0.name) || frontFace(c.name || ''),
@@ -172,14 +172,37 @@
       rarity: c.rarity || '',
       finishes: Array.isArray(c.finishes) ? c.finishes : []
     };
+    // Token print matching needs semantic data that ordinary CardDefs do not use.
+    // Keep these optional so old saved decks and normal card definitions stay stable.
+    if (def.isToken) {
+      const backPick = (k) => f1 && f1[k] != null ? f1[k] : null;
+      def.tokenLayout = c.layout || '';
+      def.tokenColors = Array.isArray(c.colors) ? c.colors.slice() : (f0 && Array.isArray(f0.colors) ? f0.colors.slice() : []);
+      def.tokenOracleId = c.oracle_id || '';
+      def.tokenColorsBack = hasBack && Array.isArray(f1.colors) ? f1.colors.slice() : [];
+      def.tokenOracleBack = hasBack ? (backPick('oracle_text') || '') : '';
+      def.tokenManaBack = hasBack ? (backPick('mana_cost') || '') : '';
+      const bp = backPick('power'), bt = backPick('toughness');
+      def.tokenPtBack = bp != null && bt != null ? bp + '/' + bt : null;
+      def.tokenLoyaltyBack = backPick('loyalty') != null ? String(backPick('loyalty')) : null;
+    }
+    return def;
   }
 
   function slimDef(d) {
-    return {
+    const slim = {
       id: d.id, name: d.name, face: d.face, backName: d.backName,
       type: d.type, backType: d.backType, cmc: d.cmc, pt: d.pt,
       img: d.img, imgBack: d.imgBack, set: d.set, setName: d.setName
     };
+    if (d.isToken || /\b(?:Token|Emblem)\b/i.test(String(d.type || ''))) {
+      ['isToken', 'oracle', 'mana', 'loyalty', 'ci', 'tokenLayout', 'tokenColors',
+        'tokenColorsBack', 'tokenOracleId', 'tokenOracleBack', 'tokenManaBack',
+        'tokenPtBack', 'tokenLoyaltyBack'].forEach(function (key) {
+        if (d[key] != null) slim[key] = Array.isArray(d[key]) ? d[key].slice() : d[key];
+      });
+    }
+    return slim;
   }
 
   /* ------------------------------------------------------------------ *
@@ -526,6 +549,58 @@
     return out;
   }
 
+  function tokenKey(def) {
+    if (!def) return '';
+    const tokenLike = !!def.isToken || /\b(?:Token|Emblem)\b/i.test(String(def.type || ''));
+    if (!tokenLike) return '';
+    // Sparse legacy definitions remain selectable, but can only identify themselves.
+    if (!def.type || typeof def.oracle !== 'string' || !def.tokenLayout ||
+        !Array.isArray(def.tokenColors) || !Array.isArray(def.ci)) return def.id ? 'unknown:' + def.id : '';
+    const faces = [
+      [def.face || frontFace(def.name), def.type, def.oracle, def.mana || '', def.pt || '', def.loyalty || ''],
+      def.backName ? [def.backName, def.backType || '', def.tokenOracleBack || '', def.tokenManaBack || '', def.tokenPtBack || '', def.tokenLoyaltyBack || ''] : null
+    ];
+    const normText = (v) => String(v || '').replace(/\r\n?/g, '\n').replace(/\s+/g, ' ').trim();
+    return JSON.stringify({ faces: faces.map((face) => face && face.map(normText)),
+      colors: def.tokenColors.slice().sort(), backColors: (def.tokenColorsBack || []).slice().sort(),
+      ci: def.ci.slice().sort(), layout: def.tokenLayout, hasBack: !!def.backName });
+  }
+
+  // Find only semantically identical token printings. Fetch the selected object first
+  // so legacy saved tokens get enough metadata to compare safely.
+  async function fetchTokenPrints(def) {
+    if (!def || !def.id) return [];
+    const tokenLike = !!def.isToken || /\b(?:Token|Emblem)\b/i.test(String(def.type || ''));
+    if (!tokenLike) return [];
+    let source = def;
+    if (!tokenKey(source) || tokenKey(source).indexOf('unknown:') === 0) {
+      try { source = await fetchById(def.id); }
+      catch (e) { if (/Card not found/.test(String(e && e.message))) return []; throw e; }
+    }
+    if (!source.isToken && !/\b(?:Token|Emblem)\b/i.test(String(source.type || ''))) return [];
+    const key = tokenKey(source);
+    if (!key) return [];
+    const name = frontFace(source.name || def.name);
+    if (!name) return [];
+    let url = API + '/cards/search?q=' + encodeURIComponent('!"' + name + '"') +
+      '&unique=prints&order=released&dir=desc&include_extras=true&include_variations=true';
+    const seen = new Set(), out = [];
+    while (url) {
+      const r = await request(url);
+      if (r.status === 404) break;
+      if (!r.ok) throw new Error(apiErrorMessage(r));
+      ((r.json && r.json.data) || []).forEach(function (c) {
+        if (['token', 'double_faced_token', 'emblem'].indexOf(c.layout) === -1 || seen.has(c.id)) return;
+        const candidate = toDef(c);
+        if (tokenKey(candidate) !== key) return;
+        seen.add(c.id);
+        out.push(candidate);
+      });
+      url = r.json && r.json.has_more && r.json.next_page ? r.json.next_page : '';
+    }
+    return out;
+  }
+
 
   // Search paper cards by a partial name for the pre-game deck builder.
   async function searchCards(query, limit) {
@@ -737,6 +812,8 @@
     commanderCandidates: commanderCandidates,
     searchTokens: searchTokens,
     fetchPrints: fetchPrints,
+    tokenKey: tokenKey,
+    fetchTokenPrints: fetchTokenPrints,
     searchCards: searchCards,
     fetchCardInfo: fetchCardInfo,
     fetchById: fetchById,
