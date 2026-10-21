@@ -120,7 +120,7 @@ Read this before changing layout or anything that finds elements on the page. Se
 
 ## Open-work summaries for Chris
 
-Whenever Chris asks what remains open, include the latest previously supplied exact-commit ZIP link beside each item that has one. Label each copy clearly: current test copy, older copy needing refresh, or paused/archived draft. Say “no test ZIP yet” for unbuilt items when helpful. Do not omit existing ZIP links merely because the copy is older.
+Whenever Chris asks what remains open, include each item’s original Objective number, its current status, and the latest previously supplied exact-commit ZIP link beside it when one exists. Keep Objective numbers distinct from pull-request numbers (for example Objective #29 is PR #50), and do not renumber the backlog. Label each copy clearly: current test copy, older copy needing refresh, or paused/archived draft. Say “no test ZIP yet” for unbuilt items when helpful. Do not omit existing ZIP links merely because the copy is older.
 
 A new release does not change an existing commit ZIP. Explain when a feature branch predates current main: integrate the relevant published changes, reconcile versions, run appropriate checks and generate/verify a fresh exact-head ZIP before presenting it as current. The feature does not need rebuilding from scratch. Keep old links identified as historical; never describe them as containing newer releases. Listing a paused draft ZIP does not authorize resuming its implementation or deploying its service.
 

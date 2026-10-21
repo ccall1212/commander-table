@@ -21,13 +21,13 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 
 ## Existing test ZIPs for open work
 
-Include these beside their items whenever Chris asks for an open-work summary. The two active proposals predate the latest release and need current main integrated/retested before refreshed ZIPs are offered. Existing commit ZIPs remain unchanged.
+Include Objective numbers, statuses and these ZIP links whenever Chris asks for an open-work summary; Objective numbers are different from PR numbers. The two active proposals predate the latest release and need current main integrated/retested before refreshed ZIPs are offered. Existing commit ZIPs remain unchanged.
 
-| Open item | Previously supplied ZIP | Status |
-|---|---|---|
-| Deck Builder checks (#50) | [Download ZIP](https://github.com/ccall1212/commander-table/archive/70033631034ebe691a0923c470aef0b01b53bdec.zip) | Older independent copy; needs refresh; Chris has not tested |
-| Collection backup/restore (#49) | [Download ZIP](https://github.com/ccall1212/commander-table/archive/9a60d15eb65b4c2c9ca28e863a14cb1cc9346dae.zip) | Older independent copy; needs refresh; Chris has not tested |
-| Random deck/website import (#11) | [Archived draft ZIP](https://github.com/ccall1212/commander-table/archive/a415ef5a9d13531a9c6b5877ab40adf84388c6dc.zip) | Paused; its separate test service is not deployed; do not resume |
+| Objective | Open item | Previously supplied ZIP | Status |
+|---|---|---|---|
+| #29 | Deck Builder checks (PR #50) | [Download ZIP](https://github.com/ccall1212/commander-table/archive/70033631034ebe691a0923c470aef0b01b53bdec.zip) | Older independent copy; needs refresh; Chris has not tested |
+| #30 | Collection backup/restore (PR #49) | [Download ZIP](https://github.com/ccall1212/commander-table/archive/9a60d15eb65b4c2c9ca28e863a14cb1cc9346dae.zip) | Older independent copy; needs refresh; Chris has not tested |
+| #9 | Random deck/website import (PR #11) | [Archived draft ZIP](https://github.com/ccall1212/commander-table/archive/a415ef5a9d13531a9c6b5877ab40adf84388c6dc.zip) | Paused; its separate test service is not deployed; do not resume |
 
 Other queued items have no separate feature test ZIP yet. Touch support’s existing shipped behavior is in the normal game; its remaining real-device testing/refinements have no new test copy.
 
