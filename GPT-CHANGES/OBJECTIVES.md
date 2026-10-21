@@ -43,3 +43,17 @@ Add an optional **Touch mode** for iPad Safari, launched from the top-right hamb
 - In Touch mode, lock page gestures on the hand row and draggable board surfaces so a bottom-edge hand drag stays on the table. Use the live visual viewport height and safe-area insets, while leaving internal menu, log and dialog scrolling enabled.
 - Fit the game to the dynamic mobile viewport height. On narrow phones in portrait, show a dismissible landscape recommendation rather than trying to force orientation lock (ordinary mobile Safari pages cannot reliably force it).
 - Test in real iPhone/iPad Safari in portrait and landscape, including enabling/disabling Touch mode, host and joiner sessions, card inspection, card actions, dragging from the bottom edge of the hand, intentional group selection/movement, internal dialog scrolling, menu dismissal, and both Sidebar and Grid layouts. Desktop emulation alone is not sufficient for marking this complete.
+
+## 28. Create several linked tokens — IN PROGRESS (PR #51; v0.30.0 test copy)
+
+Chris selected this suggestion on 2026-10-21. [PR #51](https://github.com/ccall1212/commander-table/pull/51), branch `feat/linked-token-quantity`, adds quantity choices to linked-token menus, card related-token actions, and token suggestions while keeping create-one. Whole numbers 1–60 only; a batch undoes as one action. Automated checks and actual Chromium HTTP checks passed, including two-player token visibility. Extract/open and Chris's hands-on testing are pending. The PR links the exact-commit test ZIP and click list. Publication is not approved.
+
+## 29. Optional Deck Builder checks — IN PROGRESS (PR #50; v0.31.0 test copy)
+
+Chris selected this suggestion on 2026-10-21. [PR #50](https://github.com/ccall1212/commander-table/pull/50), branch `feat/deck-builder-checks`, adds a live, dismissible count and advisory notes for missing commander, combined color identity and likely singleton duplicates, including common printed exceptions. It does not enforce legality or house rules. Automated and actual Chromium HTTP checks passed at 1920×1080 and 1366×768. Extract/open and Chris's hands-on testing are pending. The PR links the exact-commit test ZIP and click list. Publication is not approved.
+
+## 30. Collection backup and restore — IN PROGRESS (PR #49; v0.32.0 test copy)
+
+Chris selected this suggestion on 2026-10-21. [PR #49](https://github.com/ccall1212/commander-table/pull/49), branch `feat/collection-backup`, exports all saved decks, printings, linked tokens, appearance/uploads, saved name and preferences. Restore previews additions/skips, preserves existing decks, adds conflicting versions as copies, and restores preferences only when selected. Active sessions and connection identities are excluded. Nine automated checks and actual Chromium HTTP download/restore tests across separate contexts passed. Extract/open and Chris's hands-on testing are pending. The PR links the exact-commit test ZIP and click list. Publication is not approved.
+
+These three test branches were prepared independently from `main`, so each ZIP contains its named feature rather than all three. Reconcile release metadata and preserve previously accepted features when integrating them. Managed Chromium blocks `file://` navigation (`ERR_BLOCKED_BY_ADMINISTRATOR`); assistant browser checks used localhost HTTP, not Chris's extract-and-double-click flow. Draft PR #11 remains paused.
