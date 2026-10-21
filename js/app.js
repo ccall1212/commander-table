@@ -2548,7 +2548,7 @@ function showColorPicker(message) {
   }).join('') : '';
   colorModal = UI.modal({
     title: 'Choose your player color', className: 'ct-player-color-dialog',
-    html: `<p class="ct-player-color-intro">Each player has a different color. Your choice is saved to this room.</p><p class="ct-player-color-status" role="status">${esc(status)}</p><div class="ct-player-color-options">${options}</div>`,
+    html: `<p class="ct-player-color-intro">Each player has a different color. Your choice is saved to this room.</p><p class="ct-player-color-status" role="status">${esc(status)}</p><div class="ct-player-color-options">${options}</div><div class="ct-player-color-actions"><button type="button" data-a="cancel-color-flow">Cancel and return to lobby</button></div>`,
     onEscape: () => true
   });
   const backdrop = colorModal.dialog.parentElement;
@@ -2565,6 +2565,16 @@ function showColorPicker(message) {
       toHost({ t: 'op', op: { k: 'color', color } });
     }
   }));
+  colorModal.el.querySelector('[data-a="cancel-color-flow"]').addEventListener('click', cancelColorFlow);
+}
+function cancelColorFlow() {
+  if (!S.colorFlow) return;
+  closeColorModal(); S.colorFlow = false; S.colorRequestPending = false;
+  try { Net.stop(); } catch (e) { /* ignore */ }
+  LS.del('ct.sess.' + S.pid); LS.del('ct.last');
+  S.role = 'solo'; S.room = ''; S.me = null; S.table = null; S.players = {}; S.log = []; S.undo = []; S.online = {};
+  S.targetArrows = []; S.arrowControlsDismissed = false; endTargeting();
+  showLobby();
 }
 function syncColorFlow() {
   if (ownColorLocked()) {
