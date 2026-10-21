@@ -2,7 +2,12 @@
 
 ## Linked token quantities
 
-Assistant code checks only; human browser testing has not been done yet.
+Assistant Playwright browser checks were run against a local HTTP copy using Chromium and seeded deck fixtures. Human browser testing has not been done yet.
+
+- From the Tokens menu, created 3 linked tokens and undid them with one Undo action. Quantity entries `0`, `61`, and `2.5` left the prompt open and created nothing; Cancel closed the prompt without changing state. The original direct linked-token choice still created one.
+- Played a card linked to two tokens. The suggestion chooser created one token and several tokens; the card's **Create related token** menu also created one and several.
+- Started a host and joined from a second browser context; both showed **Connected**. At 1920×1080 and 1366×768, clicked Sidebar and Grid and confirmed each selected view. With the host at 1366×768 in Grid, created 3 linked tokens and confirmed the joiner received all 3 on the host's public battlefield view.
+- No browser page errors or console errors were observed in these runs. Direct `file://` navigation was blocked by the managed browser with `net::ERR_BLOCKED_BY_ADMINISTRATOR`; therefore the normal extract-and-open flow remains unverified. The successful browser runs used `http://127.0.0.1`.
 
 1. Extract the test copy and double-click **index.html**. Start a two-player game and keep the second player open to check that token creation remains local to the player who created the tokens.
 2. At both 1920×1080 and 1366×768, test **Sidebar** and **Grid**. Open ☰ → **Tokens**, open a linked token, create 1 and several, then try 0, 61 and a decimal. Invalid entries should keep the prompt open; Cancel should create nothing.
