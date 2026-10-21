@@ -51,3 +51,11 @@ Chris asked on 2026-10-21 whether Undo affects the latest action anywhere, and s
 ## 37. Opening-hand readiness and no pre-game battlefield moves — QUEUED
 
 Chris requested this as a separate later objective on 2026-10-21, after approving mulligans. The game must not start until every seated player has completed the opening-hand decision (Keep or the mulligan process), with clear feedback about who is still choosing. Cards must not be movable onto the battlefield before the game starts. When implemented, cover drag/drop, card menus, keyboard shortcuts and incoming requests, alongside the host’s Start validation; retain the published mulligan rules, including Draw 10’s bottom-three completion. This is not implemented by the published mulligan release.
+
+## 38. Move collection backup/restore into Deck Builder — QUEUED
+
+Chris requested this for later on 2026-10-21 after Objectives #29 and #30 were published. Move the existing **Back up / restore…** entry from the main start area into the area opened by the **Deck Builder** button, reducing start-screen clutter. Keep both backup export and restore available there and preserve their published behavior, including optional preferences and appearance. This is a placement follow-up to shipped Objective #30; implementation has not started and no test ZIP exists yet.
+
+## 39. Choose mulligan rules after pressing Host Game — QUEUED
+
+Chris requested this for later on 2026-10-21. Remove the host's mulligan options from the main start area. After the player presses **Host Game**, ask which opening-hand/mulligan rule they want before completing the hosting flow. Include a short description such as **“You can change this after joining the game.”** Preserve the existing in-game host control for changing the rule, the published opening-hand modes and their mulligan limits/host-granted extras. This is a setup-flow follow-up to shipped Objective #34; implementation has not started and no test ZIP exists yet.
