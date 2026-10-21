@@ -19,6 +19,7 @@ const context = vm.createContext({
 });
 context.window = context;
 vm.runInContext(fs.readFileSync(path.join(root, 'js/targeting.js'), 'utf8'), context);
+vm.runInContext(fs.readFileSync(path.join(root, 'js/player-colors.js'), 'utf8'), context);
 // Expose real picker/removal/state helpers to this unit harness; production exports stay unchanged.
 const appSource = fs.readFileSync(path.join(root, 'js/app.js'), 'utf8').replace('window.CT = { S,', 'window.CT = { arrowEndpointAt, arrowAnchor, renderYouTile, handleArrowRemoval, hideTargetingControls, showTargetingControls, snapFor, refreshTargeting, S,');
 vm.runInContext(appSource, context);

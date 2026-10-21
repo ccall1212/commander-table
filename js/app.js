@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.35.0';
+const APP_VERSION = '0.36.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -128,14 +128,22 @@ const S = {
   viewers: new Set(),
   touchMode: !!LS.get('ct.touchMode', false),
   touchPreview: null,
-  targetArrows: [], arrowPick: null, arrowControlsDismissed: false
+  targetArrows: [], arrowPick: null, arrowControlsDismissed: false,
+  colorFlow: false, colorRequestPending: false
 };
 
 const pname = pid => (pid === S.pid && S.me) ? S.me.name : ((S.players[pid] && S.players[pid].name) || 'Someone');
 function colorOf(pid) {
+  const selected = CTPlayerColors.color(S.table && S.table.colors && S.table.colors[pid]);
+  if (selected) return selected.value;
   const seats = (S.table && S.table.seats) || [];
   const i = seats.indexOf(pid);
-  if (i >= 0) return COLORS[i % COLORS.length];
+  if (i >= 0) {
+    const occupied = Object.values((S.table && S.table.colors) || {});
+    const available = CTPlayerColors.PALETTE.find(c => !occupied.includes(c.id));
+    if (available) return available.value;
+    return COLORS[i % COLORS.length];
+  }
   let h = 0; for (const ch of String(pid)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
   return COLORS[h % COLORS.length];
 }
@@ -333,7 +341,7 @@ function sendChat(text) {
 // ----- host side -----
 function newTable(room, openingMode = 'london', openingDeal = uid()) {
   S.chat = []; S.chatOpen = false; S.chatUnread = 0;
-  return { room, seats: [S.pid], order: [], active: null, turn: 0, turnSeq: 0, phase: 3, started: false, monarch: null, initiative: null, out: {},
+  return { room, seats: [S.pid], colorVersion: 1, colors: {}, order: [], active: null, turn: 0, turnSeq: 0, phase: 3, started: false, monarch: null, initiative: null, out: {},
     openingMode: CTMulligan.normalizeMode(openingMode), openingDeal, openingAllowances: {} };
 }
 function hostRecv(msg, from) {
@@ -411,6 +419,11 @@ function hostRecv(msg, from) {
       t.openingMode = S.table.openingMode;
       t.openingDeal = S.table.openingDeal;
       t.openingAllowances = S.table.openingAllowances || {};
+      // A guest's recovery copy is useful for turn and seat state, but confirmed
+      // player colors are assigned and persisted by the host only.
+      t.colors = CTPlayerColors.normalize(t.seats,
+        Object.fromEntries(Object.entries(S.table.colors || {}).filter(([pid]) => t.seats.includes(pid))), false);
+      t.colorVersion = 1;
       S.table = t;
       sysLog(`Restored the latest table state (turn ${t.turn}) from ${pname(from)}.`);
       afterTable();
@@ -419,10 +432,11 @@ function hostRecv(msg, from) {
     }
   }
 }
-function seat(pid) {
+function seat(pid, assignedColors) {
   const T = S.table;
   if (T.seats.includes(pid) || T.seats.length >= 6) return;
   T.seats.push(pid);
+  T.colors = CTPlayerColors.normalize(T.seats, assignedColors || T.colors, !(T.colorVersion >= 1));
   if (T.started && !T.order.includes(pid)) T.order.push(pid);
   sysLog(`${pname(pid)} joined the table.`);
   pushTable();
@@ -438,12 +452,13 @@ function cleanTable(t) {
   if (!isObj(t)) return null;
   const ids = a => (Array.isArray(a) ? a.filter(x => typeof x === 'string').slice(0, 8).map(x => x.slice(0, 40)) : []);
   const str = x => (typeof x === 'string' ? x.slice(0, 40) : null);
-  const seats = ids(t.seats);
+  const seats = CTPlayerColors.cleanSeats(ids(t.seats)), colorVersion = Math.max(0, num(t.colorVersion));
   const openingAllowances = isObj(t.openingAllowances)
     ? Object.fromEntries(Object.entries(t.openingAllowances).filter(([pid]) => seats.includes(pid)).slice(0, 8)
       .map(([pid, n]) => [pid.slice(0, 40), CTMulligan.extraLimit(n)])) : {};
   return {
-    room: String(t.room || '').slice(0, 8), seats, order: ids(t.order), active: str(t.active),
+    room: String(t.room || '').slice(0, 8), seats, colorVersion: 1,
+    colors: CTPlayerColors.normalize(seats, t.colors, colorVersion < 1), order: ids(t.order), active: str(t.active),
     turn: Math.max(0, num(t.turn)), turnSeq: Math.max(0, num(t.turnSeq, num(t.turn))), phase: clamp(num(t.phase, 3), 0, PHASES.length - 1), started: !!t.started,
     monarch: str(t.monarch), initiative: str(t.initiative),
     openingMode: CTMulligan.normalizeMode(t.openingMode), openingDeal: str(t.openingDeal), openingAllowances,
@@ -472,6 +487,35 @@ function tableOp(op, from) {
   if (!isObj(op) || typeof op.k !== 'string') return;
   const isHost = from === S.pid;
   switch (op.k) {
+    case 'color': {
+      if (!T.seats.includes(from)) return;
+      if (T.colors && T.colors[from]) return; // the first confirmed choice locks this seat
+      const colors = CTPlayerColors.claim(T.seats, T.colors, from, op.color);
+      if (!colors) {
+        broadcast({ t: 'colorerror', pid: from, reason: 'taken' });
+        return;
+      }
+      T.colors = colors;
+      pushTable();
+      return;
+    }
+    case 'joincolor': {
+      if (T.colors && T.colors[from]) return;
+      const alreadySeated = T.seats.includes(from);
+      if (!alreadySeated && T.seats.length >= 6) {
+        broadcast({ t: 'colorerror', pid: from, reason: 'full' });
+        return;
+      }
+      const seats = alreadySeated ? T.seats : T.seats.concat(from);
+      const colors = CTPlayerColors.claim(seats, T.colors, from, op.color);
+      if (!colors) {
+        broadcast({ t: 'colorerror', pid: from, reason: 'taken' });
+        return;
+      }
+      if (alreadySeated) { T.colors = colors; pushTable(); }
+      else seat(from, colors);
+      return;
+    }
     case 'rollfirst': {
       if (T.started) return;
       const live = T.seats.filter(p => !T.out[p]);
@@ -564,6 +608,7 @@ function tableOp(op, from) {
     case 'kick': {
       if (!isHost || op.pid === S.pid) return;
       T.seats = T.seats.filter(p => p !== op.pid); T.order = T.order.filter(p => p !== op.pid);
+      if (T.colors) delete T.colors[op.pid];
       if (T.openingAllowances) delete T.openingAllowances[op.pid];
       if (T.active === op.pid) T.active = T.order[0] || null;
       sysLog(`${pname(op.pid)} was removed from the table.`);
@@ -768,7 +813,13 @@ function onBroadcast(msg) {
     case 'placefx':
       if (typeof msg.pid === 'string' && typeof msg.iid === 'string' && msg.pid !== S.pid) playCardPlaceSound();
       break;
-    case 'table': S.table = msg.table; reconcileOpeningDeal(S.table); handleTurnNoticeUpdate(S.table); afterTable(); break;
+    case 'table': S.table = cleanTable(msg.table); syncColorFlow(); handleTurnNoticeUpdate(S.table); afterTable(); break;
+    case 'colorerror': if (msg.pid === S.pid) {
+      S.colorRequestPending = false;
+      const reason = msg.reason === 'full' ? 'This room has no open color slots.' : 'That color was just taken. Choose another available color.';
+      UI.toast(reason, { kind: 'warn' });
+      if (S.colorFlow) showColorPicker(reason);
+    } break;
     case 'firstroll': showFirstRoll(msg); break;
     case 'online': S.online = msg.online || {}; break;
     case 'newgame':
@@ -790,6 +841,11 @@ function clientRecv(msg) {
     S.targetArrows = CTTargeting.cleanList(msg.arrows, S.players, (S.table && S.table.seats) || []);
     S.players[S.pid] = publicView();
     checkOrphans();
+    if (ownColorLocked()) {
+      S.colorFlow = false; S.colorRequestPending = false;
+      closeColorModal();
+      publish(true);
+    } else if (S.colorFlow) showColorPicker();
     afterTable(); saveSoon(); render();
     return;
   }
@@ -2470,6 +2526,64 @@ function playerMenu(x, y, pid) {
     } });
   }
   UI.menu(x, y, items);
+}
+let colorModal = null;
+function ownColorLocked() {
+  return !!(S.table && S.table.seats.includes(S.pid) && S.table.colors && CTPlayerColors.color(S.table.colors[S.pid]));
+}
+function closeColorModal() { if (colorModal) { colorModal.close(); colorModal = null; } }
+function showColorPicker(message) {
+  if (!S.colorFlow) return;
+  closeColorModal();
+  const T = S.table, colors = T ? CTPlayerColors.normalize(T.seats, T.colors, false) : {};
+  const taken = Object.keys(colors).filter(pid => pid !== S.pid).map(pid => colors[pid]);
+  const defaultId = CTPlayerColors.PALETTE.find(c => !taken.includes(c.id))?.id;
+  const hasRoom = !!(T && (T.seats.includes(S.pid) || T.seats.length < 6));
+  const status = message || (S.colorRequestPending ? 'Sending your choice to the host…' : !T ? 'Waiting for room details…' : !hasRoom || !defaultId ? 'This room has no open color slots.' : 'Choose an available color to finish joining the table.');
+  const options = T ? CTPlayerColors.PALETTE.map(c => {
+    const owner = Object.keys(colors).find(pid => pid !== S.pid && colors[pid] === c.id);
+    const available = !owner && hasRoom;
+    const hint = owner ? `Taken by ${pname(owner)}` : !hasRoom ? 'Room full' : c.id === defaultId ? 'Available · default' : 'Available';
+    return `<button type="button" class="ct-player-color-option" data-color="${c.id}"${available && !S.colorRequestPending ? '' : ' disabled'}><span class="ct-player-color-swatch" style="--pc:${c.value}"></span><span class="ct-player-color-name">${c.name}</span><span class="ct-player-color-state">${esc(hint)}</span></button>`;
+  }).join('') : '';
+  colorModal = UI.modal({
+    title: 'Choose your player color', className: 'ct-player-color-dialog',
+    html: `<p class="ct-player-color-intro">Each player has a different color. Your choice is saved to this room.</p><p class="ct-player-color-status" role="status">${esc(status)}</p><div class="ct-player-color-options">${options}</div><div class="ct-player-color-actions"><button type="button" data-a="cancel-color-flow">Cancel and return to lobby</button></div>`,
+    onEscape: () => true
+  });
+  const backdrop = colorModal.dialog.parentElement;
+  backdrop.addEventListener('click', e => { if (e.target === backdrop) { e.preventDefault(); e.stopImmediatePropagation(); } }, true);
+  colorModal.el.querySelectorAll('[data-color]').forEach(button => button.addEventListener('click', () => {
+    if (button.disabled || S.colorRequestPending) return;
+    const color = button.dataset.color;
+    if (S.role === 'client') {
+      if (!S.table) return;
+      S.colorRequestPending = true;
+      showColorPicker();
+      toHost({ t: 'op', op: { k: 'joincolor', color } });
+    } else {
+      toHost({ t: 'op', op: { k: 'color', color } });
+    }
+  }));
+  colorModal.el.querySelector('[data-a="cancel-color-flow"]').addEventListener('click', cancelColorFlow);
+}
+function cancelColorFlow() {
+  if (!S.colorFlow) return;
+  closeColorModal(); S.colorFlow = false; S.colorRequestPending = false;
+  try { Net.stop(); } catch (e) { /* ignore */ }
+  LS.del('ct.sess.' + S.pid); LS.del('ct.last');
+  S.role = 'solo'; S.room = ''; S.me = null; S.table = null; S.players = {}; S.log = []; S.undo = []; S.online = {};
+  S.targetArrows = []; S.arrowControlsDismissed = false; endTargeting();
+  showLobby();
+}
+function syncColorFlow() {
+  if (ownColorLocked()) {
+    const wasChoosing = S.colorFlow;
+    S.colorFlow = false; S.colorRequestPending = false;
+    if (wasChoosing) { closeColorModal(); publish(true); saveNow(); }
+    return;
+  }
+  if (S.colorFlow && S.role === 'client' && S.table) showColorPicker();
 }
 function diceMenu(x, y) {
   const roll = (sides) => { const v = rnd(sides) + 1; say(`rolled a d${sides}: ${v}`); };
@@ -4657,7 +4771,7 @@ function startNet() {
     onStatus: (state, text, code, transport) => {
       const was = S.net.state;
       S.net = { state, text: text || '', code: code || '', transport: transport || '' };
-      if (state === 'online' && was !== 'online' && S.role === 'client') {
+      if (state === 'online' && was !== 'online' && S.role === 'client' && ownColorLocked()) {
         publish(true);
         if (S.table && S.table.room === S.room) Net.send({ t: 'tsync', table: S.table });
       }
@@ -4715,10 +4829,13 @@ function resume(sess) {
     if (!S.table.openingDeal) S.table.openingDeal = uid();
     if (!S.me.openingDeal) S.me.openingDeal = S.table.openingDeal;
   }
+  S.colorFlow = S.role !== 'solo' && !ownColorLocked(); S.colorRequestPending = false;
   if (S.role === 'host') Object.keys(S.players).forEach(p => { if (p !== S.pid) S.online[p] = false; });
   showGame();
   startNet();
-  publish(true);
+  if (S.role === 'client') showColorPicker();
+  else if (ownColorLocked()) publish(true);
+  else showColorPicker();
   UI.toast(S.role === 'solo' ? 'Practice game restored.' : `Rejoined room ${S.room} — your game was restored.`);
 }
 function leaveGame() {
@@ -4982,10 +5099,13 @@ function begin(role) {
   const openingDeal = role === 'client' ? null : uid();
   S.me = newPlayer(deck, name, null, openingMode, openingDeal);
   S.table = role === 'client' ? null : newTable(room, openingMode, openingDeal);
+  S.colorFlow = role !== 'solo'; S.colorRequestPending = false;
   S.net = { state: role === 'solo' ? 'online' : 'connecting', text: '' };
   showGame();
   startNet();
-  publish(true);
+  if (role === 'host') showColorPicker();
+  else if (role === 'client') showColorPicker();
+  else publish(true);
   saveNow();
   if (role === 'host') UI.toast(`You're hosting room ${room}. Click the code at the top-left to copy an invite link for your friends.`, { ms: 8000 });
   if (role === 'solo') sysLog('Practice game started. Use “Start game” to begin turn tracking.');

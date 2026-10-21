@@ -1,27 +1,25 @@
-# Opening-hand rules — v0.35.0 test copy
+# Unique player colors — v0.36.0 test copy
 
 Download the ZIP, extract it, and double-click **index.html**. Keep internet access on. No terminal or local server needed. Use two players on this copy.
 
 ## Click list
 
-1. Before hosting, choose **Opening hand rule**: London (normal Commander first mulligan free), **At least 3 lands**, or **Draw 10, bottom 3**. Join with a second player; both must see/use the host's rule.
-2. London: begin with seven. First mulligan is free; later keeps bottom one more card. After seven mulligans, Mulligan must disable and Keep must remain usable.
-3. At least 3 lands: seven-card opening/mulligan hands include three randomly selected front-face Lands plus four random remaining cards. Both alternate modes start with one mulligan. After a player uses it, Mulligan disables; Keep remains available. Right-click that player's name as host and choose **Grant another mulligan**: only that player's limit increases by one. Repeat the grant to verify it adds one attempt each time. A guest must not be able to grant attempts. With fewer than three lands in the deck, the prompt should explain the fallback and still allow keeping. This house rule counts printed front-face Lands, not a land on a card's back face.
-4. Draw 10, bottom 3: both players draw ten; Keep asks you to choose exactly three to put on the bottom. Short decks never require bottoming every card. Verify the same one-attempt default and per-player host grant behavior.
-5. Before starting, the host can change the rule. Cancel must preserve existing hands; confirm must reshuffle/redeal everyone, including a player who already kept. Once the game starts, that rule control is unavailable. Start a new game to choose again; new games retain the selected policy but reset per-player grants.
-6. Reload/reconnect a guest: their exact opening hand must stay intact rather than redeal. Check Sidebar/Grid at roughly 1920×1080 and 1366×768, and a narrow window: the opening-hand prompt should wrap and its buttons remain reachable.
+1. Press **Host a game**. Before entering the table, choose **Red** in the color picker. The host's player marker and name should turn red.
+2. Join from a second browser/tab. Before entering the table, check that red says **Taken by [host name]** and is disabled. Choose another available color; verify each screen shows the same colors.
+3. Have both players try to claim the same available color from separate screens in quick succession. Only one should receive it; the rejected player sees a message and can choose another.
+4. Verify that Escape, clicking the backdrop, or the modal's close control cannot dismiss the required picker before selection. Its explicit **Cancel and return to lobby** action must safely leave a join that has not received room details.
+5. On each browser, test at 1920×1080 and 1366×768 in Sidebar and Grid. Check the markers/name colors in both layouts.
+6. Reload each browser and reconnect. The choices should remain. Start a new game; the colors should still remain. Remove a player from the table and verify that player's color becomes available to the remaining players.
+7. Verify the shipped v0.35.0 opening-hand options and mulligan behavior remain present after this update.
 
 ## Verification
 
-- Assistant-run Playwright Chromium checks used two player sessions over localhost HTTP on port 8108. Both hosts and guests received each selected deal; private hands stayed private; guest reload preserved the hand and grant, and host reload preserved the grant table; pregame change cancel/confirm and ten-card bottom-three worked; alternate limit/grants (target-only, repeated increments, guest rejection) and London cap behaved as expected; started tables rejected policy changes; a started but unkept player could receive a grant; new game preserved policy and cleared grants; Sidebar/Grid at 1920×1080 and 1366×768 and the 320px prompt bounds passed. No page errors occurred.
-- Browser checks caught and fixed top-bar crowding at 1366px and a narrow prompt overflowing left. A forged higher-revision guest table-sync message cannot change the host's selected rule/deal identifier.
-- Node rule regressions cover default sanitation, all modes, London cap, alternate grant limits, short decks, impossible land counts, front-face classification, keep/bottom counts, host authority and deal reconciliation. All `tests/test_*.cjs` suites, changed JavaScript syntax checks and `git diff --check` passed.
+- Assistant-run Playwright Chromium checks used a host and three guests over localhost HTTP on port 8109. Host and join pickers appeared before board entry; red showed as taken and disabled for a guest; simultaneous claims gave blue to exactly one guest, and the loser saw blue stay disabled and could choose teal. Escape/backdrop clicks and the hidden close control could not dismiss the required picker; an unresolved room could be safely canceled back to the lobby with its pending session cleared. A forged higher-revision guest snapshot could not replace the host's confirmed color or opening-hand authority. Guest reload preserved its choice; new game did not reopen the picker; no later color-change menu appeared. Sidebar and Grid at 1920×1080 and 1366×768 passed with no page errors.
+- Node color regressions cover deterministic legacy defaults, invalid and duplicate saved assignments, unassigned new seats, available/taken claims, simultaneous claim rejection, invalid palette values, non-seated claims, locked colors and JSON persistence. Color, chat sizing, mulligan, P/T, targeting and token picker/printing Node suites, changed JavaScript syntax checks and `git diff --check` passed. The unchanged room-vault backend was not rerun on this branch; its exact Worker source has separate local and live verification in PR #57.
 - Chris requested the feature; hands-on review and publication approval are pending. Managed Chromium blocks file:// navigation, so the assistant browser checks used HTTP. Real-device Safari/touch and extracted-copy flow still require appropriate checks.
 
-Includes published v0.33.1 chat and arrow fix. This independent proposal does not include the pending moderation, Deck Builder checks or backup proposals. PR #11 remains paused. Nothing here is approved for publication.
+Includes published v0.35.0 opening-hand rules and relay backup capability, plus the published v0.33.1 chat and arrow fix. PR #11 remains paused. Hands-on review and publication approval for v0.36.0 are pending.
 
-Tested by Chris: “Mulligan looks great”; he approved push, merge and publication on 2026-10-21. Integrating the approved server PR changed only release/testing documentation alongside the server files; the tested browser source is unchanged.
+Tested by Chris: he reviewed the original menu-based color copy and requested selection immediately after Host/Join, with no later menu changes. This revised entry flow still awaits his testing and publication approval.
 
-Publication verification: v0.35.0 was merged after Chris’s approval; its automatic annotated tag points to the exact release merge. Production Workers Builds and Pages deployment succeeded. The server capability was confirmed through real Chromium health and a complete fresh-incognito recovery test using PR #55’s separate client copy.
-
-The managed browser blocks live GitHub Pages navigation with ERR_TUNNEL_CONNECTION_FAILED; the live footer was not observed. The relay domain is accessible from Chromium and was verified separately.
+Chris approved publishing the revised colors on 2026-10-21. Detailed multiplayer clicks were not reported. The publication refresh integrates current handoff documentation only; browser source remains identical to the approved ZIP. Live GitHub Pages navigation is blocked in this managed environment, so deployment status and any live-page observation must be reported separately.
