@@ -7,16 +7,16 @@ global.window = {};
 require('../js/chat-panel.js');
 const { normalize, fit } = window.CTChatPanel;
 
-assert.deepEqual(normalize(null), { floating: false, transparent: false, x: null, y: null });
-assert.deepEqual(normalize('bad'), { floating: false, transparent: false, x: null, y: null });
+assert.deepEqual(normalize(null), { floating: false, transparent: false, x: null, y: null, width: null, height: null });
+assert.deepEqual(normalize('bad'), { floating: false, transparent: false, x: null, y: null, width: null, height: null });
 assert.deepEqual(normalize({ floating: 1, transparent: 'yes', x: '20', y: NaN }), {
-  floating: false, transparent: false, x: null, y: null
+  floating: false, transparent: false, x: null, y: null, width: null, height: null
 });
 assert.deepEqual(normalize({ floating: true, transparent: true, x: Infinity, y: -Infinity }), {
-  floating: true, transparent: true, x: null, y: null
+  floating: true, transparent: true, x: null, y: null, width: null, height: null
 });
 assert.deepEqual(normalize({ floating: true, transparent: false, x: -200, y: 140 }), {
-  floating: true, transparent: false, x: -200, y: 140
+  floating: true, transparent: false, x: -200, y: 140, width: null, height: null
 });
 
 const wide = { left: 0, top: 0, width: 1920, height: 1080 };
@@ -52,3 +52,10 @@ assert.deepEqual({ x: saved.x, y: saved.y }, { x: 900, y: 500 });
 assert.deepEqual(fit(saved, wide), { width: 360, height: 480, x: 900, y: 500 });
 
 console.log('chat panel geometry checks passed');
+
+// Custom size is validated and constrained without losing a saved larger size.
+assert.equal(normalize({width: -1, height: Infinity}).width, null);
+assert.equal(normalize({width: 280, height: 260}).height, 260);
+assert.deepEqual(fit({x: 100, y: 100, width: 280, height: 260}, wide), {x: 100, y: 100, width: 280, height: 260});
+assert.deepEqual(fit({x: 100, y: 100, width: 1, height: 1}, wide), {x: 100, y: 100, width: 260, height: 240});
+assert.deepEqual(fit({width: 2000, height: 2000}, wide), {x: 8, y: 8, width: 1904, height: 1064});

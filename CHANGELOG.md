@@ -9,7 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ## [0.33.0] - 2026-10-21
 
 ### Added
-- Pop room chat out into a movable panel over the game. Drag its heading, choose a completely transparent background with readable messages, reset its position, or dock it again. Position and presentation are saved locally; the panel stays on screen after resizing. Transparent mode hides helper labels and fades after eight idle seconds, leaving a small Chat button to resume typing. Incoming messages reveal chat, and unsent drafts keep it visible.
+- Pop room chat out into a movable panel over the game. Drag its heading, choose a completely transparent background with readable messages, reset its position, or dock it again. Drag the bottom-right corner to resize the panel. Position, size and presentation are saved locally; the panel stays on screen after resizing. Transparent mode hides helper labels and fades after eight idle seconds, leaving a small Chat button to resume typing. Incoming messages reveal chat, and unsent drafts keep it visible.
 
 ## [0.30.0] - 2026-10-21
 
