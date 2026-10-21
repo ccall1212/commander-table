@@ -38,8 +38,7 @@ const num = (v, d = 0) => (Number.isFinite(+v) ? clamp(Math.round(+v), -9999, 99
 const isObj = o => o && typeof o === 'object' && !Array.isArray(o);
 const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
 const openingModeName = mode => ({ london: 'London (7; first free)', 'three-lands': 'At least 3 lands', 'ten-bottom-three': 'Draw 10, bottom 3' })[CTMulligan.normalizeMode(mode)];
-const openingModeOptions = selected => [['london', 'London — 7, first free'], ['three-lands', 'At least 3 lands'], ['ten-bottom-three', 'Draw 10, bottom 3']]
-  .map(([value, label]) => `<option value="${value}"${value === selected ? ' selected' : ''}>${label}</option>`).join('');
+const openingModeShort = mode => ({ london: 'London', 'three-lands': '3 Lands', 'ten-bottom-three': '10 → 7' })[CTMulligan.normalizeMode(mode)];
 
 const ZONES = ['library', 'hand', 'battlefield', 'graveyard', 'exile', 'command'];
 const ZL = { library: 'library', hand: 'hand', battlefield: 'battlefield', graveyard: 'graveyard', exile: 'exile', command: 'command zone' };
@@ -403,9 +402,11 @@ function hostRecv(msg, from) {
       // A player reconnected with a copy of the table. If it's newer than ours (the host
       // reloaded before its last change was saved), adopt it; otherwise ignore it.
       const t = cleanTable(msg.table);
-      if (t && msg.table && !Object.prototype.hasOwnProperty.call(msg.table, 'openingMode')) t.openingMode = S.table.openingMode;
-      if (t && msg.table && !Object.prototype.hasOwnProperty.call(msg.table, 'openingDeal')) t.openingDeal = S.table.openingDeal;
       if (!t || t.room !== S.table.room || t.rev <= (S.table.rev || 0) || !t.seats.includes(S.pid)) return;
+      // Recovery can restore host table changes, but only the host may choose the
+      // opening policy or advance its deal epoch.
+      t.openingMode = S.table.openingMode;
+      t.openingDeal = S.table.openingDeal;
       S.table = t;
       sysLog(`Restored the latest table state (turn ${t.turn}) from ${pname(from)}.`);
       afterTable();
@@ -471,7 +472,7 @@ function tableOp(op, from) {
       break;
     }
     case 'mulligan': {
-      if (!isHost) return;
+      if (!isHost || T.started) return;
       const mode = CTMulligan.normalizeMode(op.mode);
       if (mode === T.openingMode) return;
       T.openingMode = mode;
@@ -2071,6 +2072,13 @@ async function changeOpeningMode(mode) {
     resetForNewGame(); render();
   } else toHost({ t: 'op', op: { k: 'mulligan', mode } });
 }
+function openingRulesMenu(btn) {
+  const r = btn.getBoundingClientRect(), current = (S.table && S.table.openingMode) || 'london';
+  UI.menu(r.left, r.bottom + 4, CTMulligan.MODES.map(mode => ({
+    label: openingModeName(mode), checked: mode === current,
+    onClick: () => changeOpeningMode(mode)
+  })));
+}
 
 // =====================================================================
 //  Zone viewers (searchable graveyard / exile / library)
@@ -3010,9 +3018,9 @@ function renderTop() {
   pill.title = S.net.text || '';
   let html;
   const rule = T ? CTMulligan.normalizeMode(T.openingMode) : 'london';
-  const ruleControl = T ? (S.role === 'client'
-    ? `<span class="muted ct-opening-rule" title="Opening-hand rule">${esc(openingModeName(rule))}</span>`
-    : `<label class="ct-opening-rule">Opening hands <select data-opening-mode aria-label="Opening-hand rule">${openingModeOptions(rule)}</select></label>`)
+  const ruleControl = T ? (S.role === 'client' || T.started
+    ? `<span class="muted ct-opening-rule" title="${esc(openingModeName(rule))}">${esc(openingModeShort(rule))}</span>`
+    : `<button class="ct-opening-rule" data-a="openingrule" title="Change opening-hand rule">Opening: ${esc(openingModeShort(rule))}</button>`)
     : '';
   if (!T) html = `<span class="muted">${esc(S.net.text || 'Connecting to the host…')}</span>`;
   else if (!T.started) {
@@ -3321,7 +3329,14 @@ function renderMine(idx) {
     mb.innerHTML = `<b>Opening hand</b> <button class="primary" data-a="keep"${landBlocked ? ' disabled' : ''}>${keepLabel}</button>
       <button data-a="mull"${!CTMulligan.canMulligan(m.mull) ? ' disabled' : ''}>Mulligan (${m.mull}/${CTMulligan.CAP})</button><span class="muted small">${next}</span>`;
     mb.classList.remove('hidden');
+    positionMulliganBar();
   } else mb.classList.add('hidden');
+}
+function positionMulliganBar() {
+  const mb = $('#mullBar'), hand = $('#handWrap');
+  if (!mb || mb.classList.contains('hidden') || !hand) return;
+  const r = hand.getBoundingClientRect();
+  mb.style.top = Math.max(8, r.top - 26 - mb.offsetHeight) + 'px';
 }
 
 let logLen = -1, logLast = null;
@@ -3742,6 +3757,7 @@ function bindGame() {
     prepareChatAudio();
     if (chatAudioContext && chatAudioContext.state === 'running') document.removeEventListener('pointerdown', unlockSavedChatSound);
   });
+  window.addEventListener('resize', positionMulliganBar, { passive: true });
   // Native browser text/image dragging can steal pointer gestures from the tabletop's card drag logic.
   g.addEventListener('dragstart', e => {
     if (e.target.closest('.board, .card')) e.preventDefault();
@@ -3793,9 +3809,6 @@ function bindGame() {
       return;
     }
     if (card && card.dataset.pid === S.pid && card.dataset.zone === 'battlefield') toggleTap(card.dataset.iid);
-  });
-  g.addEventListener('change', e => {
-    if (e.target.matches('[data-opening-mode]')) changeOpeningMode(e.target.value);
   });
   g.addEventListener('dblclick', e => {
     const card = e.target.closest('.card');
@@ -4423,6 +4436,7 @@ function onButton(a, btn, e) {
     case 'dice': diceMenu(r.left, r.bottom + 4); break;
     case 'undo': undo(); break;
     case 'menu': mainMenu(r.right - 240, r.bottom + 4); break;
+    case 'openingrule': openingRulesMenu(btn); break;
     case 'copyroom': copyRoom(); break;
     case 'arrange': toggleArrange(); break;
     case 'tidy': act(() => { tidyBoard(); return ['tidied up their battlefield']; }); break;
