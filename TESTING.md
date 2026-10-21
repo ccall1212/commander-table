@@ -1,31 +1,20 @@
-# Commander Table v0.31.0 — test copy
+# Deck Builder checks — v0.38.0 test copy
 
-Download the branch ZIP, extract it, and double-click **index.html**. No terminal, installation, or local server is needed. Keep internet access on for card images and online play.
+Extract the ZIP and double-click **index.html**, with internet access for card images and online features. No terminal or installation is needed. This refresh carries forward the published moderation and recovery work, private room backups, entry colors, mulligan rules, room chat, and targeting arrows.
 
-## Chris's testing status
+## Chris's testing and approval
 
-Chris tested the token gallery on the separate v0.30.0 test copy and said, “Perfect, push and merge and Publish.” He approved the token gallery, quantities, automatic return to the battlefield, and matching artwork revision; that release is published as v0.30.0. His approval does **not** cover the Deck Builder checks in this v0.31.0 test copy. No human test of the Deck Builder checks is recorded yet.
+Tested by Chris: he reports that he tested both refreshed ZIPs (#29 Deck Builder checks and #30 collection backup) and approved their publication. His message did not specify device, browser, or individual click coverage.
 
 ## Click list
 
-1. Open a saved/imported deck in **Deck Builder**. Check the summary includes commander(s) in the total.
-2. Remove a commander and check the missing-commander note. Right-click a Commander candidate and choose **Set as commander**; confirm the summary updates.
-3. Add a card outside the combined commander color identity. For partner commanders, check a card matching either identity is allowed.
-4. Add a second copy of a nonbasic card and check for a duplicate note. Basic lands and cards such as Seven Dwarves or Rat Colony should not be flagged for their allowed copies.
-5. Expand and collapse **Review notes**, dismiss the summary with **×**, close and reopen Deck Builder, and continue editing.
-6. In a game, open **☰ → Tokens**. Check token pictures appear once each with search/filter/sort and **Search all tokens…**. Choose a token, enter 3, create it, and confirm the gallery closes and three tokens appear. Undo should remove the batch together.
-7. Repeat token creation in **Sidebar** and **Grid** at approximately **1920×1080** and **1366×768**. Try cancel and invalid quantities. Check related-token suggestions, artwork selection, and battlefield token printing changes if convenient.
+1. Open a saved deck in **Deck Builder**. Check the displayed total includes commander(s); remove a commander and set a Commander candidate to confirm the count and missing-commander note update.
+2. With partner commanders, verify a card matching either identity is accepted. Add a card outside the combined identity and confirm it appears in **Review notes**.
+3. Add a duplicate nonbasic card and confirm likely duplicates are noted. Basic lands, Seven Dwarves (up to seven), and Rat Colony (any number) should be treated as common printed exceptions.
+4. Expand/collapse **Review notes**, dismiss the summary with **×**, remove a card, close and reopen Deck Builder. Editing should update the count and notes; reopening should restore the summary.
 
-## Automated checks
+## Assistant-run checks
 
-- `tests/test_deck_health.cjs`: commander-inclusive count, missing commander, combined identity, legacy missing-color data, duplicate grouping, basic lands, printed any-number/up-to-N exceptions, and large quantities without per-copy expansion.
-- `tests/test_token_picker.cjs` and `tests/test_token_printings.cjs`: token picker behavior, semantic grouping, quantity validation/cancellation, and printing lookup/update compatibility.
-- Existing node suites, JavaScript syntax, all local cache links and app/meta version agreement.
-
-## Assistant-run browser checks
-
-- Deck Builder was opened in headless Chromium through localhost HTTP at 1920×1080 and 1366×768. With 99 warning notes expanded, the list remained scrollable and the header/close control stayed within the viewport. Dismiss/reopen, commander removal/replacement, and card removal refreshed the summary. No console errors were observed.
-- The **+ Add card** search for Sol Ring returned HTTP 200 from Scryfall; its image also returned HTTP 200.
-- In Practice solo, the merged token gallery opened from **☰ → Tokens**; selecting the Treasure fixture, entering 2 and choosing **Create X Tokens** created two battlefield tokens and closed the gallery. No console errors were observed.
-- Token gallery and printing browser checks are recorded in the published v0.30.0 test notes: equivalent real Treasure printings grouped, different-stat Soldiers remained separate, batches were created and undone, gallery artwork choices and battlefield printing changes propagated to a second player, and no page errors were observed.
-- Direct `file:///` navigation is blocked by the managed browser policy (`ERR_BLOCKED_BY_ADMINISTRATOR`). Assistant browser checks use localhost HTTP; this does not substitute for Chris's extracted-copy check.
+- Actual Chromium (`/usr/bin/chromium`) over local HTTP at port 8108 passed `tests/test_deck_editor_browser.cjs`: commander-inclusive counts; partner color identity; out-of-identity warnings changing after a commander edit; duplicate grouping and printed exceptions; dismissal, card removal and reopening; 1920×1080 and 1366×768; no page errors.
+- `tests/test_deck_health.cjs` and the available moderation, mulligan, color, chat, targeting, power/toughness and token suites passed. JavaScript syntax, version metadata and all local asset cache versions passed.
+- The existing recovery browser suite and room-vault integration test were not rerun for this focused Deck Builder refresh. They need Miniflare, which is not installed in this checkout. Their existing main-branch coverage and previously recorded results remain unchanged; Chris's ZIP testing is reported separately above.

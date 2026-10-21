@@ -118,6 +118,12 @@ Read this before changing layout or anything that finds elements on the page. Se
 - **Cache-busting:** after any CSS/JS change run `tools/bump-version.py`; the browser (and the live site, for about 10 minutes) otherwise serves old files.
 - **Tags and branches:** the release tag is created automatically (`.github/workflows/tag-release.yml`). Chris wants merged feature/fix/documentation branches deleted as the normal default, without another approval request. Keep GitHub's **Automatically delete head branches** setting enabled and verify cleanup after every merge. Preserve `main`, protected/long-lived branches, open or paused work (including PR #11), and any branch with additional unmerged commits.
 
+## Open-work summaries for Chris
+
+Whenever Chris asks what remains open, include each item’s original Objective number, its current status, and the latest previously supplied exact-commit ZIP link beside it when one exists. Keep Objective numbers distinct from pull-request numbers (for example Objective #29 is PR #50), and do not renumber the backlog. Label each copy clearly: current test copy, older copy needing refresh, or paused/archived draft. Say “no test ZIP yet” for unbuilt items when helpful. Do not omit existing ZIP links merely because the copy is older.
+
+A new release does not change an existing commit ZIP. Explain when a feature branch predates current main: integrate the relevant published changes, reconcile versions, run appropriate checks and generate/verify a fresh exact-head ZIP before presenting it as current. The feature does not need rebuilding from scratch. Keep old links identified as historical; never describe them as containing newer releases. Listing a paused draft ZIP does not authorize resuming its implementation or deploying its service.
+
 ## Required test ZIP for Chris
 
 **Every feature or fix pull request must include a downloadable ZIP of the exact pull-request branch so Chris can test it locally.** Do this every time; do not wait for him to ask.
