@@ -1,29 +1,31 @@
-# Commander Table v0.31.0 — release checks
+# Commander Table v0.31.0 — test copy
 
-For a downloaded test copy: extract the ZIP and double-click **index.html**. No Python, terminal, installation or local server is needed. Keep internet access on for card images and online play.
+Download the branch ZIP, extract it, and double-click **index.html**. No terminal, installation, or local server is needed. Keep internet access on for card images and online play.
 
-## Included changes
+## Chris's testing status
 
-- Deck Builder shows an informational summary of the total card count including commander(s), missing commander, cards outside the combined commander color identity, and likely duplicate names. Expand **Review notes** for details; dismiss the summary with **×**. It is not a full legality validator and does not enforce house rules.
-- Basic lands and cards whose oracle text allows any number or up to a stated number of copies are excluded from false duplicate warnings.
+Chris tested the token gallery on the separate v0.30.0 test copy and said, “Perfect, push and merge and Publish.” He approved the token gallery, quantities, automatic return to the battlefield, and matching artwork revision; that release is published as v0.30.0. His approval does **not** cover the Deck Builder checks in this v0.31.0 test copy. No human test of the Deck Builder checks is recorded yet.
+
+## Click list
+
+1. Open a saved/imported deck in **Deck Builder**. Check the summary includes commander(s) in the total.
+2. Remove a commander and check the missing-commander note. Right-click a Commander candidate and choose **Set as commander**; confirm the summary updates.
+3. Add a card outside the combined commander color identity. For partner commanders, check a card matching either identity is allowed.
+4. Add a second copy of a nonbasic card and check for a duplicate note. Basic lands and cards such as Seven Dwarves or Rat Colony should not be flagged for their allowed copies.
+5. Expand and collapse **Review notes**, dismiss the summary with **×**, close and reopen Deck Builder, and continue editing.
+6. In a game, open **☰ → Tokens**. Check token pictures appear once each with search/filter/sort and **Search all tokens…**. Choose a token, enter 3, create it, and confirm the gallery closes and three tokens appear. Undo should remove the batch together.
+7. Repeat token creation in **Sidebar** and **Grid** at approximately **1920×1080** and **1366×768**. Try cancel and invalid quantities. Check related-token suggestions, artwork selection, and battlefield token printing changes if convenient.
 
 ## Automated checks
 
-- `node tests/test_deck_health.cjs`: commander-inclusive count, missing commander, combined commander identity, duplicate-name grouping, basic-land exemption, and any-number / up-to-N exceptions.
-- JavaScript syntax, local asset cache links and app/meta version agreement.
+- `tests/test_deck_health.cjs`: commander-inclusive count, missing commander, combined identity, legacy missing-color data, duplicate grouping, basic lands, printed any-number/up-to-N exceptions, and large quantities without per-copy expansion.
+- `tests/test_token_picker.cjs` and `tests/test_token_printings.cjs`: token picker behavior, semantic grouping, quantity validation/cancellation, and printing lookup/update compatibility.
+- Existing node suites, JavaScript syntax, all local cache links and app/meta version agreement.
 
-## Assistant-run browser check
+## Assistant-run browser checks
 
-- Headless Chromium opened the test copy through a local HTTP server at 1920 × 1080 and 1366 × 768. Expanding 99 warning notes kept the list scrollable and the modal header/close control within the viewport. Dismiss/reopen, commander removal and replacement, and card removal all refreshed the summary. No console errors were observed.
-- The **+ Add card** search for Sol Ring returned HTTP 200 from Scryfall, and its image returned HTTP 200.
-- Direct `file:///` navigation was blocked by the managed browser policy (`ERR_BLOCKED_BY_ADMINISTRATOR`), so extract-and-open was not observed in this browser pass. The localhost browser run exercised the same app files.
-
-## Try it in the browser
-
-1. Import or select a deck and open **Deck Builder**. Check the summary count includes the commander(s).
-2. Remove a commander and confirm the missing-commander note appears. Set a commander from a card and confirm the summary updates.
-3. Add a card outside the commander color identity and confirm it appears in the notes. With partner commanders, check a card matching either commander is allowed.
-4. Add a second copy of a nonbasic card and check for a duplicate note. Add basic lands and cards such as Seven Dwarves or Rat Colony; their allowed copies should not be flagged.
-5. Expand and collapse **Review notes**, dismiss the summary with **×**, and continue editing the deck.
-
-No human browser test is recorded for this test copy yet.
+- Deck Builder was opened in headless Chromium through localhost HTTP at 1920×1080 and 1366×768. With 99 warning notes expanded, the list remained scrollable and the header/close control stayed within the viewport. Dismiss/reopen, commander removal/replacement, and card removal refreshed the summary. No console errors were observed.
+- The **+ Add card** search for Sol Ring returned HTTP 200 from Scryfall; its image also returned HTTP 200.
+- In Practice solo, the merged token gallery opened from **☰ → Tokens**; selecting the Treasure fixture, entering 2 and choosing **Create X Tokens** created two battlefield tokens and closed the gallery. No console errors were observed.
+- Token gallery and printing browser checks are recorded in the published v0.30.0 test notes: equivalent real Treasure printings grouped, different-stat Soldiers remained separate, batches were created and undone, gallery artwork choices and battlefield printing changes propagated to a second player, and no page errors were observed.
+- Direct `file:///` navigation is blocked by the managed browser policy (`ERR_BLOCKED_BY_ADMINISTRATOR`). Assistant browser checks use localhost HTTP; this does not substitute for Chris's extracted-copy check.

@@ -15,7 +15,7 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 - **Version:** the newest entry in `CHANGELOG.md` (do not write a version number here; it goes stale).
 - **Paused again at Chris's request (2026-10-20):** draft [PR #11](https://github.com/ccall1212/commander-table/pull/11), website import/random deck picker. Preserve the branch and recovery checkpoint. Do not resume implementation, deploy its test Worker, merge, or publish until Chris asks to resume; see the investigation note.
 - **Layouts:** Sidebar and Grid only.
-- **Open work:** see `OBJECTIVES.md`.
+- **Open work:** see `OBJECTIVES.md`. Deck Builder checks [#50](https://github.com/ccall1212/commander-table/pull/50) and collection backup/restore [#49](https://github.com/ccall1212/commander-table/pull/49) are being refreshed onto the published token release. Each will include an exact-commit ZIP; Chris's testing and publication approval for these two features are pending.
 - **Slam sound:** Chris wants to keep refining the Commander slam sound. Do that on a separate branch and leave the published behaviour alone until he approves.
 
 ## Documentation upkeep

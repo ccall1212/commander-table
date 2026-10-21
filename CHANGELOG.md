@@ -11,6 +11,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - Show dismissible, collapsible informational checks in Deck Builder for total cards including commander(s), a missing commander, cards beyond the combined commander color identity, and likely singleton duplicates. Basic lands and printed any-number / up-to-N copy exceptions are accounted for; this is not a full legality validator.
 
+## [0.30.0] - 2026-10-21
+
+### Added
+- Browse deck-linked and related tokens in an image gallery matching token search. Choose a token picture, enter a quantity from 1 to 60, and use **Create X Tokens**. Creating tokens returns directly to the battlefield; each batch undoes as one action. Token search uses the same flow, and single-token suggestions keep their quick **+ Token** action. Matching artwork versions share one entry; different printed stats, rules, colors and reverse faces remain separate. Choose token artwork from the gallery or use **Switch printing** on a battlefield token.
+
 ## [0.29.0] - 2026-10-20
 
 ### Added
@@ -22,7 +27,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
 [Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.31.0...HEAD
-[0.31.0]: https://github.com/ccall1212/commander-table/compare/v0.29.0...v0.31.0
+[0.31.0]: https://github.com/ccall1212/commander-table/compare/v0.30.0...v0.31.0
+[0.30.0]: https://github.com/ccall1212/commander-table/compare/v0.29.0...v0.30.0
 [0.29.0]: https://github.com/ccall1212/commander-table/compare/v0.28.2...v0.29.0
 [0.28.2]: https://github.com/ccall1212/commander-table/compare/v0.28.1...v0.28.2
 

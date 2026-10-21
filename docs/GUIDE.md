@@ -209,10 +209,14 @@ For a hovered card, **+ / =** adds a +1/+1 counter and **− / _** adds a −1/�
 
 ## Tokens
 
-- When you import a deck, the tokens related to your cards are linked automatically.
-- When you play a card that makes tokens, a pop-up offers a one-click **+ Token** button.
-- The Tokens menu (☰ → **Tokens**) lists your deck's tokens.
-- **Search all tokens** finds any token on Scryfall.
+- When you import a deck, its related tokens are linked automatically.
+- **☰ → Tokens** opens an image gallery of your deck's tokens, using the same card viewer as token search. Filter by name, type, or rules text, or use the type chips and sort controls.
+- Click a token picture (or use the arrow keys and Enter), enter a whole-number quantity from **1 to 60**, then choose **Create X Tokens**. The quantity starts at 1. Cancel creates nothing and leaves the gallery open. Creating tokens closes the token galleries and returns you to the battlefield. Each created batch undoes as one action.
+- Right-click a battlefield card → **Create related token…** opens the same gallery for that card. In Touch mode, use the card's **Actions** menu.
+- Playing a token-making card offers **Choose tokens…** to open its gallery. If the card makes just one kind of token, the pop-up also keeps its quick **+ Token** action.
+- **Search all tokens…** in your deck's gallery searches Scryfall for other tokens and uses the same picture-and-quantity flow. If an image cannot load, the viewer shows a readable name/type placeholder.
+- Alternate artworks of the same token share one gallery entry. Tokens with different printed stats, abilities, colors, types, or reverse faces stay separate even if their names match. Older saved tokens are checked against Scryfall when possible; if details cannot be loaded, their entries remain separate.
+- Right-click a token picture → **Choose artwork…** to browse matching versions before creating it. For a token already on your battlefield, right-click → **Switch printing…**. Filter the printing picker by set, product, collector number, or year, then use one printing for the selected token or all matching token copies. Changing artwork keeps counters, P/T adjustments, tapping, position and ownership. A token copy of a regular card uses that regular card's printings.
 
 ## Targeting arrows
 

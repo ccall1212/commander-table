@@ -1019,16 +1019,91 @@ function doMove(iid, to, opts = {}) {
 function suggestTokens(def) {
   const toks = def.tokens.map(id => S.me.defs[id]).filter(Boolean);
   if (!toks.length) return;
+  const owner = S.me;
+  const choose = { label: 'Choose tokens…', onClick: () => { if (S.me === owner) tokenGallery(toks, `Tokens for ${dname(def)}`); } };
   if (toks.length === 1) {
-    UI.toast(`${dname(def)} makes tokens`, { ms: 7000, action: { label: `+ ${dname(toks[0])}`, onClick: () => createToken(toks[0]) } });
-  } else {
-    UI.toast(`${dname(def)} makes tokens`, { ms: 7000, action: { label: 'Choose token…', onClick: () => {
-      const r = $('#myBf').getBoundingClientRect();
-      UI.menu(r.left + 40, r.top + 20, toks.map(t => ({ label: tokenLabel(t), onClick: () => createToken(t) })));
-    } } });
+    UI.toast(`${dname(def)} makes tokens`, { ms: 7000,
+      action: { label: `+ ${dname(toks[0])}`, onClick: () => { if (S.me === owner) createToken(toks[0]); } },
+      actions: [choose]
+    });
+  } else UI.toast(`${dname(def)} makes tokens`, { ms: 7000, action: choose });
+}
+async function createTokenQuantity(def) {
+  const owner = S.me;
+  const n = await UI.prompt({ title: `Create ${dname(def)} tokens`, label: 'Quantity (1–60)', type: 'number', value: 1, min: 1, max: 60, integer: true, strictBounds: true, okLabel: 'Create X Tokens' });
+  if (!Number.isInteger(n) || n < 1 || n > 60 || !owner || S.me !== owner) return false;
+  createToken(def, n);
+  UI.toast(`Created ${n} ${dname(def)} token${n === 1 ? '' : 's'}.`);
+  return true;
+}
+const tokenGalleries = new Set();
+function tokenGallery(defs, title, searchAll = false) {
+  const owner = S.me;
+  if (!owner) return;
+  const unique = [...new Map(defs.filter(Boolean).map(d => [d.id, d])).values()];
+  const grouped = values => {
+    const groups = new Map();
+    values.forEach(d => { const key = Deck.tokenKey(d) || 'id:' + d.id; if (!groups.has(key)) groups.set(key, d); });
+    return [...groups.values()].map(d => ({ iid: 'tk_' + d.id, def: d }));
+  };
+  const cards = grouped(unique);
+  let closed = false, entry, artworkChosen = false;
+  const gallery = UI.viewer({
+    title, cards,
+    searchPlaceholder: 'Filter tokens by name, type or rules text…',
+    onCardClick: async d => {
+      if (closed || S.me !== owner) return;
+      if (await createTokenQuantity(d)) {
+        // Search results can sit above the deck gallery: return all the way to the table.
+        for (const view of [...tokenGalleries]) if (view.owner === owner) view.close();
+      }
+    },
+    actions: [{ key: 'printing', label: 'Choose artwork…' }],
+    onAction: async (key, iid) => {
+      const card = cards.find(c => c.iid === iid);
+      if (!card || closed || S.me !== owner) return;
+      const wait = UI.toast(`Finding artwork for ${dname(card.def)}…`, { ms: 4000 });
+      try {
+        const prints = await Deck.fetchTokenPrints(card.def);
+        if (closed || S.me !== owner) return;
+        if (!prints.length) { UI.toast('No matching token artwork found.'); return; }
+        UI.printPicker({ title: `Artwork for ${dname(card.def)}`, prints, currentId: card.def.id,
+          onPick: nd => {
+            if (closed || S.me !== owner) return;
+            artworkChosen = true;
+            card.def = nd;
+            gallery.update(cards);
+          }
+        });
+      } catch (e) { if (!closed && S.me === owner) UI.toast(e.message || 'Could not load token artwork', { kind: 'error' }); }
+      finally { wait.close(); }
+    },
+    footer: searchAll ? [{ key: 'search', label: 'Search all tokens…' }] : [],
+    onFooter: () => { if (!closed && S.me === owner) searchTokens(); },
+    onHover: d => preview(d), onClose: () => { closed = true; tokenGalleries.delete(entry); hidePreview(); }
+  });
+  entry = { owner, close: gallery.close };
+  tokenGalleries.add(entry);
+  // Older saved decks predate token identity metadata. Enrich them in the background;
+  // keep the original pictures usable if Scryfall is unavailable.
+  if (unique.some(d => Deck.tokenKey(d).startsWith('unknown:'))) {
+    Promise.all(unique.map(d => Deck.tokenKey(d).startsWith('unknown:')
+      ? Deck.fetchById(d.id).catch(() => d) : d)).then(values => {
+      if (closed || artworkChosen || S.me !== owner) return;
+      cards.splice(0, cards.length, ...grouped(values));
+      gallery.update(cards);
+    });
   }
 }
-const tokenLabel = t => `${dname(t)}${t.pt ? ' ' + t.pt : ''}${t.type ? ' — ' + t.type.replace(/^Token /, '') : ''}`;
+async function relatedTokenGallery(ids, title) {
+  const owner = S.me;
+  if (!owner) return;
+  const results = await Promise.allSettled(ids.map(id => owner.defs[id] || Deck.fetchById(id)));
+  if (S.me !== owner) return;
+  const defs = results.filter(r => r.status === 'fulfilled').map(r => r.value).filter(Boolean);
+  if (defs.length !== results.length) UI.toast('Some related tokens could not be loaded. Try again to load the missing tokens.', { kind: 'warn' });
+  if (defs.length) tokenGallery(defs, title);
+}
 
 // --- attaching auras / equipment
 function hostInfo(pid, iid) {
@@ -1711,21 +1786,35 @@ function copyCard(def, flipped, tapped) {
   });
 }
 // --- switch a card's printing (art). Everyone sees the new art; the choice is saved to the deck.
+function printedToken(card, def) {
+  return !!(card && card.tok && def && (def.isToken || /\b(Token|Emblem)\b/.test(def.type || '')));
+}
+function samePrintingGroup(card, def, sourceCard, sourceDef, tokenPrintIds) {
+  if (printedToken(sourceCard, sourceDef)) {
+    return printedToken(card, def) && (def.id === sourceDef.id || (tokenPrintIds && tokenPrintIds.has(def.id)) || Deck.tokenKey(def) === Deck.tokenKey(sourceDef));
+  }
+  return !sourceCard.tok && !card.tok && def && def.name === sourceDef.name;
+}
 async function switchPrinting(iid) {
+  const owner = S.me;
   const f = findCard(iid); const d = f && defOf(f.card);
   if (!d || !d.name) return;
   const t = UI.toast(`Finding printings of ${dname(d)}…`, { ms: 4000 });
   let prints;
-  try { prints = await Deck.fetchPrints(d.name); } catch (e) { UI.toast(e.message || 'Could not load printings', { kind: 'error' }); return; }
+  try { prints = await (printedToken(f.card, d) ? Deck.fetchTokenPrints(d) : Deck.fetchPrints(d.name)); }
+  catch (e) { if (S.me === owner) UI.toast(e.message || 'Could not load printings', { kind: 'error' }); return; }
   finally { if (t && t.close) t.close(); }
+  if (S.me !== owner || !findCard(iid) || findCard(iid).card.id !== d.id) return;
   if (!prints.length) { UI.toast(`No other printings found for ${dname(d)}.`); return; }
-  const copies = ZONES.reduce((n, z) => n + S.me.zones[z].filter(c => !c.tok && S.me.defs[c.id] && S.me.defs[c.id].name === d.name).length, 0);
+  const groupDef = prints.find(p => p.id === d.id) || d;
+  const tokenPrintIds = printedToken(f.card, d) ? new Set(prints.map(p => p.id)) : null;
+  const copies = ZONES.reduce((n, z) => n + S.me.zones[z].filter(c => samePrintingGroup(c, S.me.defs[c.id], f.card, groupDef, tokenPrintIds)).length, 0);
   UI.printPicker({
     title: `Switch printing for ${d.name}`, prints, currentId: d.id, showAll: copies > 1,
-    onPick: (nd, scope) => applyPrinting(iid, d, nd, scope)
+    onPick: (nd, scope) => { if (S.me === owner && findCard(iid) && findCard(iid).card.id === d.id) applyPrinting(iid, groupDef, nd, scope, tokenPrintIds); }
   });
 }
-function applyPrinting(iid, oldDef, nd, scope) {
+function applyPrinting(iid, oldDef, nd, scope, tokenPrintIds) {
   const selected = findCard(iid);
   const sourceZone = selected && selected.zone;
   const isToken = !!(selected && selected.card && selected.card.tok);
@@ -1735,7 +1824,7 @@ function applyPrinting(iid, oldDef, nd, scope) {
   act(() => {
     S.me.defs[nd.id] = savedDef;
     for (const z of ZONES) for (const c of S.me.zones[z]) {
-      const same = scope === 'all' && !c.tok && S.me.defs[c.id] && S.me.defs[c.id].name === oldDef.name;
+      const same = scope === 'all' && selected && samePrintingGroup(c, S.me.defs[c.id], selected.card, oldDef, tokenPrintIds);
       if (c.iid === iid || same) c.id = nd.id;
     }
   });
@@ -2042,12 +2131,9 @@ function discardRandom() {
 }
 
 // --- tokens
-function tokensMenu(x, y) {
+function tokensMenu() {
   const toks = S.me.tokens.map(id => S.me.defs[id]).filter(Boolean).sort((a, b) => dname(a).localeCompare(dname(b)));
-  const items = toks.map(t => ({ label: tokenLabel(t), onClick: () => createToken(t) }));
-  if (!items.length) items.push({ label: 'No tokens linked to this deck', disabled: true });
-  items.push({ sep: true }, { label: 'Search all tokens…', onClick: searchTokens });
-  UI.menu(x, y, items);
+  tokenGallery(toks, 'Your deck’s tokens', true);
 }
 function ownEmptyBattlefieldHovered() {
   const el = document.elementFromPoint(pvMouse.x, pvMouse.y);
@@ -2056,31 +2142,15 @@ function ownEmptyBattlefieldHovered() {
   return !!board && board.dataset.pid === S.pid;
 }
 async function searchTokens() {
+  const owner = S.me;
+  if (!owner) return;
   const q = await UI.prompt({ title: 'Create a token', label: 'Search tokens (e.g. Goblin, Treasure, Zombie, 1/1 Soldier)' });
-  if (!q) return;
+  if (!q || S.me !== owner) return;
   let res;
-  try { res = await Deck.searchTokens(String(q)); } catch (e) { UI.toast(e.message || 'Token search failed', { kind: 'error' }); return; }
+  try { res = await Deck.searchTokens(String(q)); } catch (e) { if (S.me === owner) UI.toast(e.message || 'Token search failed', { kind: 'error' }); return; }
+  if (S.me !== owner) return;
   if (!res.length) { UI.toast(`No tokens found for “${q}”`); return; }
-  const byIid = {};
-  const cards = res.map(d => { byIid['tk_' + d.id] = d; return { iid: 'tk_' + d.id, def: d }; });
-  UI.viewer({
-    title: `Tokens matching “${q}”`, cards,
-    actions: [{ key: 'one', label: 'Create 1' }, { key: 'many', label: 'Create several…' }], primary: 'one',
-    onAction: async (k, iid) => {
-      const d = byIid[iid]; if (!d) return;
-      let n = 1;
-      if (k === 'many') { n = await UI.prompt({ title: `How many ${dname(d)} tokens?`, type: 'number', value: 2, min: 1, max: 60 }); if (!n) return; }
-      createToken(d, n);
-    },
-    onHover: d => preview(d)
-  });
-}
-async function relatedToken(id) {
-  let d = S.me.defs[id];
-  if (!d) {
-    try { d = await Deck.fetchById(id); } catch (e) { UI.toast('Could not load that token', { kind: 'error' }); return; }
-  }
-  createToken(d);
+  tokenGallery(res, `Tokens matching “${q}”`);
 }
 
 // =====================================================================
@@ -2105,7 +2175,7 @@ function cardMenu(x, y, iid) {
     items.push({ label: c.fd ? 'Turn face up' : 'Turn face down', hint: 'Z', onClick: () => toggleFaceDown(iid) });
     items.push({ label: 'Copy this card', disabled: c.fd, onClick: () => copyCard(d, c.fl) });
     if (d.tokens && d.tokens.length) {
-      items.push({ label: 'Create related token', sub: d.tokens.map(id => ({ label: S.me.defs[id] ? tokenLabel(S.me.defs[id]) : 'Token', onClick: () => relatedToken(id) })) });
+      items.push({ label: 'Create related token…', onClick: () => relatedTokenGallery(d.tokens, `Tokens for ${dname(d)}`) });
     }
     if (opps.length) items.push({ label: 'Give control to', sub: opps.map(p => ({ label: pname(p), onClick: () => giveControl(iid, p) })) });
     if (c.own !== S.pid) items.push({ label: `Return control to ${pname(c.own)}`, onClick: () => returnControl(iid) });
