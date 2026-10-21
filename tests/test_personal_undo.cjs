@@ -117,5 +117,10 @@ function reset() {
   const pendingTransfer = CT.choosePersonalEntry(target);
   CT.clearUndo(); confirm(true); await pendingTransfer;
   assert.equal(S.undo.length, 0, 'cleared history cannot restore from an open confirmation');
+  reset(); CT.act(() => { S.me.life = 37; });
+  const savePending = CT.choosePersonalEntry(S.undo[0]);
+  S.me.roomSaveRevision = 12345; confirm(true); await savePending;
+  assert.equal(S.me.life, 40, 'background room save does not invalidate a board confirmation');
+  assert.equal(S.me.roomSaveRevision, 12345, 'restore preserves the latest room save revision');
   console.log('PASS personal Undo: labels, local-only restore, IDs/defs, incoming effects, both transfer directions, stale entries/dialogs, checkpoints/automation, bounds');
 })().catch(e => { console.error(e); process.exitCode = 1; });

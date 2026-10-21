@@ -249,7 +249,7 @@ function tidyBoard() {
 }
 
 // --- the action pipeline: snapshot for undo -> mutate -> log -> publish/save/render
-function snapshot() { const { defs, ...rest } = S.me; return JSON.stringify(rest); }
+function snapshot() { const { defs, roomSaveRevision, ...rest } = S.me; return JSON.stringify(rest); }
 let undoSerial = 0, undoContext = null;
 function historyContext() {
   const t = S.table;
@@ -297,6 +297,7 @@ function restorePersonalEntry(entry) {
   const current = S.me, restored = JSON.parse(entry.state);
   // IDs and turn automation markers must never rewind with the board.
   restored.defs = current.defs;
+  restored.roomSaveRevision = current.roomSaveRevision;
   restored.seq = Math.max(current.seq || 0, restored.seq || 0);
   restored.lastTurnSeq = current.lastTurnSeq;
   restored.lastTurn = current.lastTurn;
