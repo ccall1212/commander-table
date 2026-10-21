@@ -1,8 +1,10 @@
-# Moderation and room recovery — v0.34.0 test copy
+# Moderation and room recovery — v0.37.0 test copy
 
 Extract the ZIP and double-click **index.html**, with internet access. No terminal or installation is needed. All players should use this copy.
 
-**Server prerequisite:** the relay must advertise `room-vault-v1`. The server-only companion PR must be approved, deployed through Workers Builds and checked before the fresh-browser steps below can work against the normal online room. Until then this copy reports room backup unavailable; do not treat it as recovery-ready on the live server. A local assistant test used the actual new Worker in Miniflare, not the current production server.
+**Server ready:** companion [PR #57](https://github.com/ccall1212/commander-table/pull/57) was approved and deployed through production Workers Builds. A real Chromium fetch confirmed live `room-vault-v1`, and the complete fresh-incognito recovery flow passed against that deployed Worker. You can test the steps below using normal online rooms. Only the server is published; this moderation/recovery frontend remains a test copy.
+
+Includes the published v0.35.0 mulligan rules. Choose an opening mode as usual; a board handoff retains its current opening state and remaining host-granted attempts.
 
 ## Click list
 
@@ -22,8 +24,8 @@ Use host, delegate, owner and replacement players. Check Sidebar and Grid at 192
 - Automated moderation checks cover host/delegate/member authorization, restore/kick, private seat authentication, host-ID spoof rejection, validated private boards, reference remapping and saved-session boundaries. Existing token/targeting/P/T suites pass.
 - Actual Chromium HTTP + local Cloudflare-compatible SQLite Durable Object checks passed: destroy the entire original browser context, fresh same-name claim, moderator approval, full hidden hand/library order, battlefield/life/P/T/top-reveal restore, no duplicate, guest vault denial, recipient save/reload, saved status and Sidebar/Grid at both sizes. The test waits for the completed server save before closing. No page errors observed.
 - Actual Miniflare integration checks cover storage across Worker restart, concurrent/large Unicode saves, stale revision protection, access denial, TTL, delete/clear and protocol compatibility. These do not establish live deployment.
-- Earlier four-player real-production-relay HTTP checks passed local-only delegation, restore, kick and connected/private same-browser handoffs. The new server-backed flow still needs the production capability and Chris's hands-on testing. Chris's earlier incognito test failed with the old local-only copy; that limitation prompted this revision.
+- Earlier four-player real-production-relay HTTP checks passed local-only delegation, restore, kick and connected/private same-browser handoffs. The revised server-backed flow also passed the same fresh-browser checks against the deployed production Worker. Chris’s hands-on testing remains pending. Chris's earlier incognito test failed with the old local-only copy; that limitation prompted this revision.
 - Private boards are readable by the host and room service, not ordinary players. Saves expire 24 hours after completion. Closing before completion can lose recent changes. Lost data from before this feature cannot be recovered. Host identity migration is outside this feature.
 - Managed Chromium blocks `file://`; assistant tests used HTTP. Chris's extract/open and real-device checks remain pending. GPT-6 Luna performed bounded investigation/review/server tests; primary implemented and browser-tested.
 
-Includes published v0.33.1 chat/arrows. Independent mulligan, color, Deck Builder checks and Collection backup proposals are not bundled. PR #11 remains paused. Publication is not approved.
+Includes published chat/arrows and v0.35.0 mulligans. Independent color, Deck Builder checks and Collection backup proposals are not bundled. PR #11 remains paused. Publication is not approved.

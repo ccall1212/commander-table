@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.34.0';
+const APP_VERSION = '0.37.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -37,6 +37,10 @@ const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 const num = (v, d = 0) => (Number.isFinite(+v) ? clamp(Math.round(+v), -9999, 9999) : d);
 const isObj = o => o && typeof o === 'object' && !Array.isArray(o);
 const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+const openingModeName = mode => ({ london: 'London (7; first free)', 'three-lands': 'At least 3 lands', 'ten-bottom-three': 'Draw 10, bottom 3' })[CTMulligan.normalizeMode(mode)];
+const openingModeShort = mode => ({ london: 'London', 'three-lands': '3 Lands', 'ten-bottom-three': '10 → 7' })[CTMulligan.normalizeMode(mode)];
+const openingMulliganLimit = pid => CTMulligan.limit((S.table && S.table.openingMode) || 'london',
+  (S.table && S.table.openingAllowances && S.table.openingAllowances[pid]) || 0);
 
 const ZONES = ['library', 'hand', 'battlefield', 'graveyard', 'exile', 'command'];
 const ZL = { library: 'library', hand: 'hand', battlefield: 'battlefield', graveyard: 'graveyard', exile: 'exile', command: 'command zone' };
@@ -139,9 +143,10 @@ function colorOf(pid) {
 // =====================================================================
 //  Player state
 // =====================================================================
-function newPlayer(deck, name, prev) {
+function newPlayer(deck, name, prev, mode = 'london', dealId = null) {
   const m = {
     pid: S.pid, name, appearance: CTAppearance.getPrefs(), life: 40, poison: 0, ctr: {}, cmdDmg: {}, casts: {}, mull: 0, kept: false,
+    openingDeal: dealId,
     revealHand: false, revealTop: false, revealTopOnce: null, seq: 0, lastTurn: 0, lastTurnSeq: 0,
     autoUntap: false, autoDraw: false, // always start a game with these off
     layout: prev && prev.layout ? cloneLayout(prev.layout) : defaultLayout(),
@@ -159,11 +164,14 @@ function newPlayer(deck, name, prev) {
   m.zones.library = shuffle(Deck.buildLibrary(deck).map(d => mk(d)));
   (deck.tokens || []).forEach(t => { m.defs[t.id] = t; });
   m.tokens = (deck.tokens || []).map(t => t.id);
-  m.zones.hand = m.zones.library.splice(0, 7);
+  const opening = CTMulligan.deal(m.zones.library, m.defs, mode);
+  m.zones.hand = opening.hand;
+  m.openingFallback = opening.fallback;
   return m;
 }
 // Bring older saved games up to the current shape (layout + card positions).
 function normalizeMe(m) {
+  m.mull = clamp(num(m.mull), 0, CTMulligan.MAX_LIMIT);
   m.appearance = CTAppearance.normalizePrefs(m.appearance);
   if (!layoutOk(m.layout)) {
     // zones changed in this version: switch to the new layout and re-sort cards into it
@@ -276,7 +284,7 @@ function publicView() {
   });
   return {
     pid: m.pid, bw: BW, name: m.name, appearance: CTAppearance.normalizePrefs(m.appearance), life: m.life, poison: m.poison, ctr: m.ctr, cmdDmg: m.cmdDmg, cmdrs: m.cmdrs,
-    casts: m.casts, hand: z.hand.length, lib: z.library.length, kept: m.kept, layout: m.layout, bh: myBH(),
+    casts: m.casts, hand: z.hand.length, lib: z.library.length, kept: m.kept, mullCount: m.mull, layout: m.layout, bh: myBH(),
     zones: { battlefield: take(z.battlefield), graveyard: take(z.graveyard), exile: take(z.exile), command: take(z.command) },
     revHand: m.revealHand ? take(z.hand) : null,
     // An individually revealed card is public only while it remains in its owner's hand.
@@ -324,9 +332,10 @@ function sendChat(text) {
 }
 
 // ----- host side -----
-function newTable(room) {
+function newTable(room, openingMode = 'london', openingDeal = uid()) {
   S.chat = []; S.chatOpen = false; S.chatUnread = 0; S.seatKeys = {}; S.pendingSeats = {}; S.boardBackups = {}; roomBackupSent.clear();
-  return { room, seats: [S.pid], order: [], active: null, turn: 0, turnSeq: 0, phase: 3, started: false, monarch: null, initiative: null, out: {}, hostPid: S.pid, mods: [], kicked: [], handoffs: {} };
+  return { room, seats: [S.pid], order: [], active: null, turn: 0, turnSeq: 0, phase: 3, started: false, monarch: null, initiative: null, out: {}, hostPid: S.pid, mods: [], kicked: [], handoffs: {},
+    openingMode: CTMulligan.normalizeMode(openingMode), openingDeal, openingAllowances: {} };
 }
 function hostRecv(msg, from) {
   if (!msg || typeof msg.t !== 'string' || !S.table) return;
@@ -413,6 +422,11 @@ function hostRecv(msg, from) {
       if (!t || t.room !== S.table.room || t.rev <= (S.table.rev || 0) || !t.seats.includes(S.pid)) return;
       t.seats = S.table.seats.slice(); t.out = { ...S.table.out };
       t.hostPid = S.pid; t.mods = S.table.mods || []; t.kicked = S.table.kicked || []; t.handoffs = S.table.handoffs || {};
+      // Recovery can restore host table changes, but only the host may choose the
+      // opening policy or advance its deal epoch.
+      t.openingMode = S.table.openingMode;
+      t.openingDeal = S.table.openingDeal;
+      t.openingAllowances = S.table.openingAllowances || {};
       S.table = t;
       sysLog(`Restored the latest table state (turn ${t.turn}) from ${pname(from)}.`);
       afterTable();
@@ -440,10 +454,15 @@ function cleanTable(t) {
   if (!isObj(t)) return null;
   const ids = a => (Array.isArray(a) ? a.filter(x => typeof x === 'string').slice(0, 8).map(x => x.slice(0, 40)) : []);
   const str = x => (typeof x === 'string' ? x.slice(0, 40) : null);
+  const seats = ids(t.seats);
+  const openingAllowances = isObj(t.openingAllowances)
+    ? Object.fromEntries(Object.entries(t.openingAllowances).filter(([pid]) => seats.includes(pid)).slice(0, 8)
+      .map(([pid, n]) => [pid.slice(0, 40), CTMulligan.extraLimit(n)])) : {};
   return {
-    room: String(t.room || '').slice(0, 8), seats: ids(t.seats), order: ids(t.order), active: str(t.active),
+    room: String(t.room || '').slice(0, 8), seats, order: ids(t.order), active: str(t.active),
     turn: Math.max(0, num(t.turn)), turnSeq: Math.max(0, num(t.turnSeq, num(t.turn))), phase: clamp(num(t.phase, 3), 0, PHASES.length - 1), started: !!t.started,
     monarch: str(t.monarch), initiative: str(t.initiative),
+    openingMode: CTMulligan.normalizeMode(t.openingMode), openingDeal: str(t.openingDeal), openingAllowances,
     out: isObj(t.out) ? Object.fromEntries(Object.keys(t.out).slice(0, 8).map(k => [k.slice(0, 40), !!t.out[k]])) : {},
     hostPid: str(t.hostPid), mods: ids(t.mods).filter(p => ids(t.seats).includes(p)),
     kicked: Array.isArray(t.kicked) ? [...new Set(t.kicked.filter(p => typeof p === 'string').map(p => p.slice(0, 40)))].slice(0, 128) : [],
@@ -479,6 +498,30 @@ function tableOp(op, from) {
       const live = T.seats.filter(p => !T.out[p]);
       if (!live.length) return;
       rollFirstPlayer(T, live);
+      break;
+    }
+    case 'mulligan': {
+      if (!isHost || T.started) return;
+      const mode = CTMulligan.normalizeMode(op.mode);
+      if (mode === T.openingMode) return;
+      T.openingMode = mode;
+      T.openingDeal = uid();
+      T.openingAllowances = {};
+      Object.assign(T, { order: [], active: null, turn: 0, turnSeq: 0, phase: 3, started: false, monarch: null, initiative: null, out: {} });
+      pushTable();
+      broadcast({ t: 'newgame', openingMode: T.openingMode, openingDeal: T.openingDeal });
+      sysLog(`Opening-hand rule changed to ${openingModeName(mode)}. Everyone reshuffled and redealt.`);
+      return;
+    }
+    case 'grantmull': {
+      if (!isHost || !T.seats.includes(op.pid) || T.openingMode === 'london') return;
+      const target = op.pid === S.pid ? null : S.players[op.pid];
+      if (op.pid === S.pid ? S.me.kept : !target || target.kept) return;
+      const grants = CTMulligan.extraLimit((T.openingAllowances || {})[op.pid]);
+      if (grants >= CTMulligan.MAX_EXTRA) return;
+      T.openingAllowances = T.openingAllowances || {};
+      T.openingAllowances[op.pid] = grants + 1;
+      sysLog(`${pname(op.pid)} was granted another mulligan by ${pname(S.pid)}.`);
       break;
     }
     case 'start': {
@@ -568,6 +611,7 @@ function tableOp(op, from) {
       if (T.initiative === op.pid) T.initiative = null;
       directPlayer(op.pid, { t: 'moderation-exit', reason: 'Your seat was removed by a moderator.' });
       T.seats = T.seats.filter(p => p !== op.pid); T.order = T.order.filter(p => p !== op.pid);
+      if (T.openingAllowances) delete T.openingAllowances[op.pid];
       if (T.active === op.pid) { T.active = T.order.find(p => !T.out[p]) || null; T.turnSeq = Math.max(1, num(T.turnSeq)) + 1; T.phase = 3; }
       sysLog(`${pname(op.pid)} was removed from the table.`);
       delete S.players[op.pid];
@@ -578,9 +622,11 @@ function tableOp(op, from) {
     case 'newgame': {
       if (!isHost) return;
       Object.assign(T, { order: [], active: null, turn: 0, turnSeq: 0, phase: 3, started: false, monarch: null, initiative: null, out: {} });
+      T.openingDeal = uid();
+      T.openingAllowances = {};
       pushTable();
-      broadcast({ t: 'newgame' });
-      sysLog('New game — everyone reshuffled and drew 7.');
+      broadcast({ t: 'newgame', openingMode: T.openingMode, openingDeal: T.openingDeal });
+      sysLog(`New game — everyone reshuffled and used ${openingModeName(T.openingMode)}.`);
       return;
     }
     default: return;
@@ -616,7 +662,7 @@ function cleanPub(p, from) {
     pid: from, name: String(p.name || 'Player').slice(0, 24), appearance: CTAppearance.normalizePrefs(p.appearance), life: num(p.life, 40), poison: num(p.poison),
     ctr: numMap(p.ctr), cmdDmg: numMap(p.cmdDmg), casts: numMap(p.casts),
     cmdrs: Array.isArray(p.cmdrs) ? p.cmdrs.slice(0, 3).filter(isObj).map(c => ({ iid: String(c.iid).slice(0, 40), name: String(c.name || '').slice(0, 80) })) : [],
-    hand: num(p.hand), lib: num(p.lib), kept: !!p.kept,
+    hand: num(p.hand), lib: num(p.lib), kept: !!p.kept, mullCount: clamp(num(p.mullCount), 0, CTMulligan.MAX_LIMIT),
     layout: cleanLayout(p.layout) || cloneLayout(DEFAULT_LAYOUT), bh: clamp(num(p.bh, BH), BH, BH_MAX),
     zones: { battlefield: cleanCards(z.battlefield), graveyard: cleanCards(z.graveyard), exile: cleanCards(z.exile), command: cleanCards(z.command, 4) },
     revHand: p.revHand ? cleanCards(p.revHand, 60) : null,
@@ -772,10 +818,15 @@ function onBroadcast(msg) {
     case 'placefx':
       if (typeof msg.pid === 'string' && typeof msg.iid === 'string' && msg.pid !== S.pid) playCardPlaceSound();
       break;
-    case 'table': S.table = msg.table; applyCommittedHandoff(); if (handleRemovedSeat()) return; handleTurnNoticeUpdate(S.table); afterTable(); break;
+    case 'table': S.table = msg.table; applyCommittedHandoff(); if (handleRemovedSeat()) return; reconcileOpeningDeal(S.table); handleTurnNoticeUpdate(S.table); afterTable(); break;
     case 'firstroll': showFirstRoll(msg); break;
     case 'online': S.online = msg.online || {}; break;
-    case 'newgame': resetForNewGame(); break;
+    case 'newgame':
+      if (S.table && msg.openingDeal) {
+        S.table.openingMode = CTMulligan.normalizeMode(msg.openingMode);
+        S.table.openingDeal = String(msg.openingDeal).slice(0, 40);
+      }
+      resetForNewGame(); break;
     default: return;
   }
   saveSoon(); render();
@@ -785,6 +836,7 @@ function clientRecv(msg) {
   if (handleClientModeration(msg)) return;
   if (msg.t === 'snap') {
     S.table = msg.table; S.players = msg.players || {}; S.log = msg.log || []; S.online = msg.online || {}; S.boardBackups = msg.boardBackups || {}; S.chat = cleanChatHistory(msg.chat);
+    reconcileOpeningDeal(S.table);
     seedTurnNotice(S.table);
     S.targetArrows = CTTargeting.cleanList(msg.arrows, S.players, (S.table && S.table.seats) || []);
     applyCommittedHandoff(); if (handleRemovedSeat()) return;
@@ -932,10 +984,19 @@ function afterTable() {
 }
 function resetForNewGame() {
   S.targetArrows = []; S.arrowControlsDismissed = false; endTargeting();
+  if (S.me && S.table && S.table.openingDeal && S.me.openingDeal === S.table.openingDeal) return;
   const deck = Deck.get(S.deckId);
   if (!deck) { UI.toast('Your deck is missing from this browser — cannot restart.', { kind: 'error' }); return; }
-  S.me = newPlayer(deck, S.me.name, S.me);
+  S.me = newPlayer(deck, S.me.name, S.me, (S.table && S.table.openingMode) || 'london', (S.table && S.table.openingDeal) || uid());
   S.selected.clear();
+  S.undo = [];
+  publish(true);
+}
+function reconcileOpeningDeal(table) {
+  if (!S.me || !table || !table.openingDeal || S.me.openingDeal === table.openingDeal) return;
+  const deck = Deck.get(S.deckId);
+  if (!deck) return;
+  S.me = newPlayer(deck, S.me.name, S.me, table.openingMode, table.openingDeal);
   S.undo = [];
   publish(true);
 }
@@ -2029,32 +2090,71 @@ function changeCmdDmg(key, d) {
 
 // --- mulligan (London, first one free in Commander)
 function mulligan() {
+  const mode = (S.table && S.table.openingMode) || 'london';
+  const grants = (S.table && S.table.openingAllowances && S.table.openingAllowances[S.pid]) || 0;
+  if (!S.me || S.me.kept || !CTMulligan.canMulligan(S.me.mull, mode, grants)) return;
   act(() => {
     const z = S.me.zones;
     z.library.push(...z.hand.splice(0).map(c => { delete c.rvh; return c; }));
     S.me.revealTopOnce = null;
     shuffle(z.library);
-    z.hand = z.library.splice(0, 7);
+    const opening = CTMulligan.deal(z.library, S.me.defs, (S.table && S.table.openingMode) || 'london');
+    z.hand = opening.hand;
+    S.me.openingFallback = opening.fallback;
     S.me.mull++;
-    return [`took a mulligan (#${S.me.mull}${S.me.mull === 1 ? ', free' : ''})`];
+    return [`took a mulligan (#${S.me.mull}${(S.table && S.table.openingMode || 'london') === 'london' && S.me.mull === 1 ? ', free' : ''})`];
   });
 }
 function keepHand() {
-  const n = Math.max(0, S.me.mull - 1);
-  if (!n) { act(() => { S.me.kept = true; return [`kept their opening hand${S.me.mull ? ` after ${plural(S.me.mull, 'mulligan')}` : ''}`]; }); return; }
+  const mode = (S.table && S.table.openingMode) || 'london';
+  const lands = CTMulligan.landCount(S.me.zones.hand, S.me.defs);
+  const possibleLands = lands + CTMulligan.landCount(S.me.zones.library, S.me.defs);
+  const grants = (S.table && S.table.openingAllowances && S.table.openingAllowances[S.pid]) || 0;
+  if (!CTMulligan.canKeep(mode, lands, possibleLands, S.me.mull, grants)) return;
+  const n = CTMulligan.bottomCount(mode, S.me.mull, S.me.zones.hand.length);
+  if (!n) {
+    act(() => { S.me.kept = true; return [`kept their opening hand${S.me.mull ? ` after ${plural(S.me.mull, 'mulligan')}` : ''}`]; });
+    if (mode === 'three-lands' && lands < 3 && possibleLands < 3) UI.toast('This deck has fewer than 3 lands available. You may keep any hand.', { kind: 'warn', ms: 6000 });
+    else if (S.me.mull >= openingMulliganLimit(S.pid) && mode === 'three-lands' && lands < 3) UI.toast('Mulligan limit reached. You may keep this hand even though it has fewer than 3 lands.', { kind: 'warn', ms: 6000 });
+    return;
+  }
   pushUndo();
   let picked = 0;
   UI.viewer({
     title: `Put ${plural(n, 'card')} on the bottom`,
     cards: S.me.zones.hand.map(c => ({ iid: c.iid, def: defOf(c) })),
     actions: [],
-    pick: { count: n, actionKey: 'bottom', prompt: `You took ${plural(S.me.mull, 'mulligan')} (first one free): choose ${n} to put on the bottom` },
+    pick: { count: n, actionKey: 'bottom', prompt: mode === 'london'
+      ? `You took ${plural(S.me.mull, 'mulligan')} (first one free): choose ${n} to put on the bottom`
+      : `Choose ${n} to put on the bottom` },
     onAction: (k, iid) => {
       moveCard(iid, 'library', { pos: 'bottom' });
       if (++picked === n) { S.me.kept = true; say(`kept ${S.me.zones.hand.length} cards after ${plural(S.me.mull, 'mulligan')}`); commit(); }
     },
     onHover: d => preview(d)
   });
+}
+
+async function changeOpeningMode(mode) {
+  mode = CTMulligan.normalizeMode(mode);
+  if (S.role === 'client') return;
+  const current = (S.table && S.table.openingMode) || 'london';
+  if (mode === current) return;
+  const confirmed = await UI.confirm(`Change the opening-hand rule to ${openingModeName(mode)}? Everyone will reshuffle and redeal.`, {
+    title: 'Reset opening hands for everyone', danger: true, okLabel: 'Redeal everyone'
+  });
+  if (!confirmed) { render(); return; }
+  if (S.role === 'solo') {
+    S.table.openingMode = mode; S.table.openingDeal = uid();
+    resetForNewGame(); render();
+  } else toHost({ t: 'op', op: { k: 'mulligan', mode } });
+}
+function openingRulesMenu(btn) {
+  const r = btn.getBoundingClientRect(), current = (S.table && S.table.openingMode) || 'london';
+  UI.menu(r.left, r.bottom + 4, CTMulligan.MODES.map(mode => ({
+    label: openingModeName(mode), checked: mode === current,
+    onClick: () => changeOpeningMode(mode)
+  })));
 }
 
 // =====================================================================
@@ -2401,6 +2501,11 @@ function playerMenu(x, y, pid) {
     { label: T.initiative === pid ? 'Remove initiative' : 'Give initiative 🏰', onClick: () => toHost({ t: 'op', op: { k: 'initiative', pid: T.initiative === pid ? null : pid } }) }
   ];
   const p = S.players[pid];
+  const ownKept = pid === S.pid ? !!(S.me && S.me.kept) : !!(p && p.kept);
+  if (S.role !== 'client' && T.openingMode !== 'london' && T.seats.includes(pid) && !ownKept
+    && CTMulligan.extraLimit((T.openingAllowances || {})[pid]) < CTMulligan.MAX_EXTRA) {
+    items.push({ sep: true }, { label: 'Grant another mulligan', onClick: () => toHost({ t: 'op', op: { k: 'grantmull', pid } }) });
+  }
   if (pid !== S.pid && p) {
     items.push({ sep: true },
       { label: S.focus === pid ? 'Show all opponents' : 'Show this board large', onClick: () => toggleFocus(pid) },
@@ -2505,7 +2610,7 @@ function mainMenu(x, y) {
     { sep: true }
   ];
   if (S.role !== 'client') items.push({ label: 'Start a new game (everyone)', onClick: async () => {
-    if (await UI.confirm('Start a new game? Everyone reshuffles their deck and draws 7.', { okLabel: 'New game' })) toHost({ t: 'op', op: { k: 'newgame' } });
+    if (await UI.confirm('Start a new game? Everyone reshuffles and receives a new opening hand.', { okLabel: 'New game' })) toHost({ t: 'op', op: { k: 'newgame' } });
   } });
   if (S.role !== 'solo') {
     items.push({ label: 'Copy invite link', onClick: copyRoom });
@@ -3001,15 +3106,20 @@ function renderTop() {
   pill.textContent = S.role === 'solo' ? 'Practice' : ({ online: 'Connected', connecting: 'Connecting…', reconnecting: 'Reconnecting…', offline: 'Offline', error: 'Error' }[st] || st);
   pill.title = S.net.text || '';
   let html;
+  const rule = T ? CTMulligan.normalizeMode(T.openingMode) : 'london';
+  const ruleControl = T ? (S.role === 'client' || T.started
+    ? `<span class="muted ct-opening-rule" title="${esc(openingModeName(rule))}">${esc(openingModeShort(rule))}</span>`
+    : `<button class="ct-opening-rule" data-a="openingrule" title="Change opening-hand rule">Opening: ${esc(openingModeShort(rule))}</button>`)
+    : '';
   if (!T) html = `<span class="muted">${esc(S.net.text || 'Connecting to the host…')}</span>`;
   else if (!T.started) {
-    html = `<span class="muted">Not started · ${plural(T.seats.length, 'player')} seated</span>` +
+    html = `${ruleControl}<span class="muted">Not started · ${plural(T.seats.length, 'player')} seated</span>` +
       (S.role !== 'client' ? ' <button class="primary" data-a="start" title="Uses the rolled order, or randomizes if you have not rolled">Start game</button>' : ' <span class="muted">— waiting for the host to start</span>');
   } else if (!T.active) {
-    html = `<span class="muted">No active player · everyone has conceded</span>`;
+    html = `${ruleControl}<span class="muted">No active player · everyone has conceded</span>`;
   } else {
     const mine = T.active === S.pid;
-    html = `<span>Round <b>${T.turn}</b> · <b style="color:${colorOf(T.active)}">${esc(mine ? 'Your' : pname(T.active) + "'s")}</b> turn</span>`;
+    html = `${ruleControl}<span>Round <b>${T.turn}</b> · <b style="color:${colorOf(T.active)}">${esc(mine ? 'Your' : pname(T.active) + "'s")}</b> turn</span>`;
   }
   $('#turnBox').innerHTML = html;
   updateChatButton();
@@ -3295,11 +3405,29 @@ function renderMine(idx) {
   setHTML($('#myZones'), vo ? oppZonesHTML(vo) : myZonesHTML());
   const mb = $('#mullBar');
   if (!m.kept) {
-    const next = m.mull === 0 ? 'next mulligan is free' : `next mulligan: put ${m.mull} on the bottom`;
-    mb.innerHTML = `<b>Opening hand</b> <button class="primary" data-a="keep">Keep ${z.hand.length}${m.mull > 1 ? ` (bottom ${m.mull - 1})` : ''}</button>
-      <button data-a="mull">Mulligan</button><span class="muted small">${next}</span>`;
+    const mode = (S.table && S.table.openingMode) || 'london';
+    const lands = CTMulligan.landCount(z.hand, m.defs);
+    const possibleLands = lands + CTMulligan.landCount(z.library, m.defs);
+    const grants = (S.table && S.table.openingAllowances && S.table.openingAllowances[S.pid]) || 0;
+    const limit = openingMulliganLimit(S.pid);
+    const landBlocked = !CTMulligan.canKeep(mode, lands, possibleLands, m.mull, grants);
+    const bottom = CTMulligan.bottomCount(mode, m.mull, z.hand.length);
+    const keepLabel = bottom ? `Keep ${z.hand.length} (bottom ${bottom})` : `Keep ${z.hand.length}`;
+    const next = mode === 'london'
+      ? (m.mull === 0 ? 'first mulligan is free' : `bottom ${Math.max(0, m.mull - 1)} after keeping`)
+      : mode === 'three-lands' ? `${lands}/3 lands${possibleLands < 3 ? ' · fewer than 3 in deck' : m.mull >= limit && lands < 3 ? ' · limit reached, keep allowed' : ''}`
+        : `bottom ${Math.min(3, Math.max(0, z.hand.length - 1))} after keeping`;
+    mb.innerHTML = `<b>Opening hand</b> <button class="primary" data-a="keep"${landBlocked ? ' disabled' : ''}>${keepLabel}</button>
+      <button data-a="mull"${!CTMulligan.canMulligan(m.mull, mode, grants) ? ' disabled' : ''}>Mulligan (${m.mull}/${limit})</button><span class="muted small">${next}</span>`;
     mb.classList.remove('hidden');
+    positionMulliganBar();
   } else mb.classList.add('hidden');
+}
+function positionMulliganBar() {
+  const mb = $('#mullBar'), hand = $('#handWrap');
+  if (!mb || mb.classList.contains('hidden') || !hand) return;
+  const r = hand.getBoundingClientRect();
+  mb.style.top = Math.max(8, r.top - 26 - mb.offsetHeight) + 'px';
 }
 
 let logLen = -1, logLast = null;
@@ -3723,6 +3851,7 @@ function bindGame() {
     prepareChatAudio();
     if (chatAudioContext && chatAudioContext.state === 'running') document.removeEventListener('pointerdown', unlockSavedChatSound);
   });
+  window.addEventListener('resize', positionMulliganBar, { passive: true });
   // Native browser text/image dragging can steal pointer gestures from the tabletop's card drag logic.
   g.addEventListener('dragstart', e => {
     if (e.target.closest('.board, .card')) e.preventDefault();
@@ -4401,6 +4530,7 @@ function onButton(a, btn, e) {
     case 'dice': diceMenu(r.left, r.bottom + 4); break;
     case 'undo': undo(); break;
     case 'menu': mainMenu(r.right - 240, r.bottom + 4); break;
+    case 'openingrule': openingRulesMenu(btn); break;
     case 'copyroom': copyRoom(); break;
     case 'arrange': toggleArrange(); break;
     case 'tidy': act(() => { tidyBoard(); return ['tidied up their battlefield']; }); break;
@@ -4846,6 +4976,7 @@ function handleHostBoardTransfer(msg, from) {
     if (T.initiative === p.source) T.initiative = p.target;
     if (T.out[p.source]) T.out[p.target] = true; else delete T.out[p.target];
     delete T.out[p.source]; T.mods = (T.mods || []).filter(pid => pid !== p.source);
+    if (T.openingAllowances) { T.openingAllowances[p.target] = T.openingAllowances[p.source] || 0; delete T.openingAllowances[p.source]; }
     Object.values(S.players).forEach(player => remapBoardReferences(player, p.source, p.target));
     const sourceName = pname(p.source), targetName = S.players[p.target]?.name || S.pendingSeats?.[p.target]?.p.name || pname(p.target);
     delete S.players[p.source];
@@ -4953,7 +5084,14 @@ function loadSession(pid) {
 function resume(sess) {
   S.role = sess.role; S.room = sess.room; S.deckId = sess.deckId; S.me = sess.me; S.seatKeys = isObj(sess.seatKeys) ? sess.seatKeys : {};
   normalizeMe(S.me);
-  S.table = sess.table || null; if (S.table && S.role === 'host') S.table.hostPid = S.pid; S.players = sess.players || {}; S.log = sess.log || []; S.chat = cleanChatHistory(sess.chat); S.chatOpen = false; S.chatUnread = 0; S.online = {};
+  S.table = cleanTable(sess.table) || null; S.players = sess.players || {}; S.log = sess.log || []; S.chat = cleanChatHistory(sess.chat); S.chatOpen = false; S.chatUnread = 0; S.online = {};
+  if (S.table && S.role === 'host') S.table.hostPid = S.pid;
+  if (S.table) {
+    S.table.openingMode = CTMulligan.normalizeMode(S.table.openingMode);
+    S.table.openingAllowances = S.table.openingAllowances || {};
+    if (!S.table.openingDeal) S.table.openingDeal = uid();
+    if (!S.me.openingDeal) S.me.openingDeal = S.table.openingDeal;
+  }
   if (S.role === 'host') Object.keys(S.players).forEach(p => { if (p !== S.pid) S.online[p] = false; });
   showGame();
   startNet();
@@ -5065,6 +5203,11 @@ function bindLobby() {
   $('#loadDeck').onclick = loadDeck;
   $('#nameIn').addEventListener('change', () => LS.set('ct.name', $('#nameIn').value.trim()));
   $('#hostBtn').onclick = () => begin('host');
+  const hostRule = $('#hostMulligan');
+  if (hostRule) {
+    hostRule.value = CTMulligan.normalizeMode(LS.get('ct.openingMode', 'london'));
+    hostRule.addEventListener('change', () => LS.set('ct.openingMode', CTMulligan.normalizeMode(hostRule.value)));
+  }
   $('#soloBtn').onclick = () => begin('solo');
   $('#joinBtn').onclick = () => begin('client');
   $('#joinIn').addEventListener('input', e => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); });
@@ -5220,8 +5363,10 @@ async function begin(role) {
   } catch (e) { /* ignore */ }
   S.role = role; S.room = room; S.deckId = deck.id;
   S.players = {}; S.log = []; S.online = {}; S.undo = [];
-  S.me = newPlayer(deck, name);
-  S.table = role === 'client' ? null : newTable(room);
+  const openingMode = role === 'host' ? CTMulligan.normalizeMode($('#hostMulligan').value) : 'london';
+  const openingDeal = role === 'client' ? null : uid();
+  S.me = newPlayer(deck, name, null, openingMode, openingDeal);
+  S.table = role === 'client' ? null : newTable(room, openingMode, openingDeal);
   S.net = { state: role === 'solo' ? 'online' : 'connecting', text: '' };
   showGame();
   startNet();

@@ -30,8 +30,9 @@ context.crypto = { getRandomValues: a => { a.fill(3); return a; } };
 context.CTAppearance = { normalizePrefs: x => x || {}, getCustom: () => ({}), boardBackgroundStyle: () => '' };
 context.UI.cardBackHTML = () => '';
 vm.runInContext(fs.readFileSync(path.join(root, 'js/targeting.js'), 'utf8'), context);
+vm.runInContext(fs.readFileSync(path.join(root, 'js/mulligan.js'), 'utf8'), context);
 let source = fs.readFileSync(path.join(root, 'js/app.js'), 'utf8');
-source = source.replace('window.CT = { S,', 'window.CT = { tableOp, cleanTable, cleanPrivateBoard, remapBoardReferences, publicView, savedRoomSession, saveNow, snapFor, authorizeClientMessage, seatKey, loadSession, resume, beginBoardTransfer, handleHostBoardTransfer, handleClientModeration, isModerator, pendingTransfer: () => pendingBoardTransfer, S,');
+source = source.replace('window.CT = { S,', 'window.CT = { reconcileOpeningDeal, tableOp, cleanTable, cleanPrivateBoard, remapBoardReferences, publicView, savedRoomSession, saveNow, snapFor, authorizeClientMessage, seatKey, loadSession, resume, beginBoardTransfer, handleHostBoardTransfer, handleClientModeration, isModerator, pendingTransfer: () => pendingBoardTransfer, S,');
 vm.runInContext(source, context);
 
 const CT = context.CT;
@@ -158,5 +159,21 @@ assert.equal(S.table.phase, 4, 'an authenticated later operation reaches the hos
 CT.saveNow();
 assert.equal(JSON.parse(data['ct.sess.host']).seatKeys.authclient, seatSecret, 'host session persists the private seat-key map');
 assert.equal(Object.hasOwn(CT.snapFor(), 'seatKeys'), false, 'private seat keys are not included in public join snapshots');
+
+// A saved kept hand from an earlier game must adopt a host-confirmed new deal
+// even if this browser missed the one-time newgame broadcast.
+const openingDeck = { name: 'Opening fixture', cards: [{ def: { id: 'land', name: 'Island', type: 'Basic Land — Island' }, qty: 20 }], commanders: [], tokens: [] };
+context.Deck.get = () => openingDeck;
+context.Deck.buildLibrary = deck => deck.cards.flatMap(r => Array.from({ length: r.qty }, () => r.def));
+context.CTAppearance.getPrefs = () => ({});
+S.me = clone(privateBoard); S.me.kept = true; S.me.openingDeal = 'old-deal';
+S.me.layout = [{ k: 'creatures', x: 0, y: 0, w: 1000, h: 300 }];
+CT.reconcileOpeningDeal({ openingMode: 'london', openingDeal: 'new-deal' });
+assert.equal(S.me.openingDeal, 'new-deal', 'new deal survives a missed newgame event for a kept player');
+assert.equal(S.me.kept, false, 'new hand needs its own keep decision');
+assert.equal(S.me.zones.battlefield.length, 0, 'previous-game battlefield cannot survive a confirmed new deal');
+const currentHand = S.me.zones.hand.map(c => c.iid).join(','); S.me.kept = true;
+CT.reconcileOpeningDeal({ openingMode: 'london', openingDeal: 'new-deal' });
+assert.equal(S.me.zones.hand.map(c => c.iid).join(','), currentHand, 'same-deal snapshots leave a kept hand untouched');
 
 console.log('PASS moderation: host/mod/member authorization, concession restore, persistent kick block, sanitized authority state, private board validation/remap, capture sender checks and room-scoped recovery lookup');
