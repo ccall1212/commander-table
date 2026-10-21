@@ -1022,14 +1022,14 @@ function suggestTokens(def) {
   if (toks.length === 1) {
     UI.toast(`${dname(def)} makes tokens`, { ms: 7000,
       action: { label: `+ ${dname(toks[0])}`, onClick: () => createToken(toks[0]) },
-      actions: [{ label: 'Create several…', onClick: () => createTokenQuantity(toks[0]) }]
+      actions: [{ label: 'Create X Tokens', onClick: () => createTokenQuantity(toks[0]) }]
     });
   } else {
     UI.toast(`${dname(def)} makes tokens`, { ms: 7000, action: { label: 'Choose token…', onClick: () => {
       const r = $('#myBf').getBoundingClientRect();
       UI.menu(r.left + 40, r.top + 20, toks.flatMap(t => [
         { label: `+ ${tokenLabel(t)}`, onClick: () => createToken(t) },
-        { label: `Create several ${tokenLabel(t)}…`, onClick: () => createTokenQuantity(t) }
+        { label: `Create X Tokens — ${tokenLabel(t)}`, onClick: () => createTokenQuantity(t) }
       ]));
     } } });
   }
@@ -1043,7 +1043,7 @@ async function createTokenQuantity(def) {
 function relatedTokenItems(id) {
   const d = S.me.defs[id];
   const name = d ? tokenLabel(d) : 'Token';
-  return [{ label: `Create several ${name}…`, onClick: async () => {
+  return [{ label: `Create X Tokens — ${name}`, onClick: async () => {
       let def = S.me.defs[id];
       if (!def) { try { def = await Deck.fetchById(id); } catch (e) { UI.toast('Could not load that token', { kind: 'error' }); return; } }
       createTokenQuantity(def);
@@ -2066,7 +2066,7 @@ function tokensMenu(x, y) {
   const toks = S.me.tokens.map(id => S.me.defs[id]).filter(Boolean).sort((a, b) => dname(a).localeCompare(dname(b)));
   const items = toks.flatMap(t => [
     { label: tokenLabel(t), onClick: () => createToken(t) },
-    { label: `Create several ${tokenLabel(t)}…`, onClick: () => createTokenQuantity(t) }
+    { label: `Create X Tokens — ${tokenLabel(t)}`, onClick: () => createTokenQuantity(t) }
   ]);
   if (!items.length) items.push({ label: 'No tokens linked to this deck', disabled: true });
   items.push({ sep: true }, { label: 'Search all tokens…', onClick: searchTokens });
@@ -2088,7 +2088,7 @@ async function searchTokens() {
   const cards = res.map(d => { byIid['tk_' + d.id] = d; return { iid: 'tk_' + d.id, def: d }; });
   UI.viewer({
     title: `Tokens matching “${q}”`, cards,
-    actions: [{ key: 'one', label: 'Create 1' }, { key: 'many', label: 'Create several…' }], primary: 'one',
+    actions: [{ key: 'one', label: 'Create 1' }, { key: 'many', label: 'Create X Tokens' }], primary: 'one',
     onAction: async (k, iid) => {
       const d = byIid[iid]; if (!d) return;
       let n = 1;

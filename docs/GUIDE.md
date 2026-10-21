@@ -212,9 +212,9 @@ For a hovered card, **+ / =** adds a +1/+1 counter and **− / _** adds a −1/�
 - When you import a deck, the tokens related to your cards are linked automatically.
 - When you play a card that makes tokens, a pop-up offers a one-click **+ Token** button.
 - The Tokens menu (☰ → **Tokens**) lists your deck's tokens.
-- Choose a linked token in that menu, or choose a card's **Create related token** action, to create one. Each also has a **Create several…** option; quantities must be whole numbers from 1 to 60.
+- Choose a linked token in that menu, or choose a card's **Create related token** action, to create one. Each also has a **Create X Tokens** option; quantities must be whole numbers from 1 to 60.
 - **Search all tokens** finds any token on Scryfall.
-- The token suggestion pop-up keeps its one-click **+ Token** button and also offers **Create several…**.
+- The token suggestion pop-up keeps its one-click **+ Token** button and also offers **Create X Tokens**.
 
 ## Targeting arrows
 

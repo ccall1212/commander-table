@@ -9,7 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ## [0.30.0] - 2026-10-21
 
 ### Added
-- Create several deck-linked tokens at once from the Tokens menu, a card's related-token actions, or the token suggestion pop-up. Enter a whole number from 1 to 60; the suggestion pop-up still has its one-click **+ Token** action.
+- Use **Create X Tokens** to create multiple deck-linked tokens at once from the Tokens menu, a card's related-token actions, or the token suggestion pop-up. Enter a whole number from 1 to 60; the suggestion pop-up still has its one-click **+ Token** action.
 
 ## [0.29.0] - 2026-10-20
 

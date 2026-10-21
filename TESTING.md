@@ -2,6 +2,8 @@
 
 ## Linked token quantities
 
+Tested by Chris: he tested the token test copy and requested the label **Create X Tokens** instead of “Several.” The revised label is included in this copy. He has not yet approved publication.
+
 Assistant Playwright browser checks were run against a local HTTP copy using Chromium and seeded deck fixtures. Human browser testing has not been done yet.
 
 - From the Tokens menu, created 3 linked tokens and undid them with one Undo action. Quantity entries `0`, `61`, and `2.5` left the prompt open and created nothing; Cancel closed the prompt without changing state. The original direct linked-token choice still created one.
@@ -12,8 +14,8 @@ Assistant Playwright browser checks were run against a local HTTP copy using Chr
 1. Extract the test copy and double-click **index.html**. Start a two-player game and keep the second player open to check that token creation remains local to the player who created the tokens.
 2. At both 1920×1080 and 1366×768, test **Sidebar** and **Grid**. Open ☰ → **Tokens**, open a linked token, create 1 and several, then try 0, 61 and a decimal. Invalid entries should keep the prompt open; Cancel should create nothing.
 3. Right-click a battlefield card with a related token → **Create related token** → choose that token. Create one and several. Repeat on a card with multiple related tokens.
-4. Play a card with a token suggestion. Confirm **+ Token** still creates one immediately, then use **Create several…** for a quantity. Repeat with a card that suggests multiple tokens and choose a token from the menu.
-5. Open **Search all tokens…**, select a result, and check **Create 1** and **Create several…**, including invalid quantities and Cancel.
+4. Play a card with a token suggestion. Confirm **+ Token** still creates one immediately, then use **Create X Tokens** for a quantity. Repeat with a card that suggests multiple tokens and choose a token from the menu.
+5. Open **Search all tokens…**, select a result, and check **Create 1** and **Create X Tokens**, including invalid quantities and Cancel.
 6. On the second player, confirm the other player's battlefield token appears in the public game view and no private card information is exposed. Check both layouts and sizes above.
 
 ## Previous release checks (v0.29.0)
