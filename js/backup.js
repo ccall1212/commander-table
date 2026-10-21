@@ -18,6 +18,11 @@
     for (const key of ['face', 'backName', 'type', 'backType', 'oracle', 'mana', 'pt', 'loyalty', 'set', 'setName', 'cn', 'year', 'rarity']) {
       if (v[key] != null) out[key] = string(v[key], key === 'oracle' ? 20000 : 1000, 'card ' + key, true);
     }
+    // Token printing equivalence depends on these Scryfall fields. They are
+    // optional so backups made before the token gallery change still load.
+    for (const key of ['tokenLayout', 'tokenOracleId', 'tokenOracleBack', 'tokenManaBack', 'tokenPtBack', 'tokenLoyaltyBack']) {
+      if (v[key] != null) out[key] = string(v[key], key.includes('Oracle') ? 20000 : 1000, 'card ' + key, true);
+    }
     for (const key of ['img', 'imgBack']) {
       if (v[key] == null || v[key] === '') { out[key] = v[key] || null; continue; }
       const url = string(v[key], 2000, 'card image');
@@ -36,6 +41,11 @@
       if (!Array.isArray(v[key]) || v[key].length > 200) fail('Invalid card ' + key + ' in backup.');
       out[key] = v[key].map(x => string(x, 200, 'card ' + key));
       if (key === 'ci' && out[key].some(x => !['W', 'U', 'B', 'R', 'G'].includes(x))) fail('Invalid color identity in backup.');
+    }
+    for (const key of ['tokenColors', 'tokenColorsBack']) if (v[key] != null) {
+      if (!Array.isArray(v[key]) || v[key].length > 5) fail('Invalid card ' + key + ' in backup.');
+      out[key] = v[key].map(x => string(x, 2, 'card ' + key));
+      if (out[key].some(x => !['W', 'U', 'B', 'R', 'G'].includes(x))) fail('Invalid card ' + key + ' in backup.');
     }
     return out;
   }

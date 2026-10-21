@@ -241,7 +241,7 @@
   let toastBox = null;
   const MAX_TOASTS = 4;
 
-  /** UI.toast(text, {ms=3500, action?:{label,onClick}, kind?:'info'|'warn'|'error'}) -> {close()} */
+  /** UI.toast(text, {ms=3500, action?:{label,onClick}, actions?:[{label,onClick}], kind?:'info'|'warn'|'error'}) -> {close()} */
   UI.toast = function (text, opts) {
     opts = opts || {};
     const ms = opts.ms == null ? 3500 : opts.ms;
@@ -265,15 +265,15 @@
     }
     t._dismiss = dismiss;
 
-    if (opts.action && opts.action.label) {
-      const b = h('button', 'w-toast-btn', opts.action.label);
+    [opts.action].concat(Array.isArray(opts.actions) ? opts.actions : []).filter(a => a && a.label).forEach(action => {
+      const b = h('button', 'w-toast-btn', action.label);
       b.type = 'button';
       b.addEventListener('click', () => {
-        try { if (typeof opts.action.onClick === 'function') opts.action.onClick(); }
+        try { if (typeof action.onClick === 'function') action.onClick(); }
         finally { dismiss(); }
       });
       t.appendChild(b);
-    }
+    });
     toastBox.appendChild(t);
 
     // Cap the visible stack: dismiss the oldest first.
@@ -436,7 +436,10 @@
         if (!isNum) { finish(input.value); return; }
         const raw = input.value.trim();
         let n = Number(raw);
-        if (raw === '' || !isFinite(n)) { input.classList.add('w-invalid'); input.focus(); return; }
+        if (raw === '' || !isFinite(n) || (o.integer && !Number.isInteger(n)) ||
+            (o.strictBounds && ((o.min != null && n < Number(o.min)) || (o.max != null && n > Number(o.max))))) {
+          input.classList.add('w-invalid'); input.focus(); return;
+        }
         if (o.min != null && o.min !== '') n = Math.max(Number(o.min), n);
         if (o.max != null && o.max !== '') n = Math.min(Number(o.max), n);
         finish(n);

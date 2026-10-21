@@ -8,7 +8,11 @@ vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname, '../js/b
 const api = window.CTBackup;
 const plain = v => JSON.parse(JSON.stringify(v));
 const card = { id: 'card-1', name: 'Test Commander', type: 'Legendary Creature', oracle: 'Rules text', ci: ['U'], img: 'https://cards.scryfall.io/normal/front/a/b/test.jpg', imgBack: null, pt: '2/2', set: 'test', cn: '12', mana: '{U}', cmc: 1, tokens: ['token-1'] };
-const deck = { id: 'deck-1', name: 'My deck', createdAt: '2026-10-21T00:00:00Z', commanders: [card], cards: [{ def: { ...card, id: 'card-2', name: 'Test Island', ci: [] }, qty: 10 }], tokens: [{ ...card, id: 'token-1', name: 'Test Token', isToken: true }], source: 'Commander\n1 Test Commander\nDeck\n10 Test Island' };
+const token = { ...card, id: 'token-1', name: 'Goblin // Goblin', isToken: true,
+  tokenLayout: 'double_faced_token', tokenColors: ['R'], tokenColorsBack: ['R'],
+  tokenOracleId: '11111111-1111-4111-8111-111111111111', tokenOracleBack: 'Flying',
+  tokenManaBack: '{R}', tokenPtBack: '2/2', tokenLoyaltyBack: '3' };
+const deck = { id: 'deck-1', name: 'My deck', createdAt: '2026-10-21T00:00:00Z', commanders: [card], cards: [{ def: { ...card, id: 'card-2', name: 'Test Island', ci: [] }, qty: 10 }], tokens: [token], source: 'Commander\n1 Test Commander\nDeck\n10 Test Island' };
 class Store {
   constructor(values = {}) { this.data = new Map(Object.entries(values)); this.failKey = null; this.failed = false; }
   getItem(k) { return this.data.has(k) ? this.data.get(k) : null; }
@@ -24,7 +28,16 @@ test('round trip preserves all saved card data, printings, tokens and preference
   api.restore(dest, loaded, true);
   assert.deepEqual(JSON.parse(dest.getItem('ct.decks.v1')), plain(backup.decks));
   assert.deepEqual(plain(backup.decks[0].commanders[0]), card);
+  assert.deepEqual(plain(backup.decks[0].tokens[0]), token, 'token semantic identity and reverse-face metadata survive backup round trip');
   for (const [key, value] of Object.entries(backup.preferences)) assert.deepEqual(JSON.parse(dest.getItem(key)), plain(value));
+});
+test('older token definitions without semantic metadata remain supported', () => {
+  const oldDeck = plain(deck); delete oldDeck.tokens[0].tokenLayout; delete oldDeck.tokens[0].tokenColors;
+  delete oldDeck.tokens[0].tokenColorsBack; delete oldDeck.tokens[0].tokenOracleId;
+  delete oldDeck.tokens[0].tokenOracleBack; delete oldDeck.tokens[0].tokenManaBack;
+  delete oldDeck.tokens[0].tokenPtBack; delete oldDeck.tokens[0].tokenLoyaltyBack;
+  const backup = { format: 'commander-table-collection', version: 1, decks: [oldDeck], preferences: {} };
+  assert.deepEqual(plain(api.parse(JSON.stringify(backup)).decks[0].tokens[0]), plain(oldDeck.tokens[0]));
 });
 test('excludes active sessions and player identities', () => {
   const text = JSON.stringify(api.create(fixture()));
@@ -60,6 +73,12 @@ test('malformed data and unsupported versions fail without writes', () => {
     const bad = plain(backup); mutate(bad); assert.throws(() => api.restore(storage, bad, true)); assert.deepEqual([...storage.data], before);
   }
   assert.throws(() => api.parse('invalid'), /not valid JSON/); assert.throws(() => api.parse(' '.repeat(20 * 1024 * 1024 + 1)), /20 MB/);
+});
+test('malformed optional token semantic fields are rejected before restore', () => {
+  const backup = plain(api.create(fixture())), storage = fixture(), before = [...storage.data];
+  for (const mutate of [b => b.decks[0].tokens[0].tokenColors = 'R', b => b.decks[0].tokens[0].tokenColorsBack = ['X'], b => b.decks[0].tokens[0].tokenLayout = 7]) {
+    const bad = plain(backup); mutate(bad); assert.throws(() => api.restore(storage, bad, true)); assert.deepEqual([...storage.data], before);
+  }
 });
 test('unrecognized storage keys and card fields cannot be restored', () => {
   const backup = plain(api.create(fixture())), dest = new Store();

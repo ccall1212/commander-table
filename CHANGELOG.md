@@ -9,7 +9,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ## [0.32.0] - 2026-10-21
 
 ### Added
-- Back up all saved decks, printing choices, uploaded appearance images, and preferences to one file. Preview a restore, keep existing decks, and optionally bring over saved preferences and appearance.
+- Back up saved decks, chosen printings, uploaded appearance images and preferences in one file. Preview restores, keep existing decks and optionally restore preferences and appearance.
+- Preserve token identity details when backing up and restoring decks, so token artwork choices continue to distinguish different printed rules, colors and reverse faces.
+
+## [0.30.0] - 2026-10-21
+
+### Added
+- Browse deck-linked and related tokens in an image gallery matching token search. Choose a token picture, enter a quantity from 1 to 60, and use **Create X Tokens**. Creating tokens returns directly to the battlefield; each batch undoes as one action. Token search uses the same flow, and single-token suggestions keep their quick **+ Token** action. Matching artwork versions share one entry; different printed stats, rules, colors and reverse faces remain separate. Choose token artwork from the gallery or use **Switch printing** on a battlefield token.
 
 ## [0.29.0] - 2026-10-20
 
@@ -21,6 +27,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.32.0...HEAD
+[0.32.0]: https://github.com/ccall1212/commander-table/compare/v0.30.0...v0.32.0
+[0.30.0]: https://github.com/ccall1212/commander-table/compare/v0.29.0...v0.30.0
 [0.29.0]: https://github.com/ccall1212/commander-table/compare/v0.28.2...v0.29.0
 [0.28.2]: https://github.com/ccall1212/commander-table/compare/v0.28.1...v0.28.2
 
