@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.38.0] - 2026-10-21
+
+### Added
+- Show dismissible, collapsible informational checks in Deck Builder for total cards including commander(s), a missing commander, cards beyond the combined commander color identity, and likely singleton duplicates. Basic lands and printed any-number / up-to-N copy exceptions are accounted for; this is not a full legality validator.
+
 ## [0.37.0] - 2026-10-21
 
 ### Added
@@ -51,7 +56,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.37.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.38.0...HEAD
+[0.38.0]: https://github.com/ccall1212/commander-table/compare/v0.37.0...v0.38.0
 [0.37.0]: https://github.com/ccall1212/commander-table/compare/v0.36.0...v0.37.0
 [0.36.0]: https://github.com/ccall1212/commander-table/compare/v0.35.0...v0.36.0
 [0.35.0]: https://github.com/ccall1212/commander-table/compare/v0.33.1...v0.35.0
