@@ -32,7 +32,7 @@ for (const file of ['targeting.js', 'mulligan.js', 'player-colors.js']) {
   vm.runInContext(fs.readFileSync(path.join(__dirname, '../js', file), 'utf8'), context);
 }
 let source = fs.readFileSync(path.join(__dirname, '../js/app.js'), 'utf8');
-source = source.replace('window.CT = { S,', 'window.CT = { S, tableOp, openingPending, cleanPub, publicView, moveCard, insertCard, createToken, createTokenQuantity, copyCard, giveControl, giveControlGroup, returnControl, takeBack, hostRecv, canEnterBattlefield,');
+source = source.replace('window.CT = { S,', 'window.CT = { S, tableOp, openingPending, cleanPub, publicView, moveCard, insertCard, createToken, createTokenQuantity, copyCard, giveControl, giveControlGroup, returnControl, takeBack, hostRecv, canEnterBattlefield, undo, afterTable, keepHand,');
 vm.runInContext(source, context);
 
 const CT = context.CT, { S } = CT;
@@ -97,8 +97,12 @@ S.role = 'host';
 
 S.players.host.kept = true; S.players.guest.kept = true; S.players.guest.openingDeal = 'deal-current';
 S.me.kept = true;
+S.undo = [JSON.stringify({ ...S.me, kept: false })];
 CT.tableOp({ k: 'start' }, 'host');
 assert.equal(S.table.started, true, 'host can start after every live seat keeps the current deal');
+assert.equal(S.undo.length, 0, 'the opening-hand undo history is cleared when this deal starts');
+CT.undo();
+assert.equal(S.me.kept, true, 'undo after Start cannot restore the unkept snapshot');
 const rollCount = sent.filter(message => message.t === 'firstroll').length;
 CT.tableOp({ k: 'start' }, 'host');
 assert.equal(sent.filter(message => message.t === 'firstroll').length, rollCount, 'repeated Start does not reroll turn order');
@@ -106,6 +110,9 @@ assert.equal(sent.filter(message => message.t === 'firstroll').length, rollCount
 S.table.started = true;
 assert.equal(CT.insertCard({ iid: 'after_start', id: 'card', own: 'host', c: {} }, 'battlefield'), true);
 assert.equal(S.me.zones.battlefield.length, 1, 'battlefield insertion works after Start');
+S.me.kept = false;
+CT.keepHand();
+assert.equal(S.me.kept, true, 'a player joining after Start can still keep their opening hand');
 
 earlyToken.then(result => {
   assert.equal(result, false, 'token quantity picker rejects creation before prompting');

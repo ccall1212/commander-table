@@ -268,6 +268,7 @@ function undo() {
   say('undid their last action');
   commit();
 }
+let undoClearedOpeningDeal = null;
 
 // =====================================================================
 //  Public view + messaging
@@ -1054,6 +1055,10 @@ function afterTable() {
   const T = S.table, m = S.me;
   if (!T || !m) return;
   if (!T.started) return;
+  if (T.openingDeal && undoClearedOpeningDeal !== T.openingDeal) {
+    S.undo = [];
+    undoClearedOpeningDeal = T.openingDeal;
+  }
   const turnSeq = Math.max(1, num(T.turnSeq, num(T.turn)));
   const lastTurnSeq = num(m.lastTurnSeq, num(m.lastTurn));
   if (T.active === S.pid && turnSeq > lastTurnSeq) {
