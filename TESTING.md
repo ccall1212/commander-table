@@ -1,22 +1,18 @@
-# Targeting arrows across board views — v0.33.1 test copy
+# Unique player colors — v0.36.0 test copy
 
 Download the ZIP, extract it, and double-click **index.html**. Keep internet access on. No terminal or local server needed. Use at least two players with this copy; three are useful for switching between two opponents.
 
 ## Click list
 
-1. In Sidebar, play several cards on your battlefield. Draw four targeting arrows: your card → opponent card; opponent card → another of your cards; your card → opponent player; opponent card → your player. Use **Send arrow to…** or **☰ → Targeting arrow…**.
-2. Click an opponent's tile to view their board big. All arrows whose endpoints appear on the main board or miniature boards should still be visible. Your cards' lines should connect to the YOU miniature, with the count unchanged.
-3. Switch to a different opponent, then click YOU to return to your board. Lines should follow their original cards/players each time without redrawing them.
-4. Check at roughly 1920×1080 and 1366×768. Switch Sidebar → Grid → Sidebar. Grid's full-board zoom intentionally hides other boards; their card arrows should reappear when you return to the overview.
-5. Try dragging/clicking your read-only YOU miniature. It should still just return you to your board, without moving, tapping or modifying your cards. Click an arrow to remove only that arrow and confirm the other player receives the removal. Clear all should still work.
+1. Host a game and join from a second browser/tab. In the host's ☰ menu, choose **Choose player color… (currently Gold)** and then **Red — available**. The host's player marker and name should turn red on both screens.
+2. On the second player's screen, open ☰ → **Choose player color… (currently Blue)**. Red should say **taken by [host name]** and be disabled. Choose another available color; verify each screen shows the same colors.
+3. Have both players try to claim the same available color from separate screens in quick succession. Only one should receive it; the rejected player sees a message and can choose another.
+4. On each browser, test at 1920×1080 and 1366×768 in Sidebar and Grid. Check the markers/name colors in both layouts.
+5. Reload each browser and reconnect. The choices should remain. Start a new game; the colors should still remain. Remove a player from the table and verify that player's color becomes available to the remaining players.
 
 ## Verification
 
-- Assistant reproduced the original problem in Chromium over localhost HTTP with three relay-connected sessions: four arrows counted, only one drawn after focusing an opponent in Sidebar.
-- After the fix, a three-session Chromium HTTP pass kept four arrows visible through Sidebar focus switches between two opponents and back to your board, checked Grid overview/zoom return and Sidebar/Grid at 1920×1080 and 1366×768, confirmed miniature dragging does not move your real cards, and checked the second player still sees all four arrows. No page errors observed.
-- All five Node suites passed (targeting, chat sizing, P/T, token picker and printings), along with changed JavaScript syntax and diff checks. The targeting regression exercises the real YOU renderer and anchor resolver, including a hidden main board, largest-visible-copy selection, and the own-player miniature marker. A bounded GPT-6 Luna investigation and test contribution were used.
-- Source fix gives the YOU miniature separate drawing identifiers, while keeping gameplay identifiers stripped. No relay messages or card state format changed.
-- Chris supplied two screenshots and reported arrows not continuing when switching views; he replied “Perfect” and approved publishing this exact fix on 2026-10-21. PR #53 is merged as v0.33.1.
-- Assistant browser checks use HTTP: managed Chromium blocks `file://` navigation. Extract/open and real-device Safari/touch need appropriate hands-on checks.
-
-Includes the published floating/transparent/resizable chat. Deck Builder checks (#50) and collection backup (#49) remain independent proposals; deck randomizer/import PR #11 remains paused.
+- Chromium HTTP check with two players: host chose red; guest saw red marked taken and disabled, then chose purple; both layouts at 1920×1080 and 1366×768 showed synchronized color state; reloading the host and starting a new game kept both choices. No page errors observed.
+- All six Node suites passed. `node --check js/app.js` and `node --check js/player-colors.js` passed. The player-color checks cover legacy defaults, deterministic uniqueness, invalid/non-seated claims, competing claims, and serialized persistence.
+- Color choices are host-owned table data. The relay protocol and player hidden state are unchanged.
+- A real browser is needed for the two-player flow; double-clicking `index.html` alone cannot provide a shared room.

@@ -160,6 +160,7 @@ Dropped connections and crashed tabs happen, and recovering from them is the mai
 - Counters stack down the top-right corner of a card; the P/T badge stays in the bottom-right corner. On both, **left-click goes up, right-click goes down**.
 - Cards in your hand show their mana cost along the top edge; your hand count shows above your hand and every opponent's hand count is in their header.
 - Your hand size is set in ☰ → **Display settings…** (see **Display settings** above).
+- In a shared game, open ☰ → **Choose player color…** to choose an available color. Each seated player has a different color; the menu marks colors as current, available or taken. Your current color also appears in the menu label, and stays with your seat when you reconnect or start a new game.
 
 **Counters, power/toughness & card info**
 

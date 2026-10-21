@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.33.1';
+const APP_VERSION = '0.36.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -129,6 +129,9 @@ const S = {
 
 const pname = pid => (pid === S.pid && S.me) ? S.me.name : ((S.players[pid] && S.players[pid].name) || 'Someone');
 function colorOf(pid) {
+  const assigned = S.table && S.table.colors && S.table.colors[pid];
+  const selected = assigned && CTPlayerColors.color(assigned);
+  if (selected) return selected.value;
   const seats = (S.table && S.table.seats) || [];
   const i = seats.indexOf(pid);
   if (i >= 0) return COLORS[i % COLORS.length];
@@ -325,7 +328,7 @@ function sendChat(text) {
 // ----- host side -----
 function newTable(room) {
   S.chat = []; S.chatOpen = false; S.chatUnread = 0;
-  return { room, seats: [S.pid], order: [], active: null, turn: 0, turnSeq: 0, phase: 3, started: false, monarch: null, initiative: null, out: {} };
+  return { room, seats: [S.pid], colors: { [S.pid]: CTPlayerColors.PALETTE[0].id }, order: [], active: null, turn: 0, turnSeq: 0, phase: 3, started: false, monarch: null, initiative: null, out: {} };
 }
 function hostRecv(msg, from) {
   if (!msg || typeof msg.t !== 'string' || !S.table) return;
@@ -409,6 +412,7 @@ function seat(pid) {
   const T = S.table;
   if (T.seats.includes(pid) || T.seats.length >= 6) return;
   T.seats.push(pid);
+  T.colors = CTPlayerColors.normalize(T.seats, T.colors);
   if (T.started && !T.order.includes(pid)) T.order.push(pid);
   sysLog(`${pname(pid)} joined the table.`);
   pushTable();
@@ -424,8 +428,9 @@ function cleanTable(t) {
   if (!isObj(t)) return null;
   const ids = a => (Array.isArray(a) ? a.filter(x => typeof x === 'string').slice(0, 8).map(x => x.slice(0, 40)) : []);
   const str = x => (typeof x === 'string' ? x.slice(0, 40) : null);
+  const seats = CTPlayerColors.cleanSeats(ids(t.seats));
   return {
-    room: String(t.room || '').slice(0, 8), seats: ids(t.seats), order: ids(t.order), active: str(t.active),
+    room: String(t.room || '').slice(0, 8), seats, colors: CTPlayerColors.normalize(seats, t.colors), order: ids(t.order), active: str(t.active),
     turn: Math.max(0, num(t.turn)), turnSeq: Math.max(0, num(t.turnSeq, num(t.turn))), phase: clamp(num(t.phase, 3), 0, PHASES.length - 1), started: !!t.started,
     monarch: str(t.monarch), initiative: str(t.initiative),
     out: isObj(t.out) ? Object.fromEntries(Object.keys(t.out).slice(0, 8).map(k => [k.slice(0, 40), !!t.out[k]])) : {},
@@ -453,6 +458,17 @@ function tableOp(op, from) {
   if (!isObj(op) || typeof op.k !== 'string') return;
   const isHost = from === S.pid;
   switch (op.k) {
+    case 'color': {
+      if (!T.seats.includes(from)) return;
+      const colors = CTPlayerColors.claim(T.seats, T.colors, from, op.color);
+      if (!colors) {
+        if (T.seats.includes(from)) broadcast({ t: 'colorerror', pid: from });
+        return;
+      }
+      T.colors = colors;
+      pushTable();
+      return;
+    }
     case 'rollfirst': {
       if (T.started) return;
       const live = T.seats.filter(p => !T.out[p]);
@@ -521,6 +537,7 @@ function tableOp(op, from) {
     case 'kick': {
       if (!isHost || op.pid === S.pid) return;
       T.seats = T.seats.filter(p => p !== op.pid); T.order = T.order.filter(p => p !== op.pid);
+      delete T.colors[op.pid];
       if (T.active === op.pid) T.active = T.order[0] || null;
       sysLog(`${pname(op.pid)} was removed from the table.`);
       delete S.players[op.pid];
@@ -722,7 +739,8 @@ function onBroadcast(msg) {
     case 'placefx':
       if (typeof msg.pid === 'string' && typeof msg.iid === 'string' && msg.pid !== S.pid) playCardPlaceSound();
       break;
-    case 'table': S.table = msg.table; handleTurnNoticeUpdate(S.table); afterTable(); break;
+    case 'table': S.table = cleanTable(msg.table); handleTurnNoticeUpdate(S.table); afterTable(); break;
+    case 'colorerror': if (msg.pid === S.pid) UI.toast('That color was just taken. Choose another available color.', { kind: 'warn' }); break;
     case 'firstroll': showFirstRoll(msg); break;
     case 'online': S.online = msg.online || {}; break;
     case 'newgame': resetForNewGame(); break;
@@ -733,7 +751,7 @@ function onBroadcast(msg) {
 function clientRecv(msg) {
   if (!msg) return;
   if (msg.t === 'snap') {
-    S.table = msg.table; S.players = msg.players || {}; S.log = msg.log || []; S.online = msg.online || {}; S.chat = cleanChatHistory(msg.chat);
+    S.table = cleanTable(msg.table); S.players = msg.players || {}; S.log = msg.log || []; S.online = msg.online || {}; S.chat = cleanChatHistory(msg.chat);
     seedTurnNotice(S.table);
     S.targetArrows = CTTargeting.cleanList(msg.arrows, S.players, (S.table && S.table.seats) || []);
     S.players[S.pid] = publicView();
@@ -2366,6 +2384,22 @@ function playerMenu(x, y, pid) {
   }
   UI.menu(x, y, items);
 }
+function playerColorMenu(x, y) {
+  const colors = CTPlayerColors.normalize((S.table && S.table.seats) || [], (S.table && S.table.colors) || {});
+  const current = colors[S.pid];
+  UI.menu(x, y, [
+    { label: 'Choose a unique player color:', disabled: true }, { sep: true },
+    ...CTPlayerColors.PALETTE.map(c => {
+      const owner = Object.keys(colors).find(pid => pid !== S.pid && colors[pid] === c.id);
+      const mine = current === c.id;
+      return {
+        label: `${c.name}${mine ? ' — current' : owner ? ` — taken by ${pname(owner)}` : ' — available'}`,
+        checked: mine, disabled: !!owner,
+        onClick: () => { if (!mine) toHost({ t: 'op', op: { k: 'color', color: c.id } }); }
+      };
+    })
+  ]);
+}
 function diceMenu(x, y) {
   const roll = (sides) => { const v = rnd(sides) + 1; say(`rolled a d${sides}: ${v}`); };
   UI.menu(x, y, [
@@ -2432,6 +2466,7 @@ function mainMenu(x, y) {
     { label: S.arrange ? 'Done arranging zones' : 'Arrange my zones', onClick: toggleArrange },
     { label: 'Tidy up my cards', onClick: () => act(() => { tidyBoard(); return ['tidied up their battlefield']; }) },
     { label: 'Display settings…', onClick: displaySettings },
+    ...(S.role !== 'solo' && S.table && S.table.seats.includes(S.pid) ? [{ label: `Choose player color… (currently ${CTPlayerColors.color(S.table.colors && S.table.colors[S.pid])?.name || 'unknown'})`, onClick: () => playerColorMenu(x, y) }] : []),
     { label: `Touch mode: ${S.touchMode ? 'On' : 'Off'}`, checked: S.touchMode, onClick: () => setTouchMode(!S.touchMode) },
     { label: 'Hotkey list…', onClick: showHotkeyList },
     { sep: true },
@@ -4578,7 +4613,7 @@ function loadSession(pid) {
 function resume(sess) {
   S.role = sess.role; S.room = sess.room; S.deckId = sess.deckId; S.me = sess.me;
   normalizeMe(S.me);
-  S.table = sess.table || null; S.players = sess.players || {}; S.log = sess.log || []; S.chat = cleanChatHistory(sess.chat); S.chatOpen = false; S.chatUnread = 0; S.online = {};
+  S.table = sess.table ? cleanTable(sess.table) : null; S.players = sess.players || {}; S.log = sess.log || []; S.chat = cleanChatHistory(sess.chat); S.chatOpen = false; S.chatUnread = 0; S.online = {};
   if (S.role === 'host') Object.keys(S.players).forEach(p => { if (p !== S.pid) S.online[p] = false; });
   showGame();
   startNet();
