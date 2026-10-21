@@ -122,6 +122,8 @@
     this.transport = 'relay';
     this.maxMsg = DEFAULT_MAX_MSG;
     this.server = null;
+    this.features = [];
+    this._vaultPending = {};
 
     this._url = typeof opts.url === 'string' ? opts.url : '';
     this._key = (typeof opts.key === 'string' && opts.key) ? opts.key : null;
@@ -146,6 +148,8 @@
   // Close every connection locally (open=false + 'close' event) and forget them.
   RelayPeer.prototype._closeAllConns = function () {
     var all = [], k;
+    for (k in this._vaultPending) { clearTimeout(this._vaultPending[k].timer); this._vaultPending[k].reject(new Error('Room connection closed before board save completed.')); }
+    this._vaultPending = {};
     for (k in this._conns) all.push(this._conns[k]);
     for (k in this._pending) all.push(this._pending[k]);
     this._conns = {};
@@ -230,6 +234,12 @@
       case 'hello':
         if (typeof m.maxMsg === 'number' && m.maxMsg > 0) this.maxMsg = m.maxMsg;
         this.server = m.server || null;
+        this.features = Array.isArray(m.features) ? m.features : [];
+        break;
+
+      case 'vault':
+        var pending = this._vaultPending[m.rid];
+        if (pending) { delete this._vaultPending[m.rid]; clearTimeout(pending.timer); if (m.ok) pending.resolve(m.result); else pending.reject(new Error(String(m.error || 'Room board save failed.'))); }
         break;
 
       case 'pong':
@@ -306,6 +316,19 @@
         }
         break;
     }
+  };
+
+  RelayPeer.prototype.roomVault = function (action, payload) {
+    var self = this;
+    if (!self.open || !self._ws || self._ws.readyState !== 1) return Promise.reject(new Error('Room server is not connected.'));
+    if (self.features.indexOf('room-vault-v1') < 0) return Promise.reject(new Error('This room server does not support board recovery yet.'));
+    var rid = 'v' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+    return new Promise(function (resolve, reject) {
+      var timer = setTimeout(function () { delete self._vaultPending[rid]; reject(new Error('Room board save timed out.')); }, 15000);
+      self._vaultPending[rid] = { resolve: resolve, reject: reject, timer: timer };
+      try { self._ws.send(JSON.stringify(Object.assign({}, payload || {}, { op: 'vault', rid: rid, action: action }))); }
+      catch (e) { clearTimeout(timer); delete self._vaultPending[rid]; reject(e); }
+    });
   };
 
   // Close the websocket without any further events from it.

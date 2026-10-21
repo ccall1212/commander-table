@@ -24,7 +24,7 @@
   var HOST_RETRY = 3000;         // host: retry creating Peer / reconnecting signalling
   var SIG_RETRY = 3000;          // retry peer.reconnect() while signalling is down
   var MAX_QUEUE = 200;           // client offline send queue cap
-  var SNAPSHOT_TYPES = { pub: true }; // only the most recent of these is kept in the queue
+  var SNAPSHOT_TYPES = { pub: true, 'private-board': true }; // only the most recent of these is kept in the queue
   var ROOM_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 32 chars
   var ID_PREFIX = 'ctable-v1-';
   var QUEUE_MAX_AGE = 20000;     // actions queued while offline are dropped (not replayed) after 20s
@@ -789,10 +789,14 @@
       sendTo: sendTo,
       peers: peers,
       getState: function () { return state; },
+      roomVault: function (action, payload) {
+        if (!isHost || !peer || typeof peer.roomVault !== 'function') return Promise.reject(new Error('Room board recovery requires the relay host.'));
+        return peer.roomVault(action, payload);
+      },
       diag: function () {
         return { role: cfg.role, room: room.toUpperCase(), transport: transport, auto: auto, state: state, code: code,
           text: lastText, peerOpen: !!(peer && peer.open), players: isHost ? Array.from(conns.keys()) : null,
-          queued: queue.length, notFound: notFound, maxMsg: (peer && peer.maxMsg) || DIRECT_MAX_BYTES };
+          queued: queue.length, notFound: notFound, maxMsg: (peer && peer.maxMsg) || DIRECT_MAX_BYTES, roomVault: !!(peer && peer.features && peer.features.indexOf('room-vault-v1') >= 0) };
       },
       onOnline: onOnline,
       onVisible: onVisible,
@@ -845,6 +849,8 @@
     state: function () {
       return current ? current.getState() : fallbackState;
     },
+
+    roomVault: function (action, payload) { return current ? current.roomVault(action, payload) : Promise.reject(new Error('Room server is not connected.')); },
 
     // Snapshot of the connection for the diagnostics panel / bug reports.
     diag: function () {
