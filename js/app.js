@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.33.0';
+const APP_VERSION = '0.33.1';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -3034,9 +3034,10 @@ function renderYouTile(el, idx) {
   el.classList.toggle('active', T.active === S.pid);
   el.querySelector('.ohead').innerHTML = `<span class="dot" style="--pc:${colorOf(S.pid)}"></span><span class="pname">${esc(S.me.name)}</span><span class="tag you">YOU</span>
     ${T.active === S.pid ? '<span class="tag">TURN</span>' : ''}<span class="life-ro">♥ <b>${S.me.life}</b></span>`;
-  // strip ids so the miniature never answers clicks/drags meant for my real board
+  // Keep separate arrow anchors while stripping gameplay ids from this read-only miniature.
   el.querySelector('.obf').innerHTML = viewingMe ? '<div class="viewing-note">👁 Viewing your board</div>'
-    : `<div class="boardwrap thumb" data-board="thumb:${esc(S.pid)}">${boardHTML(S.pid, idx).replace(/ data-(iid|pid|zone|region|c)="[^"]*"/g, '')}</div>`;
+    : `<div class="boardwrap thumb" data-board="thumb:${esc(S.pid)}">${boardHTML(S.pid, idx).replace(/ data-(iid|pid|zone|region|c)="([^"]*)"/g, (attr, key, value) =>
+        ['iid', 'pid', 'zone'].includes(key) ? ` data-arrow-${key}="${value}"` : '')}</div>`;
 }
 // Grid: my own quadrant is drawn exactly like the opponents' miniatures (hand fan, piles and life drawn inside the scaled board).
 function gridMine() { return !!S.me && curView() === 'grid' && !S.arrange && !S.focus && oppPids().length > 0; }
@@ -3529,12 +3530,13 @@ function pickArrowEndpoint(target) {
 }
 function arrowAnchor(ep) {
   // A player/card may appear twice (large board and miniature). Choose the largest visible copy.
-  const nodes = ep.kind === 'card' ? document.querySelectorAll('#game .board .card[data-zone="battlefield"]')
+  const nodes = ep.kind === 'card' ? document.querySelectorAll('#game .board .card[data-zone="battlefield"], #game .board .card[data-arrow-zone="battlefield"]')
     : document.querySelectorAll('#game .boardwrap');
   let best = null;
   nodes.forEach(el => {
-    const match = ep.kind === 'card' ? el.dataset.pid === ep.pid && el.dataset.iid === ep.iid
-      : el.firstElementChild && el.firstElementChild.dataset.pid === ep.pid;
+    const match = ep.kind === 'card'
+      ? (el.dataset.pid === ep.pid && el.dataset.iid === ep.iid) || (el.dataset.arrowPid === ep.pid && el.dataset.arrowIid === ep.iid)
+      : el.firstElementChild && (el.firstElementChild.dataset.pid === ep.pid || el.firstElementChild.dataset.arrowPid === ep.pid);
     if (!match || getComputedStyle(el).visibility === 'hidden') return;
     const r = el.getBoundingClientRect();
     if (!r.width || !r.height || r.right <= 0 || r.bottom <= 0 || r.left >= innerWidth || r.top >= innerHeight) return;

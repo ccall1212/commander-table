@@ -6,11 +6,13 @@ const path = require('node:path');
 const root = path.join(__dirname, '..');
 const sent = [];
 const game = { classList: { contains: () => true } };
+let arrowNodes = [];
 const context = vm.createContext({
   console, URL, URLSearchParams, Set, Map, Uint32Array, performance,
+  innerWidth: 1200, innerHeight: 900, getComputedStyle: el => ({ visibility: el.visibility || 'visible' }),
   location: { search: '?nettest', protocol: 'http:', href: 'http://localhost/?nettest' },
   document: { querySelector: s => s === '#game' ? game : null,
-    querySelectorAll: () => [], body: { classList: { toggle() {} } } },
+    querySelectorAll: () => arrowNodes, body: { classList: { toggle() {} } } },
   setTimeout: () => 1, clearTimeout() {}, setInterval: () => 1,
   requestAnimationFrame: () => 1, cancelAnimationFrame() {},
   Net: { send: msg => sent.push(JSON.parse(JSON.stringify(msg))) }
@@ -18,7 +20,7 @@ const context = vm.createContext({
 context.window = context;
 vm.runInContext(fs.readFileSync(path.join(root, 'js/targeting.js'), 'utf8'), context);
 // Expose real picker/removal/state helpers to this unit harness; production exports stay unchanged.
-const appSource = fs.readFileSync(path.join(root, 'js/app.js'), 'utf8').replace('window.CT = { S,', 'window.CT = { arrowEndpointAt, handleArrowRemoval, hideTargetingControls, showTargetingControls, snapFor, refreshTargeting, S,');
+const appSource = fs.readFileSync(path.join(root, 'js/app.js'), 'utf8').replace('window.CT = { S,', 'window.CT = { arrowEndpointAt, arrowAnchor, renderYouTile, handleArrowRemoval, hideTargetingControls, showTargetingControls, snapFor, refreshTargeting, S,');
 vm.runInContext(appSource, context);
 const { S, hostRecv } = context.CT, T = context.CTTargeting;
 S.pid = 'p1'; S.role = 'host'; S.me = {};
@@ -35,6 +37,40 @@ assert.equal(context.CT.arrowEndpointAt(element({'[data-phead]':{dataset:{phead:
 assert.equal(context.CT.arrowEndpointAt(element({'.card':{dataset:{zone:'hand',pid:'p1',iid:'hidden'}},'.boardwrap':wrap})),null,'hand never falls back to player board');
 assert.equal(context.CT.arrowEndpointAt(element({'.boardwrap':wrap,'[data-pile], .tstrip, .thand, .tpile, #myRow, .lifebox, button, input, textarea, .rlabel, .grip':{}})),null,'life/pile/interactive controls are excluded');
 assert.equal(context.CT.arrowEndpointAt(element({'.card':{dataset:{zone:'battlefield',pid:'p2',iid:'p2_2'}},'.boardwrap':wrap})).kind,'card','battlefield cards take priority over board target');
+
+// The YOU miniature must retain a separate arrow identity namespace after its click/drag IDs are stripped.
+// Exercise the real renderer, then the real anchor lookup with only that miniature available (the full board
+// is hidden while viewing an opponent) and with both visible copies (the larger copy should win).
+S.me = { name: 'Me', life: 40, poison: 0, ctr: {}, cmdDmg: {}, casts: {}, zones: {
+  battlefield: [{ iid: 'own-card', x: 20, y: 30 }], hand: [], library: [], graveyard: [], exile: [], command: []
+}, layout: [
+  { k: 'creatures', label: 'Creatures', x: 0, y: 0, w: 1000, h: 170 },
+  { k: 'lands', label: 'Lands', x: 0, y: 180, w: 540, h: 250 },
+  { k: 'permanents', label: 'Permanents', x: 550, y: 180, w: 450, h: 250 }
+] };
+S.focus = 'p2';
+context.CTAppearance = { getCustom: () => ({}), normalizePrefs: () => ({}), boardBackgroundStyle: () => '' };
+context.UI = { cardBackHTML: () => '' };
+const youHead = { innerHTML: '' }, youBody = { innerHTML: '' };
+const youHtml = { classList: { toggle() {} }, querySelector: sel => sel === '.ohead' ? youHead : youBody };
+context.CT.renderYouTile(youHtml, { entries: [{ ctrl: 'p1', c: S.me.zones.battlefield[0], def: null }], atts: new Map() });
+assert.match(youBody.innerHTML, /data-arrow-iid="own-card"[^>]*data-arrow-pid="p1"[^>]*data-arrow-zone="battlefield"/, 'YOU miniature renders dedicated arrow identity attributes');
+assert.doesNotMatch(youBody.innerHTML, /data-(?:pid|iid|zone)="(?:p1|own-card|battlefield)"/, 'YOU miniature still strips interaction identity attributes');
+const box = (left, top, width, height, visibility = 'visible') => ({ dataset: {}, left, top, width, height, right: left + width, bottom: top + height, visibility, getBoundingClientRect() { return this; } });
+const miniCard = box(100, 120, 32, 45); Object.assign(miniCard.dataset, { arrowPid: 'p1', arrowIid: 'own-card', arrowZone: 'battlefield' });
+const hiddenReal = box(400, 120, 80, 112, 'hidden'); Object.assign(hiddenReal.dataset, { pid: 'p1', iid: 'own-card', zone: 'battlefield' });
+arrowNodes = [hiddenReal, miniCard];
+const ownCard = { kind: 'card', pid: 'p1', iid: 'own-card' };
+const anchorRect = () => { const r = context.CT.arrowAnchor(ownCard); return r && { left: r.left, top: r.top, width: r.width, height: r.height }; };
+assert.deepEqual(anchorRect(), { left: 100, top: 120, width: 32, height: 45 }, 'focused view anchors own card to visible YOU miniature when full board is hidden');
+const largeVisibleReal = box(600, 120, 80, 112); Object.assign(largeVisibleReal.dataset, { pid: 'p1', iid: 'own-card', zone: 'battlefield' });
+arrowNodes = [hiddenReal, miniCard, largeVisibleReal];
+assert.deepEqual(anchorRect(), { left: 600, top: 120, width: 80, height: 112 }, 'largest visible real copy wins when both copies can be seen');
+const miniBoard = box(900, 100, 240, 180); miniBoard.firstElementChild = { dataset: { arrowPid: 'p1' } };
+arrowNodes = [miniBoard];
+const playerAnchor = context.CT.arrowAnchor({ kind: 'player', pid: 'p1' });
+assert.deepEqual(JSON.parse(JSON.stringify(playerAnchor)), { left: 1014, top: 184, width: 12, height: 12 }, 'own player marker follows the read-only miniature board');
+arrowNodes = [];
 const card = { kind: 'card', pid: 'p1', iid: 'p6u6wnase_1' };
 const player = { kind: 'player', pid: 'p2' };
 const send = (arrow, from = 'p1') => hostRecv({ t: 'arrows', k: 'add', arrow }, from);
