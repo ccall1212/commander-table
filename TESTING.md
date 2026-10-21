@@ -1,4 +1,17 @@
-# Commander Table v0.29.0 — release checks
+# Commander Table v0.30.0 — release checks
+
+## Linked token quantities
+
+Assistant code checks only; human browser testing has not been done yet.
+
+1. Extract the test copy and double-click **index.html**. Start a two-player game and keep the second player open to check that token creation remains local to the player who created the tokens.
+2. At both 1920×1080 and 1366×768, test **Sidebar** and **Grid**. Open ☰ → **Tokens**, open a linked token, create 1 and several, then try 0, 61 and a decimal. Invalid entries should keep the prompt open; Cancel should create nothing.
+3. Right-click a battlefield card with a related token → **Create related token** → choose that token. Create one and several. Repeat on a card with multiple related tokens.
+4. Play a card with a token suggestion. Confirm **+ Token** still creates one immediately, then use **Create several…** for a quantity. Repeat with a card that suggests multiple tokens and choose a token from the menu.
+5. Open **Search all tokens…**, select a result, and check **Create 1** and **Create several…**, including invalid quantities and Cancel.
+6. On the second player, confirm the other player's battlefield token appears in the public game view and no private card information is exposed. Check both layouts and sizes above.
+
+## Previous release checks (v0.29.0)
 
 For a downloaded copy: extract the ZIP and double-click **index.html**. No Python, terminal, installation or local server is needed. Keep internet access on for card images and online play.
 

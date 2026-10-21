@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.29.0';
+const APP_VERSION = '0.30.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -1020,15 +1020,35 @@ function suggestTokens(def) {
   const toks = def.tokens.map(id => S.me.defs[id]).filter(Boolean);
   if (!toks.length) return;
   if (toks.length === 1) {
-    UI.toast(`${dname(def)} makes tokens`, { ms: 7000, action: { label: `+ ${dname(toks[0])}`, onClick: () => createToken(toks[0]) } });
+    UI.toast(`${dname(def)} makes tokens`, { ms: 7000,
+      action: { label: `+ ${dname(toks[0])}`, onClick: () => createToken(toks[0]) },
+      actions: [{ label: 'Create several…', onClick: () => createTokenQuantity(toks[0]) }]
+    });
   } else {
     UI.toast(`${dname(def)} makes tokens`, { ms: 7000, action: { label: 'Choose token…', onClick: () => {
       const r = $('#myBf').getBoundingClientRect();
-      UI.menu(r.left + 40, r.top + 20, toks.map(t => ({ label: tokenLabel(t), onClick: () => createToken(t) })));
+      UI.menu(r.left + 40, r.top + 20, toks.flatMap(t => [
+        { label: `+ ${tokenLabel(t)}`, onClick: () => createToken(t) },
+        { label: `Create several ${tokenLabel(t)}…`, onClick: () => createTokenQuantity(t) }
+      ]));
     } } });
   }
 }
 const tokenLabel = t => `${dname(t)}${t.pt ? ' ' + t.pt : ''}${t.type ? ' — ' + t.type.replace(/^Token /, '') : ''}`;
+async function createTokenQuantity(def) {
+  const n = await UI.prompt({ title: `How many ${dname(def)} tokens?`, label: 'Enter a whole number from 1 to 60.', type: 'number', value: 2, min: 1, max: 60, integer: true, strictBounds: true });
+  if (n == null) return;
+  createToken(def, n);
+}
+function relatedTokenItems(id) {
+  const d = S.me.defs[id];
+  const name = d ? tokenLabel(d) : 'Token';
+  return [{ label: `Create several ${name}…`, onClick: async () => {
+      let def = S.me.defs[id];
+      if (!def) { try { def = await Deck.fetchById(id); } catch (e) { UI.toast('Could not load that token', { kind: 'error' }); return; } }
+      createTokenQuantity(def);
+    } }];
+}
 
 // --- attaching auras / equipment
 function hostInfo(pid, iid) {
@@ -2044,7 +2064,10 @@ function discardRandom() {
 // --- tokens
 function tokensMenu(x, y) {
   const toks = S.me.tokens.map(id => S.me.defs[id]).filter(Boolean).sort((a, b) => dname(a).localeCompare(dname(b)));
-  const items = toks.map(t => ({ label: tokenLabel(t), onClick: () => createToken(t) }));
+  const items = toks.flatMap(t => [
+    { label: tokenLabel(t), onClick: () => createToken(t) },
+    { label: `Create several ${tokenLabel(t)}…`, onClick: () => createTokenQuantity(t) }
+  ]);
   if (!items.length) items.push({ label: 'No tokens linked to this deck', disabled: true });
   items.push({ sep: true }, { label: 'Search all tokens…', onClick: searchTokens });
   UI.menu(x, y, items);
@@ -2069,7 +2092,7 @@ async function searchTokens() {
     onAction: async (k, iid) => {
       const d = byIid[iid]; if (!d) return;
       let n = 1;
-      if (k === 'many') { n = await UI.prompt({ title: `How many ${dname(d)} tokens?`, type: 'number', value: 2, min: 1, max: 60 }); if (!n) return; }
+      if (k === 'many') { n = await UI.prompt({ title: `How many ${dname(d)} tokens?`, label: 'Enter a whole number from 1 to 60.', type: 'number', value: 2, min: 1, max: 60, integer: true, strictBounds: true }); if (n == null) return; }
       createToken(d, n);
     },
     onHover: d => preview(d)
@@ -2105,7 +2128,10 @@ function cardMenu(x, y, iid) {
     items.push({ label: c.fd ? 'Turn face up' : 'Turn face down', hint: 'Z', onClick: () => toggleFaceDown(iid) });
     items.push({ label: 'Copy this card', disabled: c.fd, onClick: () => copyCard(d, c.fl) });
     if (d.tokens && d.tokens.length) {
-      items.push({ label: 'Create related token', sub: d.tokens.map(id => ({ label: S.me.defs[id] ? tokenLabel(S.me.defs[id]) : 'Token', onClick: () => relatedToken(id) })) });
+      items.push({ label: 'Create related token', sub: d.tokens.flatMap(id => [
+        { label: S.me.defs[id] ? tokenLabel(S.me.defs[id]) : 'Token', onClick: () => relatedToken(id) },
+        ...relatedTokenItems(id)
+      ]) });
     }
     if (opps.length) items.push({ label: 'Give control to', sub: opps.map(p => ({ label: pname(p), onClick: () => giveControl(iid, p) })) });
     if (c.own !== S.pid) items.push({ label: `Return control to ${pname(c.own)}`, onClick: () => returnControl(iid) });
