@@ -15,23 +15,24 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 - **Version:** the newest entry in `CHANGELOG.md` (do not write a version number here; it goes stale).
 - **Paused again at Chris's request (2026-10-20):** draft [PR #11](https://github.com/ccall1212/commander-table/pull/11), website import/random deck picker. Preserve the branch and recovery checkpoint. Do not resume implementation, deploy its test Worker, merge, or publish until Chris asks to resume; see the investigation note.
 - **Layouts:** Sidebar and Grid only.
-- **Open work:** Objective #37 opening readiness is ready to test in [PR #58](https://github.com/ccall1212/commander-table/pull/58). Objective #35 personal Undo/checkpoints is ready to test in [PR #59](https://github.com/ccall1212/commander-table/pull/59), stacked on #58. Both await Chris's testing and explicit publication approval. Draft #11 remains paused.
+- **Open work:** Objective #37 opening readiness is ready to test in [PR #58](https://github.com/ccall1212/commander-table/pull/58). Objective #35 personal Undo/checkpoints is ready to test in [PR #59](https://github.com/ccall1212/commander-table/pull/59), stacked on #58. Objective #40 repeatable In response! cue is ready to test in [PR #60](https://github.com/ccall1212/commander-table/pull/60), stacked on #59. All three await Chris's testing and explicit publication approval. Draft #11 remains paused.
 - **Queued:** Moving backup/restore into Deck Builder #38 and choosing mulligan rules after Host Game #39 remain unimplemented. Other open, paused and deferred items are listed in `OBJECTIVES.md`.
 - **Slam sound:** Chris wants to keep refining the Commander slam sound. Do that on a separate branch and leave the published behaviour alone until he approves.
 
 ## Existing test ZIPs for open work
 
-Include Objective numbers, statuses and these ZIP links whenever Chris asks for an open-work summary; Objective numbers are different from PR numbers. Existing commit ZIPs remain unchanged. The current test copies below include all published v0.39.0 features; the #35 copy also includes #37. Extract and double-click index.html; click lists are in TESTING.md.
+Include Objective numbers, statuses and these ZIP links whenever Chris asks for an open-work summary; Objective numbers are different from PR numbers. Existing commit ZIPs remain unchanged. The current test copies below include all published v0.39.0 features; the #35 copy also includes #37, and the #40 copy includes both #35 and #37. Extract and double-click index.html; click lists are in TESTING.md.
 
 | Objective | Open item | Previously supplied ZIP | Status |
 |---|---|---|---|
 | #37 | Opening readiness (PR #58) | [v0.40.0 current test ZIP](https://github.com/ccall1212/commander-table/archive/639b15a3eb235006fdb10e7c071d01d3bd6082e7.zip) | Ready for Chris's test; not published |
 | #35 | Personal Undo/checkpoints (PR #59) | [v0.41.0 current test ZIP](https://github.com/ccall1212/commander-table/archive/2cba32c5b4a4f6e1472dcc3a869dfd63f5aab411.zip) | Ready for Chris's test; includes #37; not published |
+| #40 | In response! cue (PR #60) | [v0.42.0 current test ZIP](https://github.com/ccall1212/commander-table/archive/dae00e8d3a4bc31d10e2169278a379f1f214da68.zip) | Ready for Chris's test; includes #35 and #37; not published |
 | #9 | Random deck/website import (PR #11) | [Archived draft ZIP](https://github.com/ccall1212/commander-table/archive/a415ef5a9d13531a9c6b5877ab40adf84388c6dc.zip) | Paused; its separate test service is not deployed; do not resume |
 
 Other queued items have no separate feature test ZIP yet. Touch support’s existing shipped behavior is in the normal game; its remaining real-device testing/refinements have no new test copy.
 
-**Publication dependency:** #59 targets `feat/opening-readiness` to isolate its diff. Publish #58 first, then reconcile #59 onto main and retarget it before publication. Preserve the #58 branch while #59 depends on it; clean both branches/worktrees once the dependency is removed and each merged head is verified.
+**Publication dependency:** #59 targets `feat/opening-readiness`, and #60 targets `feat/personal-undo-history`, to isolate each feature diff. Publish approved PRs in order #58 → #59 → #60, reconciling each dependent branch onto main and retargeting it before publication. Preserve branches while an open PR depends on them; clean branches/worktrees once dependencies are removed and each merged head is verified.
 
 ## Documentation upkeep
 
