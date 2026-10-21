@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.33.1] - 2026-10-21
+
+### Fixed
+- Keep targeting arrows connected to your cards and player marker in the read-only YOU miniature when viewing another player’s board in Sidebar. Switching boards no longer leaves arrows counted but missing.
+
 ## [0.33.0] - 2026-10-21
 
 ### Added
@@ -26,7 +31,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.33.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.33.1...HEAD
+[0.33.1]: https://github.com/ccall1212/commander-table/compare/v0.33.0...v0.33.1
 [0.33.0]: https://github.com/ccall1212/commander-table/compare/v0.30.0...v0.33.0
 [0.30.0]: https://github.com/ccall1212/commander-table/compare/v0.29.0...v0.30.0
 [0.29.0]: https://github.com/ccall1212/commander-table/compare/v0.28.2...v0.29.0
