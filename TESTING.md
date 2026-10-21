@@ -1,22 +1,32 @@
-# Targeting arrows across board views — v0.33.1 test copy
+# Room board vault — backend-only test copy
 
-Download the ZIP, extract it, and double-click **index.html**. Keep internet access on. No terminal or local server needed. Use at least two players with this copy; three are useful for switching between two opponents.
+## Backend-only room vault
 
-## Click list
+This branch adds optional `room-vault-v1` support to the Cloudflare relay. It is server-only:
+the app frontend and version are unchanged, and LAN mode does not support this API. Local checks
+can be run without Cloudflare credentials or a deployment:
 
-1. In Sidebar, play several cards on your battlefield. Draw four targeting arrows: your card → opponent card; opponent card → another of your cards; your card → opponent player; opponent card → your player. Use **Send arrow to…** or **☰ → Targeting arrow…**.
-2. Click an opponent's tile to view their board big. All arrows whose endpoints appear on the main board or miniature boards should still be visible. Your cards' lines should connect to the YOU miniature, with the count unchanged.
-3. Switch to a different opponent, then click YOU to return to your board. Lines should follow their original cards/players each time without redrawing them.
-4. Check at roughly 1920×1080 and 1366×768. Switch Sidebar → Grid → Sidebar. Grid's full-board zoom intentionally hides other boards; their card arrows should reappear when you return to the overview.
-5. Try dragging/clicking your read-only YOU miniature. It should still just return you to your board, without moving, tapping or modifying your cards. Click an arrow to remove only that arrow and confirm the other player receives the removal. Clear all should still work.
+```sh
+npm install --prefix /tmp/ct-vault-runtime --no-audit --no-fund miniflare@4
+NODE_PATH=/tmp/ct-vault-runtime/node_modules node tests/test_room_vault.cjs
+python tests/test_relay_protocol.py
+```
 
-## Verification
+The room-vault test uses a local Miniflare Durable Object with SQLite persistence. It checks host
+authorization, private retrieval, chunking, restart durability, stale-revision rejection, and TTL
+cleanup. Protocol regression checks the unchanged v2 relay behavior. To enable recovery in the
+existing PR #55 recovery ZIP, the Worker must first be deployed through an approved Cloudflare
+Workers Build. Deployment verification still needs `GET /health` to advertise `room-vault-v1` and
+a protocol smoke test against the live Worker; local tests alone do not establish that production
+has the capability.
 
-- Assistant reproduced the original problem in Chromium over localhost HTTP with three relay-connected sessions: four arrows counted, only one drawn after focusing an opponent in Sidebar.
-- After the fix, a three-session Chromium HTTP pass kept four arrows visible through Sidebar focus switches between two opponents and back to your board, checked Grid overview/zoom return and Sidebar/Grid at 1920×1080 and 1366×768, confirmed miniature dragging does not move your real cards, and checked the second player still sees all four arrows. No page errors observed.
-- All five Node suites passed (targeting, chat sizing, P/T, token picker and printings), along with changed JavaScript syntax and diff checks. The targeting regression exercises the real YOU renderer and anchor resolver, including a hidden main board, largest-visible-copy selection, and the own-player miniature marker. A bounded GPT-6 Luna investigation and test contribution were used.
-- Source fix gives the YOU miniature separate drawing identifiers, while keeping gameplay identifiers stripped. No relay messages or card state format changed.
-- Chris supplied two screenshots and reported arrows not continuing when switching views; he replied “Perfect” and approved publishing this exact fix on 2026-10-21. PR #53 is merged as v0.33.1.
-- Assistant browser checks use HTTP: managed Chromium blocks `file://` navigation. Extract/open and real-device Safari/touch need appropriate hands-on checks.
 
-Includes the published floating/transparent/resizable chat. Deck Builder checks (#50) and collection backup (#49) remain independent proposals; deck randomizer/import PR #11 remains paused.
+## Review and rollout
+
+The ZIP contains the complete runnable project. Extract and double-click index.html to open the existing published frontend; there is no new game control in this server-only copy. Chris does not need to install or run anything. The commands above record assistant/developer checks in the managed environment only.
+
+Publication needs Chris’s explicit approval. After the companion server PR is merged and the production Workers Build succeeds, verify health capability and live relay compatibility. Then use PR #55’s separate updated ZIP to test saved-board status, closing all incognito windows, a fresh browser’s board request and moderator-approved recovery. Do not claim that flow works on the production relay before that verification.
+
+Assistant checks passed: actual local Miniflare SQLite storage/restart, private access denial, chunking/Unicode, concurrent writes, stale revisions, TTL/delete/clear, plus unchanged protocol tests (16/16). The frontend is unchanged at v0.33.1; no browser asset version bump or new app release tag is needed for this service preparation. Existing clients keep using protocol v2. LAN has no vault support.
+
+Collection backup/restore PR #49 and Deck Builder checks PR #50 remain untested by Chris and unpublished. Mulligan and unique-color proposals are separate. Draft PR #11 remains paused; its test Worker is unrelated and must not be deployed.

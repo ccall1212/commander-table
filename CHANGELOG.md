@@ -6,6 +6,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+- Add optional `room-vault-v1` support to the Cloudflare relay for host-authenticated private board backups, with 24-hour expiry and stale-save protection. The v2 protocol remains compatible; LAN mode is unchanged.
+
 ## [0.33.1] - 2026-10-21
 
 ### Fixed
