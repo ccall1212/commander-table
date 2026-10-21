@@ -295,7 +295,7 @@ let pubTimer = null;
 function publish(now) { clearTimeout(pubTimer); pubTimer = setTimeout(doPublish, now ? 0 : 120); }
 function doPublish() { if (!S.me || boardTransferLock) return; toHost({ t: 'pub', p: publicView() }); }
 
-function toHost(msg) { if (S.role === 'client') Net.send(msg); else hostRecv(msg, S.pid); }
+function toHost(msg) { if (S.role === 'client') Net.send({ ...msg, seatKey: seatKey() }); else hostRecv(msg, S.pid); }
 function broadcast(msg) { if (S.role === 'host') Net.send(msg); onBroadcast(msg); }
 function sendReq(to, req) { if (to === S.pid) onReq(req, S.pid); else toHost({ t: 'req', to, req }); }
 function say(text, cards) {
@@ -325,7 +325,7 @@ function sendChat(text) {
 
 // ----- host side -----
 function newTable(room) {
-  S.chat = []; S.chatOpen = false; S.chatUnread = 0;
+  S.chat = []; S.chatOpen = false; S.chatUnread = 0; S.seatKeys = {};
   return { room, seats: [S.pid], order: [], active: null, turn: 0, turnSeq: 0, phase: 3, started: false, monarch: null, initiative: null, out: {}, hostPid: S.pid, mods: [], kicked: [], handoffs: {} };
 }
 function hostRecv(msg, from) {
@@ -4575,7 +4575,7 @@ function startNet() {
   Net.start({
     role: S.role, room: S.room, pid: S.pid, key: netKey(),
     onMessage: (msg, from) => {
-      if (S.role === 'host') hostRecv(msg, from);
+      if (S.role === 'host') { if (authorizeClientMessage(msg, from)) hostRecv(msg, from); }
       else clientRecv(msg);
     },
     onStatus: (state, text, code, transport) => {
@@ -4583,7 +4583,7 @@ function startNet() {
       S.net = { state, text: text || '', code: code || '', transport: transport || '' };
       if (state === 'online' && was !== 'online' && S.role === 'client') {
         publish(true);
-        if (S.table && S.table.room === S.room) Net.send({ t: 'tsync', table: S.table });
+        if (S.table && S.table.room === S.room) toHost({ t: 'tsync', table: S.table });
       }
       render();
     },
@@ -4614,6 +4614,21 @@ function startNet() {
 // Host-authorized moderation and private board handoffs. Private state is addressed
 // only to the host and the selected recipient, never included in room broadcasts.
 let boardTransferLock = false, pendingBoardTransfer = null, boardTransferTimer = null;
+function seatKey() {
+  const name = 'ct.seatKey.' + S.room + '.' + S.pid;
+  let key = LS.get(name, null);
+  if (!key) { key = Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join(''); LS.set(name, key); }
+  return key;
+}
+function authorizeClientMessage(msg, from) {
+  // Public seat IDs cannot grant host/moderator authority or claim an offline seat.
+  if (!isObj(msg) || from === S.pid || typeof from !== 'string' || !/^[\w-]{1,40}$/.test(from)) return false;
+  if (typeof msg.seatKey !== 'string' || !/^[a-f0-9]{32}$/.test(msg.seatKey)) return false;
+  S.seatKeys = S.seatKeys || {};
+  if (S.seatKeys[from]) return S.seatKeys[from] === msg.seatKey;
+  if (msg.t !== 'pub') return false;
+  S.seatKeys[from] = msg.seatKey; saveNow(); return true;
+}
 function samePlayerName(a, b) { return String(a || '').trim().toLocaleLowerCase() === String(b || '').trim().toLocaleLowerCase(); }
 function isModerator(pid = S.pid) {
   return !!S.table && (pid === S.table.hostPid || (pid === S.pid && S.role !== 'client') || (S.table.mods || []).includes(pid));
@@ -4829,7 +4844,7 @@ function saveNow() {
   if (!S.me) return;
   const host = S.role !== 'client';
   LS.set('ct.sess.' + S.pid, {
-    v: 2, at: Date.now(), role: S.role, room: S.room, deckId: S.deckId, me: S.me,
+    v: 2, at: Date.now(), role: S.role, room: S.room, deckId: S.deckId, me: S.me, seatKeys: host ? S.seatKeys : null,
     table: host ? S.table : null, players: host ? S.players : null, log: host ? S.log.slice(-150) : null, chat: host ? S.chat.slice(-100) : null
   });
   LS.set('ct.last', S.pid);
@@ -4839,7 +4854,7 @@ function loadSession(pid) {
   return s && s.me && Date.now() - s.at < 24 * 3600e3 ? s : null;
 }
 function resume(sess) {
-  S.role = sess.role; S.room = sess.room; S.deckId = sess.deckId; S.me = sess.me;
+  S.role = sess.role; S.room = sess.room; S.deckId = sess.deckId; S.me = sess.me; S.seatKeys = isObj(sess.seatKeys) ? sess.seatKeys : {};
   normalizeMe(S.me);
   S.table = sess.table || null; if (S.table && S.role === 'host') S.table.hostPid = S.pid; S.players = sess.players || {}; S.log = sess.log || []; S.chat = cleanChatHistory(sess.chat); S.chatOpen = false; S.chatUnread = 0; S.online = {};
   if (S.role === 'host') Object.keys(S.players).forEach(p => { if (p !== S.pid) S.online[p] = false; });

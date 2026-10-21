@@ -31,7 +31,7 @@ context.CTAppearance = { normalizePrefs: x => x || {}, getCustom: () => ({}), bo
 context.UI.cardBackHTML = () => '';
 vm.runInContext(fs.readFileSync(path.join(root, 'js/targeting.js'), 'utf8'), context);
 let source = fs.readFileSync(path.join(root, 'js/app.js'), 'utf8');
-source = source.replace('window.CT = { S,', 'window.CT = { tableOp, cleanTable, cleanPrivateBoard, remapBoardReferences, publicView, savedRoomSession, saveNow, loadSession, resume, beginBoardTransfer, handleHostBoardTransfer, handleClientModeration, isModerator, pendingTransfer: () => pendingBoardTransfer, S,');
+source = source.replace('window.CT = { S,', 'window.CT = { tableOp, cleanTable, cleanPrivateBoard, remapBoardReferences, publicView, savedRoomSession, saveNow, snapFor, authorizeClientMessage, seatKey, loadSession, resume, beginBoardTransfer, handleHostBoardTransfer, handleClientModeration, isModerator, pendingTransfer: () => pendingBoardTransfer, S,');
 vm.runInContext(source, context);
 
 const CT = context.CT;
@@ -136,5 +136,27 @@ assert.equal(CT.savedRoomSession('ABCDE').pid, 'savedpid');
 assert.equal(CT.savedRoomSession('NOPE!'), null, 'saved seats are never offered across room codes');
 storage.setItem('ct.sess.expired', JSON.stringify({ ...session, at: Date.now() - 25 * 3600 * 1000 }));
 assert.notEqual(CT.savedRoomSession('ABCDE').pid, 'expired', 'expired recovery sessions are ignored');
+
+// Remote senders cannot claim host identity, and each client must bind a private seat key on its first public snapshot.
+S.pid = 'host'; S.room = 'ABCDE'; S.role = 'host'; S.table.seats.push('authclient');
+S.players.authclient = { name: 'Auth client', zones: { battlefield: [], graveyard: [], exile: [] } };
+S.seatKeys = {};
+assert.equal(CT.authorizeClientMessage({ t: 'op', seatKey: 'a'.repeat(32) }, 'host'), false, 'remote host-id spoof is rejected');
+assert.equal(CT.authorizeClientMessage({ t: 'pub' }, 'authclient'), false, 'missing seat key is rejected');
+assert.equal(CT.authorizeClientMessage({ t: 'pub', seatKey: 'not-a-key' }, 'authclient'), false, 'malformed seat key is rejected');
+assert.equal(CT.authorizeClientMessage({ t: 'op', seatKey: 'a'.repeat(32) }, 'newclient'), false, 'unknown clients cannot send operations before their first public snapshot');
+const seatSecret = 'a'.repeat(32); // fixed test fixture only; no generated runtime key is logged
+assert.equal(CT.authorizeClientMessage({ t: 'pub', seatKey: seatSecret }, 'authclient'), true, 'initial pub binds the per-seat key');
+assert.equal(S.seatKeys.authclient, seatSecret);
+const phaseBeforeBadKey = S.table.phase;
+assert.equal(CT.authorizeClientMessage({ t: 'op', op: { k: 'phase', v: 6 }, seatKey: 'b'.repeat(32) }, 'authclient'), false, 'wrong key cannot send later operations');
+assert.equal(S.table.phase, phaseBeforeBadKey);
+const validOp = { t: 'op', op: { k: 'phase', v: 4 }, seatKey: seatSecret };
+assert.equal(CT.authorizeClientMessage(validOp, 'authclient'), true, 'correct bound key authenticates later operations');
+CT.hostRecv(validOp, 'authclient');
+assert.equal(S.table.phase, 4, 'an authenticated later operation reaches the host table');
+CT.saveNow();
+assert.equal(JSON.parse(data['ct.sess.host']).seatKeys.authclient, seatSecret, 'host session persists the private seat-key map');
+assert.equal(Object.hasOwn(CT.snapFor(), 'seatKeys'), false, 'private seat keys are not included in public join snapshots');
 
 console.log('PASS moderation: host/mod/member authorization, concession restore, persistent kick block, sanitized authority state, private board validation/remap, capture sender checks and room-scoped recovery lookup');
