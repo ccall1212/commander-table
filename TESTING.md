@@ -19,3 +19,5 @@ Download the ZIP, extract it, and double-click **index.html**. Keep internet acc
 - Chris requested the feature; hands-on review and publication approval are pending. Managed Chromium blocks file:// navigation, so the assistant browser checks used HTTP. Real-device Safari/touch and extracted-copy flow still require appropriate checks.
 
 Includes published v0.33.1 chat and arrow fix. This independent proposal does not include the pending moderation, Deck Builder checks or backup proposals. PR #11 remains paused. Nothing here is approved for publication.
+
+Tested by Chris: “Mulligan looks great”; he approved push, merge and publication on 2026-10-21. Integrating the approved server PR changed only release/testing documentation alongside the server files; the tested browser source is unchanged.
