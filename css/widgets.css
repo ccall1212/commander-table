@@ -218,7 +218,7 @@
 .deck-health > span { color: var(--text, #e6e9f2); font-weight: 600; }
 .deck-health details { flex: 1; min-width: 0; }
 .deck-health summary { cursor: pointer; }
-.deck-health ul { margin: 4px 0 0; padding-left: 18px; }
+.deck-health ul { margin: 4px 0 0; padding-left: 18px; max-height: min(22vh, 200px); overflow: auto; }
 .deck-health li { margin: 2px 0; }
 .deck-health button { padding: 0 6px; line-height: 1.4; }
 .w-v-pickprompt { color: var(--accent, #7c9cff); font-weight: 600; }

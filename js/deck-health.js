@@ -2,7 +2,10 @@
 (function () {
   'use strict';
 
-  const qty = entry => Math.max(0, Math.floor(Number(entry && entry.qty) || 0));
+  const qty = entry => {
+    const n = Number(entry && entry.qty);
+    return Number.isFinite(n) ? Math.max(0, Math.min(Number.MAX_SAFE_INTEGER, Math.floor(n))) : 0;
+  };
   const name = def => String(def && def.name || '').trim();
   const keyName = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/[’‘ʼ`]/g, "'").toLocaleLowerCase().trim();
@@ -19,23 +22,29 @@
     if (total !== 100) out.push('Deck has ' + total + ' card' + (total === 1 ? '' : 's') + ' including commander' + (commanders.length === 1 ? '' : 's') + '; Commander decks usually have 100.');
 
     const allowedColors = new Set();
+    const commandersHaveIdentity = commanders.every(d => Array.isArray(d.ci));
     commanders.forEach(d => (Array.isArray(d.ci) ? d.ci : []).forEach(c => allowedColors.add(c)));
-    if (commanders.length) {
+    let identityUnknown = commanders.filter(d => !Array.isArray(d.ci)).length;
+    if (commanders.length && commandersHaveIdentity) {
       cards.forEach(e => {
         const d = e && e.def || {};
+        if (qty(e) && !Array.isArray(d.ci)) { identityUnknown += qty(e); return; }
         const outside = (Array.isArray(d.ci) ? d.ci : []).filter(c => colors.includes(c) && !allowedColors.has(c));
         if (qty(e) && outside.length) out.push(name(d) + ' is outside the commander color identity (' + outside.join(', ') + ').');
       });
-    }
+    } else if (commanders.length && !commandersHaveIdentity) identityUnknown += mainCount;
+    if (identityUnknown) out.push('Color identity could not be checked for ' + identityUnknown + ' card' + (identityUnknown === 1 ? '' : 's') + '; review manually.');
 
     const groups = new Map();
-    commanders.concat(cards.flatMap(e => Array(qty(e)).fill(e && e.def || {}))).forEach(d => {
+    function addToGroup(d, count) {
       const nm = name(d);
-      if (!nm) return;
+      if (!nm || !count) return;
       const key = keyName(nm);
       if (!groups.has(key)) groups.set(key, { name: nm, count: 0, defs: [] });
-      const g = groups.get(key); g.count++; g.defs.push(d);
-    });
+      const g = groups.get(key); g.count += count; g.defs.push(d);
+    }
+    commanders.forEach(d => addToGroup(d, 1));
+    cards.forEach(e => addToGroup(e && e.def || {}, qty(e)));
     groups.forEach(g => {
       if (g.defs.some(d => /\bBasic\b/i.test(d.type || ''))) return;
       let limit = 1;

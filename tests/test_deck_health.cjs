@@ -39,4 +39,10 @@ assert.equal(got.messages.some(m => m.includes('Plains appears')), false, 'basic
 
 got = result({ commanders: [commander], cards: [card('Sol Ring'), card('Sol Ring')] });
 assert.ok(got.messages.some(m => m.includes('Sol Ring appears 2 times')), 'duplicate printings group by card name');
+got = result({ commanders: [commander], cards: [{ def: { name: 'Corrupt quantity' }, qty: 900000000 } ] });
+assert.ok(got.messages.some(m => m.includes('Corrupt quantity appears 900000000 times')),
+  'large quantities aggregate without expanding one array item per copy');
+got = result({ commanders: [{ name: 'Old saved commander' }], cards: [card('Old saved card')] });
+assert.ok(got.messages.some(m => m.includes('Color identity could not be checked for 2 cards')),
+  'missing saved color identities are reported as unknown instead of assuming colorless');
 console.log('PASS deck health: commander-inclusive count, missing commander, combined identity, duplicate grouping and exemptions');

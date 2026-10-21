@@ -1,4 +1,4 @@
-# Commander Table v0.30.0 — release checks
+# Commander Table v0.31.0 — release checks
 
 For a downloaded test copy: extract the ZIP and double-click **index.html**. No Python, terminal, installation or local server is needed. Keep internet access on for card images and online play.
 
@@ -11,6 +11,12 @@ For a downloaded test copy: extract the ZIP and double-click **index.html**. No 
 
 - `node tests/test_deck_health.cjs`: commander-inclusive count, missing commander, combined commander identity, duplicate-name grouping, basic-land exemption, and any-number / up-to-N exceptions.
 - JavaScript syntax, local asset cache links and app/meta version agreement.
+
+## Assistant-run browser check
+
+- Headless Chromium opened the test copy through a local HTTP server at 1920 × 1080 and 1366 × 768. Expanding 99 warning notes kept the list scrollable and the modal header/close control within the viewport. Dismiss/reopen, commander removal and replacement, and card removal all refreshed the summary. No console errors were observed.
+- The **+ Add card** search for Sol Ring returned HTTP 200 from Scryfall, and its image returned HTTP 200.
+- Direct `file:///` navigation was blocked by the managed browser policy (`ERR_BLOCKED_BY_ADMINISTRATOR`), so extract-and-open was not observed in this browser pass. The localhost browser run exercised the same app files.
 
 ## Try it in the browser
 
