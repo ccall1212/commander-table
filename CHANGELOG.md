@@ -9,10 +9,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ## [0.37.0] - 2026-10-21
 
 ### Added
-- The host can grant/revoke moderator permissions. Moderators can restore conceded players, kick a seat, or force a non-host board handoff into an empty replacement seat, including its private hand/library and saved deck. Complete private boards are saved to the room server for 24 hours on a compatible relay. A moderator can approve a fresh browser’s request to recover a disconnected board, including hidden cards and library order. Save status is visible in the board chooser. Handoffs preserve the recipient’s previous board locally and clear undo/arrow history at the transfer boundary.
+- The host can grant/revoke moderator permissions. Moderators can restore conceded players, kick a seat, or force a non-host board handoff into an empty replacement seat, including its private hand/library and saved deck. Complete private boards are saved to the room server for 24 hours on a compatible relay. A moderator can approve a fresh browser’s request to recover a disconnected board, including hidden cards and library order. Save status is visible in the board chooser. Handoffs retain the original board’s locked color and release the recipient’s previous color. Handoffs preserve the recipient’s previous board locally and clear undo/arrow history at the transfer boundary.
 
 ### Fixed
 - Dismissing the resume reminder keeps the saved session. Joining a room with a local saved seat offers to resume it; a matching player name opens a moderator-approved board claim instead of creating a second seat. Closing an active online tab asks for browser confirmation. Reconnecting to a confirmed new opening deal resets an older kept hand even if that browser missed the new-game message.
+
+## [0.36.0] - 2026-10-21
+
+### Added
+- Choose a unique player color immediately after hosting or joining a room. The picker labels available and taken colors, including red; the host locks your choice to your seat. Colors persist through reconnects and new games, and a removed player's color becomes available again.
 
 ## [0.35.0] - 2026-10-21
 
@@ -47,7 +52,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
 [Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.37.0...HEAD
-[0.37.0]: https://github.com/ccall1212/commander-table/compare/v0.35.0...v0.37.0
+[0.37.0]: https://github.com/ccall1212/commander-table/compare/v0.36.0...v0.37.0
+[0.36.0]: https://github.com/ccall1212/commander-table/compare/v0.35.0...v0.36.0
 [0.35.0]: https://github.com/ccall1212/commander-table/compare/v0.33.1...v0.35.0
 [0.33.1]: https://github.com/ccall1212/commander-table/compare/v0.33.0...v0.33.1
 [0.33.0]: https://github.com/ccall1212/commander-table/compare/v0.30.0...v0.33.0

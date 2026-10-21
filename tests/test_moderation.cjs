@@ -31,6 +31,7 @@ context.CTAppearance = { normalizePrefs: x => x || {}, getCustom: () => ({}), bo
 context.UI.cardBackHTML = () => '';
 vm.runInContext(fs.readFileSync(path.join(root, 'js/targeting.js'), 'utf8'), context);
 vm.runInContext(fs.readFileSync(path.join(root, 'js/mulligan.js'), 'utf8'), context);
+vm.runInContext(fs.readFileSync(path.join(root, 'js/player-colors.js'), 'utf8'), context);
 let source = fs.readFileSync(path.join(root, 'js/app.js'), 'utf8');
 source = source.replace('window.CT = { S,', 'window.CT = { reconcileOpeningDeal, tableOp, cleanTable, cleanPrivateBoard, remapBoardReferences, publicView, savedRoomSession, saveNow, snapFor, authorizeClientMessage, seatKey, loadSession, resume, beginBoardTransfer, handleHostBoardTransfer, handleClientModeration, isModerator, pendingTransfer: () => pendingBoardTransfer, S,');
 vm.runInContext(source, context);
@@ -175,5 +176,25 @@ assert.equal(S.me.zones.battlefield.length, 0, 'previous-game battlefield cannot
 const currentHand = S.me.zones.hand.map(c => c.iid).join(','); S.me.kept = true;
 CT.reconcileOpeningDeal({ openingMode: 'london', openingDeal: 'new-deal' });
 assert.equal(S.me.zones.hand.map(c => c.iid).join(','), currentHand, 'same-deal snapshots leave a kept hand untouched');
+
+// Authenticate an initial public snapshot before color admission, without adding a
+// duplicate or reserving a color until the authoritative choice succeeds.
+S.pid = 'host'; S.role = 'host'; S.table = { room: 'ABCDE', seats: ['host'], order: [], active: null, turn: 0, turnSeq: 0, phase: 3, started: false, out: {}, hostPid: 'host', mods: [], kicked: [], handoffs: {}, colorVersion: 1, colors: { host: 'red' } };
+S.players = { host: { name: 'Host' } }; S.pendingSeats = {}; S.online = { host: true, newcomer: true };
+const candidate = clone(transferredPublic); candidate.name = 'New player'; candidate.zones.battlefield = []; candidate.zones.graveyard = []; candidate.zones.exile = [];
+CT.hostRecv({ t: 'pub', p: candidate }, 'newcomer');
+assert.equal(S.table.seats.includes('newcomer'), false, 'a new player chooses before being seated');
+assert.equal(S.pendingSeats.newcomer.selectingColor, true);
+CT.tableOp({ k: 'joincolor', color: 'blue' }, 'outsider');
+assert.equal(S.table.seats.includes('outsider'), false, 'unregistered color claims cannot create a seat');
+CT.tableOp({ k: 'joincolor', color: 'red' }, 'newcomer');
+assert.equal(S.table.seats.includes('newcomer'), false, 'taken colors leave the entry pending');
+CT.tableOp({ k: 'joincolor', color: 'blue' }, 'newcomer');
+assert.equal(S.table.colors.newcomer, 'blue');
+assert.equal(S.pendingSeats.newcomer, undefined);
+CT.hostRecv({ t: 'pub', p: candidate }, 'duplicate');
+assert.equal(S.pendingSeats.duplicate.claimSource, 'newcomer');
+CT.tableOp({ k: 'joincolor', color: 'green' }, 'duplicate');
+assert.equal(S.table.seats.includes('duplicate'), false, 'same-name recovery candidates cannot bypass approval by choosing a color');
 
 console.log('PASS moderation: host/mod/member authorization, concession restore, persistent kick block, sanitized authority state, private board validation/remap, capture sender checks and room-scoped recovery lookup');
