@@ -1287,3 +1287,28 @@ body.touch-mode #myBar .ctrpanel {
 .ct-chat-transparent .ct-chat-entry-time, .ct-chat-transparent .ct-chat-empty { color: #d0d6e0; }
 .ct-chat-transparent button:hover:not(:disabled), .ct-chat-transparent input:focus { border-color: transparent; }
 @media (max-height: 400px) { .ct-chat-floating .ct-chat-subtitle, .ct-chat-floating .ct-chat-foot { display: none; } }
+
+/* Quiet transparent chat: only conversation and a composer, with controls on interaction. */
+.ct-chat-wake { display: none; }
+.ct-chat-transparent .ct-chat-subtitle,
+.ct-chat-transparent .ct-chat-foot,
+.ct-chat-transparent .ct-chat-empty,
+.ct-chat-transparent .ct-chat-entry-time { display: none; }
+.ct-chat-transparent { grid-template-rows: auto auto minmax(0, 1fr) auto; }
+.ct-chat-transparent > .ct-chat-head,
+.ct-chat-transparent > .ct-chat-tools { opacity: 0; pointer-events: none; }
+.ct-chat-transparent:hover > .ct-chat-head,
+.ct-chat-transparent:hover > .ct-chat-tools,
+.ct-chat-transparent:focus-within > .ct-chat-head,
+.ct-chat-transparent:focus-within > .ct-chat-tools { opacity: 1; pointer-events: auto; }
+.ct-chat-transparent > :not(.ct-chat-wake) { visibility: visible; transition: opacity .45s ease, visibility 0s; }
+.ct-chat-transparent.ct-chat-idle > :not(.ct-chat-wake) { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .45s ease, visibility 0s .45s; }
+.ct-chat-transparent.ct-chat-idle .ct-chat-wake {
+  display: block; position: absolute; bottom: 8px; left: 8px; pointer-events: auto;
+  background: transparent; border-color: transparent; color: var(--muted); text-shadow: inherit;
+}
+.ct-chat-transparent .ct-chat-form input { border-bottom-color: rgba(208,214,224,.5); border-radius: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .ct-chat-transparent > :not(.ct-chat-wake),
+  .ct-chat-transparent.ct-chat-idle > :not(.ct-chat-wake) { transition: none; }
+}

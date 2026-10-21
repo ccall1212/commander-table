@@ -19,6 +19,8 @@
       y: Math.max(top, Math.min(bottom, prefs.y == null ? viewport.top + 58 : prefs.y)) };
   }
   let prefs = normalize(null), panel, handle, floatButton, clearButton, resetButton, dragging = null;
+  let idleTimer = null, open = false;
+  const IDLE_MS = 8000;
   function viewport() {
     const v = window.visualViewport;
     return { left: v ? v.offsetLeft : 0, top: v ? v.offsetTop : 0,
@@ -27,10 +29,31 @@
   function save() {
     try { window.localStorage.setItem(KEY, JSON.stringify(prefs)); } catch (_) { /* preferences are optional */ }
   }
+  function armFade() {
+    clearTimeout(idleTimer);
+    if (!panel || !open || !prefs.floating || !prefs.transparent) return;
+    idleTimer = setTimeout(() => {
+      const input = document.getElementById('chatInput');
+      if (dragging || input.value.length) { armFade(); return; }
+      panel.classList.add('ct-chat-idle');
+      // Keep a focused control reachable rather than leaving focus in hidden chat.
+      if (panel.contains(document.activeElement)) document.getElementById('chatWake').focus({ preventScroll: true });
+    }, IDLE_MS);
+  }
+  function wake(focusInput) {
+    if (!panel) return;
+    panel.classList.remove('ct-chat-idle');
+    armFade();
+    if (focusInput && open) requestAnimationFrame(() => {
+      if (open && !isFaded()) document.getElementById('chatInput').focus();
+    });
+  }
+  function isFaded() { return !!panel && panel.classList.contains('ct-chat-idle'); }
   function apply() {
     if (!panel) return;
     panel.classList.toggle('ct-chat-floating', prefs.floating);
     panel.classList.toggle('ct-chat-transparent', prefs.floating && prefs.transparent);
+    if (!prefs.floating || !prefs.transparent) { clearTimeout(idleTimer); panel.classList.remove('ct-chat-idle'); }
     floatButton.textContent = prefs.floating ? 'Dock' : 'Pop out';
     floatButton.setAttribute('aria-pressed', String(prefs.floating));
     floatButton.title = prefs.floating ? 'Return chat to its normal position' : 'Float chat over the game';
@@ -68,12 +91,19 @@
     try { prefs = normalize(JSON.parse(window.localStorage.getItem(KEY) || 'null')); } catch (_) { prefs = normalize(null); }
     // Chat controls must not tap, move, attach, or target cards behind the panel.
     for (const type of ['pointerdown', 'click', 'dblclick', 'contextmenu']) panel.addEventListener(type, e => e.stopPropagation());
-    floatButton.addEventListener('click', () => { endDrag(null, true); prefs.floating = !prefs.floating; save(); apply(); });
+    floatButton.addEventListener('click', () => { endDrag(null, true); prefs.floating = !prefs.floating; save(); apply(); wake(false); });
     clearButton.addEventListener('click', () => {
       prefs.transparent = !prefs.floating || !prefs.transparent;
-      prefs.floating = true; save(); apply();
+      prefs.floating = true; save(); apply(); wake(false);
     });
-    resetButton.addEventListener('click', () => { endDrag(null, true); prefs.x = null; prefs.y = null; save(); apply(); });
+    resetButton.addEventListener('click', () => { endDrag(null, true); prefs.x = null; prefs.y = null; save(); apply(); wake(false); });
+    document.getElementById('chatWake').addEventListener('click', () => wake(true));
+    for (const type of ['pointerdown', 'pointermove', 'keydown', 'input', 'wheel', 'focusin']) {
+      panel.addEventListener(type, e => {
+        if (e.target.closest('#chatWake') || isFaded()) return;
+        armFade();
+      });
+    }
     handle.addEventListener('pointerdown', e => {
       if (!prefs.floating || dragging || e.button !== 0 || e.isPrimary === false) return;
       e.preventDefault();
@@ -107,6 +137,10 @@
     }
     apply();
   }
-  function setOpen(open) { if (!open) endDrag(null, true); apply(); }
-  window.CTChatPanel = { init, setOpen, normalize, fit };
+  function setOpen(value) {
+    open = !!value;
+    if (!open) endDrag(null, true);
+    apply(); wake(false);
+  }
+  window.CTChatPanel = { init, setOpen, normalize, fit, wake, isFaded };
 })();

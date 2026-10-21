@@ -3323,6 +3323,7 @@ function pulseChatButton() {
 function pulseChatPanel() {
   const panel = $('#chatPanel');
   if (!panel || !S.chatOpen) return;
+  if (window.CTChatPanel) CTChatPanel.wake(false);
   clearTimeout(chatPanelGlowTimer);
   panel.classList.remove('ct-chat-new-message');
   void panel.offsetWidth;
@@ -3649,7 +3650,7 @@ function bindGame() {
   }, true);
   if (window.CTChatPanel) CTChatPanel.init();
   const chatBtn = $('#chatBtn'), chatClose = $('#chatClose'), chatForm = $('#chatForm'), chatSoundToggle = $('#chatSoundToggle');
-  if (chatBtn) chatBtn.addEventListener('click', e => { e.stopPropagation(); setChatPanelOpen(!S.chatOpen); });
+  if (chatBtn) chatBtn.addEventListener('click', e => { e.stopPropagation(); if (S.chatOpen && window.CTChatPanel && CTChatPanel.isFaded()) CTChatPanel.wake(true); else setChatPanelOpen(!S.chatOpen); });
   if (chatClose) chatClose.addEventListener('click', () => { setChatPanelOpen(false); if (chatBtn) chatBtn.focus(); });
   if (chatForm) chatForm.addEventListener('submit', sendChatFromForm);
   if (chatSoundToggle) chatSoundToggle.addEventListener('click', toggleChatSound);
