@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.40.0] - 2026-10-21
+
+### Changed
+- The host can start only after every seated player who is still in the game has kept an opening hand from the current deal. The lobby names players still choosing; battlefield moves, tokens and copies remain blocked until the game starts.
+
 ## [0.39.0] - 2026-10-21
 
 ### Added
@@ -61,7 +66,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.39.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.40.0...HEAD
+[0.40.0]: https://github.com/ccall1212/commander-table/compare/v0.39.0...v0.40.0
 [0.39.0]: https://github.com/ccall1212/commander-table/compare/v0.38.0...v0.39.0
 [0.38.0]: https://github.com/ccall1212/commander-table/compare/v0.37.0...v0.38.0
 [0.37.0]: https://github.com/ccall1212/commander-table/compare/v0.36.0...v0.37.0

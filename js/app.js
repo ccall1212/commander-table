@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.39.0';
+const APP_VERSION = '0.40.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -291,7 +291,7 @@ function publicView() {
     return p;
   });
   return {
-    pid: m.pid, bw: BW, name: m.name, appearance: CTAppearance.normalizePrefs(m.appearance), life: m.life, poison: m.poison, ctr: m.ctr, cmdDmg: m.cmdDmg, cmdrs: m.cmdrs,
+    pid: m.pid, bw: BW, name: m.name, openingDeal: m.openingDeal, appearance: CTAppearance.normalizePrefs(m.appearance), life: m.life, poison: m.poison, ctr: m.ctr, cmdDmg: m.cmdDmg, cmdrs: m.cmdrs,
     casts: m.casts, hand: z.hand.length, lib: z.library.length, kept: m.kept, mullCount: m.mull, layout: m.layout, bh: myBH(),
     zones: { battlefield: take(z.battlefield), graveyard: take(z.graveyard), exile: take(z.exile), command: take(z.command) },
     revHand: m.revealHand ? take(z.hand) : null,
@@ -352,6 +352,9 @@ function hostRecv(msg, from) {
   switch (msg.t) {
     case 'pub': {
       const p = cleanPub(msg.p, from); if (!p) return;
+      // A client on an older or modified page must not introduce battlefield
+      // cards while everyone is still choosing opening hands.
+      if (!S.table.started) p.zones.battlefield = [];
       if (!S.table.seats.includes(from)) {
         const duplicate = S.table.seats.find(pid => pid !== from && S.players[pid] && samePlayerName(S.players[pid].name, p.name));
         if (duplicate) { S.pendingSeats = S.pendingSeats || {}; S.pendingSeats[from] = { p, claimSource: duplicate }; directPlayer(from, { t: 'seat-conflict', name: p.name, pid: duplicate }); return; }
@@ -419,6 +422,8 @@ function hostRecv(msg, from) {
     case 'op': tableOp(msg.op, from); break;
     case 'req': {
       if (typeof msg.to !== 'string') return;
+      const req = msg.req;
+      if (!S.table.started && req && (req.k === 'give' || req.k === 'take' || (req.k === 'return' && req.zone === 'battlefield'))) return;
       if (msg.to === S.pid) onReq(msg.req, from);
       else if (S.role === 'host') Net.sendTo(msg.to, { t: 'req', from, req: msg.req });
       break;
@@ -429,6 +434,9 @@ function hostRecv(msg, from) {
       // reloaded before its last change was saved), adopt it; otherwise ignore it.
       const t = cleanTable(msg.table);
       if (!t || t.room !== S.table.room || t.rev <= (S.table.rev || 0) || !t.seats.includes(S.pid)) return;
+      if (!S.table.started && t.started && openingPending(S.table).length) {
+        t.started = false; t.order = []; t.active = null; t.turn = 0; t.turnSeq = 0;
+      }
       t.seats = S.table.seats.slice(); t.out = { ...S.table.out };
       t.hostPid = S.pid; t.mods = S.table.mods || []; t.kicked = S.table.kicked || []; t.handoffs = S.table.handoffs || {};
       // Recovery can restore host table changes, but only the host may choose the
@@ -500,6 +508,14 @@ function rollFirstPlayer(T, live) {
   T.order = live.slice().sort((a, b) => rolls.get(b) - rolls.get(a));
   broadcast({ t: 'firstroll', rolls: live.map(pid => ({ pid, name: pname(pid), value: rolls.get(pid) })), winner: T.order[0] });
   sysLog(`Roll for first player (d20): ${T.order.map(p => `${pname(p)} rolled ${rolls.get(p)}`).join(' · ')}. ${pname(T.order[0])} goes first.`);
+}
+
+function openingPending(T = S.table) {
+  if (!T) return [];
+  return T.seats.filter(pid => !T.out[pid]).filter(pid => {
+    const p = S.players[pid];
+    return !p || !p.kept || p.openingDeal !== T.openingDeal;
+  });
 }
 
 function tableOp(op, from) {
@@ -578,9 +594,14 @@ function tableOp(op, from) {
       break;
     }
     case 'start': {
-      if (!isHost) return;
+      if (!isHost || T.started) return;
       const live = T.seats.filter(p => !T.out[p]);
       if (!live.length) return;
+      const pending = openingPending(T);
+      if (pending.length) {
+        UI.toast(`Waiting for ${pending.map(pname).join(', ')} to keep a current opening hand.`, { kind: 'warn', ms: 7000 });
+        return;
+      }
       // Starting a game always chooses the turn order with the animated d20 roll.
       rollFirstPlayer(T, live);
       T.active = T.order[0] || null; T.turn = 1; T.turnSeq = 1; T.phase = 3; T.started = true;
@@ -716,7 +737,8 @@ function cleanPub(p, from) {
     pid: from, name: String(p.name || 'Player').slice(0, 24), appearance: CTAppearance.normalizePrefs(p.appearance), life: num(p.life, 40), poison: num(p.poison),
     ctr: numMap(p.ctr), cmdDmg: numMap(p.cmdDmg), casts: numMap(p.casts),
     cmdrs: Array.isArray(p.cmdrs) ? p.cmdrs.slice(0, 3).filter(isObj).map(c => ({ iid: String(c.iid).slice(0, 40), name: String(c.name || '').slice(0, 80) })) : [],
-    hand: num(p.hand), lib: num(p.lib), kept: !!p.kept, mullCount: clamp(num(p.mullCount), 0, CTMulligan.MAX_LIMIT),
+    hand: num(p.hand), lib: num(p.lib), openingDeal: typeof p.openingDeal === 'string' ? p.openingDeal.slice(0, 40) : null,
+    kept: !!p.kept, mullCount: clamp(num(p.mullCount), 0, CTMulligan.MAX_LIMIT),
     layout: cleanLayout(p.layout) || cloneLayout(DEFAULT_LAYOUT), bh: clamp(num(p.bh, BH), BH, BH_MAX),
     zones: { battlefield: cleanCards(z.battlefield), graveyard: cleanCards(z.graveyard), exile: cleanCards(z.exile), command: cleanCards(z.command, 4) },
     revHand: p.revHand ? cleanCards(p.revHand, 60) : null,
@@ -922,6 +944,10 @@ function onReq(req, from) {
     const c = cleanCards([req.card], 1)[0]; const d = isObj(req.def) ? req.def : null;
     if (!c || !d || typeof d.id !== 'string') return;
     const zone = req.k === 'give' ? 'battlefield' : (ZONES.includes(req.zone) ? req.zone : 'graveyard');
+    if (zone === 'battlefield' && !canEnterBattlefield()) {
+      UI.toast('The battlefield opens when the host starts the game.', { kind: 'warn' });
+      return;
+    }
     act(() => {
       if (!S.me.defs[d.id]) S.me.defs[d.id] = d;
       if (findCard(c.iid)) return null; // already have it (duplicate message)
@@ -938,6 +964,7 @@ function onReq(req, from) {
     return;
   }
   if (req.k === 'take' && typeof req.iid === 'string') {
+    if (!canEnterBattlefield()) return;
     // only the card's owner may do this; I hand it straight back to them
     const f = findCard(req.iid);
     if (!f || f.zone !== 'battlefield' || f.card.own !== from || from === S.pid) return;
@@ -1069,7 +1096,9 @@ function reconcileOpeningDeal(table) {
 // =====================================================================
 //  Card moves
 // =====================================================================
+function canEnterBattlefield() { return S.role === 'solo' || !!(S.table && S.table.started); }
 function insertCard(card, to, opts = {}) {
+  if (to === 'battlefield' && !canEnterBattlefield()) return false;
   const z = S.me.zones[to];
   if (to === 'library') { S.me.revealTopOnce = null; if (opts.pos === 'bottom') z.push(card); else z.unshift(card); } else z.push(card);
   if (to === 'battlefield') {
@@ -1080,6 +1109,7 @@ function insertCard(card, to, opts = {}) {
     const d = defOf(card);
     if (d && d.loyalty && !card.c.Loyalty && /Planeswalker/.test(d.type || '')) card.c.Loyalty = parseInt(d.loyalty, 10) || 0;
   }
+  return true;
 }
 // My cards attached to a host that is leaving: they fall off (equipment stays, auras usually die).
 function detachFrom(hostPid, hostIid) {
@@ -1112,6 +1142,10 @@ function checkOrphans() {
 }
 // Low-level move; returns info for logging or null.
 function moveCard(iid, to, opts = {}) {
+  if (to === 'battlefield' && !canEnterBattlefield()) {
+    UI.toast('The battlefield opens when the host starts the game.', { kind: 'warn' });
+    return null;
+  }
   const f = findCard(iid); if (!f) return null;
   const { zone: from, card } = f;
   const def = defOf(card);
@@ -1947,6 +1981,7 @@ async function viewInfo(def) {
   try { h.set(await Deck.fetchCardInfo(def.id)); } catch (e) { h.error(e.message || 'Could not load card details'); }
 }
 function createToken(def, n = 1) {
+  if (!canEnterBattlefield()) { UI.toast('The battlefield opens when the host starts the game.', { kind: 'warn' }); return; }
   act(() => {
     S.me.defs[def.id] = S.me.defs[def.id] || def;
     for (let i = 0; i < n; i++) insertCard(mkCard(def, { tok: true }), 'battlefield');
@@ -1957,6 +1992,7 @@ function createToken(def, n = 1) {
 // A copy behaves like a token (it ceases to exist off the battlefield) but is labelled TOKEN COPY.
 function copyCard(def, flipped, tapped) {
   if (!def || !def.id) return;
+  if (!canEnterBattlefield()) { UI.toast('The battlefield opens when the host starts the game.', { kind: 'warn' }); return; }
   act(() => {
     S.me.defs[def.id] = S.me.defs[def.id] || def;
     insertCard(mkCard(def, { tok: true, cp: true, t: !!tapped, fl: !!(flipped && (def.imgBack || def.backName)) }), 'battlefield');
@@ -2052,6 +2088,7 @@ function applyPrinting(iid, oldDef, nd, scope, tokenPrintIds) {
 
 // Works from any zone (menu or drag-and-drop). `at` = where on their board it lands.
 function giveControl(iid, to, at) {
+  if (!canEnterBattlefield()) { UI.toast('Control changes are available after the host starts the game.', { kind: 'warn' }); return; }
   const f = findCard(iid); if (!f) return;
   const d = defOf(f.card);
   act(() => {
@@ -2069,12 +2106,14 @@ function giveControl(iid, to, at) {
 }
 // Owner reclaims a card they gave away: ask the controller's game to hand it straight back (no approval needed).
 function takeBack(pid, iid) {
+  if (!canEnterBattlefield()) { UI.toast('Control changes are available after the host starts the game.', { kind: 'warn' }); return; }
   const f = oppCard(pid, iid);
   if (!f || f.c.own !== S.pid) return;
   sendReq(pid, { k: 'take', iid });
   UI.toast(`Taking back ${f.def ? dname(f.def) : 'your card'} from ${pname(pid)}…`, { ms: 3000 });
 }
 function returnControl(iid) {
+  if (!canEnterBattlefield()) { UI.toast('Control changes are available after the host starts the game.', { kind: 'warn' }); return; }
   const f = findCard(iid); if (!f) return;
   const d = defOf(f.card);
   act(() => {
@@ -3236,8 +3275,12 @@ function renderTop() {
     : '';
   if (!T) html = `<span class="muted">${esc(S.net.text || 'Connecting to the host…')}</span>`;
   else if (!T.started) {
-    html = `${ruleControl}<span class="muted">Not started · ${plural(T.seats.length, 'player')} seated</span>` +
-      (S.role !== 'client' ? ' <button class="primary" data-a="start" title="Uses the rolled order, or randomizes if you have not rolled">Start game</button>' : ' <span class="muted">— waiting for the host to start</span>');
+    const pending = openingPending(T);
+    const readiness = pending.length
+      ? `<span class="muted" title="Every seated player must keep a hand from this deal">Waiting for ${esc(pending.map(pname).join(', '))} to keep</span>`
+      : '<span class="muted">Everyone has kept</span>';
+    html = `${ruleControl}<span class="muted">Not started · ${plural(T.seats.length, 'player')} seated</span> ${readiness}` +
+      (S.role !== 'client' ? ` <button class="primary" data-a="start" title="Uses the rolled order, or randomizes if you have not rolled"${pending.length ? ' disabled' : ''}>Start game</button>` : ' <span class="muted">— waiting for the host to start</span>');
   } else if (!T.active) {
     html = `${ruleControl}<span class="muted">No active player · everyone has conceded</span>`;
   } else {
@@ -4460,6 +4503,7 @@ function moveGroupToZone(group, to, opts = {}) {
   if (to === 'battlefield' && results.length) emitCardPlaceSound(results[0].card.iid);
 }
 function giveControlGroup(group, to, at, anchorIid) {
+  if (!canEnterBattlefield()) { UI.toast('Control changes are available after the host starts the game.', { kind: 'warn' }); return; }
   if (!group.length) return;
   const lead = group.find(p => p.iid === anchorIid) || group[0];
   let count = 0;

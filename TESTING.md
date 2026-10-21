@@ -1,3 +1,25 @@
+# Opening readiness — Objective #37, v0.40.0 test copy
+
+Extract the ZIP and double-click **index.html**. For the shared-game checks, keep internet access on and use two separate browsers or devices. Try both Sidebar and Grid at 1920×1080 and 1366×768.
+
+## Click list
+
+1. Host a room using each opening-hand rule in turn: London, At least 3 lands, and Draw 10, bottom 3. Join with a second player.
+2. Before either player keeps, confirm **Start game** is disabled and the lobby names both players as still choosing. Try the host's hand/card menu and the **B** hotkey to play a card; it should stay out of the battlefield and explain that the host must start the game.
+3. Keep the host's hand. Confirm the guest remains listed and Start stays disabled. Have the guest mulligan; it should remain listed. For Draw 10, bottom three cards; the guest should remain listed until all three selections are finished.
+4. Have the guest keep. Confirm both names clear and Start becomes available. Undo the guest's Keep and confirm the host sees the guest pending again. A completed keep from an older deal must not satisfy readiness after a host redeal or new game.
+5. Confirm the host cannot start while anyone is pending and can start after everyone currently seated and not out has kept. After start, the host should roll turn order and normal hand-to-battlefield moves should work.
+6. While one player is pending, have the other player try dragging a card, using a battlefield menu action, making a token, making a copy, and receiving a control/return request to the battlefield. None should place a card on the battlefield.
+7. Repeat the readiness display and Start checks in Sidebar and Grid at both screen sizes. Confirm the public lobby reveals only player names and keep status, never hidden card identities.
+
+## Assistant checks
+
+- `node tests/test_opening_readiness.cjs`: host readiness rejects unkept and stale-deal status; public status carries only the deal ID and keep flag beside the existing hand count; low-level moves, direct insertion and token/copy creation are blocked before start.
+- Actual Chromium over localhost HTTP with two separate browser contexts and the configured relay: Start began disabled with both names listed; after only the host kept, the guest remained listed and Start stayed disabled; after the guest kept, the names cleared and Start enabled. Host and guest were at 1920×1080 and 1366×768, respectively; no page errors occurred. The relay connection used the configured service, not a local network stub.
+- Existing mulligan tests cover London, three-lands and Draw 10/bottom-three rules. The broader click list remains for Chris: pre-start drag/menu/hotkey and incoming requests, undo/redeal/reconnect behavior, and Sidebar/Grid at both sizes were not part of the assistant-run browser pass.
+
+---
+
 # Collection backup and restore — PR #49, v0.39.0 test copy
 
 Extract the ZIP and double-click **index.html**. Keep internet access on for card images and online play. No terminal or installation is needed.
