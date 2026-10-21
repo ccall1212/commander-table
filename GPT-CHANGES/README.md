@@ -27,7 +27,7 @@ Include Objective numbers, statuses and these ZIP links whenever Chris asks for 
 |---|---|---|---|
 | #37 | Opening readiness (PR #58) | [v0.40.0 current test ZIP](https://github.com/ccall1212/commander-table/archive/639b15a3eb235006fdb10e7c071d01d3bd6082e7.zip) | Ready for Chris's test; not published |
 | #35 | Personal Undo/checkpoints (PR #59) | [v0.41.0 current test ZIP](https://github.com/ccall1212/commander-table/archive/2cba32c5b4a4f6e1472dcc3a869dfd63f5aab411.zip) | Ready for Chris's test; includes #37; not published |
-| #40 | In response! cue (PR #60) | [v0.42.0 current test ZIP](https://github.com/ccall1212/commander-table/archive/dae00e8d3a4bc31d10e2169278a379f1f214da68.zip) | Ready for Chris's test; includes #35 and #37; not published |
+| #40 | In response! cue (PR #60) | [v0.42.0 current test ZIP](https://github.com/ccall1212/commander-table/archive/287561c2d25532788e0b0576ec7d13d4b150da7f.zip) | Ready for Chris's test; includes #35 and #37; not published |
 | #9 | Random deck/website import (PR #11) | [Archived draft ZIP](https://github.com/ccall1212/commander-table/archive/a415ef5a9d13531a9c6b5877ab40adf84388c6dc.zip) | Paused; its separate test service is not deployed; do not resume |
 
 Other queued items have no separate feature test ZIP yet. Touch support’s existing shipped behavior is in the normal game; its remaining real-device testing/refinements have no new test copy.
