@@ -4,7 +4,7 @@ Extract the ZIP and double-click **index.html**, with internet access for card i
 
 ## Chris's testing and approval
 
-Tested by Chris: he reports that he tested both refreshed ZIPs (#29 Deck Builder checks and #30 collection backup) and approved their publication. His message did not specify device, browser, or individual click coverage.
+Tested by Chris: he reports that he tested both previously supplied ZIPs (#29 Deck Builder checks at 7003363 and #30 collection backup at 9a60d15), then explicitly requested updating them and publishing. Assistant checks below cover the refreshed Deck Builder integration. His message did not specify device, browser, or individual click coverage.
 
 ## Click list
 
@@ -17,4 +17,4 @@ Tested by Chris: he reports that he tested both refreshed ZIPs (#29 Deck Builder
 
 - Actual Chromium (`/usr/bin/chromium`) over local HTTP at port 8108 passed `tests/test_deck_editor_browser.cjs`: commander-inclusive counts; partner color identity; out-of-identity warnings changing after a commander edit; duplicate grouping and printed exceptions; dismissal, card removal and reopening; 1920×1080 and 1366×768; no page errors.
 - `tests/test_deck_health.cjs` and the available moderation, mulligan, color, chat, targeting, power/toughness and token suites passed. JavaScript syntax, version metadata and all local asset cache versions passed.
-- The existing recovery browser suite and room-vault integration test were not rerun for this focused Deck Builder refresh. They need Miniflare, which is not installed in this checkout. Their existing main-branch coverage and previously recorded results remain unchanged; Chris's ZIP testing is reported separately above.
+- The existing recovery browser suite and room-vault integration test were not rerun for this focused Deck Builder refresh. Recovery and relay code are unchanged by this feature. Their existing main-branch coverage and previously recorded results remain unchanged; Chris's ZIP testing is reported separately above.
