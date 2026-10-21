@@ -473,6 +473,3 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [0.5.0]: https://github.com/ccall1212/commander-table/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/ccall1212/commander-table/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/ccall1212/commander-table/releases/tag/v0.3.0
-
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.32.0...HEAD
-[0.32.0]: https://github.com/ccall1212/commander-table/compare/v0.29.0...v0.32.0
