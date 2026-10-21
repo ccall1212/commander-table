@@ -1096,7 +1096,7 @@ function reconcileOpeningDeal(table) {
 // =====================================================================
 //  Card moves
 // =====================================================================
-function canEnterBattlefield() { return S.role === 'solo' || !!(S.table && S.table.started); }
+function canEnterBattlefield() { return !!(S.table && S.table.started); }
 function insertCard(card, to, opts = {}) {
   if (to === 'battlefield' && !canEnterBattlefield()) return false;
   const z = S.me.zones[to];
@@ -1241,10 +1241,11 @@ function suggestTokens(def) {
   } else UI.toast(`${dname(def)} makes tokens`, { ms: 7000, action: choose });
 }
 async function createTokenQuantity(def) {
+  if (!canEnterBattlefield()) { UI.toast('The battlefield opens when the host starts the game.', { kind: 'warn' }); return false; }
   const owner = S.me;
   const n = await UI.prompt({ title: `Create ${dname(def)} tokens`, label: 'Quantity (1–60)', type: 'number', value: 1, min: 1, max: 60, integer: true, strictBounds: true, okLabel: 'Create X Tokens' });
   if (!Number.isInteger(n) || n < 1 || n > 60 || !owner || S.me !== owner) return false;
-  createToken(def, n);
+  if (!canEnterBattlefield() || !createToken(def, n)) return false;
   UI.toast(`Created ${n} ${dname(def)} token${n === 1 ? '' : 's'}.`);
   return true;
 }
@@ -1981,13 +1982,15 @@ async function viewInfo(def) {
   try { h.set(await Deck.fetchCardInfo(def.id)); } catch (e) { h.error(e.message || 'Could not load card details'); }
 }
 function createToken(def, n = 1) {
-  if (!canEnterBattlefield()) { UI.toast('The battlefield opens when the host starts the game.', { kind: 'warn' }); return; }
+  if (!canEnterBattlefield()) { UI.toast('The battlefield opens when the host starts the game.', { kind: 'warn' }); return false; }
+  if (!S.me) return false;
   act(() => {
     S.me.defs[def.id] = S.me.defs[def.id] || def;
     for (let i = 0; i < n; i++) insertCard(mkCard(def, { tok: true }), 'battlefield');
     if (!S.me.tokens.includes(def.id)) S.me.tokens.push(def.id);
     return [`created ${n > 1 ? n + ' ' : 'a '}{0} token${n > 1 ? 's' : ''}`, [def]];
   });
+  return true;
 }
 // A copy behaves like a token (it ceases to exist off the battlefield) but is labelled TOKEN COPY.
 function copyCard(def, flipped, tapped) {

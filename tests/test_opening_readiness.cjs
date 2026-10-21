@@ -15,23 +15,24 @@ const context = vm.createContext({
   console, URL, URLSearchParams, Set, Map, Uint32Array, performance,
   innerWidth: 1200, innerHeight: 900,
   location: { search: '?nettest', protocol: 'http:', href: 'http://localhost/?nettest' },
-  document: { querySelector: () => null, querySelectorAll: () => [], body: { classList: { toggle() {} } } },
+  document: { querySelector: () => null, querySelectorAll: () => [], createElement: () => ({ setAttribute() {}, querySelectorAll: () => [], remove() {}, classList: { add() {}, remove() {} } }), body: { classList: { toggle() {} }, appendChild() {} } },
   localStorage: storage, sessionStorage: storage,
   setTimeout: () => 1, clearTimeout() {}, setInterval: () => 1,
   requestAnimationFrame: () => 1, cancelAnimationFrame() {},
   Net: { send: msg => sent.push(msg), sendTo: (pid, msg) => sent.push([pid, msg]), stop() {} },
   Deck: { slimDef: d => ({ id: d.id, name: d.name }) },
-  UI: { toast: msg => notices.push(msg), confirm: async () => true, modal: () => ({ close() {} }) }
+  UI: { toast: msg => notices.push(msg), confirm: async () => true, prompt: async () => { throw new Error('blocked token creation should not prompt'); }, modal: () => ({ close() {} }) }
 });
 context.window = context;
 context.crypto = { getRandomValues: a => { a.fill(3); return a; } };
+context.matchMedia = () => ({ matches: true });
 context.CTAppearance = { normalizePrefs: x => x || {}, getCustom: () => ({}), boardBackgroundStyle: () => '' };
 context.UI.cardBackHTML = () => '';
 for (const file of ['targeting.js', 'mulligan.js', 'player-colors.js']) {
   vm.runInContext(fs.readFileSync(path.join(__dirname, '../js', file), 'utf8'), context);
 }
 let source = fs.readFileSync(path.join(__dirname, '../js/app.js'), 'utf8');
-source = source.replace('window.CT = { S,', 'window.CT = { S, tableOp, openingPending, cleanPub, publicView, moveCard, insertCard, createToken, copyCard, giveControl, giveControlGroup, returnControl, takeBack, hostRecv,');
+source = source.replace('window.CT = { S,', 'window.CT = { S, tableOp, openingPending, cleanPub, publicView, moveCard, insertCard, createToken, createTokenQuantity, copyCard, giveControl, giveControlGroup, returnControl, takeBack, hostRecv, canEnterBattlefield,');
 vm.runInContext(source, context);
 
 const CT = context.CT, { S } = CT;
@@ -88,8 +89,25 @@ CT.hostRecv({ t: 'req', to: 'guest', req: { k: 'take', iid: 'foreign_card' } }, 
 CT.hostRecv({ t: 'req', to: 'guest', req: { k: 'return', zone: 'battlefield', card: { iid: 'foreign_card' } } }, 'host');
 assert.equal(sent.length, sentBeforeBlockedRequest, 'host does not forward pre-start battlefield control requests');
 
+assert.equal(CT.canEnterBattlefield(), false, 'Practice also waits for its Start action before battlefield moves');
+S.role = 'solo';
+assert.equal(CT.insertCard({ iid: 'solo_card', id: 'card', own: 'host', c: {} }, 'battlefield'), false);
+const earlyToken = CT.createTokenQuantity({ id: 'token', name: 'Token' });
+S.role = 'host';
+
+S.players.host.kept = true; S.players.guest.kept = true; S.players.guest.openingDeal = 'deal-current';
+S.me.kept = true;
+CT.tableOp({ k: 'start' }, 'host');
+assert.equal(S.table.started, true, 'host can start after every live seat keeps the current deal');
+const rollCount = sent.filter(message => message.t === 'firstroll').length;
+CT.tableOp({ k: 'start' }, 'host');
+assert.equal(sent.filter(message => message.t === 'firstroll').length, rollCount, 'repeated Start does not reroll turn order');
+
 S.table.started = true;
 assert.equal(CT.insertCard({ iid: 'after_start', id: 'card', own: 'host', c: {} }, 'battlefield'), true);
 assert.equal(S.me.zones.battlefield.length, 1, 'battlefield insertion works after Start');
 
-console.log('opening readiness and pre-start movement checks passed');
+earlyToken.then(result => {
+  assert.equal(result, false, 'token quantity picker rejects creation before prompting');
+  console.log('opening readiness and pre-start movement checks passed');
+}).catch(error => { console.error(error); process.exitCode = 1; });
