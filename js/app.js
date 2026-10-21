@@ -250,23 +250,116 @@ function tidyBoard() {
 
 // --- the action pipeline: snapshot for undo -> mutate -> log -> publish/save/render
 function snapshot() { const { defs, ...rest } = S.me; return JSON.stringify(rest); }
-function pushUndo() { S.undo.push(snapshot()); if (S.undo.length > 40) S.undo.shift(); }
+let undoSerial = 0, undoContext = null;
+function historyContext() {
+  const t = S.table;
+  return t ? [S.pid, t.room, t.openingDeal, !!t.started, t.turnSeq, t.active].join('|') : S.pid;
+}
+function clearUndo() { S.undo = []; }
+function pushUndo(label = 'Changed your board', kind = 'action', deferTrim = false) {
+  const t = S.table;
+  const entry = { id: ++undoSerial, state: snapshot(), label, kind, context: historyContext(),
+    phase: t && t.started ? `Round ${t.turn} · ${PHASES[t.phase]}` : 'Opening hand' };
+  S.undo.push(entry);
+  if (!deferTrim && S.undo.length > 40) S.undo.shift();
+  return entry;
+}
+function actionLabel(before, result) {
+  if (Array.isArray(result) && result[0]) return String(result[0]).replace(/\{(\d+)\}/g,
+    (_, i) => result[1] && result[1][i] ? dname(result[1][i]) : 'a card').slice(0, 160);
+  const old = JSON.parse(before), m = S.me;
+  if (old.life !== m.life) return `Life ${old.life} → ${m.life}`;
+  if (old.poison !== m.poison) return `Poison ${old.poison} → ${m.poison}`;
+  for (const zone of ZONES) {
+    const cards = m.zones[zone] || [], prior = old.zones[zone] || [];
+    const changed = cards.find(c => { const p = prior.find(x => x.iid === c.iid); return p && JSON.stringify(p) !== JSON.stringify(c); });
+    if (changed) return `Adjusted ${dname(defOf(changed))}`;
+  }
+  return 'Changed your board';
+}
 function act(fn, opts) {
   if (!S.me || boardTransferLock) return;
-  if (!(opts && opts.noUndo)) pushUndo();
+  const entry = !(opts && opts.noUndo) ? pushUndo(opts && opts.label, 'action', true) : null;
   const r = fn();
+  if (entry && S.undo.includes(entry)) {
+    if (entry.state === snapshot()) S.undo.splice(S.undo.indexOf(entry), 1);
+    else entry.label = opts && opts.label || actionLabel(entry.state, r);
+  }
+  if (S.undo.length > 40) S.undo.shift();
   if (Array.isArray(r) && r[0]) say(r[0], r[1]);
   commit();
 }
 function commit() { publish(); saveSoon(); render(); }
-function undo() {
-  if (boardTransferLock || !S.me) return;
-  const s = S.undo.pop();
-  if (!s) { UI.toast('Nothing to undo'); return; }
-  const defs = S.me.defs;
-  S.me = JSON.parse(s); S.me.defs = defs;
-  say('undid their last action');
+function restorePersonalEntry(entry) {
+  if (boardTransferLock || !S.me || S.dragging || S.regionDrag) return false;
+  const index = S.undo.indexOf(entry);
+  if (index < 0 || entry.context !== historyContext()) { UI.toast('That history is no longer available.'); return false; }
+  const current = S.me, restored = JSON.parse(entry.state);
+  // IDs and turn automation markers must never rewind with the board.
+  restored.defs = current.defs;
+  restored.seq = Math.max(current.seq || 0, restored.seq || 0);
+  restored.lastTurnSeq = current.lastTurnSeq;
+  restored.lastTurn = current.lastTurn;
+  restored.autoDraw = current.autoDraw; restored.autoUntap = current.autoUntap;
+  S.me = restored;
+  S.undo.splice(index);
+  S.selected.clear(); S.hover = null;
+  clearTimeout(lifeLog.timer); lifeLog.from = null; lifeLog.by = '';
+  Object.values(cdLog).forEach(clearTimeout);
+  // Keep card names from the private history out of the shared log.
+  say(entry.kind === 'checkpoint' ? 'restored their board to a personal phase checkpoint' : 'undid their own action(s)');
   commit();
+  return true;
+}
+function undo() {
+  const entry = [...S.undo].reverse().find(e => e.kind === 'action');
+  if (!entry) { UI.toast('Nothing to undo'); return; }
+  restorePersonalEntry(entry);
+}
+async function choosePersonalEntry(entry) {
+  if (!S.me) return;
+  const before = snapshot();
+  const ok = await UI.confirm(`Restore only your board to ${entry.kind === 'checkpoint' ? entry.label : 'before: ' + entry.label}? Later personal actions will be discarded. The shared turn, phase and other boards stay where they are.`, {
+    title: 'Restore your board', okLabel: 'Restore my board'
+  });
+  if (!ok) return;
+  if (!S.me || snapshot() !== before) { UI.toast('Your board changed while confirming. Choose a history entry again.'); return; }
+  restorePersonalEntry(entry);
+}
+function undoHistoryMenu(btn) {
+  const r = btn.getBoundingClientRect();
+  const entries = S.undo.filter(e => e.context === historyContext());
+  const actions = entries.filter(e => e.kind === 'action').reverse();
+  const checkpoints = entries.filter(e => e.kind === 'checkpoint').reverse();
+  const row = e => ({ label: e.kind === 'checkpoint' ? e.label : 'Before: ' + e.label, hint: e.phase, onClick: () => choosePersonalEntry(e) });
+  UI.menu(r.left, r.bottom + 4, [
+    { label: 'Your recent actions', disabled: true },
+    ...(actions.length ? actions.map(row) : [{ label: 'No personal actions yet', disabled: true }]),
+    { sep: true }, { label: 'Your phase checkpoints', disabled: true },
+    { label: 'Save phase checkpoint', disabled: !S.table || !S.table.started || S.table.active !== S.pid,
+      sub: PHASES.map((phase, i) => ({ label: phase, onClick: () => savePersonalCheckpoint(i) })) },
+    ...(checkpoints.length ? checkpoints.map(row) : [{ label: 'Available during your turn', disabled: true }]),
+    { sep: true }, { label: 'History resets at turns, transfers and incoming effects', disabled: true }
+  ]);
+}
+function savePersonalCheckpoint(phase) {
+  const t = S.table;
+  if (boardTransferLock || !S.me || !t || !t.started || t.active !== S.pid || !Number.isInteger(phase) || !PHASES[phase]) return;
+  const entry = pushUndo(`${PHASES[phase]} checkpoint`, 'checkpoint');
+  entry.phase = `Round ${t.turn} · ${PHASES[phase]}`;
+  UI.toast(`${PHASES[phase]} checkpoint saved for your board.`);
+}
+function preparePersonalHistory() {
+  const context = historyContext();
+  if (context !== undoContext) { clearUndo(); undoContext = context; }
+}
+function recordPhaseCheckpoint() {
+  const t = S.table;
+  if (!S.me || !t || !t.started || t.active !== S.pid) return;
+  const key = historyContext() + '|' + t.phase;
+  if (S.undo.some(e => e.kind === 'checkpoint' && e.key === key)) return;
+  const entry = pushUndo(`${PHASES[t.phase]} start`, 'checkpoint');
+  entry.key = key;
 }
 let undoClearedOpeningDeal = null;
 
@@ -314,7 +407,10 @@ function doPublish() { if (!S.me || boardTransferLock) return; toHost({ t: 'pub'
 
 function toHost(msg) { if (S.role === 'client') Net.send({ ...msg, seatKey: seatKey() }); else hostRecv(msg, S.pid); }
 function broadcast(msg) { if (S.role === 'host') Net.send(msg); onBroadcast(msg); }
-function sendReq(to, req) { if (to === S.pid) onReq(req, S.pid); else toHost({ t: 'req', to, req }); }
+function sendReq(to, req) {
+  if (to === S.pid) onReq(req, S.pid);
+  else { clearUndo(); toHost({ t: 'req', to, req }); }
+}
 function say(text, cards) {
   const cs = (cards || []).filter(Boolean).slice(0, 8).map(d => ({ id: d.id || '', name: dname(d), img: d.img || '', imgBack: d.imgBack || '' }));
   toHost({ t: 'log', text, cards: cs });
@@ -940,6 +1036,14 @@ function snapFor() { return { t: 'snap', table: S.table, players: S.players, log
 
 // Requests from other players, applied to MY state.
 function onReq(req, from) {
+  const before = S.me && snapshot();
+  try { applyPlayerRequest(req, from); }
+  finally {
+    // Incoming effects belong to their sender; never rewind across them.
+    if (S.me && before !== snapshot()) clearUndo();
+  }
+}
+function applyPlayerRequest(req, from) {
   if (!isObj(req) || typeof req.k !== 'string') return;
   if (req.k === 'give' || req.k === 'return') {
     const c = cleanCards([req.card], 1)[0]; const d = isObj(req.def) ? req.def : null;
@@ -1054,6 +1158,7 @@ function turnNoticeHTML(pid) {
 function afterTable() {
   const T = S.table, m = S.me;
   if (!T || !m) return;
+  preparePersonalHistory();
   if (!T.started) return;
   if (T.openingDeal && undoClearedOpeningDeal !== T.openingDeal) {
     S.undo = [];
@@ -1078,6 +1183,7 @@ function afterTable() {
     }, { noUndo: true });
     if (drew) emitDrawAnimation(drew);
   }
+  recordPhaseCheckpoint();
 }
 function resetForNewGame() {
   S.targetArrows = []; S.arrowControlsDismissed = false; endTargeting();
@@ -1141,6 +1247,7 @@ function checkOrphans() {
     return p && p.zones && !(p.zones.battlefield || []).some(x => x.iid === c.att.i);
   });
   if (!lost.length) return;
+  clearUndo(); // an opponent's move detached one of our cards
   lost.forEach(c => { c.att = null; if (c.x == null) autoPlace(c, 'battlefield'); });
   orphanToast(lost);
   publish(); saveSoon();
@@ -2230,7 +2337,7 @@ function keepHand() {
     else if (S.me.mull >= openingMulliganLimit(S.pid) && mode === 'three-lands' && lands < 3) UI.toast('Mulligan limit reached. You may keep this hand even though it has fewer than 3 lands.', { kind: 'warn', ms: 6000 });
     return;
   }
-  pushUndo();
+  pushUndo('Kept opening hand and chose bottom cards');
   let picked = 0;
   UI.viewer({
     title: `Put ${plural(n, 'card')} on the bottom`,
@@ -3062,6 +3169,7 @@ function stretchAutoLayout(W, H) {
   const m = S.me, bottom = Math.max(...m.layout.map(r => r.y + r.h));
   const target = clamp(Math.round(Math.min(BW * H / W, 800)), BH, BH_MAX);
   if (!bottom || Math.abs(target - bottom) <= 4) return;
+  clearUndo(); // old snapshots use the previous board geometry
   const f = target / bottom;
   m.layout.forEach(r => { r.y = Math.round(r.y * f); r.h = Math.round(r.h * f); });
   m.zones.battlefield.forEach(c => { if (c.y != null && !c.att) c.y = clamp(Math.round(c.y * f), 0, target - CH); });
@@ -4629,7 +4737,7 @@ function startRegionDrag(e, handle) {
   e.preventDefault();
   const regEl = handle.closest('.region'); const board = handle.closest('.board');
   const r = S.me.layout.find(x => x.k === regEl.dataset.region); if (!r) return;
-  pushUndo();
+  pushUndo('Arranged battlefield zones');
   const mode = handle.classList.contains('grip') ? 'resize' : 'move';
   const cards = mode === 'move'
     ? S.me.zones.battlefield.concat(S.me.zones.command).filter(c => !c.att && c.x != null && centerIn(c, r)).map(c => [c, c.x, c.y])
@@ -4704,6 +4812,7 @@ function onButton(a, btn, e) {
     case 'phase': toHost({ t: 'op', op: { k: 'phase', v: num(btn.dataset.i) } }); break;
     case 'dice': diceMenu(r.left, r.bottom + 4); break;
     case 'undo': undo(); break;
+    case 'undohistory': undoHistoryMenu(btn); break;
     case 'menu': mainMenu(r.right - 240, r.bottom + 4); break;
     case 'openingrule': openingRulesMenu(btn); break;
     case 'copyroom': copyRoom(); break;
