@@ -325,7 +325,7 @@ function sendChat(text) {
 
 // ----- host side -----
 function newTable(room) {
-  S.chat = []; S.chatOpen = false; S.chatUnread = 0; S.seatKeys = {};
+  S.chat = []; S.chatOpen = false; S.chatUnread = 0; S.seatKeys = {}; S.pendingSeats = {}; S.boardBackups = {}; roomBackupSent.clear();
   return { room, seats: [S.pid], order: [], active: null, turn: 0, turnSeq: 0, phase: 3, started: false, monarch: null, initiative: null, out: {}, hostPid: S.pid, mods: [], kicked: [], handoffs: {} };
 }
 function hostRecv(msg, from) {
@@ -337,7 +337,7 @@ function hostRecv(msg, from) {
       const p = cleanPub(msg.p, from); if (!p) return;
       if (!S.table.seats.includes(from)) {
         const duplicate = S.table.seats.find(pid => pid !== from && S.players[pid] && samePlayerName(S.players[pid].name, p.name));
-        if (duplicate) { directPlayer(from, { t: 'seat-conflict', name: p.name, pid: duplicate }); return; }
+        if (duplicate) { S.pendingSeats = S.pendingSeats || {}; S.pendingSeats[from] = { p }; directPlayer(from, { t: 'seat-conflict', name: p.name, pid: duplicate }); return; }
       }
       S.players[from] = p;
       seat(from);
@@ -345,6 +345,12 @@ function hostRecv(msg, from) {
       const arrows = CTTargeting.cleanList(S.targetArrows, S.players, S.table.seats);
       if (arrows.length !== S.targetArrows.length) broadcast({ t: 'arrows', arrows });
       break;
+    }
+    case 'private-board': { if (S.table.seats.includes(from)) saveRoomBoard(from, msg.data, msg.revision); return; }
+    case 'recover-seat-request': {
+      if ((!S.table.seats.includes(from) && !(S.pendingSeats || {})[from]) || !S.table.seats.includes(msg.source) || msg.source === S.pid || msg.source === from) return;
+      const name = S.players[from]?.name || S.pendingSeats[from].p.name;
+      broadcast({ t: 'recovery-request', request: { from, source: msg.source, name } }); return;
     }
     case 'log': { const e = cleanLog(msg, from); if (e) broadcast({ t: 'log', e }); break; }
     case 'chat': { const e = cleanChatMessage(msg, from); if (e) broadcast({ t: 'chat', e }); break; }
@@ -565,6 +571,8 @@ function tableOp(op, from) {
       if (T.active === op.pid) { T.active = T.order.find(p => !T.out[p]) || null; T.turnSeq = Math.max(1, num(T.turnSeq)) + 1; T.phase = 3; }
       sysLog(`${pname(op.pid)} was removed from the table.`);
       delete S.players[op.pid];
+      if (S.boardBackups) delete S.boardBackups[op.pid];
+      if (typeof Net.roomVault === 'function') Net.roomVault('delete', { pid: op.pid }).catch(() => {});
       break;
     }
     case 'newgame': {
@@ -776,7 +784,7 @@ function clientRecv(msg) {
   if (!msg) return;
   if (handleClientModeration(msg)) return;
   if (msg.t === 'snap') {
-    S.table = msg.table; S.players = msg.players || {}; S.log = msg.log || []; S.online = msg.online || {}; S.chat = cleanChatHistory(msg.chat);
+    S.table = msg.table; S.players = msg.players || {}; S.log = msg.log || []; S.online = msg.online || {}; S.boardBackups = msg.boardBackups || {}; S.chat = cleanChatHistory(msg.chat);
     seedTurnNotice(S.table);
     S.targetArrows = CTTargeting.cleanList(msg.arrows, S.players, (S.table && S.table.seats) || []);
     applyCommittedHandoff(); if (handleRemovedSeat()) return;
@@ -788,7 +796,7 @@ function clientRecv(msg) {
   if (msg.t === 'req') { onReq(msg.req, msg.from); return; }
   onBroadcast(msg);
 }
-function snapFor() { return { t: 'snap', table: S.table, players: S.players, log: S.log.slice(-150), online: S.online, chat: S.chat.slice(-100), arrows: S.targetArrows }; }
+function snapFor() { return { t: 'snap', table: S.table, players: S.players, log: S.log.slice(-150), online: S.online, chat: S.chat.slice(-100), arrows: S.targetArrows, boardBackups: S.boardBackups || {} }; }
 
 // Requests from other players, applied to MY state.
 function onReq(req, from) {
@@ -2474,6 +2482,7 @@ function mainMenu(x, y) {
   const items = [
     { label: 'Draw a card', hint: 'D', onClick: () => draw(1) },
     { label: 'Untap all', hint: 'U', onClick: untapAll },
+    { label: 'Choose / recover a board…', onClick: () => showBoardRecovery() },
     { label: 'Tokens…', onClick: () => tokensMenu(x, y) },
     { label: 'Targeting arrow…', onClick: () => startTargeting() },
     { label: 'Show arrow controls', disabled: !S.targetArrows.length, onClick: showTargetingControls },
@@ -4582,9 +4591,12 @@ function startNet() {
       const was = S.net.state;
       S.net = { state, text: text || '', code: code || '', transport: transport || '' };
       if (state === 'online' && was !== 'online' && S.role === 'client') {
+        roomBackupSent.delete(S.room + ':' + S.pid);
         publish(true);
+        queueRoomBackup();
         if (S.table && S.table.room === S.room) toHost({ t: 'tsync', table: S.table });
       }
+      if (state === 'online' && was !== 'online' && S.role === 'host') { roomBackupSent.delete(S.room + ':' + S.pid); queueRoomBackup(); }
       render();
     },
     onDropped: msgs => {
@@ -4600,6 +4612,7 @@ function startNet() {
       broadcast({ t: 'online', online: S.online });
     },
     onLeave: pid => {
+      if (S.pendingSeats && !S.table.seats.includes(pid)) delete S.pendingSeats[pid];
       S.online[pid] = false;
       broadcast({ t: 'online', online: S.online });
       // brief blips reconnect within a few seconds — only log real outages
@@ -4608,6 +4621,76 @@ function startNet() {
         if (S.online[pid] === false) { sysLog(`${pname(pid)} lost connection — waiting for them to come back…`); lostTimers[pid] = 'logged'; }
       }, 6000);
     }
+  });
+}
+
+// Private room snapshots: status/roster metadata is public, saved card data is not.
+const roomBackupSent = new Map(), roomBackupQueues = new Map(), roomBackupVersion = new Map(), roomBackupAccepted = new Map();
+function queueRoomBackup() {
+  if (!S.me || boardTransferLock || S.role === 'solo' || !S.table || !S.table.seats.includes(S.pid) || S.net.state !== 'online') return;
+  const deck = Deck.get(S.deckId); if (!deck) return;
+  const { roomSaveRevision, ...me } = S.me;
+  const data = { me, deck }, serialized = JSON.stringify(data), key = S.room + ':' + S.pid;
+  if (roomBackupSent.get(key) === serialized) return;
+  roomBackupSent.set(key, serialized);
+  S.me.roomSaveRevision = Math.max(Date.now(), (Number(roomSaveRevision) || 0) + 1);
+  const revision = S.me.roomSaveRevision;
+  if (S.role === 'host') saveRoomBoard(S.pid, JSON.parse(serialized), revision);
+  else toHost({ t: 'private-board', data: JSON.parse(serialized), revision });
+}
+function roomBackupStatus(pid, status, at, error) {
+  S.boardBackups = S.boardBackups || {};
+  S.boardBackups[pid] = { status, at: at || 0, error: error || '' };
+  const label = document.querySelector(`[data-room-save="${CSS.escape(pid)}"]`);
+  if (label) label.textContent = roomBackupLabel(pid);
+}
+function roomBackupLabel(pid) {
+  const status = (S.boardBackups || {})[pid];
+  return status && status.status === 'saved' ? 'Saved to room ' + new Date(status.at).toLocaleTimeString() : status && status.status === 'pending' ? 'Saving to room…' : 'Room backup unavailable';
+}
+function saveRoomBoard(pid, data, revision) {
+  if (typeof Net.roomVault !== 'function') return;
+  const me = cleanPrivateBoard(data && data.me, pid, pid), deck = cleanTransferDeck(data && data.deck);
+  if (!me || !deck || !Number.isSafeInteger(revision) || revision <= (roomBackupAccepted.get(pid) || 0)) return;
+  roomBackupAccepted.set(pid, revision);
+  const room = S.room, version = (roomBackupVersion.get(pid) || 0) + 1; roomBackupVersion.set(pid, version);
+  roomBackupStatus(pid, 'pending');
+  broadcast({ t: 'backup-status', pid, status: 'pending' });
+  const previous = roomBackupQueues.get(pid) || Promise.resolve();
+  const task = previous.catch(() => {}).then(() => {
+    if (S.room !== room || S.role !== 'host' || !S.table.seats.includes(pid)) return;
+    return Net.roomVault('put', { pid, data: { me, deck, revision } }).then(result => {
+      if (roomBackupVersion.get(pid) === version && S.room === room && S.table && S.table.seats.includes(pid)) broadcast({ t: 'backup-status', pid, status: 'saved', at: result && result.updatedAt || Date.now() });
+    }).catch(error => {
+      if (roomBackupVersion.get(pid) === version && S.room === room && S.table) broadcast({ t: 'backup-status', pid, status: 'unavailable', error: error.message });
+    });
+  });
+  roomBackupQueues.set(pid, task);
+}
+function showBoardRecovery(preselect) {
+  const T = S.table; if (!T) return;
+  const rows = T.seats.map(pid => {
+    const p = S.players[pid];
+    const canChoose = pid !== S.pid && pid !== T.hostPid;
+    return `<div class="ct-recovery-seat"><b>${esc(p ? p.name : pid)}</b> <span class="muted small">${S.online[pid] || pid === T.hostPid ? 'Connected' : 'Disconnected'} · <span data-room-save="${esc(pid)}">${esc(roomBackupLabel(pid))}</span></span>${canChoose ? `<button type="button" data-recover-seat="${esc(pid)}">${isModerator() ? 'Assign board…' : 'Request this board'}</button>` : ''}</div>`;
+  }).join('');
+  let requested = false;
+  const waiting = !T.seats.includes(S.pid);
+  const modal = UI.modal({ title: 'Choose / recover a board', onClose: () => { if (waiting && !requested) exitModerated('No board was selected. Join with a different name or request your existing board again.'); }, html: `<p>Choose the board you need. A moderator must approve changing who controls it. Private hand and library are restored from the latest completed room save.</p>${rows}<button id="ctRetryRoomSave" type="button">Save my board now</button><p class="muted small">Room saves expire after 24 hours. A save still pending when the browser closes may miss the latest action. If room backup is unavailable, keep the original browser’s saved game.</p>` });
+  modal.el.querySelectorAll('[data-recover-seat]').forEach(button => {
+    button.onclick = () => {
+      const source = button.dataset.recoverSeat;
+      requested = true; modal.close();
+      if (isModerator()) showBoardTransfer(source);
+      else { toHost({ t: 'recover-seat-request', source }); UI.toast('Board request sent. A moderator must approve it.', { ms: 30000, action: { label: 'Cancel request', onClick: () => { if (waiting) exitModerated('Board request cancelled.'); } } }); }
+    };
+  });
+  modal.el.querySelector('#ctRetryRoomSave').onclick = () => { roomBackupSent.delete(S.room + ':' + S.pid); queueRoomBackup(); };
+  if (preselect) modal.el.querySelector(`[data-recover-seat="${CSS.escape(preselect)}"]`)?.focus();
+}
+function reviewSeatRequest(request) {
+  UI.confirm(`${request.name} requests control of ${pname(request.source)}'s board. Approve replacing their current empty board, including private hand/library?`, { title: 'Approve board claim', danger: true, okLabel: 'Assign board' }).then(ok => {
+    if (ok) toHost({ t: 'op', op: { k: 'handoff', pid: request.source, to: request.from } });
   });
 }
 
@@ -4714,15 +4797,24 @@ function cleanTransferDeck(raw) {
 function beginBoardTransfer(source, target, moderator) {
   const T = S.table;
   if (pendingBoardTransfer) { transferNotice(moderator, 'Finish the current board handoff first.'); return; }
-  if (!T.seats.includes(source) || !T.seats.includes(target) || source === target || source === S.pid || (target !== S.pid && !S.online[target])) { transferNotice(moderator, 'Choose a connected recipient and a different non-host board.'); return; }
+  if (!T.seats.includes(source) || (!T.seats.includes(target) && !(S.pendingSeats || {})[target]) || source === target || source === S.pid || (target !== S.pid && !S.online[target])) { transferNotice(moderator, 'Choose a connected recipient and a different non-host board.'); return; }
   // Replacing a live battlefield would strand its attachments/borrowed cards.
-  const old = S.players[target];
+  const old = S.players[target] || S.pendingSeats?.[target]?.p;
   if (!old || ['battlefield', 'graveyard', 'exile'].some(z => old.zones[z].length) || Object.entries(S.players).some(([pid, p]) => pid !== target && p.zones.battlefield.some(c => c.own === target || (c.att && c.att.p === target)))) { transferNotice(moderator, 'The recipient needs an empty battlefield, graveyard and exile, with no cards controlled by others. Their hand/command/library will be backed up and replaced.'); return; }
   const id = 'h' + uid() + uid();
   pendingBoardTransfer = { id, source, target, moderator, stage: 'capture' };
   boardTransferTimer = setTimeout(() => abortBoardTransfer('Board handoff timed out. No seat was removed.'), 25000);
   const recovery = !S.online[source];
-  directPlayer(recovery ? target : source, { t: 'board-capture', id, source, target, recovery });
+  if (recovery && typeof Net.roomVault === 'function') {
+    Net.roomVault('get', { pid: source }).then(result => {
+      if (pendingBoardTransfer?.id !== id) return;
+      handleHostBoardTransfer({ t: 'board-captured', id, me: result.data.me, deck: result.data.deck }, target);
+    }).catch(error => {
+      if (pendingBoardTransfer?.id !== id) return;
+      pendingBoardTransfer.recoveryError = error.message;
+      directPlayer(target, { t: 'board-capture', id, source, target, recovery: true });
+    });
+  } else directPlayer(recovery ? target : source, { t: 'board-capture', id, source, target, recovery });
 }
 function abortBoardTransfer(reason) {
   const p = pendingBoardTransfer; if (!p) return;
@@ -4732,8 +4824,8 @@ function abortBoardTransfer(reason) {
 function handleHostBoardTransfer(msg, from) {
   if (!['board-captured', 'board-ready', 'board-failed'].includes(msg.t)) return false;
   const p = pendingBoardTransfer;
-  if (!p || msg.id !== p.id || !S.table.seats.includes(from) || !isModerator(p.moderator)) return true;
-  if (msg.t === 'board-failed' && [p.source, p.target].includes(from)) { abortBoardTransfer('The private saved board was unavailable or could not be saved. Reconnect the original browser and try again.'); return true; }
+  if (!p || msg.id !== p.id || (!S.table.seats.includes(from) && !(from === p.target && S.pendingSeats?.[from])) || !isModerator(p.moderator)) return true;
+  if (msg.t === 'board-failed' && [p.source, p.target].includes(from)) { abortBoardTransfer(p.recoveryError ? `No room-server backup was available: ${p.recoveryError} The original browser's local save was also unavailable.` : 'The private saved board was unavailable or could not be saved. Check the room backup status or reconnect the original browser.'); return true; }
   if (msg.t === 'board-captured' && p.stage === 'capture' && from === (S.online[p.source] ? p.source : p.target)) {
     const me = cleanPrivateBoard(msg.me, p.source, p.target);
     if (!me) { abortBoardTransfer('The saved board failed validation; no seat was removed.'); return true; }
@@ -4746,7 +4838,7 @@ function handleHostBoardTransfer(msg, from) {
     // Recipient has durably stored the private copy before public ownership changes.
     T.handoffs = { ...(T.handoffs || {}), [p.target]: { id: p.id, source: p.source } };
     T.kicked = [...new Set([...(T.kicked || []), p.source])].slice(-128);
-    T.seats = T.seats.filter(pid => pid !== p.source);
+    T.seats = T.seats.filter(pid => pid !== p.target).map(pid => pid === p.source ? p.target : pid);
     const oldOrder = T.order.filter(pid => pid !== p.target);
     T.order = oldOrder.map(pid => pid === p.source ? p.target : pid);
     if (T.active === p.source) T.active = p.target;
@@ -4755,8 +4847,10 @@ function handleHostBoardTransfer(msg, from) {
     if (T.out[p.source]) T.out[p.target] = true; else delete T.out[p.target];
     delete T.out[p.source]; T.mods = (T.mods || []).filter(pid => pid !== p.source);
     Object.values(S.players).forEach(player => remapBoardReferences(player, p.source, p.target));
-    const sourceName = pname(p.source), targetName = pname(p.target);
+    const sourceName = pname(p.source), targetName = S.players[p.target]?.name || S.pendingSeats?.[p.target]?.p.name || pname(p.target);
     delete S.players[p.source];
+    if (S.pendingSeats) delete S.pendingSeats[p.target];
+    if (typeof Net.roomVault === 'function') Net.roomVault('delete', { pid: p.source }).catch(() => {});
     pendingBoardTransfer = null; clearTimeout(boardTransferTimer);
     broadcast({ t: 'board-remap', source: p.source, target: p.target });
     pushTable();
@@ -4783,8 +4877,10 @@ function handleClientModeration(msg) {
   if (msg.t === 'moderation-exit') { exitModerated(String(msg.reason || 'Your seat was removed.')); return true; }
   if (msg.t === 'moderation-notice') { UI.toast(String(msg.text || ''), { kind: 'warn', ms: 12000 }); return true; }
   if (msg.t === 'seat-conflict') {
-    exitModerated(`A seat named ${String(msg.name || 'you')} already exists. Resume its saved session, ask a moderator to transfer the board, or join under a different name.`); return true;
+    if (!boardTransferLock) { boardTransferLock = true; UI.toast('That player already has a board. Request it below; a moderator must approve.', { ms: 10000 }); showBoardRecovery(msg.pid); } return true;
   }
+  if (msg.t === 'backup-status') { roomBackupStatus(msg.pid, msg.status, msg.at, msg.error); return true; }
+  if (msg.t === 'recovery-request') { if (isModerator()) UI.toast(`${msg.request.name} requests ${pname(msg.request.source)}'s board.`, { ms: 20000, action: { label: 'Review', onClick: () => reviewSeatRequest(msg.request) } }); return true; }
   if (msg.t === 'board-capture') {
     if (!S.me || typeof msg.id !== 'string') return true;
     let me = S.me, deckId = S.deckId;
@@ -4824,9 +4920,9 @@ function handleClientModeration(msg) {
   return false;
 }
 function showBoardTransfer(source) {
-  const choices = S.table.seats.filter(pid => pid !== source && (pid === S.pid || S.online[pid]));
+  const choices = [...new Set([...S.table.seats, ...Object.keys(S.pendingSeats || {})])].filter(pid => pid !== source && (pid === S.pid || S.online[pid]));
   if (!choices.length) { UI.toast('A connected recipient is required.', { kind: 'warn' }); return; }
-  const modal = UI.modal({ title: `Transfer ${pname(source)}'s board`, html: `<p>Select the player who will control this board, including its private hand and library. Their previous board will be backed up locally and replaced. Use an empty replacement seat.</p><select id="ctTransferRecipient">${choices.map(pid => `<option value="${esc(pid)}">${esc(pname(pid))}</option>`).join('')}</select><p class="muted small">Disconnected board: its saved session must still exist in the recipient's browser. The host cannot reconstruct deleted hidden cards.</p><button class="danger" id="ctTransferGo">Transfer board</button>` });
+  const modal = UI.modal({ title: `Transfer ${pname(source)}'s board`, html: `<p>Select the player who will control this board, including its private hand and library. Their previous board will be backed up locally and replaced. Use an empty replacement seat.</p><select id="ctTransferRecipient">${choices.map(pid => `<option value="${esc(pid)}">${esc(S.pendingSeats?.[pid]?.p.name || pname(pid))}</option>`).join('')}</select><p class="muted small">Disconnected boards use their latest completed room-server save. If server backup is unavailable, the original browser's saved session is needed.</p><button class="danger" id="ctTransferGo">Transfer board</button>` });
   modal.el.querySelector('#ctTransferGo').onclick = async () => {
     const to = modal.el.querySelector('select').value;
     if (!await UI.confirm(`Transfer ${pname(source)}'s complete board to ${pname(to)} and replace their current board? The old owner's seat will be removed.`, { danger: true, okLabel: 'Transfer' })) return;
@@ -4843,6 +4939,7 @@ function saveSoon() { clearTimeout(saveT); saveT = setTimeout(saveNow, 300); }
 function saveNow() {
   if (!S.me) return;
   const host = S.role !== 'client';
+  queueRoomBackup();
   LS.set('ct.sess.' + S.pid, {
     v: 2, at: Date.now(), role: S.role, room: S.room, deckId: S.deckId, me: S.me, seatKeys: host ? S.seatKeys : null,
     table: host ? S.table : null, players: host ? S.players : null, log: host ? S.log.slice(-150) : null, chat: host ? S.chat.slice(-100) : null

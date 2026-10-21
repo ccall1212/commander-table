@@ -9,10 +9,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ## [0.34.0] - 2026-10-21
 
 ### Added
-- The host can grant/revoke moderator permissions. Moderators can restore conceded players, kick a seat, or force a non-host board handoff into an empty replacement seat, including its private hand/library and saved deck. Disconnected board recovery requires the saved session in the recipient’s browser. Handoffs preserve the recipient’s previous board locally and clear undo/arrow history at the transfer boundary.
+- The host can grant/revoke moderator permissions. Moderators can restore conceded players, kick a seat, or force a non-host board handoff into an empty replacement seat, including its private hand/library and saved deck. Complete private boards are saved to the room server for 24 hours on a compatible relay. A moderator can approve a fresh browser’s request to recover a disconnected board, including hidden cards and library order. Save status is visible in the board chooser. Handoffs preserve the recipient’s previous board locally and clear undo/arrow history at the transfer boundary.
 
 ### Fixed
-- Dismissing the resume reminder keeps the saved session. Joining a room with a local saved seat offers to resume it; duplicate player names are rejected instead of creating a second seat. Closing an active online tab asks for browser confirmation.
+- Dismissing the resume reminder keeps the saved session. Joining a room with a local saved seat offers to resume it; a matching player name opens a moderator-approved board claim instead of creating a second seat. Closing an active online tab asks for browser confirmation.
 
 ## [0.33.1] - 2026-10-21
 
