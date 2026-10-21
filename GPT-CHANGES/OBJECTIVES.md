@@ -44,11 +44,11 @@ Add an optional **Touch mode** for iPad Safari, launched from the top-right hamb
 - Fit the game to the dynamic mobile viewport height. On narrow phones in portrait, show a dismissible landscape recommendation rather than trying to force orientation lock (ordinary mobile Safari pages cannot reliably force it).
 - Test in real iPhone/iPad Safari in portrait and landscape, including enabling/disabling Touch mode, host and joiner sessions, card inspection, card actions, dragging from the bottom edge of the hand, intentional group selection/movement, internal dialog scrolling, menu dismissal, and both Sidebar and Grid layouts. Desktop emulation alone is not sufficient for marking this complete.
 
-## 29. Optional Deck Builder checks — IN PROGRESS (PR #50; v0.31.0 test copy)
+## 29. Optional Deck Builder checks: counts, colors and duplicates — IN PROGRESS / AWAITING CHRIS’S TESTING (PR #50; v0.31.0 test copy)
 
 Chris selected this suggestion on 2026-10-21. [PR #50](https://github.com/ccall1212/commander-table/pull/50), branch `feat/deck-builder-checks`, adds a live, dismissible count and advisory notes for missing commander, combined color identity and likely singleton duplicates, including common printed exceptions. It does not enforce legality or house rules. The refreshed branch passed all five Node suites and actual Chromium HTTP checks at 1920×1080 and 1366×768, including a token-gallery compatibility smoke check. Extract/open and Chris's hands-on testing of the deck checks are pending. The PR links the exact-commit test ZIP and click list. Publication is not approved.
 
-## 30. Collection backup and restore — IN PROGRESS (PR #49; v0.32.0 test copy)
+## 30. Collection backup and restore — IN PROGRESS / AWAITING CHRIS’S TESTING (PR #49; v0.32.0 test copy)
 
 Chris selected this suggestion on 2026-10-21. [PR #49](https://github.com/ccall1212/commander-table/pull/49), branch `feat/collection-backup`, exports all saved decks, printings, linked tokens, appearance/uploads, saved name and preferences. Restore previews additions/skips, preserves existing decks, adds conflicting versions as copies, and restores preferences only when selected. Active sessions and connection identities are excluded. Eleven automated backup checks and the existing token/targeting/P/T suites passed. Actual Chromium HTTP download/restore tests across separate contexts passed, including preservation of the new token artwork metadata and backward compatibility with older backups. Extract/open and Chris's hands-on testing are pending. The PR links the exact-commit test ZIP and click list. Publication is not approved.
 
