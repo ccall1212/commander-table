@@ -1,22 +1,21 @@
-# Targeting arrows across board views — v0.33.1 test copy
+# Opening-hand rules — v0.35.0 test copy
 
-Download the ZIP, extract it, and double-click **index.html**. Keep internet access on. No terminal or local server needed. Use at least two players with this copy; three are useful for switching between two opponents.
+Download the ZIP, extract it, and double-click **index.html**. Keep internet access on. No terminal or local server needed. Use two players on this copy.
 
 ## Click list
 
-1. In Sidebar, play several cards on your battlefield. Draw four targeting arrows: your card → opponent card; opponent card → another of your cards; your card → opponent player; opponent card → your player. Use **Send arrow to…** or **☰ → Targeting arrow…**.
-2. Click an opponent's tile to view their board big. All arrows whose endpoints appear on the main board or miniature boards should still be visible. Your cards' lines should connect to the YOU miniature, with the count unchanged.
-3. Switch to a different opponent, then click YOU to return to your board. Lines should follow their original cards/players each time without redrawing them.
-4. Check at roughly 1920×1080 and 1366×768. Switch Sidebar → Grid → Sidebar. Grid's full-board zoom intentionally hides other boards; their card arrows should reappear when you return to the overview.
-5. Try dragging/clicking your read-only YOU miniature. It should still just return you to your board, without moving, tapping or modifying your cards. Click an arrow to remove only that arrow and confirm the other player receives the removal. Clear all should still work.
+1. Before hosting, choose **Opening hand rule**: London (normal Commander first mulligan free), **At least 3 lands**, or **Draw 10, bottom 3**. Join with a second player; both must see/use the host's rule.
+2. London: begin with seven. First mulligan is free; later keeps bottom one more card. After seven mulligans, Mulligan must disable and Keep must remain usable.
+3. At least 3 lands: seven-card opening/mulligan hands include three randomly selected front-face Lands plus four random remaining cards. With fewer than three lands in the deck, the prompt should explain the fallback and still allow keeping. This house rule counts printed front-face Lands, not a land on a card's back face.
+4. Draw 10, bottom 3: both players draw ten; Keep asks you to choose exactly three to put on the bottom. Short decks never require bottoming every card.
+5. Before starting, the host can change the rule. Cancel must preserve existing hands; confirm must reshuffle/redeal everyone, including a player who already kept. Once the game starts, that rule control is unavailable. Start a new game to choose again; new games retain the selected policy by default.
+6. Reload/reconnect a guest: their exact opening hand must stay intact rather than redeal. Check Sidebar/Grid at roughly 1920×1080 and 1366×768, and a narrow window: the opening-hand prompt should wrap and its buttons remain reachable.
 
 ## Verification
 
-- Assistant reproduced the original problem in Chromium over localhost HTTP with three relay-connected sessions: four arrows counted, only one drawn after focusing an opponent in Sidebar.
-- After the fix, a three-session Chromium HTTP pass kept four arrows visible through Sidebar focus switches between two opponents and back to your board, checked Grid overview/zoom return and Sidebar/Grid at 1920×1080 and 1366×768, confirmed miniature dragging does not move your real cards, and checked the second player still sees all four arrows. No page errors observed.
-- All five Node suites passed (targeting, chat sizing, P/T, token picker and printings), along with changed JavaScript syntax and diff checks. The targeting regression exercises the real YOU renderer and anchor resolver, including a hidden main board, largest-visible-copy selection, and the own-player miniature marker. A bounded GPT-6 Luna investigation and test contribution were used.
-- Source fix gives the YOU miniature separate drawing identifiers, while keeping gameplay identifiers stripped. No relay messages or card state format changed.
-- Chris supplied two screenshots and reported arrows not continuing when switching views; he replied “Perfect” and approved publishing this exact fix on 2026-10-21. PR #53 is merged as v0.33.1.
-- Assistant browser checks use HTTP: managed Chromium blocks `file://` navigation. Extract/open and real-device Safari/touch need appropriate hands-on checks.
+- GPT-6 Luna implemented and ran actual two-player Chromium over localhost HTTP checks: all three initial policies for host/guest, private-hand boundaries, exact reload/deal persistence, cancelled/confirmed pregame rule changes, ten-card bottom-three, changing rules after a keep, seven-mulligan cap, started-game rejection, newgame policy persistence, both layouts at both sizes and 320px prompt bounds. No page errors observed.
+- Browser checks caught and fixed top-bar crowding at 1366px and a narrow prompt overflowing left. A forged higher-revision guest table-sync message cannot change the host's selected rule/deal identifier.
+- Node rule regressions cover default sanitation, all modes, cap, short decks, impossible land counts, front-face classification, keep/bottom counts, host authority and deal reconciliation. Existing Node suites, changed JavaScript syntax and diff checks passed.
+- Chris requested the feature; hands-on review and publication approval are pending. Managed Chromium blocks file:// navigation, so the assistant browser checks used HTTP. Real-device Safari/touch and extracted-copy flow still require appropriate checks.
 
-Includes the published floating/transparent/resizable chat. Deck Builder checks (#50) and collection backup (#49) remain independent proposals; deck randomizer/import PR #11 remains paused.
+Includes published v0.33.1 chat and arrow fix. This independent proposal does not include the pending moderation, Deck Builder checks or backup proposals. PR #11 remains paused. Nothing here is approved for publication.
