@@ -23,3 +23,5 @@ Includes published v0.33.1 chat and arrow fix. This independent proposal does no
 Tested by Chris: “Mulligan looks great”; he approved push, merge and publication on 2026-10-21. Integrating the approved server PR changed only release/testing documentation alongside the server files; the tested browser source is unchanged.
 
 Publication verification: v0.35.0 was merged after Chris’s approval; its automatic annotated tag points to the exact release merge. Production Workers Builds and Pages deployment succeeded. The server capability was confirmed through real Chromium health and a complete fresh-incognito recovery test using PR #55’s separate client copy.
+
+The managed browser blocks live GitHub Pages navigation with ERR_TUNNEL_CONNECTION_FAILED; the live footer was not observed. The relay domain is accessible from Chromium and was verified separately.
