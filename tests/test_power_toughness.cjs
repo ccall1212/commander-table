@@ -68,7 +68,7 @@ for (const [printed, expected] of cases) {
   changePT(c.iid, 1, 0);
   assert.equal(S.undo.length, beforeUndo + 1, 'stat changes enter the existing undo pipeline');
   // Restore the actual snapshot without running undo's unrelated room-log/UI feedback.
-  const restored = JSON.parse(S.undo.pop()).zones.battlefield[0];
+  const restored = JSON.parse(S.undo.pop().state).zones.battlefield[0];
   assert.equal(effPT(restored, def).text, effPT({ ...c, dp: 0 }, def).text);
 }
 const facedown = { iid: 'p1_fd', fd: true, c: {} };
