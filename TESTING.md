@@ -1,5 +1,25 @@
 # Targeting arrows across board views — v0.33.1 test copy
 
+## Backend-only room vault
+
+This branch adds optional `room-vault-v1` support to the Cloudflare relay. It is server-only:
+the app frontend and version are unchanged, and LAN mode does not support this API. Local checks
+can be run without Cloudflare credentials or a deployment:
+
+```sh
+npm install --prefix /tmp/ct-vault-runtime --no-audit --no-fund miniflare@4
+NODE_PATH=/tmp/ct-vault-runtime/node_modules node tests/test_room_vault.cjs
+python tests/test_relay_protocol.py
+```
+
+The room-vault test uses a local Miniflare Durable Object with SQLite persistence. It checks host
+authorization, private retrieval, chunking, restart durability, stale-revision rejection, and TTL
+cleanup. Protocol regression checks the unchanged v2 relay behavior. To enable recovery in the
+existing PR #55 recovery ZIP, the Worker must first be deployed through an approved Cloudflare
+Workers Build. Deployment verification still needs `GET /health` to advertise `room-vault-v1` and
+a protocol smoke test against the live Worker; local tests alone do not establish that production
+has the capability.
+
 Download the ZIP, extract it, and double-click **index.html**. Keep internet access on. No terminal or local server needed. Use at least two players with this copy; three are useful for switching between two opponents.
 
 ## Click list
