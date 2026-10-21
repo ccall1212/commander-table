@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.32.0] - 2026-10-21
+
+### Added
+- Back up all saved decks, printing choices, uploaded appearance images, and preferences to one file. Preview a restore, keep existing decks, and optionally bring over saved preferences and appearance.
+
 ## [0.29.0] - 2026-10-20
 
 ### Added
@@ -16,7 +21,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.29.0...HEAD
 [0.29.0]: https://github.com/ccall1212/commander-table/compare/v0.28.2...v0.29.0
 [0.28.2]: https://github.com/ccall1212/commander-table/compare/v0.28.1...v0.28.2
 
@@ -425,7 +429,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - First playable build: paste-import decks from Moxfield or Archidekt (via Scryfall), 2–4 player rooms over PeerJS with self-healing reconnects, a searchable zone viewer, commander damage tracking and automatic tokens.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.28.0...HEAD
 [0.20.5]: https://github.com/ccall1212/commander-table/compare/v0.20.4...v0.20.5
 [0.20.4]: https://github.com/ccall1212/commander-table/compare/v0.20.3...v0.20.4
 [0.20.3]: https://github.com/ccall1212/commander-table/compare/v0.19.1...v0.20.3
@@ -461,3 +464,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [0.5.0]: https://github.com/ccall1212/commander-table/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/ccall1212/commander-table/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/ccall1212/commander-table/releases/tag/v0.3.0
+
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.32.0...HEAD
+[0.32.0]: https://github.com/ccall1212/commander-table/compare/v0.29.0...v0.32.0

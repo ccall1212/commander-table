@@ -35,6 +35,12 @@ Before starting a game, use **Your look** on the opening screen to choose from 1
 
 Decks are saved in your browser. Select a saved deck and choose **Deck Builder** to browse its cards as a large image grid like the in-game Library search. Hover a card to see its enlarged preview. Use the card-type chips to filter (such as Artifacts or Creatures), or sort by name, type, color identity or mana value. Use the **×** on a card to remove one copy; **+ Add card** searches Scryfall as you type, and clicking a result adds it. Right-click a card for **Change printing…** or **Set as commander**. The printing picker can change one copy or use the selected printing for **ALL copies** of that card (useful for basic lands). **Export deck** opens **Export Options**: **Copy for Moxfield** keeps the current format including set/collector numbers, **Copy Plain Text** gives a simple names-and-quantities list, and **Download .txt** saves whichever format is selected. Arena and MTGO exports are not included. Your edits are saved with that deck in this browser and are used in future games.
 
+### Back up and restore your collection
+
+On the opening screen, choose **Back up / restore…** beside the Deck Builder. **Download backup** saves all decks (including chosen printings and linked tokens), appearance and uploaded images, your saved name, and display preferences to one `.json` file. Keep that file to move your collection to another browser/computer or recover it later. Active games, room codes, chat, and connection identities are not included.
+
+To restore, open the same control and select your backup file. Review how many decks will be added or skipped before clicking **Restore and reload**. Existing decks are kept; exact matches are skipped, and changed decks with the same ID are added as **(restored)** copies. Preferences and appearance stay as they are unless you check **Also restore saved preferences and appearance**. The page reloads after a successful restore. Files must be Commander Table collection backups, version 1, no larger than 20 MB. Normal decklist exports still use the Deck Builder's separate Export Options.
+
 ## Playing a game
 
 - One person clicks **Host a game** and gets a 5-letter room code. Click the code in the top-left to copy an invite link, and send it to your friends. (☰ → **Copy invite link** does the same thing.)

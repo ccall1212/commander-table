@@ -1,26 +1,13 @@
-# Commander Table v0.29.0 — release checks
+# Collection backup and restore test copy
 
-For a downloaded copy: extract the ZIP and double-click **index.html**. No Python, terminal, installation or local server is needed. Keep internet access on for card images and online play.
+Download this branch ZIP, extract it, and double-click `index.html`. This test copy is not published. Browser storage belongs to each browser/address; a ZIP copy may have a different collection from the live website.
 
-## Recorded approval
+1. Save two decks. In Deck Builder, change a printing so you can recognize it later. Choose a card back/background, optionally upload an image, and enter your name.
+2. Next to Deck Builder, click **Back up / restore… → Download backup**. Keep the downloaded `.json` file.
+3. Open this extracted copy in a second browser, select that file in **Back up / restore…**, and check the preview. Leave the preferences checkbox off and click **Restore and reload**. Both decks should appear with their printings; this browser's name and appearance should stay as they were.
+4. Restore the same file again. Matching decks should be skipped. Check **Also restore saved preferences and appearance** and restore: after reload, the saved name, appearance and preferences should match the first browser.
+5. Edit a restored deck, then select the original backup again. Preview should offer a restored copy; confirm and verify both the edited deck and original version are available. Other decks must remain.
+6. Select a plain decklist `.txt` file or invalid JSON: show a clear error and leave Restore disabled. Cancel/close a valid preview: the collection must remain unchanged.
+7. Check the dialog at 1920×1080 and 1366×768; long previews should scroll inside the dialog and Close should remain reachable. Start Practice solo after restore and verify the selected printing is used. Sidebar/Grid in a two-player room should still work; backup controls only appear before a game.
 
-Tested by Chris: he reviewed the multiple-arrow test copy and symbolic power/toughness test copy and said, “Both of these look good to me. Please push both of them.” Publication was authorized on 2026-10-20. Do not infer specific multiplayer/device checks beyond that report.
-
-## Included changes
-
-- Multiple shared arrows remain at once. Click a line to remove only that arrow. **×** hides the controls without removing arrows; **☰ → Show arrow controls** reopens them, and **Clear all** clears the collection. Empty battlefield space targets that player; names remain a fallback.
-- Symbolic P/T components start at zero for manual adjustment: `*/5 → 0/5`, `*/* → 0/0`, `3/* → 3/0`. Both stats use the usual +/- controls; real counters, base overrides and reset continue to apply. Printed definitions remain available.
-
-## Automated integration checks
-
-- `tests/test_targeting.cjs`: four attackers, unique IDs, individual click/keyboard removal, local controls dismissal/reopen, full join snapshots, independent endpoint pruning, sender authorization, privacy and scaled geometry.
-- `tests/test_power_toughness.cjs`: symbolic/numeric baselines, generated adjustment controls, independent changes, counters, overrides/reset, public-state roundtrip, undo snapshots and hidden/non-creature exclusions.
-- JavaScript syntax, all 16 local asset cache links and app/meta version agreement.
-
-## Future regression checks
-
-1. Draw four creature-to-player arrows; remove one by its line and confirm the other three remain. Hide/reopen controls, cancel a pick and clear all. Check card/pile/life actions away from a line.
-2. Adjust a starred creature's power and toughness separately, add counters, set a base and reset. Check ordinary numeric creatures and face-down behavior.
-3. In Sidebar and Grid, resize the window, move an arrow endpoint and change focus. Join another player using the same version and compare all arrows and adjusted stats. Use real touch hardware when checking Touch mode.
-
-The deck randomizer/import draft remains paused at Chris's request; it is not part of this release.
+Publication requires Chris's explicit approval. Chris has not yet tested this branch. Assistant checks are reported separately in the PR/chat.

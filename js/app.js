@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.29.0';
+const APP_VERSION = '0.32.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -4602,6 +4602,7 @@ function bindLobby() {
       selDeck = row.dataset.deck; LS.set('ct.selDeck', selDeck); renderDeckList();
     }
   });
+  $('#backupBtn').onclick = () => CTBackup.open();
   $('#importBtn').onclick = () => { $('#importBox').classList.remove('hidden'); $('#importBtn').classList.add('hidden'); $('#deckText').focus(); };
   $('#cancelImport').onclick = closeImport;
   $('#loadDeck').onclick = loadDeck;
