@@ -21,3 +21,5 @@ Download the ZIP, extract it, and double-click **index.html**. Keep internet acc
 Includes published v0.35.0 opening-hand rules and relay backup capability, plus the published v0.33.1 chat and arrow fix. PR #11 remains paused. Hands-on review and publication approval for v0.36.0 are pending.
 
 Tested by Chris: he reviewed the original menu-based color copy and requested selection immediately after Host/Join, with no later menu changes. This revised entry flow still awaits his testing and publication approval.
+
+Chris approved publishing the revised colors on 2026-10-21. Detailed multiplayer clicks were not reported. The publication refresh integrates current handoff documentation only; browser source remains identical to the approved ZIP. Live GitHub Pages navigation is blocked in this managed environment, so deployment status and any live-page observation must be reported separately.
