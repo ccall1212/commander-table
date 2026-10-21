@@ -19,6 +19,18 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 - **Queued:** Personal Undo/checkpoints #35 and opening readiness/no pre-game battlefield moves #37 remain unimplemented. Other open, paused and deferred items are listed in `OBJECTIVES.md`.
 - **Slam sound:** Chris wants to keep refining the Commander slam sound. Do that on a separate branch and leave the published behaviour alone until he approves.
 
+## Existing test ZIPs for open work
+
+Include these beside their items whenever Chris asks for an open-work summary. The two active proposals predate the latest release and need current main integrated/retested before refreshed ZIPs are offered. Existing commit ZIPs remain unchanged.
+
+| Open item | Previously supplied ZIP | Status |
+|---|---|---|
+| Deck Builder checks (#50) | [Download ZIP](https://github.com/ccall1212/commander-table/archive/70033631034ebe691a0923c470aef0b01b53bdec.zip) | Older independent copy; needs refresh; Chris has not tested |
+| Collection backup/restore (#49) | [Download ZIP](https://github.com/ccall1212/commander-table/archive/9a60d15eb65b4c2c9ca28e863a14cb1cc9346dae.zip) | Older independent copy; needs refresh; Chris has not tested |
+| Random deck/website import (#11) | [Archived draft ZIP](https://github.com/ccall1212/commander-table/archive/a415ef5a9d13531a9c6b5877ab40adf84388c6dc.zip) | Paused; its separate test service is not deployed; do not resume |
+
+Other queued items have no separate feature test ZIP yet. Touch support’s existing shipped behavior is in the normal game; its remaining real-device testing/refinements have no new test copy.
+
 ## Documentation upkeep
 
 Routine documentation-only updates, including `AGENTS.md`, objectives, and handoff notes, may go directly to `main` without a separate branch, PR, or approval request. Check accuracy and report the changes in chat. No app version bump, release tag, test ZIP, or browser testing is required. Game changes still require the branch, testing, and approval process below; documentation bundled with a game change follows that same process.
