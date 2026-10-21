@@ -4,7 +4,7 @@ Download this branch ZIP, extract it, and double-click **index.html**. No termin
 
 ## Chris's testing and requested refinements
 
-Tested by Chris: he tested the earlier copies, requested **Create X Tokens** and the image gallery, then said the gallery looked good. He requested automatic return to the battlefield after creation and a way to find alternate token artwork from the battlefield. Those refinements are included here and await his review; publication is not approved. His specific device/multiplayer coverage was not stated.
+Tested by Chris: he tested the final token test copy and said, “Perfect, push and merge and Publish.” He approved the current token gallery, quantities, automatic return to the battlefield and matching artwork revision on 2026-10-21. PR #51 was published as v0.30.0. His specific device/multiplayer coverage was not stated. Assistant automated and browser results are recorded separately below.
 
 ## Click list
 
@@ -30,4 +30,4 @@ Current-revision Playwright/Chromium HTTP browser checks passed:
 
 The managed browser blocks direct `file://` navigation with `ERR_BLOCKED_BY_ADMINISTRATOR`; assistant browser checks use localhost HTTP. This does not substitute for Chris's normal extracted-copy check of this revision.
 
-The deck randomizer/import draft PR #11 remains paused. No publication is approved.
+The deck randomizer/import draft PR #11 remains paused. This release approval does not cover the separate Deck Builder checks or backup/restore proposals.
