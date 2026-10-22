@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.46.1] - 2026-10-22
+
+### Fixed
+- Keep the ☰ table menu visible on narrow iPhone screens in portrait and landscape, so Touch mode can be turned on. Move the portrait landscape tip below the top bar so it does not cover the menu after activation.
+
 ## [0.46.0] - 2026-10-22
 
 ### Added
@@ -111,7 +116,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.46.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.46.1...HEAD
+[0.46.1]: https://github.com/ccall1212/commander-table/compare/v0.46.0...v0.46.1
 [0.46.0]: https://github.com/ccall1212/commander-table/compare/v0.45.1...v0.46.0
 [0.45.1]: https://github.com/ccall1212/commander-table/compare/v0.45.0...v0.45.1
 [0.45.0]: https://github.com/ccall1212/commander-table/compare/v0.44.1...v0.45.0

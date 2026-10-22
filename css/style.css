@@ -450,6 +450,15 @@ body.lens-on #pv { display: none; }
   .turn-actions { gap: 4px; }
   .turn-actions .ztool > button { padding: 3px 5px; font-size: 12px; }
   .phases { display: none; }
+  /* Keep the table menu reachable even when turn controls overflow a phone. */
+  #topbar [data-a="menu"] {
+    position: fixed;
+    top: calc(3px + env(safe-area-inset-top));
+    right: calc(6px + env(safe-area-inset-right));
+    z-index: 20;
+    min-width: 40px;
+    min-height: 40px;
+  }
 }
 
 /* =====================================================================
@@ -1115,7 +1124,7 @@ body.touch-mode #myBar .ctrpanel {
 #ct-touch-orientation-hint {
   position: fixed;
   z-index: 2147483000;
-  top: max(8px, env(safe-area-inset-top));
+  top: calc(52px + env(safe-area-inset-top));
   left: 50%;
   transform: translateX(-50%);
   display: flex;

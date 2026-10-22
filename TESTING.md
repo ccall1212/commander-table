@@ -1,14 +1,13 @@
-# Two new card backs — v0.46.0 test copy
+# iPhone Touch mode menu access — v0.46.1 test copy
 
-To check this copy, extract the ZIP and double-click **index.html**. No terminal or local server is needed.
+Extract the ZIP and double-click **index.html**; no terminal or local server is needed. This change has not been published.
 
-1. On the opening screen, enter a name and open **Your look**. The **Card back** picker should now show twelve presets. The last two are **Gilded Knight** (an armored knight holding a sword in front of a stained-glass window) and **Obsidian Gem** (a dark faceted gem with silver smoke in a gothic silver frame). Both thumbnails should show their pictures and fit like the others.
-2. Click **Gilded Knight**. Its tile should be highlighted. Import or pick a deck, then click **Practice solo**. The Library pile should show the knight picture. Do the same with **Obsidian Gem**.
-3. Draw a card, flip one face down (**Z**) and look at the back on the battlefield. Try Sidebar and Grid at 1920×1080 and 1366×768 if practical.
-4. With a second player (host in one tab, join from another): each player picks a different back, then both start. Each player should see the other's chosen back on face-down cards and hand fans. Anyone on an older cached copy would see Ruby Sigil for the new names, so reload both tabs first.
-5. Reload the page: your choice should still be selected. A saved **Your upload** card back, if you have one, should still work.
-6. The pictures should show no text, logos or Magic symbols. Tell us if anything looks off.
+1. On an iPhone, open a saved game or enter Practice solo. In portrait, the **☰** menu button should be visible at the top right. Tap it and choose **Touch mode: Off**. It should switch on and show **Touch mode: On** when you reopen the menu.
+2. Rotate to landscape. The **☰** button should still be visible and usable; turn Touch mode off and on again. Confirm you can reach the menu both before and after switching modes.
+3. If you play with others, check the same in a joined room. Try Sidebar and Grid if available. On a desktop-width browser, check that the top bar still works normally.
 
-## Assistant verification (headless Chromium, opened from file://)
+Please tell me which iPhone/browser and orientations you tried. Chris reported that the hamburger was unreachable on iPhone in both orientations before this fix; no post-fix iPhone test has been reported yet.
 
-Page loaded with no page errors at 1920×1080 and 1366×768. The picker listed twelve backs; both new images loaded at 420×588 and contain visible detail. Selecting each new back saved the choice, and the Library pile in a Practice solo game used that image. Multiplayer, Grid layout, and the look of face-down cards on the battlefield were not checked. Paused draft PR #11 is untouched.
+## Assistant verification
+
+Mobile Chromium reproduced the old problem: the menu began around x=1,200 on 390px portrait and 844px landscape screens. After the fix, the button was inside 320×690 and 390×844 portrait and 844×390 landscape viewports; opening the menu and toggling Touch mode both on and off worked with no page errors. The portrait landscape tip stayed below the top bar. A desktop-width control also worked at 1366×768. Tests used localhost HTTP because file:// access is blocked by this environment’s browser policy. Real iPhone Safari and multiplayer remain to be checked by Chris. Paused draft PR #11 is untouched.
