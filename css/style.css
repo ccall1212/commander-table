@@ -973,7 +973,7 @@ body.lens-on #pv { display: none; }
 }
 
 /* A short, scrollable hotkey reference inside the main Options menu. */
-.w-dialog.w-hotkey-list-dialog { width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 32px); }
+.w-dialog.w-hotkey-list-dialog { width: min(720px, calc(100vw - 32px)); max-height: calc(100vh - 32px); }
 .w-hotkey-list-dialog .w-modal-body { overflow-y: auto; }
 .ct-hotkey-list { display: grid; gap: 12px; }
 .ct-hotkey-list > p { margin: 0; }
@@ -982,6 +982,10 @@ body.lens-on #pv { display: none; }
 .ct-hotkey-group td { padding: 5px 4px; border-bottom: 1px solid var(--border); vertical-align: top; }
 .ct-hotkey-group td:first-child { width: 1%; white-space: nowrap; padding-right: 12px; }
 .ct-hotkey-group kbd { display: inline-block; min-width: 1.6em; padding: 1px 5px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text); text-align: center; font: 600 11px/1.7 ui-monospace, monospace; }
+.ct-hotkey-status { min-height: 1.3em; margin: 0; color: var(--accent); font-size: 12px; }
+.ct-hotkey-buttons { width: 1%; white-space: nowrap; text-align: right; }
+.ct-hotkey-buttons button { padding: 3px 7px; margin-left: 4px; font-size: 12px; }
+@media (max-width: 480px) { .ct-hotkey-buttons button { display: block; margin: 2px 0 2px auto; } }
 @media (prefers-reduced-motion: reduce) {
   [data-pile="library"].shuffling .zcard,
   [data-pile="library"].shuffling .tpcard,

@@ -22,7 +22,7 @@ const context = vm.createContext({ console, URL, URLSearchParams, Set, Map, Uint
   UI: { toast: msg => notices.push(msg) }
 });
 context.window = context; context.crypto = { getRandomValues: a => { a.fill(3); return a; } };
-for (const file of ['targeting', 'mulligan', 'player-colors']) vm.runInContext(fs.readFileSync(path.join(root, `js/${file}.js`), 'utf8'), context);
+for (const file of ['targeting', 'mulligan', 'player-colors', 'hotkeys']) vm.runInContext(fs.readFileSync(path.join(root, `js/${file}.js`), 'utf8'), context);
 let source = fs.readFileSync(path.join(root, 'js/app.js'), 'utf8');
 source = source.replace('window.CT = { S,', 'window.CT = { sendResponse, showResponseNotice, clearResponseNotice, onKey, seedTurnNotice, resetForNewGame, snapFor, S,');
 vm.runInContext(source, context);

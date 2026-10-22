@@ -168,9 +168,9 @@ Dropped connections and crashed tabs happen, and recovering from them is the mai
 
 **Keyboard shortcuts**
 
-Open **☰ → Hotkey list…** during a game to see the full reference.
+Open **☰ → Hotkeys** during a game to see the full reference or change shortcuts. Choose **Set** beside an action and press the key you want; the choice is saved only in your browser. **Reset** restores one default, and **Restore all defaults** clears your changes. Conflicting keys and browser-reserved combinations are rejected.
 
-Move your pointer over empty space on your own battlefield and press **T** to open the Token menu. Hover over one of your cards and press **T** to tap or untap it; if the hovered card is in your hand, **T** instead plays it onto the battlefield tapped. Press **F** to flip, **Z** to turn face down/up, **G** to move to Graveyard, **E** to move to Exile, **H** to move to Hand, **B** to move to Battlefield, **A** to attach, **J** to add a counter, or **I** to view card information.
+Move your pointer over empty space on your own battlefield and press **T** to open the Token menu. Hover over one of your cards and press **T** to tap or untap it; if the hovered card is in your hand, **T** instead plays it onto the battlefield tapped. Press **C** over a visible card to copy it onto your battlefield. Press **F** to flip, **Z** to turn face down/up, **G** to move to Graveyard, **E** to move to Exile, **H** to move to Hand, **B** to move to Battlefield, **A** to attach, **J** to add a counter, or **I** to view card information.
 
 Hover over your **Library** and press **S** to shuffle (the Library itself wiggles with a short sound), or **X** to mill the top card into your Graveyard. Press **L** anywhere during a game to open Search Library. **Ctrl+F** remains the browser's Find-on-page shortcut. You can also draw with **D**, untap all with **U**, pass the turn with **Space**, and undo with **Ctrl+Z** (or **⌘Z** on Mac).
 
