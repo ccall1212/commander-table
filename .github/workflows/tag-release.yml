@@ -1,10 +1,12 @@
 name: Tag release
 
 # When a new app version reaches main, create its annotated vX.Y.Z tag automatically.
+# A manual run can recover a missed push event without moving the tag to a later docs commit.
 # (AI assistants working through the GitHub connector cannot create tags themselves.)
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -24,12 +26,20 @@ jobs:
             exit 0
           fi
           tag="v$version"
+          # Walk only main's first-parent history to find the merge that introduced this version.
+          # Follow-up documentation commits must not become the release tag target.
+          release_sha="$GITHUB_SHA"
+          while parent=$(git rev-parse "${release_sha}^" 2>/dev/null); do
+            parent_version=$(git show "$parent:index.html" 2>/dev/null | sed -n 's/.*name="app-version" content="\([^"]*\)".*/\1/p' | head -1)
+            if [ "$parent_version" != "$version" ]; then break; fi
+            release_sha="$parent"
+          done
           if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null 2>&1; then
             echo "$tag already exists; nothing to do."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag -a "$tag" -m "$tag" "$GITHUB_SHA"
+          git tag -a "$tag" -m "$tag" "$release_sha"
           git push origin "$tag"
-          echo "Created $tag at $GITHUB_SHA"
+          echo "Created $tag at $release_sha"
