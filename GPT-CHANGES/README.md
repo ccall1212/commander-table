@@ -17,11 +17,9 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 - **Layouts:** Sidebar and Grid only.
 - **Open work:** see `OBJECTIVES.md`. #38's Deck Builder backup placement and #43's host/join Auto-Draw and Auto Untap All choices shipped together in v0.45.0 through PR #65 after Chris reported “Looks good” and approved publication. Open PRs are paused draft #11 and Objective #18 touch-height fix [PR #69](https://github.com/ccall1212/commander-table/pull/69). Objective #52's Spectate view fix shipped in v0.50.1 through PR #74 after Chris tested and approved the ZIP. Objective #49 color/UI polish shipped in v0.47.0 through PR #70 after Chris said it looked great and approved publication. Objective #50 arrow-source highlighting shipped without numbers in v0.48.0 through PR #71 after Chris approved publication. Chris dropped #42; PR #63 was closed without publishing, and the existing appearance controls are retained.
 - **Queued:** Objective #45 is a very brief hotkey reminder when entering a game, with a browser-saved **Don't show again** choice. The published Exile shortcut is **E**; **X** mills a card from a hovered Library. No test ZIP yet.
-- **Queued:** Objective #46 adds **C** to copy a hovered visible card using the existing right-click copy action. When shipped, include C in #45's eight-line reminder in place of the optional U row. No test ZIP yet.
+- **In progress:** Objective #46 adds **C** to copy a hovered visible card and allows browser-local custom action shortcuts through **Hotkey list…**. When shipped, include C in #45's eight-line reminder in place of the optional U row. No test ZIP yet.
 - **Queued:** Objective #47 adds a larger background preview on the start screen. The Arcane Star and Shadow Black card-back presets were removed in v0.45.1 through PR #66. Objective #48 is a separate project for more distinctive original backgrounds. Neither open project has a test ZIP yet.
 - **Touch support:** Objective #18’s iPhone menu access fix published in v0.46.1 through PR #68. Chris tested it on a real iPhone and found that Touch mode compressed the landscape table; PR #69 has a v0.46.2 test copy to address that. Real-device retest and broader touch refinements remain open.
-- **Live tests pending:** Objective #51's passphrase-protected admin view shipped in v0.49.0 through PR #72. The private secret and live room list are working; host-approved join and close still need a live test. PeerJS direct-connection fallback rooms cannot be managed there.
-- **Published:** Objective #52's hidden lobby Admin link and invisible read-only spectating of public boards, log and chat shipped in v0.50.0 through PR #73. Chris confirmed Spectate works live after the Worker updated. He tested the miniature fix in PR #74, said it looked great, and approved v0.50.1 publication. A real multiplayer check that Spectate does not notify or list the admin remains unreported. Private recovery backups are not used as a live hidden-card feed.
 - **Slam sound:** Chris wants to keep refining the Commander slam sound. Do that on a separate branch and leave the published behaviour alone until he approves.
 
 ## Existing test ZIPs for open work
@@ -31,7 +29,6 @@ Include Objective numbers, statuses and these ZIP links whenever Chris asks for 
 | Objective | Open item | Previously supplied ZIP | Status |
 |---|---|---|---|
 | #18 | iPhone Touch mode table height (PR #69) | [v0.46.2 test ZIP](https://github.com/ccall1212/commander-table/archive/68a6341d2f9859783581af70f59df461ead05eee.zip) | In progress; awaits Chris’s iPhone retest |
-| #52 | Spectate roster/privacy live check | [v0.50.1 release ZIP](https://codeload.github.com/ccall1212/commander-table/zip/747947474a2de55587da74727bd2acca049778d8) | Spectate and miniature fix tested by Chris; absence from player roster/notification not specifically reported |
 | #9 | Random deck/website import (PR #11) | [Archived draft ZIP](https://github.com/ccall1212/commander-table/archive/a415ef5a9d13531a9c6b5877ab40adf84388c6dc.zip) | Paused; its separate test service is not deployed; do not resume |
 
 
