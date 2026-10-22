@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.45.0] - 2026-10-22
+
+### Changed
+- The opening screen's collection backup and restore control now lives inside Deck Builder. Deck Builder also opens when the collection is empty, so a backup can restore the first deck.
+- Hosting and joining now offer separate Auto-Draw and Auto Untap All choices for your board. The host chooses these alongside the opening-hand rule; turn options can still be changed during the game and survive a pregame redeal.
+
 ## [0.44.1] - 2026-10-22
 
 ### Removed
@@ -95,7 +101,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.44.1...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.45.0...HEAD
+[0.45.0]: https://github.com/ccall1212/commander-table/compare/v0.44.1...v0.45.0
 [0.44.1]: https://github.com/ccall1212/commander-table/compare/v0.44.0...v0.44.1
 [0.44.0]: https://github.com/ccall1212/commander-table/compare/v0.43.0...v0.44.0
 [0.43.0]: https://github.com/ccall1212/commander-table/compare/v0.42.0...v0.43.0

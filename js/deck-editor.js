@@ -331,7 +331,15 @@
   }
   function open(deckId, onDeckSaved, options) {
     close();
-    if (!Deck.get(deckId)) { UI.toast('Select or import a saved deck first.', { kind: 'warn' }); return; }
+    if (!Deck.get(deckId)) {
+      deckViewer = UI.modal({
+        title: 'Deck Builder',
+        html: '<p>Import a deck to start editing. You can restore a saved collection here first.</p><button type="button" id="ctDeckBackupEmpty">Back up / restore…</button>',
+        onClose: () => { deckViewer = null; }
+      });
+      deckViewer.el.querySelector('#ctDeckBackupEmpty').addEventListener('click', () => CTBackup.open());
+      return;
+    }
     activeDeckId = deckId;
     afterSave = typeof onDeckSaved === 'function' ? onDeckSaved : null;
     onHover = options && typeof options.onHover === 'function' ? options.onHover : null;
@@ -350,10 +358,11 @@
       ],
       footer: [
         { key: 'add', label: '+ Add card', primary: true },
-        { key: 'export', label: 'Export deck' }
+        { key: 'export', label: 'Export deck' },
+        { key: 'backup', label: 'Back up / restore…' }
       ],
       onAction: handleAction,
-      onFooter: key => { if (key === 'add') openAddCard(); else if (key === 'export') openExportOptions(); },
+      onFooter: key => { if (key === 'add') openAddCard(); else if (key === 'export') openExportOptions(); else if (key === 'backup') CTBackup.open(); },
       onHover: def => { if (onHover) onHover(def); },
       onClose: () => {
         deckViewer = null;

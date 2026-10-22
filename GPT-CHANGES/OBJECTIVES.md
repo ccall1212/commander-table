@@ -44,10 +44,10 @@ Add an optional **Touch mode** for iPad Safari, launched from the top-right hamb
 - Fit the game to the dynamic mobile viewport height. On narrow phones in portrait, show a dismissible landscape recommendation rather than trying to force orientation lock (ordinary mobile Safari pages cannot reliably force it).
 - Test in real iPhone/iPad Safari in portrait and landscape, including enabling/disabling Touch mode, host and joiner sessions, card inspection, card actions, dragging from the bottom edge of the hand, intentional group selection/movement, internal dialog scrolling, menu dismissal, and both Sidebar and Grid layouts. Desktop emulation alone is not sufficient for marking this complete.
 
-## 38. Move collection backup/restore into Deck Builder — QUEUED
+## 38. Move collection backup/restore into Deck Builder — IN TESTING
 
-Chris requested this for later on 2026-10-21 after Objectives #29 and #30 were published. Move the existing **Back up / restore…** entry from the main start area into the area opened by the **Deck Builder** button, reducing start-screen clutter. Keep both backup export and restore available there and preserve their published behavior, including optional preferences and appearance. This is a placement follow-up to shipped Objective #30; implementation has not started and no test ZIP exists yet.
+Chris requested this for later on 2026-10-21 after Objectives #29 and #30 were published. The v0.45.0 test proposal moves **Back up / restore…** from the opening screen into Deck Builder, including when no deck has been imported yet. Export, restore, and optional preferences/appearance behavior remain the same. Awaiting Chris's test and publication approval; see the current PR and exact-head ZIP linked in chat.
 
-## 43. Choose Auto-Draw and Auto Untap All when hosting or joining — QUEUED
+## 43. Choose Auto-Draw and Auto Untap All when hosting or joining — IN TESTING
 
-Chris requested this on 2026-10-22. When a player hosts or joins a game, ask whether they want to enable **Auto-Draw** and/or **Auto Untap All** for their own board. Offer independent choices so they can turn on either, both or neither. Include a short note that these settings can be adjusted in-game, and preserve the existing in-game toggles. This is queued for later; no implementation or test ZIP yet.
+Chris requested this on 2026-10-22. The v0.45.0 test proposal adds independent **Auto-Draw** and **Auto Untap All** choices to the host's opening-rule dialog and to a new join dialog. The choices affect only that player's board, stay set through a pregame redeal, and remain adjustable in-game. Awaiting Chris's test and publication approval; see the current PR and exact-head ZIP linked in chat.
