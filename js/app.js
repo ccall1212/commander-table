@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.49.0';
+const APP_VERSION = '0.50.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -417,6 +417,20 @@ function queueAdminPresence() {
   }, 300);
 }
 setInterval(queueAdminPresence, 30000);
+
+let adminSnapshotTimer = null;
+function queueAdminSnapshot() {
+  if (S.role !== 'host' || !S.table || !S.me || S.net.state !== 'online') return;
+  clearTimeout(adminSnapshotTimer);
+  adminSnapshotTimer = setTimeout(() => {
+    if (S.role !== 'host' || !S.table || !S.me || S.net.state !== 'online') return;
+    const players = Object.fromEntries(S.table.seats.map(pid => {
+      const p = pid === S.pid ? publicView() : S.players[pid];
+      return [pid, p ? { ...p, bw: BW } : null];
+    }).filter(([, p]) => !!p));
+    Net.adminSnapshot({ table: cleanTable(S.table), players, online: S.online, log: S.log.slice(-100), chat: S.chat.slice(-100), arrows: S.targetArrows });
+  }, 120);
+}
 
 function toHost(msg) { if (S.role === 'client') Net.send({ ...msg, seatKey: seatKey() }); else hostRecv(msg, S.pid); }
 function broadcast(msg) { if (S.role === 'host') Net.send(msg); onBroadcast(msg); }
@@ -1231,6 +1245,7 @@ function handleTurnNoticeUpdate(t) {
   scheduleTurnNotice(t.active, nextKey);
 }
 function turnNoticeHTML(pid) {
+  if (S.role === 'spectator') return '';
   if (!activeTurnNotice || activeTurnNotice.pid !== pid) return '';
   const label = pid === S.pid ? 'YOUR TURN' : pname(pid).toUpperCase() + "'S TURN";
   return '<div class="ct-turn-notice" data-turn-key="' + esc(activeTurnNotice.key) + '" aria-hidden="true">' + esc(label) + '</div>';
@@ -3125,12 +3140,12 @@ function renderBody() {
 
 function appearanceBackFor(pid) {
   const owner = pid === S.pid ? S.me : (S.players[pid] || null), custom = CTAppearance.getCustom();
-  if (pid === S.pid && custom.cardBack && custom.cardBackActive) return 'custom-local';
+  if (pid === S.pid && S.role !== 'spectator' && custom.cardBack && custom.cardBackActive) return 'custom-local';
   return CTAppearance.normalizePrefs(owner && owner.appearance).cardBack;
 }
 function appearanceBoardStyleFor(pid) {
   const owner = pid === S.pid ? S.me : (S.players[pid] || null), custom = CTAppearance.getCustom();
-  if (pid === S.pid && custom.background && custom.backgroundActive) return CTAppearance.boardBackgroundStyle('custom-local');
+  if (pid === S.pid && S.role !== 'spectator' && custom.background && custom.backgroundActive) return CTAppearance.boardBackgroundStyle('custom-local');
   return CTAppearance.boardBackgroundStyle(CTAppearance.normalizePrefs(owner && owner.appearance).background);
 }
 function cardHTML(c, def, o) {
@@ -3252,6 +3267,7 @@ function storedPos(board, x, y) {
 // Untouched default zones follow the board's shape in the current view: zones and the cards in them
 // spread vertically (cards keep their size), so switching Top / Sidebar / Grid never shrinks the cards.
 function stretchAutoLayout(W, H) {
+  if (S.role === 'spectator') return;
   const m = S.me, bottom = Math.max(...m.layout.map(r => r.y + r.h));
   const target = clamp(Math.round(Math.min(BW * H / W, 800)), BH, BH_MAX);
   if (!bottom || Math.abs(target - bottom) <= 4) return;
@@ -3470,11 +3486,11 @@ function renderTop() {
   const pill = $('#netPill');
   const st = S.role === 'solo' ? 'online' : S.net.state;
   pill.className = 'pill ' + st;
-  pill.textContent = S.role === 'solo' ? 'Practice' : ({ online: 'Connected', connecting: 'Connecting…', reconnecting: 'Reconnecting…', offline: 'Offline', error: 'Error' }[st] || st);
+  pill.textContent = S.role === 'spectator' ? 'Spectating' : S.role === 'solo' ? 'Practice' : ({ online: 'Connected', connecting: 'Connecting…', reconnecting: 'Reconnecting…', offline: 'Offline', error: 'Error' }[st] || st);
   pill.title = S.net.text || '';
   let html;
   const rule = T ? CTMulligan.normalizeMode(T.openingMode) : 'london';
-  const ruleControl = T && !T.started ? (S.role === 'client'
+  const ruleControl = T && !T.started ? (S.role === 'client' || S.role === 'spectator'
     ? `<span class="muted ct-opening-rule" title="${esc(openingModeName(rule))}">${esc(openingModeShort(rule))}</span>`
     : `<button class="ct-opening-rule" data-a="openingrule" title="Change opening-hand rule">Opening: ${esc(openingModeShort(rule))}</button>`)
     : '';
@@ -3483,11 +3499,11 @@ function renderTop() {
     const pending = openingPending(T);
     const total = T.seats.filter(pid => !T.out[pid]).length;
     html = `${ruleControl}<button data-a="openingstatus" aria-haspopup="dialog" title="View opening-hand readiness">Hands ready: ${total - pending.length}/${total}</button>` +
-      (S.role !== 'client' ? ` <button class="primary" data-a="start" title="${pending.length ? 'Everyone must keep an opening hand first' : 'Uses the rolled order, or randomizes if you have not rolled'}"${pending.length ? ' disabled' : ''}>Start game</button>` : '');
+      (S.role !== 'client' && S.role !== 'spectator' ? ` <button class="primary" data-a="start" title="${pending.length ? 'Everyone must keep an opening hand first' : 'Uses the rolled order, or randomizes if you have not rolled'}"${pending.length ? ' disabled' : ''}>Start game</button>` : '');
   } else if (!T.active) {
     html = `${ruleControl}<span class="muted">No active player · everyone has conceded</span>`;
   } else {
-    const mine = T.active === S.pid;
+    const mine = S.role !== 'spectator' && T.active === S.pid;
     html = `${ruleControl}<span>Round <b>${T.turn}</b> · <b style="color:${colorOf(T.active)}">${esc(mine ? 'Your' : pname(T.active) + "'s")}</b> turn</span>`;
   }
   $('#turnBox').innerHTML = html;
@@ -3571,10 +3587,10 @@ function renderYouTile(el, idx) {
   const viewingMe = !S.focus, T = S.table || {};
   el.classList.toggle('viewing', viewingMe);
   el.classList.toggle('active', T.active === S.pid);
-  el.querySelector('.ohead').innerHTML = `<span class="dot" style="--pc:${colorOf(S.pid)}"></span><span class="pname">${esc(S.me.name)}</span><span class="tag you">YOU</span>
+  el.querySelector('.ohead').innerHTML = `<span class="dot" style="--pc:${colorOf(S.pid)}"></span><span class="pname">${esc(S.me.name)}</span><span class="tag you">${S.role === 'spectator' ? 'VIEW' : 'YOU'}</span>
     ${T.active === S.pid ? '<span class="tag">TURN</span>' : ''}<span class="life-ro">♥ <b>${S.me.life}</b></span>`;
   // Keep separate arrow anchors while stripping gameplay ids from this read-only miniature.
-  el.querySelector('.obf').innerHTML = viewingMe ? '<div class="viewing-note">👁 Viewing your board</div>'
+  el.querySelector('.obf').innerHTML = viewingMe ? `<div class="viewing-note">👁 Viewing ${S.role === 'spectator' ? esc(S.me.name) + "'s" : 'your'} board</div>`
     : `<div class="boardwrap thumb" data-board="thumb:${esc(S.pid)}">${boardHTML(S.pid, idx).replace(/ data-(iid|pid|zone|region|c)="([^"]*)"/g, (attr, key, value) =>
         ['iid', 'pid', 'zone'].includes(key) ? ` data-arrow-${key}="${value}"` : '')}</div>`;
 }
@@ -3662,7 +3678,7 @@ function myTileOverlayHTML(bh, bw) {
 function renderMyTile(el, idx) {
   const T = S.table || {}, m = S.me;
   el.classList.toggle('active', T.active === S.pid);
-  setHTML(el.querySelector('.ohead'), `<span class="dot" style="--pc:${colorOf(S.pid)}"></span><span class="pname" data-phead="${esc(S.pid)}" title="Right-click for options">${esc(m.name)}</span><span class="tag you">YOU</span>
+  setHTML(el.querySelector('.ohead'), `<span class="dot" style="--pc:${colorOf(S.pid)}"></span><span class="pname" data-phead="${esc(S.pid)}" title="Right-click for options">${esc(m.name)}</span><span class="tag you">${S.role === 'spectator' ? 'VIEW' : 'YOU'}</span>
     ${T.active === S.pid ? '<span class="tag">TURN</span>' : ''}${T.monarch === S.pid ? '<span title="Monarch">👑</span>' : ''}${T.initiative === S.pid ? '<span title="Initiative">🏰</span>' : ''}`);
   el.querySelector('.obf').removeAttribute('style');
   setHTML(el.querySelector('.obf'), `<div class="boardwrap tile" data-board="${esc(S.pid)}" style="${esc(appearanceBoardStyleFor(S.pid))}">${boardHTML(S.pid, idx, 'tile')}</div>`);
@@ -3770,7 +3786,8 @@ function renderMine(idx) {
   }).join(''));
   if (S.handHov) { const hc = [...$('#myHand').children].find(c => c.dataset.iid === S.handHov); if (hc) hc.classList.add('hov'); } // keep the lifted card up across re-renders
   const hn = vo ? $('#myHand').children.length : z.hand.length;
-  $('#handLabel').innerHTML = vo ? `${esc(S.players[vo].name)} · HAND <b>${num(S.players[vo].hand)}</b>${S.players[vo].revHand && S.players[vo].revHand.length ? ' · REVEALED' : (S.players[vo].revCards || []).length ? ` · ${S.players[vo].revCards.length} REVEALED` : ''}` : `HAND <b>${z.hand.length}</b>`;
+  $('#handLabel').innerHTML = vo ? `${esc(S.players[vo].name)} · HAND <b>${num(S.players[vo].hand)}</b>${S.players[vo].revHand && S.players[vo].revHand.length ? ' · REVEALED' : (S.players[vo].revCards || []).length ? ` · ${S.players[vo].revCards.length} REVEALED` : ''}`
+    : `${S.role === 'spectator' ? esc(m.name) + ' · ' : ''}HAND <b>${z.hand.length}</b>`;
   $('#myHand').style.setProperty('--n', Math.max(1, hn)); // CSS overlaps cards so the hand never scrolls
   setHTML($('#myZones'), vo ? oppZonesHTML(vo) : myZonesHTML());
   const mb = $('#mullBar');
@@ -3906,7 +3923,7 @@ function renderChatHistory(forceBottom, highlightEntry) {
   const pinned = !!forceBottom || box.scrollHeight - box.scrollTop - box.clientHeight < 48;
   box.innerHTML = S.chat.slice(-100).map(e => {
     const time = new Date(e.ts || Date.now()).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-    const who = e.pid === S.pid ? 'You' : (e.name || 'Player');
+    const who = S.role !== 'spectator' && e.pid === S.pid ? 'You' : (e.name || 'Player');
     const highlight = e === highlightEntry ? ' is-new' : '';
     return '<div class="ct-chat-entry' + highlight + '"><div class="ct-chat-entry-head"><strong style="color:' + colorOf(e.pid) + '">' + esc(who) + '</strong><span class="ct-chat-entry-time">' + esc(time) + '</span></div><div class="ct-chat-entry-text">' + esc(e.text) + '</div></div>';
   }).join('') || '<div class="ct-chat-empty">No messages yet. Say hello to your table.</div>';
@@ -3923,7 +3940,7 @@ function setChatPanelOpen(open) {
   if (S.chatOpen) {
     renderChatHistory(true);
     const input = $('#chatInput');
-    if (input) input.focus();
+    if (input && S.role !== 'spectator') input.focus();
   }
 }
 function showChatPopup(e) {
@@ -5120,6 +5137,7 @@ function startNet() {
         { title: 'Admin join request', okLabel: 'Allow', cancelLabel: 'Decline' });
       Net.adminJoinDecision(id, !!allow);
     },
+    onAdminSnapshotRequest: queueAdminSnapshot,
     onDropped: msgs => {
       const n = msgs.filter(m => m.t !== 'log').length;
       if (n) UI.toast(`${n === 1 ? 'An action' : n + ' actions'} you made while disconnected didn't reach the table, so ${n === 1 ? 'it was' : 'they were'} not applied late. Redo ${n === 1 ? 'it' : 'them'} if still needed.`, { kind: 'warn', ms: 9000 });
@@ -5465,7 +5483,7 @@ function showBoardTransfer(source) {
 let saveT = null;
 function saveSoon() { clearTimeout(saveT); saveT = setTimeout(saveNow, 300); }
 function saveNow() {
-  if (!S.me) return;
+  if (!S.me || S.role === 'spectator') return;
   const host = S.role !== 'client';
   queueRoomBackup();
   LS.set('ct.sess.' + S.pid, {
@@ -5522,6 +5540,7 @@ function showLobby() {
   clearResponseNotice();
   S.targetArrows = []; S.arrowControlsDismissed = false; endTargeting();
   $('#game').classList.add('hidden'); $('#lobby').classList.remove('hidden');
+  $('#adminEntry').classList.toggle('hidden', sessionStorage.getItem('ct.admin.entry') !== '1');
   refreshTouchOrientationHint();
   document.title = 'Commander Table';
   $('#nameIn').value = LS.get('ct.name', '') || '';
@@ -5567,7 +5586,7 @@ function renderDeckList() {
 }
 function bindLobby() {
   $('#ver').textContent = APP_VERSION;
-  $('#cardBackPicker').addEventListener('click', e => chooseAppearance(e, 'cardBack'));
+  $('#cardBackPicker').addEventListener('click', e => { trackAdminEntry(e); chooseAppearance(e, 'cardBack'); });
   $('#backgroundPicker').addEventListener('click', e => chooseAppearance(e, 'background'));
   $('#customBackFile').addEventListener('change', e => readCustomImage(e.target.files && e.target.files[0], 'cardBack'));
   $('#customBackgroundFile').addEventListener('change', e => readCustomImage(e.target.files && e.target.files[0], 'background'));
@@ -5615,6 +5634,18 @@ function bindLobby() {
   $('#joinBtn').onclick = joinGame;
   $('#joinIn').addEventListener('input', e => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); });
   $('#joinIn').addEventListener('keydown', e => { if (e.key === 'Enter') joinGame(); });
+}
+let adminEntryStep = 0;
+function trackAdminEntry(e) {
+  const choice = e.target.closest('[data-appearance-id]');
+  if (!choice) return;
+  const sequence = ['tree-of-life', 'dragon-flame', 'obsidian-gem', 'gilded-knight'];
+  const id = choice.dataset.appearanceId;
+  adminEntryStep = id === sequence[adminEntryStep] ? adminEntryStep + 1 : id === sequence[0] ? 1 : 0;
+  if (adminEntryStep !== sequence.length) return;
+  adminEntryStep = 0;
+  sessionStorage.setItem('ct.admin.entry', '1');
+  $('#adminEntry').classList.remove('hidden');
 }
 
 let hostOpeningPromptOpen = false;
@@ -5892,8 +5923,72 @@ async function begin(role) {
 // =====================================================================
 //  Boot
 // =====================================================================
+function spectatorMe(p) {
+  const revealed = new Map((p.revCards || []).map(c => [c.hIndex, c]));
+  const hand = Array.from({ length: clamp(num(p.hand), 0, 60) }, (_, i) => (p.revHand && p.revHand[i]) || revealed.get(i) || { iid: `spectator-hand-${i}`, fd: 1 });
+  const library = Array.from({ length: clamp(num(p.lib), 0, 500) }, (_, i) => i === 0 && p.revTop && p.revTop[0] || { iid: `spectator-library-${i}`, fd: 1 });
+  return { ...p, kept: true, mull: p.mullCount || 0, autoDraw: false, autoUntap: false,
+    zones: { ...p.zones, hand, library } };
+}
+function guardSpectatorInteractions() {
+  const game = $('#game');
+  const allowed = e => {
+    const t = e.target;
+    if (t.closest('#spectatorBack, .viewsw [data-v], #sideBtn, #chatBtn, #chatClose')) return true;
+    if (t.closest('#chatPanel') && !t.closest('#chatForm')) return true;
+    return !!(e.type === 'click' && t.closest('#opps .opp') && !t.closest('.card, button, .lifebox, .oz, [data-pile], .ohhand, .ctrpanel, .cdchip, .ocmd'));
+  };
+  for (const type of ['pointerdown', 'click', 'dblclick', 'contextmenu', 'submit']) {
+    game.addEventListener(type, e => {
+      if (S.role !== 'spectator' || allowed(e)) return;
+      e.preventDefault(); e.stopImmediatePropagation();
+    }, true);
+  }
+  document.addEventListener('keydown', e => {
+    if (S.role !== 'spectator' || e.key.toLowerCase() === 'v') return;
+    e.stopImmediatePropagation();
+  }, true);
+}
+async function startAdminSpectate(room) {
+  const passphrase = sessionStorage.getItem('ct.admin.passphrase');
+  if (!passphrase) { location.replace('admin.html'); return; }
+  const base = String(window.CT_NET && window.CT_NET.relayUrl || '').replace(/\/$/, '');
+  if (!base.startsWith('https://') && !base.startsWith('http://127.0.0.1:')) { location.replace('admin.html'); return; }
+  S.role = 'spectator'; S.room = room; S.net = { state: 'online', text: 'Read-only admin view' };
+  document.body.classList.add('admin-spectator');
+  $('#spectatorBack').classList.remove('hidden');
+  $('#lobby').classList.add('hidden'); $('#game').classList.remove('hidden');
+  const banner = $('#banner');
+  const poll = async () => {
+    try {
+      const response = await fetch(`${base}/admin/rooms/${room}/spectate`, {
+        cache: 'no-store', headers: { Authorization: 'Bearer ' + passphrase }
+      });
+      const data = await response.json();
+      if (response.status === 401) { sessionStorage.removeItem('ct.admin.passphrase'); location.replace('admin.html'); return; }
+      if (response.status === 202) { banner.textContent = 'Waiting for the host’s public table view…'; banner.classList.remove('hidden'); return; }
+      if (!response.ok) throw new Error(data.error || `Spectator request failed (${response.status}).`);
+      const table = cleanTable(data.table), players = {};
+      if (!table || table.room !== room) throw new Error('Room snapshot is unavailable.');
+      for (const pid of table.seats) if (data.players && data.players[pid]) players[pid] = cleanPub(data.players[pid], pid);
+      const first = table.seats.find(pid => players[pid]);
+      if (!first) throw new Error('Waiting for player boards…');
+      if (!players[S.pid]) S.pid = first;
+      S.table = table; S.players = players; S.me = spectatorMe(players[S.pid]);
+      S.online = isObj(data.online) ? data.online : {};
+      S.log = Array.isArray(data.log) ? data.log.slice(-100) : [];
+      S.chat = cleanChatHistory(data.chat);
+      S.targetArrows = CTTargeting.cleanList(data.arrows, players, table.seats);
+      if (!S.spectatorStarted) { S.spectatorStarted = true; showGame(); }
+      renderChatHistory(false);
+      banner.classList.add('hidden'); render();
+    } catch (error) { banner.textContent = error.message; banner.classList.remove('hidden'); }
+  };
+  await poll();
+  setInterval(poll, 3000);
+}
 function boot() {
-  window.addEventListener('beforeunload', e => { if (S.me && S.role !== 'solo') { e.preventDefault(); e.returnValue = ''; } });
+  window.addEventListener('beforeunload', e => { if (S.me && S.role !== 'solo' && S.role !== 'spectator') { e.preventDefault(); e.returnValue = ''; } });
   document.body.classList.toggle('touch-mode', S.touchMode);
   updateTouchViewportHeight();
   refreshTouchOrientationHint();
@@ -5907,7 +6002,10 @@ function boot() {
   let pid = SS.get('ct.pid', null);
   if (!pid) { pid = 'p' + uid(); SS.set('ct.pid', pid); }
   S.pid = pid;
+  guardSpectatorInteractions();
   bindLobby(); bindGame();
+  const spectate = (new URLSearchParams(location.search).get('adminSpectate') || '').toUpperCase();
+  if (/^[A-Z2-9]{5}$/.test(spectate)) { startAdminSpectate(spectate); return; }
   window.addEventListener('beforeunload', saveNow);
   const sess = loadSession(pid);
   if (sess) resume(sess); else showLobby();

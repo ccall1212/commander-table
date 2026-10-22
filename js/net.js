@@ -347,6 +347,10 @@
         if (!dead && p === peer) safeCall(cfg.onAdminJoinRequest, id);
       });
 
+      p.on('admin-snapshot-request', function () {
+        if (!dead && p === peer) safeCall(cfg.onAdminSnapshotRequest);
+      });
+
       p.on('disconnected', function () {
         if (dead || p !== peer) return;
         log('host signalling disconnected');
@@ -801,6 +805,7 @@
       },
       adminPresence: function (summary) { return isHost && peer && typeof peer.adminPresence === 'function' && peer.adminPresence(summary); },
       adminJoinDecision: function (id, allow) { return isHost && peer && typeof peer.adminJoinDecision === 'function' && peer.adminJoinDecision(id, allow); },
+      adminSnapshot: function (snapshot) { return isHost && peer && typeof peer.adminSnapshot === 'function' && peer.adminSnapshot(snapshot); },
       diag: function () {
         return { role: cfg.role, room: room.toUpperCase(), transport: transport, auto: auto, state: state, code: code,
           text: lastText, peerOpen: !!(peer && peer.open), players: isHost ? Array.from(conns.keys()) : null,
@@ -861,6 +866,7 @@
     roomVault: function (action, payload) { return current ? current.roomVault(action, payload) : Promise.reject(new Error('Room server is not connected.')); },
     adminPresence: function (summary) { return current ? current.adminPresence(summary) : false; },
     adminJoinDecision: function (id, allow) { return current ? current.adminJoinDecision(id, allow) : false; },
+    adminSnapshot: function (snapshot) { return current ? current.adminSnapshot(snapshot) : false; },
 
     // Snapshot of the connection for the diagnostics panel / bug reports.
     diag: function () {
