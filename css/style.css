@@ -813,6 +813,17 @@ body.lens-on #pv { display: none; }
 .appearance-choice .cardback-thumb { aspect-ratio: 5 / 7; }
 .appearance-choice .background-thumb { aspect-ratio: 16 / 9; }
 .appearance-choice .appearance-name { font-size: 11px; line-height: 1.2; min-height: 26px; display: flex; align-items: center; justify-content: center; text-align: center; }
+.background-option { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.background-option .appearance-choice { flex: 1; width: 100%; }
+.background-preview-button { min-height: 32px; padding: 4px 8px; font-size: 12px; }
+.background-preview-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.w-dialog.background-preview-dialog { width: min(1440px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); }
+.background-preview-dialog .w-modal-title { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.background-preview-content { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.background-preview-image { display: block; max-width: 100%; max-height: max(80px, calc(100dvh - 230px)); object-fit: contain; }
+.background-preview-image[hidden] { display: none; }
+.background-preview-content p { margin: 0; text-align: center; }
+.background-preview-content > button { min-height: 44px; }
 .custom-appearance-panel { margin: 10px 0 14px; }
 .custom-appearance-panel summary { display: inline-flex; align-items: center; gap: 7px; width: fit-content; padding: 6px 10px; border: 1px solid var(--border); border-radius: 7px; background: rgba(0,0,0,.2); color: var(--text); cursor: pointer; font-size: 12px; font-weight: 600; list-style-position: inside; }
 .custom-appearance-panel summary:hover { border-color: var(--accent); }
