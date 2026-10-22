@@ -33,7 +33,7 @@ const deck = {
       localStorage.setItem('ct.decks.v1', JSON.stringify([savedDeck]));
       localStorage.setItem('ct.name', JSON.stringify(playerName));
     }, { savedDeck: deck, playerName: name });
-    await page.goto('http://127.0.0.1:8106/index.html?relay=http%3A%2F%2F127.0.0.1%3A8111&net=relay');
+    await page.goto(process.env.CT_TEST_URL || 'http://127.0.0.1:8106/index.html?relay=http%3A%2F%2F127.0.0.1%3A8111&net=relay');
     return { ctx, page };
   }
 
@@ -85,8 +85,9 @@ const deck = {
 
   try {
     host = await player('Ready host', 1920, 1080);
-    await host.page.locator('#hostMulligan').selectOption('ten-bottom-three');
     await host.page.locator('#hostBtn').click();
+    await host.page.locator('input[name="host-opening-mode"][value="ten-bottom-three"]').check();
+    await host.page.getByRole('button', { name: 'Continue', exact: true }).click();
     await host.page.locator('.ct-player-color-option[data-color="blue"]').click();
     await host.page.waitForFunction(() => CT.S.room, { timeout: 30000 });
     const room = await host.page.evaluate(() => CT.S.room);

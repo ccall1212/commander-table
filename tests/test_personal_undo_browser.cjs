@@ -26,6 +26,7 @@ const deck = { id: 'undo-deck', name: 'Undo test deck', commanders: [commander],
     }
     const host = await player('Undo host');
     await host.locator('#hostBtn').click();
+    await host.getByRole('button', { name: 'Continue', exact: true }).click();
     await host.locator('.ct-player-color-option[data-color="blue"]').click();
     await host.waitForFunction(() => CT.S.room && CT.S.net.state === 'online');
     const room = await host.evaluate(() => CT.S.room);

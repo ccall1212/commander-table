@@ -335,6 +335,23 @@ body.attaching .board .card:hover { outline: 3px solid #7c4dff; }
 .ct-opening-status.ready { color: var(--good); }
 .ct-opening-roster-dialog p { margin: 16px 0 0; font-size: 12px; }
 
+.w-dialog.ct-host-opening-dialog { width: min(540px, calc(100vw - 32px)); }
+.ct-host-opening-dialog .w-modal-body { padding: 16px; }
+.ct-host-opening-form { display: grid; gap: 12px; }
+.ct-host-opening-options { display: grid; gap: 8px; margin: 0; padding: 0; border: 0; }
+.ct-host-opening-option {
+  display: grid; grid-template-columns: 20px minmax(0, 1fr); align-items: start; gap: 10px;
+  padding: 10px 12px; border: 1px solid var(--border); border-radius: 7px; background: var(--panel);
+  cursor: pointer;
+}
+.ct-host-opening-option:has(input:checked) { border-color: var(--accent); background: var(--panel2); }
+.ct-host-opening-option input { margin: 3px 0 0; accent-color: var(--accent); }
+.ct-host-opening-copy { display: grid; gap: 2px; }
+.ct-host-opening-copy span { color: var(--muted); font-size: 12px; }
+.ct-host-opening-option:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ct-host-opening-note { margin: 0; }
+.ct-host-opening-actions { justify-content: flex-end; }
+
 /* Optional iPad touch mode: keep card previews actionable and suppress Safari callouts. */
 body.touch-mode #pv.floatpv { pointer-events: auto; width: min(320px, calc(100vw - 24px)); max-height: calc(var(--ct-viewport-height, 100dvh) - 24px); overflow-y: auto; }
 body.touch-mode .ct-touch-actions { display: block; width: 100%; min-height: 44px; margin-top: 8px; border: 1px solid var(--accent); border-radius: 8px; background: var(--accent); color: #17130a; font: 700 15px/1.2 system-ui, sans-serif; }
@@ -1344,6 +1361,7 @@ body.touch-mode #myBar .ctrpanel {
   background: transparent; border-color: transparent; color: var(--muted); text-shadow: inherit;
 }
 .ct-chat-transparent .ct-chat-form input { border-bottom-color: rgba(208,214,224,.5); border-radius: 0; }
+
 @media (prefers-reduced-motion: reduce) {
   .ct-chat-transparent > :not(.ct-chat-wake),
   .ct-chat-transparent.ct-chat-idle > :not(.ct-chat-wake) { transition: none; }
