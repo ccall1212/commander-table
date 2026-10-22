@@ -15,11 +15,12 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 - **Version:** the newest entry in `CHANGELOG.md` (do not write a version number here; it goes stale).
 - **Paused again at Chris's request (2026-10-20):** draft [PR #11](https://github.com/ccall1212/commander-table/pull/11), website import/random deck picker. Preserve the branch and recovery checkpoint. Do not resume implementation, deploy its test Worker, merge, or publish until Chris asks to resume; see the investigation note.
 - **Layouts:** Sidebar and Grid only.
-- **Open work:** see `OBJECTIVES.md`. #38's Deck Builder backup placement and #43's host/join Auto-Draw and Auto Untap All choices shipped together in v0.45.0 through PR #65 after Chris reported “Looks good” and approved publication. The only open PR is paused draft #11. Chris dropped #42; PR #63 was closed without publishing, and the existing appearance controls are retained.
+- **Open work:** see `OBJECTIVES.md`. #38's Deck Builder backup placement and #43's host/join Auto-Draw and Auto Untap All choices shipped together in v0.45.0 through PR #65 after Chris reported “Looks good” and approved publication. Open PRs are paused draft #11, Objective #18 touch-height fix [PR #69](https://github.com/ccall1212/commander-table/pull/69), and Objective #49 color/UI polish [PR #70](https://github.com/ccall1212/commander-table/pull/70). Chris dropped #42; PR #63 was closed without publishing, and the existing appearance controls are retained.
 - **Queued:** Objective #45 is a very brief hotkey reminder when entering a game, with a browser-saved **Don't show again** choice. The published Exile shortcut is **E**; **X** mills a card from a hovered Library. No test ZIP yet.
 - **Queued:** Objective #46 adds **C** to copy a hovered visible card using the existing right-click copy action. When shipped, include C in #45's eight-line reminder in place of the optional U row. No test ZIP yet.
 - **Queued:** Objective #47 adds a larger background preview on the start screen. The Arcane Star and Shadow Black card-back presets were removed in v0.45.1 through PR #66. Objective #48 is a separate project for more distinctive original backgrounds. Neither open project has a test ZIP yet.
-- **Touch support:** Objective #18’s iPhone menu access fix published in v0.46.1 through PR #68. Chris’s real-iPhone retest and broader touch refinements remain open.
+- **Touch support:** Objective #18’s iPhone menu access fix published in v0.46.1 through PR #68. Chris tested it on a real iPhone and found that Touch mode compressed the landscape table; PR #69 has a v0.46.2 test copy to address that. Real-device retest and broader touch refinements remain open.
+- **In progress:** Objective #49 adds four player colors, the clearer Auto-Draw/Untap prompt heading, and a complete Undo hover border in PR #70. Its branch starts from published v0.46.1 and needs a refresh if PR #69 publishes first.
 - **Slam sound:** Chris wants to keep refining the Commander slam sound. Do that on a separate branch and leave the published behaviour alone until he approves.
 
 ## Existing test ZIPs for open work
@@ -28,10 +29,12 @@ Include Objective numbers, statuses and these ZIP links whenever Chris asks for 
 
 | Objective | Open item | Previously supplied ZIP | Status |
 |---|---|---|---|
+| #18 | iPhone Touch mode table height (PR #69) | [v0.46.2 test ZIP](https://github.com/ccall1212/commander-table/archive/68a6341d2f9859783581af70f59df461ead05eee.zip) | In progress; awaits Chris’s iPhone retest |
+| #49 | More colors and entry UI polish (PR #70) | [v0.47.0 test ZIP](https://github.com/ccall1212/commander-table/archive/8916609bbc5d8604b3cffbe913dba6c1ab5507d0.zip) | In progress; awaits Chris’s test; refresh after PR #69 if it ships first |
 | #9 | Random deck/website import (PR #11) | [Archived draft ZIP](https://github.com/ccall1212/commander-table/archive/a415ef5a9d13531a9c6b5877ab40adf84388c6dc.zip) | Paused; its separate test service is not deployed; do not resume |
 
 
-Other queued items have no separate feature test ZIP yet. Touch support’s existing shipped behavior is in the normal game; its remaining real-device testing/refinements have no new test copy.
+Other queued items have no separate feature test ZIP yet. Touch support’s previously shipped behavior remains in the normal game; PR #69 covers the reported phone-height issue.
 
 
 ## Documentation upkeep
