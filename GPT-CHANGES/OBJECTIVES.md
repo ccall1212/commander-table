@@ -76,3 +76,7 @@ On the start screen, let players inspect each play-area background in a larger v
 ## 48. More distinctive play-area backgrounds — QUEUED AS A SEPARATE ART PROJECT
 
 Chris would like additional backgrounds with stronger identity because several current choices feel generic. Develop a small set of distinct concepts and review the art direction with him before adding assets. Use original artwork that avoids recognizable Magic branding or card-art copies; keep cards and controls readable over each scene. Supply full-resolution images and matching thumbnails, check actual dimensions and visible content, and test their appearance in Sidebar and Grid. This can proceed as its own project independently of Objective #47. No artwork proposal or test ZIP yet.
+
+## 51. Private admin room dashboard — IN PROGRESS
+
+Chris wants to see relay-connected games, their host and players, request to join with the host's approval, and close a room when needed. The dashboard code can be public, but the admin passphrase must be a private Cloudflare Worker secret and every room-list/control request must be authenticated on the server. Closing a room should stop relay reconnects under that code. Rooms using direct PeerJS fallback cannot be observed or closed through the relay; label that limitation clearly. Full player accounts are a separate, larger idea and are not part of this objective.

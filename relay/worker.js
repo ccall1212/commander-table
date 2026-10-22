@@ -27,6 +27,25 @@ const VAULT_CHUNK_BYTES = 60 * 1024;
 const VAULT_TTL_MS = 24 * 60 * 60 * 1000;
 const VAULT_MAX_OWNERS = 12;
 const VAULT_PID_RE = /^[\w-]{1,40}$/;
+const HOST_ID_PREFIX = "ctable-v1-";
+const CLOSED_MS = 24 * 60 * 60 * 1000;
+const PRESENCE_MS = 90 * 1000;
+const JOIN_MS = 90 * 1000;
+
+function json(value, status = 200, headers = {}) {
+  return new Response(JSON.stringify(value), { status, headers: { "Content-Type": "application/json", "Cache-Control": "no-store", ...headers } });
+}
+
+async function adminAuthorized(request, env) {
+  const secret = env.ADMIN_PASSPHRASE;
+  const header = request.headers.get("Authorization") || "";
+  if (typeof secret !== "string" || secret.length < 20 || !header.startsWith("Bearer ") || header.length > 512) return false;
+  const hash = async value => new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value)));
+  const actual = await hash(header.slice(7)), expected = await hash(secret);
+  let difference = 0;
+  for (let i = 0; i < expected.length; i++) difference |= actual[i] ^ expected[i];
+  return difference === 0;
+}
 
 function originAllowed(origin) {
   if (typeof origin !== "string") return false;
@@ -36,7 +55,7 @@ function originAllowed(origin) {
 function corsHeaders(origin) {
   return {
     "Access-Control-Allow-Origin": origin,
-    "Access-Control-Allow-Methods": "GET, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "*",
     "Access-Control-Max-Age": "86400",
     Vary: "Origin",
@@ -58,6 +77,24 @@ export default {
       const headers = { "Content-Type": "application/json" };
       if (okOrigin) Object.assign(headers, corsHeaders(origin));
       return new Response(JSON.stringify({ ok: true, v: VERSION, features: ["room-vault-v1"] }), { status: 200, headers });
+    }
+
+    if (url.pathname.startsWith("/admin/")) {
+      if (origin && !okOrigin) return json({ error: "Origin not allowed" }, 403);
+      const headers = okOrigin ? corsHeaders(origin) : {};
+      if (!await adminAuthorized(request, env)) return json({ error: "Invalid admin passphrase or admin access is not configured" }, 401, headers);
+      if (url.pathname === "/admin/rooms" && request.method === "GET") {
+        const response = await env.DIRECTORY.get(env.DIRECTORY.idFromName("global")).fetch("https://internal/rooms");
+        return new Response(response.body, { status: response.status, headers: { "Content-Type": "application/json", "Cache-Control": "no-store", ...headers } });
+      }
+      const action = /^\/admin\/rooms\/([A-Za-z2-9]{5})\/(close|join|join\/([\w-]{1,64}))$/.exec(url.pathname);
+      if (!action) return json({ error: "Not found" }, 404, headers);
+      const method = action[2] === "close" || action[2] === "join" ? "POST" : "GET";
+      if (request.method !== method) return json({ error: "Method not allowed" }, 405, headers);
+      const room = action[1].toUpperCase();
+      const path = action[2] === "close" ? "/control/close" : action[2] === "join" ? "/control/join" : "/control/join/" + action[3];
+      const response = await env.ROOMS.get(env.ROOMS.idFromName(room)).fetch("https://internal" + path + "?room=" + room, { method });
+      return new Response(response.body, { status: response.status, headers: { "Content-Type": "application/json", "Cache-Control": "no-store", ...headers } });
     }
 
     const m = /^\/room\/([^/]+)$/.exec(url.pathname);
@@ -84,17 +121,66 @@ export class Room extends DurableObject {
     this.vaultQueue = Promise.resolve();
   }
 
+  directory(method, data) {
+    const room = data.room;
+    return this.env.DIRECTORY.get(this.env.DIRECTORY.idFromName("global")).fetch("https://internal/rooms/" + room, {
+      method, body: method === "POST" ? JSON.stringify(data) : undefined,
+    });
+  }
+
+  hostSocket() {
+    for (const ws of this.ctx.getWebSockets()) {
+      const a = this.att(ws);
+      if (!a.dead && a.room && a.id === HOST_ID_PREFIX + a.room.toLowerCase()) return ws;
+    }
+    return null;
+  }
+
+  async adminControl(request, path) {
+    if (path === "/control/close" && request.method === "POST") {
+      const until = Date.now() + CLOSED_MS;
+      await this.ctx.storage.put("admin:closedUntil", until);
+      const room = new URL(request.url).searchParams.get("room");
+      if (room && ROOM_RE.test(room)) await this.directory("DELETE", { room });
+      for (const ws of this.ctx.getWebSockets()) {
+        this.send(ws, { op: "err", type: "room-closed", message: "This game was closed by the site admin" });
+        this.drop(ws, 1008, "room closed");
+      }
+      return json({ ok: true, closedUntil: until });
+    }
+    if (path === "/control/join" && request.method === "POST") {
+      const host = this.hostSocket();
+      if (!host) return json({ error: "Host is not connected through the relay" }, 409);
+      const prior = await this.ctx.storage.get("admin:join:active");
+      if (prior && prior.status === "pending" && prior.expires > Date.now()) return json({ error: "The host already has a pending admin join request" }, 409);
+      const id = crypto.randomUUID(), expires = Date.now() + JOIN_MS;
+      await this.ctx.storage.put("admin:join:active", { id, status: "pending", expires });
+      if (!this.send(host, { op: "admin-join-request", id })) return json({ error: "Host disconnected" }, 409);
+      return json({ id, status: "pending", expires });
+    }
+    const match = /^\/control\/join\/([\w-]{1,64})$/.exec(path);
+    if (match && request.method === "GET") {
+      const entry = await this.ctx.storage.get("admin:join:active");
+      if (!entry || entry.id !== match[1] || entry.expires < Date.now()) return json({ status: "expired" }, 404);
+      return json({ status: entry.status });
+    }
+    return json({ error: "Not found" }, 404);
+  }
+
   async fetch(request) {
+    const path = new URL(request.url).pathname;
+    if (path.startsWith("/control/")) return this.adminControl(request, path);
     if (request.headers.get("Upgrade")?.toLowerCase() !== "websocket") {
       return new Response("Expected WebSocket", { status: 426 });
     }
+    if ((await this.ctx.storage.get("admin:closedUntil") || 0) > Date.now()) return new Response("Room closed", { status: 410 });
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair);
     this.ctx.acceptWebSocket(server);
     const room = (new URL(request.url).pathname.match(/^\/room\/([^/]+)$/) || [])[1];
     this.save(server, { room: room ? room.toUpperCase() : null, id: null, key: null, links: {} });
     try {
-      server.send(JSON.stringify({ op: "hello", v: VERSION, server: "cf-relay", maxMsg: MAX_MSG, features: ["room-vault-v1"] }));
+      server.send(JSON.stringify({ op: "hello", v: VERSION, server: "cf-relay", maxMsg: MAX_MSG, features: ["room-vault-v1", "admin-directory-v1"] }));
     } catch (e) {
       // socket already gone; webSocketClose/Error will clean up
     }
@@ -156,6 +242,7 @@ export class Room extends DurableObject {
   // Tear a socket down: unregister, cclose its links, close it. Safe to call repeatedly.
   drop(ws, code, reason) {
     const a = this.att(ws);
+    const wasHost = !!a.room && a.id === HOST_ID_PREFIX + a.room.toLowerCase();
     const wasDead = !!a.dead;
     const notify = [];
     if (!wasDead) {
@@ -180,6 +267,7 @@ export class Room extends DurableObject {
       // already closed
     }
     for (const [other, lid] of notify) this.send(other, { op: "cclose", lid });
+    if (wasHost && !wasDead && reason !== "replaced") this.ctx.waitUntil(this.directory("DELETE", { room: a.room }));
   }
 
   // ---- Hibernation API handlers ----
@@ -228,6 +316,12 @@ export class Room extends DurableObject {
       case "vault":
         await this.onVault(ws, msg);
         break;
+      case "admin-presence":
+        await this.onAdminPresence(ws, msg);
+        break;
+      case "admin-join-decision":
+        await this.onAdminJoinDecision(ws, msg);
+        break;
       case "cclose":
         this.onCclose(ws, msg);
         break;
@@ -242,6 +336,23 @@ export class Room extends DurableObject {
 
   async webSocketError(ws, err) {
     this.drop(ws, 1011, "error");
+  }
+
+  async onAdminPresence(ws, msg) {
+    const a = this.att(ws);
+    if (!a.room || a.id !== HOST_ID_PREFIX + a.room.toLowerCase()) return;
+    const cleanName = value => typeof value === "string" ? value.trim().slice(0, 50) : "";
+    const players = Array.isArray(msg.players) ? msg.players.slice(0, 6).map(p => ({
+      name: cleanName(p && p.name), connected: !!(p && p.connected),
+    })).filter(p => p.name) : [];
+    await this.directory("POST", { room: a.room, host: cleanName(msg.host), players, started: !!msg.started, updatedAt: Date.now() });
+  }
+
+  async onAdminJoinDecision(ws, msg) {
+    if (ws !== this.hostSocket() || typeof msg.id !== "string" || !/^[\w-]{1,64}$/.test(msg.id) || typeof msg.allow !== "boolean") return;
+    const entry = await this.ctx.storage.get("admin:join:active");
+    if (!entry || entry.id !== msg.id || entry.status !== "pending" || entry.expires < Date.now()) return;
+    await this.ctx.storage.put("admin:join:active", { ...entry, status: msg.allow ? "approved" : "declined" });
   }
 
   // ---- broker ops ----
@@ -590,5 +701,31 @@ export class Room extends DurableObject {
 
   async alarm() {
     await this.queueVault(async () => this.expireVault(Date.now()));
+  }
+}
+
+// The only cross-room state. It receives limited host-published metadata, never cards or hands.
+export class RoomDirectory extends DurableObject {
+  async fetch(request) {
+    const path = new URL(request.url).pathname;
+    if (path === "/rooms" && request.method === "GET") {
+      const entries = await this.ctx.storage.list({ prefix: "room:" });
+      const now = Date.now(), rooms = [];
+      for (const [key, value] of entries) {
+        if (value.updatedAt > now - PRESENCE_MS) rooms.push(value);
+        else await this.ctx.storage.delete(key);
+      }
+      rooms.sort((a, b) => b.updatedAt - a.updatedAt);
+      return json({ rooms, count: rooms.length });
+    }
+    const match = /^\/rooms\/([A-Za-z2-9]{5})$/.exec(path);
+    if (!match) return json({ error: "Not found" }, 404);
+    const key = "room:" + match[1].toUpperCase();
+    if (request.method === "DELETE") { await this.ctx.storage.delete(key); return json({ ok: true }); }
+    if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
+    const entry = await request.json();
+    if (entry.room !== match[1].toUpperCase()) return json({ error: "Room mismatch" }, 400);
+    await this.ctx.storage.put(key, entry);
+    return json({ ok: true });
   }
 }

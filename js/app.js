@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.48.0';
+const APP_VERSION = '0.49.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -406,6 +406,18 @@ let pubTimer = null;
 function publish(now) { clearTimeout(pubTimer); pubTimer = setTimeout(doPublish, now ? 0 : 120); }
 function doPublish() { if (!S.me || boardTransferLock) return; toHost({ t: 'pub', p: publicView() }); }
 
+let adminPresenceTimer = null;
+function queueAdminPresence() {
+  if (S.role !== 'host' || !S.me || !S.table || S.net.state !== 'online') return;
+  clearTimeout(adminPresenceTimer);
+  adminPresenceTimer = setTimeout(() => {
+    if (S.role !== 'host' || !S.me || !S.table || S.net.state !== 'online') return;
+    const players = S.table.seats.map(pid => ({ name: pname(pid), connected: pid === S.pid || !!S.online[pid] }));
+    try { Net.adminPresence({ host: S.me.name, players, started: !!S.table.started }); } catch (_) { /* older relay or direct route */ }
+  }, 300);
+}
+setInterval(queueAdminPresence, 30000);
+
 function toHost(msg) { if (S.role === 'client') Net.send({ ...msg, seatKey: seatKey() }); else hostRecv(msg, S.pid); }
 function broadcast(msg) { if (S.role === 'host') Net.send(msg); onBroadcast(msg); }
 function sendReq(to, req) {
@@ -461,6 +473,7 @@ function hostRecv(msg, from) {
       S.players[from] = p;
       seat(from);
       broadcast({ t: 'pub', p });
+      queueAdminPresence();
       const arrows = CTTargeting.cleanList(S.targetArrows, S.players, S.table.seats);
       if (arrows.length !== S.targetArrows.length) broadcast({ t: 'arrows', arrows });
       break;
@@ -576,6 +589,7 @@ function pushTable() {
   S.table.rev = (S.table.rev || 0) + 1;
   broadcast({ t: 'table', table: S.table });
   saveNow();
+  queueAdminPresence();
 }
 function cleanTable(t) {
   if (!isObj(t)) return null;
@@ -5096,7 +5110,15 @@ function startNet() {
         if (S.table && S.table.room === S.room) toHost({ t: 'tsync', table: S.table });
       }
       if (state === 'online' && was !== 'online' && S.role === 'host') { roomBackupSent.delete(S.room + ':' + S.pid); queueRoomBackup(); }
+      if (state === 'online' && S.role === 'host') queueAdminPresence();
       render();
+    },
+    onAdminJoinRequest: async id => {
+      if (S.role !== 'host' || !S.table || S.net.state !== 'online') return;
+      if (S.table.seats.length >= 6) { Net.adminJoinDecision(id, false); UI.toast('The site admin asked to join, but this table is full.'); return; }
+      const allow = await UI.confirm('The site admin asks to join this game as a normal player. Allow them to open your room link?',
+        { title: 'Admin join request', okLabel: 'Allow', cancelLabel: 'Decline' });
+      Net.adminJoinDecision(id, !!allow);
     },
     onDropped: msgs => {
       const n = msgs.filter(m => m.t !== 'log').length;
@@ -5107,12 +5129,14 @@ function startNet() {
       if (lostTimers[pid] === 'logged') sysLog(`${pname(pid)} reconnected.`);
       delete lostTimers[pid];
       S.online[pid] = true;
+      queueAdminPresence();
       Net.sendTo(pid, snapFor());
       broadcast({ t: 'online', online: S.online });
     },
     onLeave: pid => {
       if (S.pendingSeats && !S.table.seats.includes(pid)) delete S.pendingSeats[pid];
       S.online[pid] = false;
+      queueAdminPresence();
       broadcast({ t: 'online', online: S.online });
       // brief blips reconnect within a few seconds — only log real outages
       clearTimeout(lostTimers[pid]);
