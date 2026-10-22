@@ -67,7 +67,7 @@ Press **C** while hovering a visible card that currently offers **Copy this card
 
 In **Hotkeys**, let each player assign their own key or key combination to an action, reset an action to its default, or restore all defaults. Cover the actions in that list and useful game actions that currently have no shortcut. Keep assignments in that browser only, never in room state. Show the current key beside each action and reject duplicate bindings or browser-reserved combinations with a clear explanation. A custom shortcut must obey the action's usual context and permissions: hovered-card actions need an eligible visible card; game actions need the proper game state; text inputs, chat, menus and dialogs must keep normal typing. Changing a shortcut should update the corresponding menu hint. Avoid capturing an action while the player is recording a shortcut.
 
-When this shortcut ships, show **C** in Objective #45's brief entry reminder in place of the optional **U** row, keeping that reminder to eight lines. Do not advertise C in the reminder before the shortcut works. Objective #45's later popup should reflect custom bindings if the player has changed them. No test ZIP yet.
+When this shortcut ships, show **C** in Objective #45's brief entry reminder in place of the optional **U** row, keeping that reminder to eight lines. Do not advertise C in the reminder before the shortcut works. Objective #45's later popup should reflect custom bindings if the player has changed them. [PR #76](https://github.com/ccall1212/commander-table/pull/76) holds the v0.51.0 test copy.
 
 ## 47. Preview backgrounds larger — QUEUED
 
