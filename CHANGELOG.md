@@ -155,7 +155,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.50.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.51.0...HEAD
+[0.51.0]: https://github.com/ccall1212/commander-table/compare/v0.50.1...v0.51.0
+[0.50.1]: https://github.com/ccall1212/commander-table/compare/v0.50.0...v0.50.1
 [0.50.0]: https://github.com/ccall1212/commander-table/compare/v0.49.0...v0.50.0
 [0.49.0]: https://github.com/ccall1212/commander-table/compare/v0.48.0...v0.49.0
 [0.48.0]: https://github.com/ccall1212/commander-table/compare/v0.47.0...v0.48.0
