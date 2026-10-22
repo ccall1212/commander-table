@@ -1,6 +1,6 @@
 # Online multiplayer — investigation, decision and design
 
-Branch: `feature/relay-netcode`. `main` (the live site) is untouched until this is merged.
+This records the investigation behind the published online relay and its current architecture.
 
 ## 1. What was going wrong
 
@@ -56,13 +56,11 @@ GitHub Pages (static site)                Cloudflare Worker "commander-table-rel
   net.js  ── session logic, host authority   GET /room/<CODE>  (WebSocket upgrade)
      │                                          └─> Durable Object "Room" (one per room code)
      ├─ transport 'relay' : js/relay-peer.js ──wss──┘   broker: reg / conn / msg / cclose + optional vault
-     ├─ transport 'p2p'   : PeerJS (WebRTC) — fallback / home networks
-     └─ transport 'lan'   : lan-server.py (same broker protocol, optional)
+     └─ transport 'p2p'   : PeerJS (WebRTC) — fallback / home networks
 ```
 
-- **Protocol:** `docs/relay-protocol.md` (v2). The normal broker framing is shared by
-  `relay/worker.js` and `lan-server.py`; the Cloudflare Worker may additionally advertise
-  `room-vault-v1`, a host-authenticated private-board backup API. LAN does not support the vault.
+- **Protocol:** `docs/relay-protocol.md` (v2). `relay/worker.js` implements the broker framing and may additionally advertise
+  `room-vault-v1`, a host-authenticated private-board backup API.
 - **Authority:** unchanged — every player owns their own cards and publishes a public view; the host
   owns the table (turns, seats, log) and relays. The relay never interprets game messages.
 - **Route choice (`js/net-config.js`):** `mode:'auto'` = relay first; if the relay can't be reached
@@ -77,7 +75,7 @@ GitHub Pages (static site)                Cloudflare Worker "commander-table-rel
   retrieve full private board snapshots in Durable Object storage for up to 24 hours. The relay
   returns a private snapshot only to that authenticated host socket; it is not broadcast. A room
   binding prevents a different host key from claiming the saved data after disconnect. This is
-  server-side storage, not end-to-end encryption, and is not available in LAN mode.
+  server-side storage, not end-to-end encryption.
 - **Cost (Workers Free plan, per Cloudflare's pricing page, Oct 2026):** Durable Objects with SQLite
   storage are included; 100,000 requests/day, incoming WebSocket messages count 20:1, 13,000 GB-s/day,
   idle (hibernated) rooms cost nothing; keepalive pings are auto-answered without waking the object.
@@ -110,19 +108,23 @@ The top bar shows the text; ☰ → **Connection details…** shows everything (
 | `js/net-config.js` | relay URL + route mode |
 | `js/net.js` | route selection/fallback, stage codes, chunk size from server, message ids, stale-queue expiry, duplicate-tab handling, `Net.diag()` |
 | `js/app.js` | invite links (`?join=CODE`), status codes in the UI, dropped-action toast, turn-guarded pass, table `rev` + `tsync`, ☰ Connection details, `?nettest` hook |
-| `js/lan.js`, `lan-server.py` | LAN mode now uses the same `RelayPeer` + protocol v2 |
 | `index.html`, `css/style.css` | script tags, invite banner, diagnostics styling |
 | `tests/net-harness.html` | automated browser tests (13 scenarios) |
-| `tests/test_relay_protocol.py` | protocol tests (16 cases) against the LAN server or a deployed relay |
+| `tests/test_relay_protocol.py` | protocol tests (15 cases) against a local Worker or a deployed relay |
 | `docs/relay-protocol.md`, `docs/NETWORKING.md` | protocol + this document |
 
 ## 5. Tests
 
-Run locally: `python lan-server.py --start --no-browser` (port 8790) and any static server for the
-repo on `127.0.0.1:8099`, then open
-`http://127.0.0.1:8099/tests/net-harness.html?relay=http://127.0.0.1:8790&net=relay&auto=1`.
-Against the deployed relay: same page with `relay=https://commander-table-relay.<sub>.workers.dev`,
+For local developer checks, start the actual Worker with Miniflare or Wrangler on port 8111
+(for example, `npx wrangler dev --local --port 8111` from `relay/` with Wrangler available),
+and serve the repo on `127.0.0.1:8099`. Open
+`http://127.0.0.1:8099/tests/net-harness.html?relay=http://127.0.0.1:8111&net=relay&auto=1`,
+then run `python tests/test_relay_protocol.py --url ws://127.0.0.1:8111/room/TESTX`.
+The protocol runner requires an explicit `--url`; it no longer starts a separate Python broker.
+Against the deployed relay, use the same harness with the configured relay URL,
 and `python tests/test_relay_protocol.py --url wss://commander-table-relay.<sub>.workers.dev/room/TESTX`.
+These commands are developer checks; players can continue to open the website or extract a ZIP
+and double-click `index.html` without installing or running a server.
 
 See the release notes in the PR / chat for the latest recorded results. Everything above runs on one
 machine; it proves the code paths, not real-world connectivity between different networks — that

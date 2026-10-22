@@ -18,7 +18,7 @@ A full tour of the controls. For a short overview see the [README](../README.md)
 3. Click the room code in the top-left. This copies an **invite link** (it looks like `…/commander-table/?join=CODE`). Send it to your friends.
 4. Your friends open the link, enter a name, pick a deck, and press **Join**. The room code is already filled in. Typing the 5-letter code by hand works too.
 
-Want to play without the website? There's also a downloadable copy of the game for local-network play. See **Playing on a LAN** below.
+A downloaded copy also works: extract the ZIP and double-click **index.html**. Online games still use the same internet relay.
 
 ## Your look: card backs and play-area backgrounds
 
@@ -64,37 +64,6 @@ Open ☰ → **Display settings…** to adjust how things look on your screen:
 - **Magnifier size:** how big the magnifier circle is (see **Magnifier** under **Cards on the table** below).
 - **Hand size:** a slider for how big your hand cards are, with a **Reset** button.
 - On very wide monitors (2500px and up), opponent names get a bit larger.
-
-## Playing on a LAN (optional)
-
-This is for playing without the website, for example when one computer hosts on your local network. It works like Forge's LAN play: one person's computer hosts, and everyone else just uses a browser. No accounts, and no install for the other players.
-
-**Hosting (one person):**
-
-- You need Python 3. On Windows, get it from the Microsoft Store (search for "Python").
-- Start the server:
-  - **Windows:** double-click `Start LAN game.bat`.
-  - **macOS:** double-click `start-lan-game.command`. The first time, if macOS warns, right-click it and choose Open.
-  - **Linux:** run `./start-lan-game.sh`.
-  - **Any terminal:** run `python lan-server.py` (or `python3`) from the game folder.
-- A small menu appears in the window. Press Enter to choose **[1] Start the game (opens your browser)**. The other options are **[2] Status** (address, connected players, version), **[3] Check for updates**, and **[Q] Quit**. Once it's running, the menu offers Open in browser, Status, Check for updates, and Stop. Keep the window open while you play.
-- The first time, Windows asks whether Python may use the network. Tick both boxes (Private **and** Public, since office networks are often "Public") and click **Allow**.
-- The lobby shows a line like `http://YOUR-PC-NAME:8790/`. Send that to the other players. They open it in Chrome or Edge and join with the room code as usual.
-- The version is shown at the bottom of the lobby, like `v0.5.0 (abc1234)`. The part in brackets is the GitHub commit it's running, so it's always exact.
-
-**Updates:**
-
-- The host's browser checks GitHub automatically and shows "Update available". Click **Updates** (in the lobby footer, or the top bar during a game), then **Update & restart**.
-- It downloads the latest version, keeps a backup of the replaced files in a `.backup` folder, restarts the server, and the page reloads by itself. Other players reconnect automatically and see a "reload to get the new version" notice.
-- Only the host's computer can install updates. A git checkout updates with a fast-forward (like `git pull`) and refuses if it has uncommitted changes. A copy with changes that aren't on GitHub won't auto-update.
-
-**Options:** `--port 8791` (if 8790 is busy), `--no-browser`, and `--start` (skip the menu).
-
-**Good to know:**
-
-- Decks are saved per address, so decks imported on the online link need to be pasted once more at the LAN address. It stays the same afterwards.
-- Card images still come from Scryfall, so everyone needs normal internet access.
-- If players can't reach the address, the host's firewall or the network may be blocking it. Try again with another person hosting.
 
 ## If something goes wrong
 
@@ -270,7 +239,7 @@ For a hovered card, **+ / =** adds a +1/+1 counter and **− / _** adds a −1/�
 ## Troubleshooting
 
 - **Join says it can't reach the host:** check the room code (or use the invite link), and make sure the host still has the game open. ☰ → **Connection details…** shows a report you can copy and send if you need help.
-- Very strict work and school networks can still block the connection. If Join keeps failing, try a different network, or use the optional LAN option above.
+- Very strict work and school networks can still block the connection. If Join keeps failing, try a different network and share the report from **Connection details…**.
 
 ## For developers
 

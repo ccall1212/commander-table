@@ -1,8 +1,8 @@
 # Relay protocol v2
 
 One WebSocket per browser "peer". The relay is a dumb broker: it never looks inside game
-messages. The same protocol is spoken by the Cloudflare relay (`relay/worker.js`, one Durable
-Object per room) and the LAN server (`lan-server.py`). The browser side is `js/relay-peer.js`
+messages. The Cloudflare relay implements it in `relay/worker.js` (one Durable Object per room).
+The browser side is `js/relay-peer.js`
 (`RelayPeer`, a drop-in for the subset of the PeerJS API that `js/net.js` uses).
 
 ## Endpoints
@@ -10,17 +10,15 @@ Object per room) and the LAN server (`lan-server.py`). The browser side is `js/r
   case-insensitive; the worker routes it to `idFromName(ROOM.toUpperCase())`.
   `GET /health` → `{"ok":true,"v":2,"features":["room-vault-v1"]}` on a Worker
   with room-vault support (CORS: allowed origins only).
-- LAN server: `ws://<host>:<port>/ws` (one broker for the whole server; room ignored) — and
-  also `ws://<host>:<port>/room/<ROOM>` (same broker).
 
 All frames are UTF-8 JSON text. Every message has `op`.
 
 ## Server → client on connect
 `{"op":"hello","v":2,"server":"cf-relay"|"lan","maxMsg":<bytes>,"features":[...]}` —
-`maxMsg` is the largest single text frame the server accepts (Cloudflare: 1000000, LAN: 8000000).
+`maxMsg` is the largest single text frame the server accepts (Cloudflare: 1000000).
 `features` is additive capability discovery. Clients must tolerate it being absent. The Cloudflare
-Worker advertises `room-vault-v1` when it supports the host-mediated private-board vault; LAN does
-not advertise or implement this feature.
+Worker advertises `room-vault-v1` when it supports the host-mediated private-board vault.
+The `server` label may be `lan` on historical brokers; clients continue to tolerate that label.
 
 ## Keepalive
 Client may send `{"op":"ping"}` at any time; server answers `{"op":"pong"}`.
@@ -56,7 +54,7 @@ Client may send `{"op":"ping"}` at any time; server answers `{"op":"pong"}`.
 ## Optional Cloudflare room vault (`room-vault-v1`)
 
 This additive feature is available only when advertised in the Cloudflare `hello.features` array.
-It does not change protocol version 2, ordinary link framing, or LAN behavior. A client should not
+It does not change protocol version 2 or ordinary link framing. A client should not
 send vault requests unless the connected server advertised the feature.
 
 Only the registered canonical room host socket may use the API: its id must be

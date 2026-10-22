@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.44.1] - 2026-10-22
+
+### Removed
+- Unused LAN launchers, Python server and LAN-only browser updater. Open the website or extract a ZIP and double-click `index.html` to play through the existing online relay.
+
 ## [0.44.0] - 2026-10-22
 
 ### Changed
@@ -90,7 +95,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.44.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.44.1...HEAD
+[0.44.1]: https://github.com/ccall1212/commander-table/compare/v0.44.0...v0.44.1
 [0.44.0]: https://github.com/ccall1212/commander-table/compare/v0.43.0...v0.44.0
 [0.43.0]: https://github.com/ccall1212/commander-table/compare/v0.42.0...v0.43.0
 [0.42.0]: https://github.com/ccall1212/commander-table/compare/v0.41.0...v0.42.0

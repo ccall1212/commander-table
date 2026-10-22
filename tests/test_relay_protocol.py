@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Protocol v2 conformance tests (docs/relay-protocol.md), stdlib only.
 
-  python tests/test_relay_protocol.py                       # starts lan-server.py on a free port
-  python tests/test_relay_protocol.py --url wss://host/room/TESTX   # runs against a relay
+  python tests/test_relay_protocol.py --url ws://127.0.0.1:8111/room/TESTX
+  python tests/test_relay_protocol.py --url wss://host/room/TESTX
+
+The local example targets the actual Worker started with Miniflare/Wrangler on port 8111.
 
 Exit code 1 if any case fails.
 """
@@ -14,7 +16,6 @@ import queue
 import socket
 import ssl
 import struct
-import subprocess
 import sys
 import threading
 import time
@@ -22,12 +23,10 @@ import traceback
 import uuid
 from urllib.parse import urlsplit
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.dirname(HERE)
 ORIGIN = 'http://localhost:8000'
 CLOSED = object()   # queue sentinel: the socket is gone
 
-TARGET = {'url': None, 'local': False}
+TARGET = {'url': None}
 
 
 # ---------------------------------------------------------------- minimal websocket client
@@ -403,7 +402,7 @@ def second_reg_invalid(c):
 def twelve_peer_room(c):
     for i in range(12):
         c.peer(uid('r%d' % i))
-    # the 13th: refused by the relay (cap of 12 per room); the LAN server has no cap
+    # Cloudflare relay room capacity; older protocol servers may not enforce the cap.
     w = c.ws()
     hello = w.expect('hello')
     w.send({'op': 'reg', 'id': uid('r13'), 'key': None})
@@ -425,91 +424,40 @@ def unknown_op_ignored(c):
     assert not a.closed
 
 
-@case
-def ws_path_alias(c):
-    if not TARGET['local']:
-        return 'skipped (remote target)'
-    base = urlsplit(TARGET['url'])
-    for path in ('/ws', '/room/ANYTHING'):
-        w = c.ws('%s://%s%s' % (base.scheme, base.netloc, path))
-        w.expect('hello')
-        w.send({'op': 'ping'})
-        w.expect('pong')
-
-
 # ---------------------------------------------------------------- runner
-
-def free_port():
-    s = socket.socket()
-    s.bind(('127.0.0.1', 0))
-    port = s.getsockname()[1]
-    s.close()
-    return port
-
-
-def start_local_server():
-    port = free_port()
-    env = dict(os.environ)
-    env['CT_LAN_CHILD'] = '1'
-    proc = subprocess.Popen(
-        [sys.executable, os.path.join(ROOT, 'lan-server.py'), '--start', '--no-browser', '--port', str(port)],
-        stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-        env=env, cwd=ROOT)
-    deadline = time.time() + 20
-    while time.time() < deadline:
-        if proc.poll() is not None:
-            raise RuntimeError('lan-server.py exited early (code %s)' % proc.returncode)
-        try:
-            socket.create_connection(('127.0.0.1', port), timeout=0.5).close()
-            return proc, port
-        except OSError:
-            time.sleep(0.2)
-    proc.kill()
-    raise RuntimeError('lan-server.py did not start listening')
-
 
 def main():
     ap = argparse.ArgumentParser(description='Relay protocol v2 tests')
-    ap.add_argument('--url', help='ws:// or wss:// URL of a relay room (default: start lan-server.py locally)')
+    ap.add_argument('--url', required=True,
+                    help='ws:// or wss:// URL of a relay room (for example, ws://127.0.0.1:8111/room/TESTX)')
     args = ap.parse_args()
 
-    proc = None
-    failures = 0
     try:
-        if args.url:
-            TARGET['url'] = args.url
-            TARGET['local'] = False
-        else:
-            proc, port = start_local_server()
-            TARGET['url'] = 'ws://127.0.0.1:%d/room/TESTX' % port
-            TARGET['local'] = True
-        print('target: %s' % TARGET['url'])
+        parsed = urlsplit(args.url)
+        if parsed.scheme not in ('ws', 'wss') or not parsed.hostname:
+            raise ValueError('expected a ws:// or wss:// URL with a hostname')
+    except ValueError as e:
+        ap.error('invalid --url: %s' % e)
 
-        for fn in CASES:
-            ctx = Ctx()
-            name = fn.__name__
-            try:
-                res = fn(ctx)
-                print('PASS  %s%s' % (name, ('  (%s)' % res) if res else ''))
-            except Exception as e:
-                failures += 1
-                msg = str(e) or e.__class__.__name__
-                print('FAIL  %s: %s' % (name, msg))
-                if not isinstance(e, AssertionError):
-                    traceback.print_exc()
-            finally:
-                ctx.close_all()
-                time.sleep(0.25)
-    finally:
-        if proc is not None:
-            try:
-                proc.kill()
-            except Exception:
-                pass
-            try:
-                proc.wait(timeout=10)
-            except Exception:
-                pass
+    TARGET['url'] = args.url
+    failures = 0
+    print('target: %s' % TARGET['url'])
+
+    for fn in CASES:
+        ctx = Ctx()
+        name = fn.__name__
+        try:
+            res = fn(ctx)
+            print('PASS  %s%s' % (name, ('  (%s)' % res) if res else ''))
+        except Exception as e:
+            failures += 1
+            msg = str(e) or e.__class__.__name__
+            print('FAIL  %s: %s' % (name, msg))
+            if not isinstance(e, AssertionError):
+                traceback.print_exc()
+        finally:
+            ctx.close_all()
+            time.sleep(0.25)
 
     total = len(CASES)
     print('\n%d/%d passed' % (total - failures, total))
