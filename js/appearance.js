@@ -11,7 +11,9 @@
     {id:'bone-necromancer',name:'Bone Necromancer',src:'assets/card-backs/bone-necromancer.webp'},
     {id:'mystic-skull',name:'Mystic Skull',src:'assets/card-backs/mystic-skull.webp'},
     {id:'radiant-sun',name:'Radiant Sun',src:'assets/card-backs/radiant-sun.webp'},
-    {id:'stained-glass',name:'Stained Glass',src:'assets/card-backs/stained-glass.webp'}
+    {id:'stained-glass',name:'Stained Glass',src:'assets/card-backs/stained-glass.webp'},
+    {id:'gilded-knight',name:'Gilded Knight',src:'assets/card-backs/gilded-knight.webp'},
+    {id:'obsidian-gem',name:'Obsidian Gem',src:'assets/card-backs/obsidian-gem.webp'}
   ];
   const BACKGROUNDS = [
     {id:'dragons-lair',name:"Dragon's Lair",src:'assets/backgrounds/dragons-lair.webp',thumb:'assets/backgrounds/thumb-dragons-lair.webp'},

@@ -1,14 +1,14 @@
-# Card-back preset removal — v0.45.1
+# Two new card backs — v0.46.0 test copy
 
-This change was published as v0.45.1 through PR #66. To check a downloaded copy, extract the ZIP and double-click **index.html**; no terminal or local server is needed.
+To check this copy, extract the ZIP and double-click **index.html**. No terminal or local server is needed.
 
-1. On the opening screen, open **Your look**. The card-back picker should have ten presets. Arcane Star and Shadow Black should be absent; the remaining presets should show their images.
-2. Choose another preset, then host or join a game. Face-down cards in your Library and hand should use that backing. Check an opponent's face-down cards if a second player is available. Try Sidebar and Grid at 1920×1080 and 1366×768 if practical.
-3. If you had previously chosen Arcane Star or Shadow Black, the selection should now show Ruby Sigil; your face-down cards should remain visible. A collection backup containing either older choice should also restore to Ruby Sigil.
-4. If you have a custom uploaded card backing, it should still be available from **Your look** and work in game.
+1. On the opening screen, enter a name and open **Your look**. The **Card back** picker should now show twelve presets. The last two are **Gilded Knight** (an armored knight holding a sword in front of a stained-glass window) and **Obsidian Gem** (a dark faceted gem with silver smoke in a gothic silver frame). Both thumbnails should show their pictures and fit like the others.
+2. Click **Gilded Knight**. Its tile should be highlighted. Import or pick a deck, then click **Practice solo**. The Library pile should show the knight picture. Do the same with **Obsidian Gem**.
+3. Draw a card, flip one face down (**Z**) and look at the back on the battlefield. Try Sidebar and Grid at 1920×1080 and 1366×768 if practical.
+4. With a second player (host in one tab, join from another): each player picks a different back, then both start. Each player should see the other's chosen back on face-down cards and hand fans. Anyone on an older cached copy would see Ruby Sigil for the new names, so reload both tabs first.
+5. Reload the page: your choice should still be selected. A saved **Your upload** card back, if you have one, should still work.
+6. The pictures should show no text, logos or Magic symbols. Tell us if anything looks off.
 
-The change was published after Chris requested “Push.” No additional hands-on test details were reported for this copy.
+## Assistant verification (headless Chromium, opened from file://)
 
-## Assistant verification
-
-Chromium over localhost HTTP at 1366×768 and 1920×1080 showed ten picker choices, all ten remaining images returned successfully, both removed saved IDs normalized to Ruby Sigil, and no page errors. JavaScript syntax and diff whitespace checks passed. Multiplayer, Sidebar/Grid face-down cards, custom uploads and file:// opening still need Chris’s hands-on check. Paused draft PR #11 is untouched.
+Page loaded with no page errors at 1920×1080 and 1366×768. The picker listed twelve backs; both new images loaded at 420×588 and contain visible detail. Selecting each new back saved the choice, and the Library pile in a Practice solo game used that image. Multiplayer, Grid layout, and the look of face-down cards on the battlefield were not checked. Paused draft PR #11 is untouched.

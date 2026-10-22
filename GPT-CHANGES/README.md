@@ -19,6 +19,7 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 - **Queued:** Objective #45 is a very brief hotkey reminder when entering a game, with a browser-saved **Don't show again** choice. The published Exile shortcut is **E**; **X** mills a card from a hovered Library. No test ZIP yet.
 - **Queued:** Objective #46 adds **C** to copy a hovered visible card using the existing right-click copy action. When shipped, include C in #45's eight-line reminder in place of the optional U row. No test ZIP yet.
 - **Queued:** Objective #47 adds a larger background preview on the start screen. The Arcane Star and Shadow Black card-back presets were removed in v0.45.1 through PR #66. Objective #48 is a separate project for more distinctive original backgrounds. Neither open project has a test ZIP yet.
+- **In flight:** two new card backs, Gilded Knight and Obsidian Gem (v0.46.0), from art Chris supplied. The artwork has no text, logos or Magic symbols (the removed Arcane Star and Shadow Black backs had a planeswalker-style emblem, which is why they were pulled). Branch `claude/nifty-euler-rffzhv`, no PR yet. Chris still needs to test the ZIP and say **publish**.
 - **Slam sound:** Chris wants to keep refining the Commander slam sound. Do that on a separate branch and leave the published behaviour alone until he approves.
 
 ## Existing test ZIPs for open work
