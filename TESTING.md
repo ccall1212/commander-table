@@ -1,6 +1,6 @@
-# Background previews — v0.52.0 test copy (Objective #47)
+# Background previews — v0.52.0 checks (Objective #47)
 
-Download the PR's exact-commit ZIP, extract it, and double-click `index.html`. No terminal or server is needed. This is a test copy awaiting Chris's review; the published game remains v0.51.0.
+Objective #47 shipped in v0.52.0 through PR #77 after Chris approved publication. For a downloaded copy, extract the ZIP and double-click `index.html`; no terminal or server is needed. The steps below remain useful for checking background previews.
 
 1. On the opening screen, find **Your look → Play area background**. Click **Preview** below any background. The complete, larger image should appear without the gameplay dark overlay. Previewing must leave the selected thumbnail unchanged.
 2. Close with **Close preview**, ×, Escape, or a click outside the dialog. Reopen another preview. Try keyboard Tab and Enter too; closing should return focus to the preview button.
