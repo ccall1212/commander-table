@@ -227,7 +227,7 @@ const deck = { id: 'response-deck', name: 'Response test deck', commanders: [com
     }
     await guest.locator('#chatClose').click();
     await guest.locator('[data-a="menu"]').click();
-    await guest.getByRole('menuitem', { name: /Hotkey list/ }).click();
+    await guest.getByRole('menuitem', { name: 'Hotkeys' }).click();
     const modalCueBefore = await getId(guest);
     await guest.keyboard.press('r');
     assert.equal(await getId(guest), modalCueBefore, 'R while a modal is open is ignored');

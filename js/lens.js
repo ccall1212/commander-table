@@ -15,6 +15,7 @@
   } catch (e) { /* storage unavailable */ }
 
   var active = false;
+  var activeCode = null;
   var mx = -1, my = -1;
   var rafId = 0;
   var lastKey = null;
@@ -197,6 +198,7 @@
   function deactivate() {
     if (!active && !document.body.classList.contains('lens-on')) return;
     active = false;
+    activeCode = null;
     if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
     document.body.classList.remove('lens-on');
     if (circle) circle.style.display = 'none';
@@ -218,18 +220,19 @@
   document.addEventListener('keydown', function (e) {
     try {
       if (e.key === 'Escape') { deactivate(); return; }
-      if ((e.key !== 'v' && e.key !== 'V') || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (!window.CTHotkeys || !CTHotkeys.matches(e, 'lens')) return;
       if (e.repeat) { if (active) e.preventDefault(); return; }
       if (active) return;
-      if (!gameVisible() || typing() || dragging()) return;
+      if (!gameVisible() || document.querySelector('.w-backdrop') || typing() || dragging()) return;
       e.preventDefault();
+      activeCode = e.code || e.key;
       activate();
     } catch (err) { log(err); }
   });
 
   document.addEventListener('keyup', function (e) {
     try {
-      if (e.key === 'v' || e.key === 'V') deactivate();
+      if (activeCode && (e.code || e.key) === activeCode) deactivate();
     } catch (err) { log(err); }
   });
 

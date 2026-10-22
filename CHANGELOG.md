@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.51.0] - 2026-10-22
+
+### Added
+- Press C over a visible card to create a token copy using the existing Copy action, including when viewing an opponent's board. The usual game-start and face-down restrictions still apply.
+- The in-game **Hotkeys** dialog now lets each player assign, clear or reset every listed shortcut. Choices stay in that browser; assigning an occupied key moves it to the new action. Browser-reserved shortcuts are rejected. **`** opens Chat with typing focus and closes it after Enter sends a message; Tab stays available for navigation.
+
 ## [0.50.1] - 2026-10-22
 
 ### Fixed

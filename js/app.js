@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.50.1';
+const APP_VERSION = '0.51.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -2484,6 +2484,7 @@ const MOVE_ACTIONS = [
   { key: 'exile', label: 'Exile', hint: 'E' }, { key: 'top', label: 'Library — top' }, { key: 'bottom', label: 'Library — bottom' },
   { key: 'command', label: 'Command zone' }
 ];
+function moveHotkey(key) { return CTHotkeys.key(({ hand: 'hand', battlefield: 'battlefield', graveyard: 'graveyard', exile: 'exile' })[key]); }
 function runMove(key, iid) {
   const map = { hand: ['hand'], battlefield: ['battlefield'], bftapped: ['battlefield', { tapped: true }], graveyard: ['graveyard'],
     exile: ['exile'], top: ['library', { pos: 'top' }], bottom: ['library', { pos: 'bottom' }], command: ['command'] };
@@ -2515,8 +2516,8 @@ function viewZone(pid, zone) {
     }
     return newestFirst ? list.reverse() : list;
   };
-  const actions = mine ? MOVE_ACTIONS.filter(a => a.key !== zone && !(zone === 'library' && (a.key === 'top' || a.key === 'bottom'))) : [];
-  if (zone !== 'library') actions.push({ key: 'copy', label: 'Copy this card' });
+  const actions = mine ? MOVE_ACTIONS.filter(a => a.key !== zone && !(zone === 'library' && (a.key === 'top' || a.key === 'bottom'))).map(a => ({ ...a, hint: moveHotkey(a.key) })) : [];
+  if (zone !== 'library') actions.push({ key: 'copy', label: 'Copy this card', hint: CTHotkeys.key('copy') });
   if (mine) actions.push({ key: 'printing', label: 'Switch printing…' });
   actions.push({ key: 'info', label: 'View information' });
   if (mine && zone === 'library') actions.push({ key: 'top', label: 'Move to top' }, { key: 'bottom', label: 'Move to bottom' });
@@ -2634,16 +2635,16 @@ function cardMenu(x, y, iid) {
   const attachable = isAttachable(d);
   if (z === 'battlefield') {
     items.push({ label: 'Send arrow to…', onClick: () => startTargeting({ kind: 'card', pid: S.pid, iid }) });
-    items.push({ label: c.t ? 'Untap' : 'Tap', hint: 'T', onClick: () => toggleTap(iid) });
+    items.push({ label: c.t ? 'Untap' : 'Tap', hint: CTHotkeys.key('tap'), onClick: () => toggleTap(iid) });
     if (c.att) items.push({ label: 'Unattach', onClick: () => unattach(iid) });
-    items.push({ label: attachable ? (/Equipment/.test(d.type || '') ? 'Equip to…' : 'Enchant / attach to…') : 'Attach to…', hint: 'A', onClick: () => startAttach(iid) });
-    if (d.imgBack || d.backName) items.push({ label: 'Transform / flip', hint: 'F', onClick: () => flip(iid) });
+    items.push({ label: attachable ? (/Equipment/.test(d.type || '') ? 'Equip to…' : 'Enchant / attach to…') : 'Attach to…', hint: CTHotkeys.key('attach'), onClick: () => startAttach(iid) });
+    if (d.imgBack || d.backName) items.push({ label: 'Transform / flip', hint: CTHotkeys.key('flip'), onClick: () => flip(iid) });
     items.push({ sep: true });
     items.push({ label: 'Counters', sub: counterItems(iid) });
     items.push({ label: 'Power / Toughness', sub: ptItems(iid) });
     items.push({ sep: true });
-    items.push({ label: c.fd ? 'Turn face up' : 'Turn face down', hint: 'Z', onClick: () => toggleFaceDown(iid) });
-    items.push({ label: 'Copy this card', disabled: c.fd, onClick: () => copyCard(d, c.fl) });
+    items.push({ label: c.fd ? 'Turn face up' : 'Turn face down', hint: CTHotkeys.key('face'), onClick: () => toggleFaceDown(iid) });
+    items.push({ label: 'Copy this card', hint: CTHotkeys.key('copy'), disabled: c.fd, onClick: () => copyCard(d, c.fl) });
     if (d.tokens && d.tokens.length) {
       items.push({ label: 'Create related token…', onClick: () => relatedTokenGallery(d.tokens, `Tokens for ${dname(d)}`) });
     }
@@ -2651,9 +2652,9 @@ function cardMenu(x, y, iid) {
     if (c.own !== S.pid) items.push({ label: `Return control to ${pname(c.own)}`, onClick: () => returnControl(iid) });
   }
   if (z === 'hand') {
-    items.push({ label: 'Play', hint: 'B', onClick: () => doMove(iid, 'battlefield') });
+    items.push({ label: 'Play', hint: CTHotkeys.key('battlefield'), onClick: () => doMove(iid, 'battlefield') });
     if (attachable) items.push({ label: /Equipment/.test(d.type || '') ? 'Play & equip to…' : 'Cast & attach to…', onClick: () => startAttach(iid) });
-    items.push({ label: 'Play tapped', hint: 'T', onClick: () => doMove(iid, 'battlefield', { tapped: true }) });
+    items.push({ label: 'Play tapped', hint: CTHotkeys.key('tap'), onClick: () => doMove(iid, 'battlefield', { tapped: true }) });
     items.push({ label: 'Play face down', onClick: () => doMove(iid, 'battlefield', { faceDown: true }) });
     items.push({ label: c.rvh ? 'Hide from everyone' : 'Reveal to everyone', checked: !!c.rvh, disabled: S.me.revealHand, onClick: () => toggleRevealHandCard(iid) });
   }
@@ -2665,10 +2666,10 @@ function cardMenu(x, y, iid) {
     items.push({ label: 'Remove commander tax (−2)', disabled: !n, onClick: () => act(() => { S.me.casts[iid] = Math.max(0, n - 1); return [`set commander tax for {0} to +${2 * Math.max(0, n - 1)}`, [d]]; }) });
   }
   items.push({ sep: true });
-  if (d.id) items.push({ label: 'View information', hint: 'I', onClick: () => viewInfo(d) });
+  if (d.id) items.push({ label: 'View information', hint: CTHotkeys.key('info'), onClick: () => viewInfo(d) });
   if (!c.fd && d.name) items.push({ label: 'Switch printing…', onClick: () => switchPrinting(iid) });
   const moves = MOVE_ACTIONS.filter(a => a.key !== z && !(z === 'battlefield' && a.key === 'bftapped'));
-  items.push({ label: 'Move to', sub: moves.map(a => ({ label: a.label, hint: a.hint, onClick: () => runMove(a.key, iid) })) });
+  items.push({ label: 'Move to', sub: moves.map(a => ({ label: a.label, hint: moveHotkey(a.key), onClick: () => runMove(a.key, iid) })) });
   if (c.tok) items.push({ label: c.cp ? 'Remove copy' : 'Remove token', danger: true, onClick: () => doMove(iid, 'graveyard') });
   UI.menu(x, y, items);
 }
@@ -2693,7 +2694,7 @@ function oppCardMenu(x, y, pid, iid) {
   }
   items.push(
     { label: 'View information', disabled: !f.def, onClick: () => viewInfo(f.def) },
-    { label: 'Copy this card', disabled: !f.def, hint: f.def ? '' : 'face down', onClick: () => copyCard(f.def, f.c.fl) }
+    { label: 'Copy this card', disabled: !f.def || !!f.c.fd, hint: f.def && !f.c.fd ? CTHotkeys.key('copy') : 'face down', onClick: () => copyCard(f.def, f.c.fl) }
   );
   UI.menu(x, y, items);
 }
@@ -2702,21 +2703,21 @@ function counterItems(iid) {
   const d = f && defOf(f.card);
   const has = Object.keys(c).length > 0;
   const items = [
-    { label: 'Add +1/+1 counter', hint: '+', onClick: () => addCounter(iid, '+1/+1', 1) },
-    { label: 'Add −1/−1 counter', hint: '−', onClick: () => addCounter(iid, '-1/-1', 1) }
+    { label: 'Add +1/+1 counter', hint: CTHotkeys.key('plus'), onClick: () => addCounter(iid, '+1/+1', 1) },
+    { label: 'Add −1/−1 counter', hint: CTHotkeys.key('minus'), onClick: () => addCounter(iid, '-1/-1', 1) }
   ];
   if (d && /Planeswalker/.test(d.type || '')) {
     items.push({ label: 'Loyalty +1', onClick: () => addCounter(iid, 'Loyalty', 1) }, { label: 'Loyalty −1', onClick: () => addCounter(iid, 'Loyalty', -1) });
   }
-  items.push({ label: 'Add a counter…', hint: 'J', onClick: () => customCounter(iid) });
+  items.push({ label: 'Add a counter…', hint: CTHotkeys.key('counter'), onClick: () => customCounter(iid) });
   // one-click +/- for any other counters already on the card
   Object.keys(c).filter(k => !['+1/+1', '-1/-1', 'Loyalty'].includes(k)).forEach(k => {
     items.push({ label: `${k} (${c[k]})`, sub: [{ label: '+1', onClick: () => addCounter(iid, k, 1) }, { label: '−1', onClick: () => addCounter(iid, k, -1) }] });
   });
   items.push({ sep: true },
-    { label: 'Increment all counters', hint: 'Shift+1', disabled: !has, onClick: () => allCounters(iid, 'inc') },
-    { label: 'Double all counters', hint: 'Shift+2', disabled: !has, onClick: () => allCounters(iid, 'double') },
-    { label: 'Decrement all counters', hint: 'Shift+3', disabled: !has, onClick: () => allCounters(iid, 'dec') },
+    { label: 'Increment all counters', hint: CTHotkeys.key('incCounters'), disabled: !has, onClick: () => allCounters(iid, 'inc') },
+    { label: 'Double all counters', hint: CTHotkeys.key('doubleCounters'), disabled: !has, onClick: () => allCounters(iid, 'double') },
+    { label: 'Decrement all counters', hint: CTHotkeys.key('decCounters'), disabled: !has, onClick: () => allCounters(iid, 'dec') },
     { sep: true },
     { label: 'Reset counters', disabled: !has, danger: true, onClick: () => allCounters(iid, 'reset') });
   return items;
@@ -2727,10 +2728,10 @@ function ptItems(iid) {
   return [
     { label: 'Set power/toughness…', onClick: () => setPT(iid) },
     { sep: true },
-    { label: 'Power +1', hint: 'Alt+1', onClick: () => changePT(iid, 1, 0) },
-    { label: 'Power −1', hint: 'Alt+3', onClick: () => changePT(iid, -1, 0) },
-    { label: 'Toughness +1', hint: 'Alt+2', onClick: () => changePT(iid, 0, 1) },
-    { label: 'Toughness −1', hint: 'Alt+4', onClick: () => changePT(iid, 0, -1) },
+    { label: 'Power +1', hint: CTHotkeys.key('powerUp'), onClick: () => changePT(iid, 1, 0) },
+    { label: 'Power −1', hint: CTHotkeys.key('powerDown'), onClick: () => changePT(iid, -1, 0) },
+    { label: 'Toughness +1', hint: CTHotkeys.key('toughUp'), onClick: () => changePT(iid, 0, 1) },
+    { label: 'Toughness −1', hint: CTHotkeys.key('toughDown'), onClick: () => changePT(iid, 0, -1) },
     { label: 'Manual +1/+1 (until reset)', onClick: () => changePT(iid, 1, 1) },
     { sep: true },
     { label: 'Reset power/toughness', disabled: !mod, onClick: () => resetPT(iid) }
@@ -2738,16 +2739,16 @@ function ptItems(iid) {
 }
 function libraryMenu(x, y) {
   UI.menu(x, y, [
-    { label: 'Draw', hint: 'D', onClick: () => draw(1) },
+    { label: 'Draw', hint: CTHotkeys.key('draw'), onClick: () => draw(1) },
     { label: 'Draw X…', onClick: async () => { const n = await UI.prompt({ title: 'Draw cards', type: 'number', value: 2, min: 1, max: 30 }); if (n) draw(n); } },
-    { label: 'Shuffle', hint: 'S', onClick: shuffleLib },
+    { label: 'Shuffle', hint: CTHotkeys.key('shuffle'), onClick: shuffleLib },
     { sep: true },
-    { label: 'Search library…', hint: 'L', onClick: () => viewZone(S.pid, 'library') },
+    { label: 'Search library…', hint: CTHotkeys.key('library'), onClick: () => viewZone(S.pid, 'library') },
     { label: 'Look at top X (scry)…', onClick: () => lookTop() },
     { label: 'Reveal top card', onClick: revealTop },
     { label: 'Play with top card revealed', checked: S.me.revealTop, onClick: () => act(() => { S.me.revealTop = !S.me.revealTop; return [S.me.revealTop ? 'is playing with the top card revealed' : 'stopped revealing the top card']; }) },
     { sep: true },
-    { label: 'Mill top card to Graveyard', hint: 'X', onClick: millTopCard },
+    { label: 'Mill top card to Graveyard', hint: CTHotkeys.key('mill'), onClick: millTopCard },
     { label: 'Mill X…', onClick: () => millN('graveyard') },
     { label: 'Exile top X…', onClick: () => millN('exile') },
     { label: 'Exile top X face down…', onClick: () => millN('exile', true) }
@@ -2962,11 +2963,11 @@ function setTouchMode(enabled) {
 function mainMenu(x, y) {
   const m = S.me;
   const items = [
-    { label: 'Draw a card', hint: 'D', onClick: () => draw(1) },
-    { label: 'Untap all', hint: 'U', onClick: untapAll },
+    { label: 'Draw a card', hint: CTHotkeys.key('draw'), onClick: () => draw(1) },
+    { label: 'Untap all', hint: CTHotkeys.key('untapAll'), onClick: untapAll },
     { label: 'Choose / recover a board…', onClick: () => showBoardRecovery() },
-    { label: 'Tokens…', onClick: () => tokensMenu(x, y) },
-    { label: 'Targeting arrow…', onClick: () => startTargeting() },
+    { label: 'Tokens…', hint: CTHotkeys.key('tokens'), onClick: () => tokensMenu(x, y) },
+    { label: 'Targeting arrow…', hint: CTHotkeys.key('arrow'), onClick: () => startTargeting() },
     { label: 'Show arrow controls', disabled: !S.targetArrows.length, onClick: showTargetingControls },
     { label: 'Clear all targeting arrows', disabled: !S.targetArrows.length, onClick: clearTargetArrows },
     { sep: true },
@@ -2974,7 +2975,7 @@ function mainMenu(x, y) {
     { label: 'Tidy up my cards', onClick: () => act(() => { tidyBoard(); return ['tidied up their battlefield']; }) },
     { label: 'Display settings…', onClick: displaySettings },
     { label: `Touch mode: ${S.touchMode ? 'On' : 'Off'}`, checked: S.touchMode, onClick: () => setTouchMode(!S.touchMode) },
-    { label: 'Hotkey list…', onClick: showHotkeyList },
+    { label: 'Hotkeys', onClick: showHotkeyList },
     { sep: true },
     { label: 'Auto-untap on my turn', checked: m.autoUntap, onClick: () => act(() => { m.autoUntap = !m.autoUntap; }, { noUndo: true }) },
     { label: 'Auto-draw on my turn', checked: m.autoDraw, onClick: () => act(() => { m.autoDraw = !m.autoDraw; }, { noUndo: true }) },
@@ -3009,33 +3010,42 @@ function passBtn() {
 }
 function toggleFocus(pid) { S.focus = S.focus === pid ? null : pid; render(); }
 function showHotkeyList() {
-  const groups = [
-    { title: 'With a card hovered', rows: [
-      ['T', 'Tap / untap; from hand, play onto the battlefield tapped'], ['F', 'Transform / flip'], ['Z', 'Turn face down or up'],
-      ['G', 'Move to Graveyard'], ['E', 'Move to Exile'], ['H', 'Move to Hand'], ['B', 'Move to Battlefield'],
-      ['A', 'Attach / equip / enchant'], ['J', 'Add a named counter'], ['I', 'View card information'],
-      ['+ or =', 'Add a +1/+1 counter'], ['− or _', 'Add a −1/−1 counter'],
-      ['Shift+1', 'Increment every counter on the card'], ['Shift+2', 'Double every counter on the card'],
-      ['Shift+3', 'Decrement every counter on the card'],
-      ['Alt+1', 'Power +1'], ['Alt+2', 'Toughness +1'], ['Alt+3', 'Power −1'], ['Alt+4', 'Toughness −1']
-    ] },
-    { title: 'With your Library hovered', rows: [
-      ['S', 'Shuffle Library (small card animation and sound)'],
-      ['X', 'Mill the top card into your Graveyard']
-    ] },
-    { title: 'General', rows: [
-      ['R', 'In response! — alert everyone; press again to repeat'],
-      ['D', 'Draw one card'], ['U', 'Untap all'], ['L', 'Open Search Library from anywhere'], ['T (empty battlefield)', 'Open the Token menu'],
-      ['Space', 'Pass the turn'], ['Ctrl+Z / ⌘Z', 'Undo'], ['Hold V', 'Use the magnifier']
-    ] }
-  ];
-  const html = '<div class="ct-hotkey-list">' +
-    '<p class="muted small">Hotkeys are active during a game. Card-specific actions use the card currently under your cursor.</p>' +
-    groups.map(group => '<section class="ct-hotkey-group"><h3>' + esc(group.title) + '</h3><table><tbody>' +
-      group.rows.map(([key, action]) => '<tr><td><kbd>' + esc(key) + '</kbd></td><td>' + esc(action) + '</td></tr>').join('') +
-      '</tbody></table></section>').join('') +
-    '</div>';
-  UI.modal({ title: 'Hotkey list', className: 'w-hotkey-list-dialog', html });
+  const groups = ['Hovered card', 'Library hovered', 'General'];
+  let recording = null;
+  const modal = UI.modal({ title: 'Hotkeys', className: 'w-hotkey-list-dialog', html: '<div class="ct-hotkey-list"></div>', onClose: () => document.removeEventListener('keydown', capture, true) });
+  const root = modal.el.querySelector('.ct-hotkey-list');
+  function drawList(message = '') {
+    root.innerHTML = '<p class="muted small">Choose Set, then press a key or combination. A key already in use moves to the new action; the old action becomes unassigned. Tab stays available for navigation. Shortcuts are saved in this browser.</p>' +
+      `<p class="ct-hotkey-status" role="status">${esc(message)}</p>` +
+      groups.map(group => `<section class="ct-hotkey-group"><h3>${esc(group)}</h3><table><tbody>` +
+        CTHotkeys.actions.filter(a => a.group === group).map(a => `<tr data-hotkey="${esc(a.id)}"><td><kbd>${esc(CTHotkeys.key(a.id) || 'Unassigned')}</kbd></td><td>${esc(a.label)}</td><td class="ct-hotkey-buttons"><button type="button" data-hotkey-set="${esc(a.id)}">Set</button><button type="button" data-hotkey-clear="${esc(a.id)}"${CTHotkeys.key(a.id) ? '' : ' disabled'}>Clear</button><button type="button" data-hotkey-reset="${esc(a.id)}"${CTHotkeys.key(a.id) === a.key ? ' disabled' : ''}>Reset</button></td></tr>`).join('') +
+        '</tbody></table></section>').join('') +
+      '<button type="button" data-hotkey-reset-all>Restore all defaults</button>';
+  }
+  function capture(e) {
+    if (!recording) return;
+    if (e.key === 'Tab') { recording = null; drawList('Shortcut change cancelled.'); return; }
+    e.preventDefault(); e.stopImmediatePropagation();
+    if (e.key === 'Escape') { recording = null; drawList('Shortcut change cancelled.'); return; }
+    if (['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) return;
+    const id = recording, binding = CTHotkeys.chord(e);
+    const moved = CTHotkeys.actions.filter(a => a.id !== id && CTHotkeys.key(a.id) === binding && !(binding === 'T' && ['tap', 'tokens'].includes(a.id) && ['tap', 'tokens'].includes(id)));
+    const error = CTHotkeys.set(id, binding);
+    if (error) { drawList(error + ' Press another key, or Escape to cancel.'); return; }
+    recording = null;
+    drawList(`${CTHotkeys.actions.find(a => a.id === id).label}: ${binding}${moved.length ? '. Cleared ' + moved.map(a => a.label).join(' and ') + '.' : ''}`);
+  }
+  root.addEventListener('click', e => {
+    const set = e.target.closest('[data-hotkey-set]');
+    const clear = e.target.closest('[data-hotkey-clear]');
+    const reset = e.target.closest('[data-hotkey-reset]');
+    if (set) { recording = set.dataset.hotkeySet; drawList(`Press a key for ${CTHotkeys.actions.find(a => a.id === recording).label}. Escape cancels.`); }
+    else if (clear) { recording = null; drawList(CTHotkeys.clear(clear.dataset.hotkeyClear) || 'Hotkey cleared.'); }
+    else if (reset) { recording = null; drawList(CTHotkeys.reset(reset.dataset.hotkeyReset) || 'Default restored.'); }
+    else if (e.target.closest('[data-hotkey-reset-all]')) { recording = null; drawList(CTHotkeys.resetAll() || 'All defaults restored.'); }
+  });
+  document.addEventListener('keydown', capture, true);
+  drawList();
 }
 function displaySettings() {
   const r0 = window.Lens ? Lens.getRadius() : 90;
@@ -3043,7 +3053,7 @@ function displaySettings() {
     <div class="display-settings">
       <div>
         <div class="display-setting-head"><label for="ctLensSize"><b>Magnifier size</b></label><strong id="ctLensValue">${r0}px</strong></div>
-        <small>Hold <kbd>V</kbd> over the table: every card inside the circle is shown large. A bigger circle catches more cards at once.</small>
+        <small>Hold <kbd>${esc(CTHotkeys.key('lens') || 'your magnifier key')}</kbd> over the table: every card inside the circle is shown large. A bigger circle catches more cards at once.</small>
         <input class="display-scale" id="ctLensSize" type="range" min="40" max="260" step="10" value="${r0}" aria-label="Magnifier size">
         <div class="display-scale-ends"><span>Small</span><span>Large</span></div>
       </div>
@@ -3936,8 +3946,10 @@ function renderChatHistory(forceBottom, highlightEntry) {
   if (pinned) requestAnimationFrame(() => { if (box.isConnected) box.scrollTop = box.scrollHeight; });
   updateChatButton();
 }
+let chatSentSinceOpen = false;
 function setChatPanelOpen(open) {
   S.chatOpen = !!open && S.role !== 'solo';
+  if (S.chatOpen) chatSentSinceOpen = false;
   if (S.chatOpen) S.chatUnread = 0;
   const panel = $('#chatPanel');
   if (panel) panel.classList.toggle('hidden', !S.chatOpen);
@@ -3974,7 +3986,7 @@ function sendChatFromForm(e) {
   e.preventDefault();
   const input = $('#chatInput');
   if (!input) return;
-  if (sendChat(input.value)) { input.value = ''; input.focus(); }
+  if (sendChat(input.value)) { input.value = ''; input.focus(); chatSentSinceOpen = true; }
 }
 
 // --- preview panel
@@ -5036,8 +5048,12 @@ function showConnInfo() {
 }
 function onKey(e) {
   if (e.defaultPrevented) return;
+  if (S.role === 'spectator') return;
   if (!S.me || $('#game').classList.contains('hidden')) return;
   if (e.target.closest && e.target.closest('#chatPanel')) {
+    if (S.chatOpen && chatSentSinceOpen && !$('#chatInput').value && CTHotkeys.matches(e, 'chat')) {
+      setChatPanelOpen(false); $('#chatBtn').focus(); e.preventDefault(); return;
+    }
     if (e.key === 'Escape' && S.chatOpen) { setChatPanelOpen(false); $('#chatBtn').focus(); e.preventDefault(); }
     return;
   }
@@ -5047,55 +5063,54 @@ function onKey(e) {
   if (e.key === 'Escape' && S.chatOpen) { setChatPanelOpen(false); e.preventDefault(); return; }
   if (e.target.closest && e.target.closest('input,textarea,select,[contenteditable]')) return;
   if (document.querySelector('.w-backdrop')) return; // a dialog/viewer is open
+  if ([' ', 'Enter'].includes(e.key) && e.target.closest && e.target.closest('button,a,[role="button"],[tabindex],label')) return;
   if (e.key === 'Escape' && (selectionDrag || S.selected.size)) { cancelSelectionDrag(true); return; }
-  if (e.code === 'Space' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey) {
+  const h = S.hover;
+  const mine = h && h.pid === S.pid && findCard(h.iid);
+  const tokenSpace = !h && CTHotkeys.matches(e, 'tokens') && ownEmptyBattlefieldHovered();
+  const action = CTHotkeys.actionFor(e, { card: !!h, emptyBattlefield: tokenSpace });
+  if (action === 'pass' && !e.repeat) {
     // Leave Spacebar's native behavior alone when a button or other interactive control has focus.
     if (e.target.closest && e.target.closest('button,a,[role="button"],[tabindex],label')) return;
     e.preventDefault(); passTurn(); return;
   }
-  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); return; }
-  const h = S.hover;
-  const mine = h && h.pid === S.pid && findCard(h.iid);
-  // Alt+1..4 = power/toughness on the hovered card (Ctrl+number is reserved by the browser for tabs)
-  if (e.altKey && !e.ctrlKey && !e.metaKey) {
-    const ptKeys = { Digit1: [1, 0], Digit2: [0, 1], Digit3: [-1, 0], Digit4: [0, -1] };
-    if (mine && ptKeys[e.code]) { e.preventDefault(); changePT(h.iid, ...ptKeys[e.code]); }
+  if (action === 'undo') { e.preventDefault(); undo(); return; }
+  if (e.key === 'Escape' && S.arrange) { toggleArrange(); return; }
+  if (!action || action === 'lens') return; // the magnifier handles keydown and keyup itself
+  if (['response', 'copy', 'shuffle', 'mill', 'tokens', 'arrow', 'chat', 'log'].includes(action) && e.repeat) return;
+  const anyCard = h && (mine ? { c: mine.card, def: defOf(mine.card) } : oppCard(h.pid, h.iid));
+  if (action === 'copy') {
+    if (anyCard && (!mine || mine.zone === 'battlefield') && !anyCard.c.fd && anyCard.def && anyCard.def.id) { e.preventDefault(); copyCard(anyCard.def, anyCard.c.fl); }
     return;
   }
-  if (e.ctrlKey || e.metaKey) return;
-  // Shift+1/2/3 = increment / double / decrement all counters on the hovered card
-  if (e.shiftKey && mine && ['Digit1', 'Digit2', 'Digit3'].includes(e.code)) {
-    e.preventDefault(); allCounters(h.iid, { Digit1: 'inc', Digit2: 'double', Digit3: 'dec' }[e.code]); return;
-  }
-  const k = e.key.toLowerCase();
-  if (k === 'r') { if (!e.repeat) { e.preventDefault(); sendResponse(); } return; }
-  if (k === 't' && ownEmptyBattlefieldHovered()) {
-    e.preventDefault();
-    tokensMenu(pvMouse.x, pvMouse.y);
+  if (action === 'info') {
+    if (anyCard && anyCard.def && anyCard.def.id && !anyCard.c.fd) { e.preventDefault(); viewInfo(anyCard.def); }
     return;
   }
-  if (k === 'escape' && S.arrange) { toggleArrange(); return; }
-  if ((k === 's' || k === 'x') && e.repeat) return; // avoid repeated shuffle/mill while a key is held
-  if (k === 's') {
-    if (ownLibraryHovered()) { e.preventDefault(); shuffleLib(); }
-    return;
-  }
-  if (k === 'x' && ownLibraryHovered()) { e.preventDefault(); millTopCard(); return; }
-  if (k === 'l') { e.preventDefault(); viewZone(S.pid, 'library'); return; }
-  if (k === 'd') { draw(1); return; }
-  if (k === 'u') { untapAll(); return; }
-  if (k === 'i' && h) { // info works on anyone's card
-    const f = mine ? { def: defOf(mine.card) } : oppCard(h.pid, h.iid);
-    if (f && f.def) { e.preventDefault(); viewInfo(f.def); }
+  const general = {
+    response: sendResponse, draw: () => draw(1), untapAll, library: () => viewZone(S.pid, 'library'),
+    arrow: () => startTargeting(h && anyCard && !anyCard.c.fd ? { kind: 'card', pid: h.pid, iid: h.iid } : undefined),
+    chat: () => setChatPanelOpen(!S.chatOpen), log: () => $('#sideBtn').click()
+  };
+  if (general[action]) { e.preventDefault(); general[action](); return; }
+  if (action === 'tokens') { if (ownEmptyBattlefieldHovered()) { e.preventDefault(); tokensMenu(pvMouse.x, pvMouse.y); } return; }
+  if (action === 'shuffle' || action === 'mill') {
+    if (ownLibraryHovered()) { e.preventDefault(); if (action === 'shuffle') shuffleLib(); else millTopCard(); }
     return;
   }
   if (!mine) return;
-  const map = { t: () => mine.zone === 'hand' ? doMove(h.iid, 'battlefield', { tapped: true }) : toggleTap(h.iid), f: () => flip(h.iid), g: () => doMove(h.iid, 'graveyard'),
-    e: () => doMove(h.iid, 'exile'), h: () => doMove(h.iid, 'hand'), b: () => doMove(h.iid, 'battlefield'), a: () => startAttach(h.iid),
-    z: () => toggleFaceDown(h.iid), j: () => customCounter(h.iid),
-    '+': () => addCounter(h.iid, '+1/+1', 1), '=': () => addCounter(h.iid, '+1/+1', 1),
-    '-': () => addCounter(h.iid, '-1/-1', 1), '_': () => addCounter(h.iid, '-1/-1', 1) };
-  if (map[k]) { e.preventDefault(); map[k](); }
+  const cardActions = {
+    tap: () => mine.zone === 'hand' ? doMove(h.iid, 'battlefield', { tapped: true }) : toggleTap(h.iid),
+    flip: () => flip(h.iid), face: () => toggleFaceDown(h.iid),
+    graveyard: () => doMove(h.iid, 'graveyard'), exile: () => doMove(h.iid, 'exile'),
+    hand: () => doMove(h.iid, 'hand'), battlefield: () => doMove(h.iid, 'battlefield'),
+    attach: () => startAttach(h.iid), counter: () => customCounter(h.iid),
+    plus: () => addCounter(h.iid, '+1/+1', 1), minus: () => addCounter(h.iid, '-1/-1', 1),
+    incCounters: () => allCounters(h.iid, 'inc'), doubleCounters: () => allCounters(h.iid, 'double'), decCounters: () => allCounters(h.iid, 'dec'),
+    powerUp: () => changePT(h.iid, 1, 0), toughUp: () => changePT(h.iid, 0, 1),
+    powerDown: () => changePT(h.iid, -1, 0), toughDown: () => changePT(h.iid, 0, -1)
+  };
+  if (cardActions[action]) { e.preventDefault(); cardActions[action](); }
 }
 
 // =====================================================================
