@@ -19,6 +19,7 @@ All frames are UTF-8 JSON text. Every message has `op`.
 `features` is additive capability discovery. Clients must tolerate it being absent. The Cloudflare
 Worker advertises `room-vault-v1` when it supports the host-mediated private-board vault.
 It also advertises `admin-directory-v1` when a registered host can publish limited room status and receive site-admin join requests.
+`admin-spectate-v1` advertises host-supplied public snapshots for the authenticated admin viewer.
 The `server` label may be `lan` on historical brokers; clients continue to tolerate that label.
 
 ## Keepalive
@@ -57,6 +58,8 @@ Client may send `{"op":"ping"}` at any time; server answers `{"op":"pong"}`.
 Only the registered host peer (`ctable-v1-<room in lowercase>`) may send `admin-presence` with host name, up to six player names/connectivity flags, and started status. The room relay forwards only this bounded summary to a separate directory Durable Object; entries older than 90 seconds are pruned. No private card data is sent. The relay's ordinary game messages remain opaque.
 
 The site-admin HTTP API requires `Authorization: Bearer <private passphrase>` and checks the Cloudflare Worker secret `ADMIN_PASSPHRASE` on every call. `GET /admin/rooms` lists recent summaries. `POST /admin/rooms/<ROOM>/join` asks the host for consent through the relay's `admin-join-request` socket message. The host replies with `admin-join-decision`; `GET /admin/rooms/<ROOM>/join/<id>` returns pending, approved or declined status. Approval reveals only the ordinary join link. `POST /admin/rooms/<ROOM>/close` ends relay sockets and blocks that room code for 24 hours. Direct PeerJS fallback rooms are outside this API. Never send the admin passphrase in a room frame, URL or repository file.
+
+`GET /admin/rooms/<ROOM>/spectate` requests a fresh public snapshot from the registered host with `admin-snapshot-request`. The host replies with `admin-public-snapshot`, containing only table, public player views, recent log/chat, connection status and arrows. The Worker stores it briefly in chunks and returns it only to an authenticated admin; a pending snapshot returns HTTP 202. The admin viewer polls every three seconds and has no relay peer ID, player seat or write channel. Unrevealed hand/library contents and private recovery backups are excluded.
 
 ## Optional Cloudflare room vault (`room-vault-v1`)
 

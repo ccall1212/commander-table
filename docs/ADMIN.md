@@ -1,6 +1,6 @@
 # Private admin dashboard
 
-The dashboard lives at `admin.html` beside the game. Its source is public because this repository is public; the passphrase and live room data are protected by the Cloudflare Worker, not by hiding the page. The dashboard is not linked from the player menu.
+The dashboard lives at `admin.html` beside the game. Its source is public because this repository is public; the passphrase and live room data are protected by the Cloudflare Worker, not by hiding the page. On the lobby, selecting the **Tree of Life → Dragon Flame → Obsidian Gem → Gilded Knight** card backs in that order reveals a small Admin link for that browser tab. The sequence only hides the link; the relay checks the private passphrase on every admin request.
 
 ## Before using it
 
@@ -11,6 +11,8 @@ The dashboard lives at `admin.html` beside the game. Its source is public becaus
 The list shows rooms whose **host is connected through the Cloudflare relay** and publishing status. It displays room code, host display name, player display names/connection status, started status and count, with 15-second refresh. Names are chosen by players and are not verified account identities. It never lists hands, libraries or private boards. A room falls off the list after the host disconnects or 90 seconds without a status update. A connection using the direct PeerJS fallback bypasses this relay; that game is absent and cannot be closed here. The count is therefore active *relay games*, not a guaranteed total of every game using the app.
 
 **Request to join** sends a visible approval prompt to the host. After approval the dashboard shows a regular join link. You still enter with a deck and choose an available color, subject to the usual six-player limit. Approval does not grant moderator rights or reveal hidden cards.
+
+**Spectate** opens a read-only Sidebar/Grid view with the public boards, game log and chat. It uses the current game's normal board renderer but does not take a seat, appear in the player roster, send chat, change cards, or notify the host or players. The passphrase is checked on every snapshot request, and the relay keeps a snapshot only briefly. Unrevealed hands and library cards remain hidden. Private room backups support board recovery, but they are not a live feed and are not exposed to spectators. Spectating only works while the host is connected through the relay, and it requires both the new game copy and updated Worker. An older host copy cannot provide snapshots.
 
 **Close room** ends its relay connections and rejects this room code for 24 hours. This is for an unwanted or stuck relay game; it does not close any direct PeerJS connection already in use. The separate in-game host/delegate moderation controls still handle individual players and board transfers. Older game copies that do not understand the closure message may reconnect through direct PeerJS; ask your group to use the current game copy when testing this feature.
 

@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.50.0] - 2026-10-22
+
+### Added
+- A hidden Admin link appears on the lobby after selecting the Tree of Life, Dragon Flame, Obsidian Gem and Gilded Knight card backs in that order. The link still requires the private admin passphrase.
+- Admins can spectate relay-connected games without taking a player seat or alerting the table. The read-only view uses the normal Sidebar/Grid board renderer and shows public boards, log and chat; unrevealed hands and libraries remain hidden.
+
 ## [0.49.0] - 2026-10-22
 
 ### Added
@@ -137,7 +143,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.49.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.50.0...HEAD
+[0.50.0]: https://github.com/ccall1212/commander-table/compare/v0.49.0...v0.50.0
 [0.49.0]: https://github.com/ccall1212/commander-table/compare/v0.48.0...v0.49.0
 [0.48.0]: https://github.com/ccall1212/commander-table/compare/v0.47.0...v0.48.0
 [0.47.0]: https://github.com/ccall1212/commander-table/compare/v0.46.1...v0.47.0

@@ -31,6 +31,9 @@ const HOST_ID_PREFIX = "ctable-v1-";
 const CLOSED_MS = 24 * 60 * 60 * 1000;
 const PRESENCE_MS = 90 * 1000;
 const JOIN_MS = 90 * 1000;
+const SPECTATE_MS = 20 * 1000;
+const SPECTATE_MAX_BYTES = 900000;
+const SPECTATE_CHUNK_BYTES = 60 * 1024;
 
 function json(value, status = 200, headers = {}) {
   return new Response(JSON.stringify(value), { status, headers: { "Content-Type": "application/json", "Cache-Control": "no-store", ...headers } });
@@ -76,7 +79,7 @@ export default {
     if (url.pathname === "/health") {
       const headers = { "Content-Type": "application/json" };
       if (okOrigin) Object.assign(headers, corsHeaders(origin));
-      return new Response(JSON.stringify({ ok: true, v: VERSION, features: ["room-vault-v1"] }), { status: 200, headers });
+      return new Response(JSON.stringify({ ok: true, v: VERSION, features: ["room-vault-v1", "admin-directory-v1", "admin-spectate-v1"] }), { status: 200, headers });
     }
 
     if (url.pathname.startsWith("/admin/")) {
@@ -87,12 +90,13 @@ export default {
         const response = await env.DIRECTORY.get(env.DIRECTORY.idFromName("global")).fetch("https://internal/rooms");
         return new Response(response.body, { status: response.status, headers: { "Content-Type": "application/json", "Cache-Control": "no-store", ...headers } });
       }
-      const action = /^\/admin\/rooms\/([A-Za-z2-9]{5})\/(close|join|join\/([\w-]{1,64}))$/.exec(url.pathname);
+      const action = /^\/admin\/rooms\/([A-Za-z2-9]{5})\/(close|join|spectate|join\/([\w-]{1,64}))$/.exec(url.pathname);
       if (!action) return json({ error: "Not found" }, 404, headers);
       const method = action[2] === "close" || action[2] === "join" ? "POST" : "GET";
       if (request.method !== method) return json({ error: "Method not allowed" }, 405, headers);
       const room = action[1].toUpperCase();
-      const path = action[2] === "close" ? "/control/close" : action[2] === "join" ? "/control/join" : "/control/join/" + action[3];
+      const path = action[2] === "close" ? "/control/close" : action[2] === "join" ? "/control/join"
+        : action[2] === "spectate" ? "/control/spectate" : "/control/join/" + action[3];
       const response = await env.ROOMS.get(env.ROOMS.idFromName(room)).fetch("https://internal" + path + "?room=" + room, { method });
       return new Response(response.body, { status: response.status, headers: { "Content-Type": "application/json", "Cache-Control": "no-store", ...headers } });
     }
@@ -137,6 +141,20 @@ export class Room extends DurableObject {
   }
 
   async adminControl(request, path) {
+    if (path === "/control/spectate" && request.method === "GET") {
+      if ((await this.ctx.storage.get("admin:closedUntil") || 0) > Date.now()) return json({ error: "Room closed" }, 410);
+      const host = this.hostSocket();
+      if (!host) return json({ error: "Host is not connected through the relay" }, 409);
+      if (!this.send(host, { op: "admin-snapshot-request" })) return json({ error: "Host disconnected" }, 409);
+      const meta = await this.ctx.storage.get("admin:snapshot:meta");
+      if (!meta || meta.generation !== this.att(host).generation || meta.updatedAt < Date.now() - SPECTATE_MS) return json({ status: "waiting" }, 202);
+      const chunks = await Promise.all(Array.from({ length: meta.chunks }, (_, i) => this.ctx.storage.get(`admin:snapshot:${meta.rev}:${i}`)));
+      if (chunks.some(chunk => !(chunk instanceof Uint8Array))) return json({ status: "waiting" }, 202);
+      const bytes = new Uint8Array(chunks.reduce((n, chunk) => n + chunk.byteLength, 0));
+      let offset = 0;
+      for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+      return new Response(bytes, { headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
+    }
     if (path === "/control/close" && request.method === "POST") {
       const until = Date.now() + CLOSED_MS;
       await this.ctx.storage.put("admin:closedUntil", until);
@@ -180,7 +198,7 @@ export class Room extends DurableObject {
     const room = (new URL(request.url).pathname.match(/^\/room\/([^/]+)$/) || [])[1];
     this.save(server, { room: room ? room.toUpperCase() : null, id: null, key: null, links: {} });
     try {
-      server.send(JSON.stringify({ op: "hello", v: VERSION, server: "cf-relay", maxMsg: MAX_MSG, features: ["room-vault-v1", "admin-directory-v1"] }));
+      server.send(JSON.stringify({ op: "hello", v: VERSION, server: "cf-relay", maxMsg: MAX_MSG, features: ["room-vault-v1", "admin-directory-v1", "admin-spectate-v1"] }));
     } catch (e) {
       // socket already gone; webSocketClose/Error will clean up
     }
@@ -322,6 +340,9 @@ export class Room extends DurableObject {
       case "admin-join-decision":
         await this.onAdminJoinDecision(ws, msg);
         break;
+      case "admin-public-snapshot":
+        await this.onAdminSnapshot(ws, msg);
+        break;
       case "cclose":
         this.onCclose(ws, msg);
         break;
@@ -353,6 +374,44 @@ export class Room extends DurableObject {
     const entry = await this.ctx.storage.get("admin:join:active");
     if (!entry || entry.id !== msg.id || entry.status !== "pending" || entry.expires < Date.now()) return;
     await this.ctx.storage.put("admin:join:active", { ...entry, status: msg.allow ? "approved" : "declined" });
+  }
+
+  async onAdminSnapshot(ws, msg) {
+    if (ws !== this.hostSocket() || !msg.snapshot || typeof msg.snapshot !== "object") return;
+    const input = msg.snapshot, table = input.table;
+    if (!table || table.room !== this.att(ws).room || !Array.isArray(table.seats) || table.seats.length > 6 || !input.players || typeof input.players !== "object") return;
+    // Allow only the same public player fields shared with ordinary opponents. Never copy
+    // private-board backups, deck contents, or unrecognized fields into the admin response.
+    const players = {};
+    for (const pid of table.seats) {
+      const p = input.players[pid];
+      if (!p || p.pid !== pid || !p.zones) continue;
+      const zones = Object.fromEntries(["battlefield", "graveyard", "exile", "command"].map(k => [k, Array.isArray(p.zones[k]) ? p.zones[k] : []]));
+      const revHand = Array.isArray(p.revHand) ? p.revHand : null;
+      const revCards = Array.isArray(p.revCards) ? p.revCards : [];
+      const revTop = Array.isArray(p.revTop) ? p.revTop : null;
+      const visibleIds = new Set([...Object.values(zones).flat(), ...(revHand || []), ...revCards, ...(revTop || [])].map(c => c && c.id).filter(Boolean));
+      const defs = Object.fromEntries([...visibleIds].filter(id => p.defs && Object.hasOwn(p.defs, id)).map(id => [id, p.defs[id]]));
+      players[pid] = { pid, name: p.name, bw: p.bw, appearance: p.appearance, life: p.life, poison: p.poison,
+        ctr: p.ctr, cmdDmg: p.cmdDmg, casts: p.casts, cmdrs: p.cmdrs, hand: p.hand, lib: p.lib,
+        openingDeal: p.openingDeal, kept: p.kept, mullCount: p.mullCount, layout: p.layout, bh: p.bh,
+        zones, revHand, revCards, revTop, defs };
+    }
+    const snapshot = { table, players, online: input.online, log: Array.isArray(input.log) ? input.log.slice(-100) : [],
+      chat: Array.isArray(input.chat) ? input.chat.slice(-100) : [], arrows: Array.isArray(input.arrows) ? input.arrows.slice(0, 100) : [], updatedAt: Date.now() };
+    const bytes = new TextEncoder().encode(JSON.stringify(snapshot));
+    if (bytes.byteLength > SPECTATE_MAX_BYTES) return;
+    const previous = await this.ctx.storage.get("admin:snapshot:meta");
+    const rev = crypto.randomUUID(), chunks = Math.ceil(bytes.byteLength / SPECTATE_CHUNK_BYTES);
+    for (let i = 0; i < chunks; i++) await this.ctx.storage.put(`admin:snapshot:${rev}:${i}`, bytes.slice(i * SPECTATE_CHUNK_BYTES, (i + 1) * SPECTATE_CHUNK_BYTES));
+    await this.ctx.storage.put("admin:snapshot:meta", { rev, chunks, generation: this.att(ws).generation, updatedAt: snapshot.updatedAt, expiresAt: Date.now() + 60 * 1000 });
+    if (previous) await this.deleteAdminSnapshot(previous);
+    await this.scheduleVaultAlarm();
+  }
+
+  async deleteAdminSnapshot(meta) {
+    if (!meta || typeof meta.rev !== "string" || !Number.isInteger(meta.chunks)) return;
+    await this.ctx.storage.delete(Array.from({ length: Math.min(meta.chunks, 20) }, (_, i) => `admin:snapshot:${meta.rev}:${i}`));
   }
 
   // ---- broker ops ----
@@ -389,6 +448,7 @@ export class Room extends DurableObject {
     const fresh = this.att(ws); // re-read: a takeover may have touched sockets
     fresh.id = want;
     fresh.key = key;
+    fresh.generation = crypto.randomUUID();
     this.save(ws, fresh);
     this.send(ws, { op: "open", id: want });
   }
@@ -664,6 +724,11 @@ export class Room extends DurableObject {
   }
 
   async expireVault(now = Date.now()) {
+    const adminSnapshot = await this.ctx.storage.get("admin:snapshot:meta");
+    if (adminSnapshot && adminSnapshot.expiresAt <= now) {
+      await this.ctx.storage.delete("admin:snapshot:meta");
+      await this.deleteAdminSnapshot(adminSnapshot);
+    }
     const owners = await this.vaultOwners();
     for (const [key, meta] of owners) {
       if (meta && Number.isFinite(meta.expiresAt) && meta.expiresAt <= now) {
@@ -695,6 +760,8 @@ export class Room extends DurableObject {
     for (const stage of stages.values()) if (stage && Number.isFinite(stage.expiresAt)) next = Math.min(next, stage.expiresAt);
     const roomOwner = await this.ctx.storage.get(this.vaultRoomOwnerKey());
     if (roomOwner && Number.isFinite(roomOwner.expiresAt)) next = Math.min(next, roomOwner.expiresAt);
+    const adminSnapshot = await this.ctx.storage.get("admin:snapshot:meta");
+    if (adminSnapshot && Number.isFinite(adminSnapshot.expiresAt)) next = Math.min(next, adminSnapshot.expiresAt);
     if (Number.isFinite(next)) await this.ctx.storage.setAlarm(next);
     else await this.ctx.storage.deleteAlarm();
   }

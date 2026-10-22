@@ -80,3 +80,7 @@ Chris would like additional backgrounds with stronger identity because several c
 ## 51. Private admin room dashboard — PRIVATE SETUP AND LIVE TEST PENDING
 
 The dashboard code shipped in v0.49.0 through PR #72. Chris still needs to set the private `ADMIN_PASSPHRASE` Worker secret and run a live relay test. Then confirm relay-connected rooms show their host and players, a join request reaches the host for approval, and closing a throwaway room stops relay reconnects under that code. Rooms using direct PeerJS fallback cannot be observed or closed through the relay. Full player accounts are a separate, larger idea.
+
+## 52. Hidden admin entry and read-only spectating — READY FOR CHRIS'S TEST
+
+Reveal a lobby Admin link by choosing the Tree of Life, Dragon Flame, Obsidian Gem and Gilded Knight card backs in that order. The link still requires the private passphrase. From the dashboard, an admin can spectate a relay-connected game invisibly and without taking a seat. The first implementation uses public boards, game log and chat; unrevealed hands and library cards remain private because room backups are not a current live feed. Check Sidebar and Grid, navigation, read-only controls and the absence of a player notification or roster entry. A live test needs the updated relay and private Cloudflare secret. No release approval yet.

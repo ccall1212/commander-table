@@ -87,6 +87,7 @@ function renderRoom(info) {
   const joinButton = button('Request to join', function () { requestJoin(room, result, this); });
   joinButton.disabled = joinStates.get(room) === 'waiting';
   actions.appendChild(joinButton);
+  actions.appendChild(button('Spectate', () => { location.href = 'index.html?adminSpectate=' + encodeURIComponent(room); }));
   actions.appendChild(button('Close room', function () { closeRoom(room, this); }, 'danger'));
   panel.appendChild(actions); panel.appendChild(result);
   renderJoinState(room, result);

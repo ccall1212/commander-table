@@ -249,6 +249,10 @@
         if (typeof m.id === 'string') this.emit('admin-join-request', m.id);
         break;
 
+      case 'admin-snapshot-request':
+        this.emit('admin-snapshot-request');
+        break;
+
       case 'open':
         this.id = m.id;
         this.open = true;
@@ -346,6 +350,14 @@
   RelayPeer.prototype.adminJoinDecision = function (id, allow) {
     if (!this.open || !this._ws || this._ws.readyState !== 1 || this.features.indexOf('admin-directory-v1') < 0) return false;
     this._ws.send(JSON.stringify({ op: 'admin-join-decision', id: id, allow: !!allow }));
+    return true;
+  };
+
+  RelayPeer.prototype.adminSnapshot = function (snapshot) {
+    if (!this.open || !this._ws || this._ws.readyState !== 1 || this.features.indexOf('admin-spectate-v1') < 0) return false;
+    var frame = JSON.stringify({ op: 'admin-public-snapshot', snapshot: snapshot });
+    if (!fitsIn(frame, this.maxMsg || DEFAULT_MAX_MSG)) return false;
+    this._ws.send(frame);
     return true;
   };
 

@@ -26,6 +26,7 @@ const assert = require('node:assert/strict');
     await page.getByText('1 active relay game').waitFor();
     await page.getByText('Host: Chris').waitFor();
     await page.getByText('Friend · disconnected').waitFor();
+    assert.equal(await page.getByRole('button', { name: 'Spectate' }).count(), 1);
     await page.getByRole('button', { name: 'Request to join' }).click();
     const link = page.getByRole('link', { name: 'Join this game' }); await link.waitFor();
     assert.equal(await link.getAttribute('href'), 'index.html?join=ABCDE');
