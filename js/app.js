@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.46.1';
+const APP_VERSION = '0.46.2';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -2891,15 +2891,6 @@ function diceMenu(x, y) {
   ]);
 }
 let touchOrientationHintDismissed = false;
-function updateTouchViewportHeight() {
-  const viewport = window.visualViewport;
-  const height = viewport && viewport.height > 0 ? viewport.height : window.innerHeight;
-  if (S.touchMode && Number.isFinite(height) && height > 0) {
-    document.documentElement.style.setProperty('--ct-viewport-height', `${Math.round(height)}px`);
-  } else {
-    document.documentElement.style.removeProperty('--ct-viewport-height');
-  }
-}
 function refreshTouchOrientationHint() {
   const old = $('#ct-touch-orientation-hint');
   const gameActive = $('#game') && !$('#game').classList.contains('hidden');
@@ -2924,7 +2915,7 @@ function setTouchMode(enabled) {
   S.touchMode = !!enabled;
   LS.set('ct.touchMode', S.touchMode);
   document.body.classList.toggle('touch-mode', S.touchMode);
-  updateTouchViewportHeight();
+  window.scrollTo(0, 0);
   S.touchPreview = null;
   hidePreview();
   refreshTouchOrientationHint();
@@ -5863,12 +5854,8 @@ async function begin(role) {
 function boot() {
   window.addEventListener('beforeunload', e => { if (S.me && S.role !== 'solo') { e.preventDefault(); e.returnValue = ''; } });
   document.body.classList.toggle('touch-mode', S.touchMode);
-  updateTouchViewportHeight();
   refreshTouchOrientationHint();
-  const updateMobileViewport = () => {
-    updateTouchViewportHeight();
-    refreshTouchOrientationHint();
-  };
+  const updateMobileViewport = () => refreshTouchOrientationHint();
   window.addEventListener('resize', updateMobileViewport, { passive: true });
   window.addEventListener('orientationchange', updateMobileViewport, { passive: true });
   if (window.visualViewport) window.visualViewport.addEventListener('resize', updateMobileViewport, { passive: true });
