@@ -20,7 +20,7 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 - **Queued:** Objective #46 adds **C** to copy a hovered visible card using the existing right-click copy action. When shipped, include C in #45's eight-line reminder in place of the optional U row. No test ZIP yet.
 - **Queued:** Objective #47 adds a larger background preview on the start screen. The Arcane Star and Shadow Black card-back presets were removed in v0.45.1 through PR #66. Objective #48 is a separate project for more distinctive original backgrounds. Neither open project has a test ZIP yet.
 - **Touch support:** Objective #18’s iPhone menu access fix published in v0.46.1 through PR #68. Chris tested it on a real iPhone and found that Touch mode compressed the landscape table; PR #69 has a v0.46.2 test copy to address that. Real-device retest and broader touch refinements remain open.
-- **In progress:** Objective #51 adds a passphrase-protected admin view of relay-connected rooms, host-approved join requests and room closure. The dashboard and Worker changes are on a focused branch; the passphrase must be configured privately in Cloudflare after review. PeerJS direct-connection fallback rooms cannot be managed there.
+- **Setup pending:** Objective #51's passphrase-protected admin view shipped in v0.49.0 through PR #72. Chris must configure the private Cloudflare Worker secret and test the live room list, host-approved join and close action before this objective is complete. PeerJS direct-connection fallback rooms cannot be managed there.
 - **Slam sound:** Chris wants to keep refining the Commander slam sound. Do that on a separate branch and leave the published behaviour alone until he approves.
 
 ## Existing test ZIPs for open work
