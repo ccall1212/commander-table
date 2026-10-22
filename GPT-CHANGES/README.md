@@ -15,8 +15,8 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 - **Version:** the newest entry in `CHANGELOG.md` (do not write a version number here; it goes stale).
 - **Paused again at Chris's request (2026-10-20):** draft [PR #11](https://github.com/ccall1212/commander-table/pull/11), website import/random deck picker. Preserve the branch and recovery checkpoint. Do not resume implementation, deploy its test Worker, merge, or publish until Chris asks to resume; see the investigation note.
 - **Layouts:** Sidebar and Grid only.
-- **Open work:** see `OBJECTIVES.md`. Opening readiness, personal Undo and In response are published. The only open PR is paused draft #11.
-- **Queued:** Moving backup/restore into Deck Builder #38, choosing mulligan rules after Host Game #39, and cleaner pre-game readiness wording #41 remain unimplemented; #41 is awaiting a design choice. Other open, paused and deferred items are listed in `OBJECTIVES.md`.
+- **Open work:** see `OBJECTIVES.md`. Opening readiness, personal Undo and In response are published. The published versions remain available; #41 is now being prepared on a separate branch, followed by #39.
+- **Queued:** Moving backup/restore into Deck Builder #38 remains queued. Chris chose the compact Hands ready roster for #41 and requested #39 next. Other open, paused and deferred items are listed in `OBJECTIVES.md`.
 - **Slam sound:** Chris wants to keep refining the Commander slam sound. Do that on a separate branch and leave the published behaviour alone until he approves.
 
 ## Existing test ZIPs for open work

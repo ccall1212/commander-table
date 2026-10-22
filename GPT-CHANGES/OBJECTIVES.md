@@ -48,12 +48,10 @@ Add an optional **Touch mode** for iPad Safari, launched from the top-right hamb
 
 Chris requested this for later on 2026-10-21 after Objectives #29 and #30 were published. Move the existing **Back up / restore…** entry from the main start area into the area opened by the **Deck Builder** button, reducing start-screen clutter. Keep both backup export and restore available there and preserve their published behavior, including optional preferences and appearance. This is a placement follow-up to shipped Objective #30; implementation has not started and no test ZIP exists yet.
 
-## 39. Choose mulligan rules after pressing Host Game — QUEUED
+## 39. Choose mulligan rules after pressing Host Game — REQUESTED NEXT
 
-Chris requested this for later on 2026-10-21. Remove the host's mulligan options from the main start area. After the player presses **Host Game**, ask which opening-hand/mulligan rule they want before completing the hosting flow. Include a short description such as **“You can change this after joining the game.”** Preserve the existing in-game host control for changing the rule, the published opening-hand modes and their mulligan limits/host-granted extras. This is a setup-flow follow-up to shipped Objective #34; implementation has not started and no test ZIP exists yet.
+Chris requested this for later on 2026-10-21. Remove the host's mulligan options from the main start area. After the player presses **Host Game**, ask which opening-hand/mulligan rule they want before completing the hosting flow. Include a short description such as **“You can change this after joining the game.”** Preserve the existing in-game host control for changing the rule, the published opening-hand modes and their mulligan limits/host-granted extras. This is a setup-flow follow-up to shipped Objective #34. Chris requested implementation after #41 on 2026-10-22; no test ZIP yet.
 
-## 41. Cleaner pre-game opening-hand status — QUEUED (design suggestions requested)
+## 41. Cleaner pre-game opening-hand status — IN PROGRESS
 
-Chris likes #37 but finds the inline “Everyone has kept” / “Waiting for Chris” sentences cluttered. He requested suggestions on 2026-10-21, including hover details on disabled Start or a nicer dialog; no replacement design has been selected or implemented. The opening-rule label already disappears after Start in the published release.
-
-Suggested directions: (1) a compact **Hands ready: 2/4** control beside Start that opens a roster marked Ready / Choosing, or (2) a minimal Start control with pending names in a tooltip and an accessible details button for touch/keyboard users. Keep pending names and long sentences out of the top bar, preserve host-side readiness validation and Draw 10 completion, and cover both layouts/sizes. This is a separate design follow-up, with no test ZIP yet.
+Chris selected the recommended compact **Hands ready: 2/4** control on 2026-10-22. It opens a live roster marked Ready / Choosing, replacing the inline pending names and long sentences. Host-side readiness validation, Draw 10 completion and the hidden in-game rule label remain in place. Implementation is on `feat/opening-roster`; assistant two-player Chromium checks passed in both layouts at 1920×1080 and 1366×768. An exact-head test ZIP is being prepared. Chris has not tested or approved publication of this redesign yet.

@@ -1,32 +1,19 @@
-# In response! — Objective #40, v0.42.0
+# Opening-hand roster — Objective #41, v0.43.0
 
-Includes published v0.41.0 personal Undo/checkpoints and v0.40.0 opening readiness, with the final hidden opening-rule label during play. Extract the ZIP and double-click **index.html**; no terminal or installation is needed. For multiplayer checks, use two browsers/devices running the same version with internet access.
-
-## Chris's testing and approval
-
-Tested by Chris: he likes #37, reports Undo works as it should, and says In response looks amazing and has been tested. He explicitly approved publication after hiding the opening-rule label during play and matching the response cue to the responding player color. His testing of the earlier ZIP is separate from the assistant's final label/color checks below. The pre-game wording redesign is a separate suggestions follow-up.
+Extract the ZIP and double-click **index.html**. No terminal or installation is needed. For multiplayer, use two browsers/devices with internet access and this same copy.
 
 ## Click list
 
-1. Host and join; choose different colors, such as blue and red. Keep both hands and Start. The London/3 Lands/10 → 7 label disappears after Start on both screens. A New Game restores the pre-game rule control.
-2. Press **In response!** or **R**. Both screens show the pressing player's name, with text and glow matching that player's color. Repeated separate presses restart the cue, which fades about 1.8 seconds after the latest press.
-3. Click an opponent's tile to enlarge it. Try both the button and R while that view remains open. The cue still uses your own name/color, and leaves the opponent view open. Repeat in Sidebar/Grid at 1920×1080 and 1366×768.
-4. Type R in chat/search/text fields, hold R, and try R with a dialog open: these must not fire repeated cues. I still opens card information; Ctrl+R/⌘R retain browser behavior.
-5. Calling a response must leave cards, turns, life, Undo history and the game log alone. The cue is click-through. With reduced motion enabled it appears without motion and still disappears normally.
-6. Disconnect/reconnect or reload: the cue is unavailable while disconnected, and old cues are not replayed. New Game clears any current cue and requires both players to keep again.
+1. Host and join with two players. The top bar shows **Hands ready: 0/2**, without inline player names or long waiting sentences. The opening rule is still available before Start.
+2. Click **Hands ready** on either screen. The **Opening hands** dialog lists both names with **Choosing**. Close it with X or Esc; keyboard focus returns to Hands ready. Enter also opens the focused button.
+3. Keep one hand while the other screen's roster is open. That player's row changes to **Ready** and the button to **1/2**. Start stays disabled. With Draw 10, bottom 3, selecting Keep alone does not count until the bottom cards have been chosen.
+4. Keep both hands. The button shows **2/2** and the host can Start. The readiness button, rule label and any open readiness dialog disappear on both screens after Start. Battlefield moves are still blocked before Start.
+5. Try Sidebar and Grid at both 1920×1080 and 1366×768. The roster should be compact, readable and inside the screen. New Game returns everyone to **0/2** and restores the opening rule.
 
-## Assistant checks
+## Verification
 
-- All 14 non-browser Node suites pass on the final combined integration: response, response transport, personal Undo, opening readiness, moderation, targeting, mulligan, player colors, P/T, token picker/printing, chat, backup and deck health. Response tests cover all six player colors and host/guest identity, authorization, current deal, repeat/fade/reset, no card/table/Undo/log mutation and offline queue behavior.
-- Actual two-context Chromium over HTTP :8104 with the unchanged Worker in local Miniflare :8114 passes the full response regression after rebasing onto the published dependencies. Both screens show the rule before Keep and hide it after Start. Guest red/host blue text and gradient are checked on sender and receiver, including a red guest pressing button/R while focused on the blue host board. Both layouts/sizes, repeats, input/dialog guards, click-through, dismissal, reduced motion, controls/menu bounds, unchanged gameplay state, and disconnected guest behavior pass; no page errors. Browser comparisons exclude automatic layout/turn bookkeeping and room-save metadata. Card-info I is unchanged in source; no external lookup or real-device Safari result is claimed.
-- The v0.40.0 label pass also checked that New Game restores the rule label on both screens. The rebased v0.41.0 Undo browser regression passed with two contexts and its own actual local relay, including history/checkpoint isolation, transfers and incoming effects.
-- Prior network harness: t1–t10 passed; t11 passed after its fixture was updated to meet opening readiness. Direct-P2P/fallback checks t12/t13 failed identically on the proposal and the published v0.39.0 baseline because PeerJS proxy tunnels failed and the intentional fallback-test port reported ERR_UNSAFE_PORT. Those unavailable direct paths were not rerun for the final color-only change. No relay/Worker/protocol code changed.
-- Changed JS/test syntax, all 21 cache/version links and diff checks pass. The downloadable archive is verified against the exact publication head.
+- Assistant code checks pass: changed JavaScript/test syntax, opening readiness, mulligan rules, personal Undo, response cues, player colors, version/cache links and diff checks.
+- Actual two-player Chromium checks pass over localhost HTTP with the unchanged Worker in local Miniflare. Sidebar and Grid at 1920×1080 and 1366×768 cover compact wording, no top-bar collisions, roster bounds, keyboard Enter/Esc and focus return, live Choosing → Ready updates, Draw 10 bottoming, Start guards, pre-start battlefield blocking, reload, automatic dialog close after Start, hidden in-game rule/readiness controls and New Game reset. Start is clicked at 1366×768 in Grid. No page errors. Settled screenshots were visually reviewed.
+- Assistant tests use HTTP; Chris's extract-and-double-click flow is above. No real-device Safari test is claimed. No relay/protocol code changed.
 
-Assistant browser checks use localhost HTTP; Chris's flow is extract/double-click above. Publication is authorized. Paused draft PR #11 remains untouched.
-
-## Publication verification
-
-Objectives #37, #35 and #40 merged through PRs #58–#60 after Chris's testing and approval of the final label/color adjustments. The automatic annotated tag targets were verified: v0.40.0 → `f7233f17bbbf2f63902a95d64377af295a1155c0`, v0.41.0 → `5609e8385d00424efe0dcd4647c63eb9fb928de4`, v0.42.0 → `52fa038c1fa48c3899ca53898b3f39eeeb979d5d`. Pages build/deploy, Workers Builds and release-tag checks succeeded for all three releases.
-
-The live-page browser check was blocked by `net::ERR_TUNNEL_CONNECTION_FAILED`; its footer and live rendering remain unverified here despite successful deployment pipelines. Merged feature branches/worktrees were cleaned after confirming exact heads and no unpublished changes. Only paused draft PR #11 remains open. Pre-game wording polish is tracked separately as Objective #41, awaiting a design choice.
+Chris has not tested this redesign yet; publication is awaiting his approval. Paused draft PR #11 remains untouched.
