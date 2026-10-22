@@ -796,6 +796,10 @@ body.lens-on #pv { display: none; }
 .custom-appearance-controls button { padding: 5px 9px; font-size: 12px; }
 .custom-appearance-controls button:disabled { opacity: .45; cursor: not-allowed; }
 .appearance-choice .custom-saved-label { display: block; margin-top: -3px; color: var(--muted); font-size: 10px; line-height: 1.1; text-align: center; }
+.custom-appearance-saved { min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.custom-appearance-saved > .appearance-choice { width: 100%; }
+.appearance-remove-upload { align-self: stretch; padding: 4px 8px; color: var(--muted); font-size: 11px; }
+.appearance-remove-upload:hover { border-color: var(--danger); color: var(--text); }
 .custom-upload-choice .appearance-thumb { border-color: var(--accent); }
 .custom-upload-choice.selected .custom-saved-label { color: var(--text); }
 .boardwrap { background-color: #0b1018; background-repeat: no-repeat; background-size: cover; background-position: center; }

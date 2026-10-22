@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.44.0';
+const APP_VERSION = '0.45.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -5680,14 +5680,26 @@ function readCustomImage(file, kind) {
   img.onerror = () => { URL.revokeObjectURL(url); status.textContent = 'The image could not be opened. Try another file.'; };
   img.src = url;
 }
-function resetCustomImage(kind) {
+async function resetCustomImage(kind) {
+  if (kind !== 'cardBack' && kind !== 'background') return;
+  const custom = CTAppearance.getCustom();
+  if (!custom[kind]) return;
+  const label = kind === 'cardBack' ? 'card-back image' : 'background image';
+  if (!await UI.confirm(`Remove your saved ${label}?`, {
+    title: 'Remove saved image', danger: true, okLabel: 'Remove', cancelLabel: 'Keep image'
+  })) return;
   CTAppearance.clearCustom(kind);
   const input = $(kind === 'cardBack' ? '#customBackFile' : '#customBackgroundFile');
   if (input) input.value = '';
   renderAppearancePickers();
+  const picker = $(kind === 'cardBack' ? '#cardBackPicker' : '#backgroundPicker');
+  const selected = picker && picker.querySelector('[data-appearance-id][aria-pressed="true"]');
+  if (selected) selected.focus({ preventScroll: true });
   if (!$('#game').classList.contains('hidden')) render();
 }
 function chooseAppearance(e, kind) {
+  const remove = e.target.closest('[data-remove-custom]');
+  if (remove) { resetCustomImage(remove.dataset.removeCustom); return; }
   const choice = e.target.closest('[data-appearance-id]');
   if (!choice) return;
   const prefs = CTAppearance.getPrefs(), id = choice.dataset.appearanceId;
