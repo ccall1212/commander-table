@@ -98,8 +98,7 @@ The normal flow for game changes is:
   Cross-player effects are requests to the card's owner. Don't add a second rendering system.
 - **No secrets** in code, commits or chat (API keys, tokens, passwords). The relay URL is public.
 - Don't install Node/npm or other tooling on Chris's work laptop (SentinelOne EDR). Python 3 and git are available.
-- Keyboard shortcuts already in use (don't reuse these letters without checking the in-game Hotkey list): T taps/untaps a battlefield card or plays a hovered hand card onto the battlefield tapped, F flip, Z face-down, G graveyard, E exile, H hand, B battlefield, A attach, J counter, D draw, U untap all, S shuffles when hovering your Library, X mills one card when hovering your Library, L opens Search Library, I info, V magnifier, Space pass turn, Ctrl+Z undo.
-- Open Objective #40 / PR #60 also reserves **R** for the repeatable **In response!** cue. This remains a test proposal until Chris approves publication; do not reuse R in another change while it is open.
+- Keyboard shortcuts already in use (don't reuse these letters without checking the in-game Hotkey list): T taps/untaps a battlefield card or plays a hovered hand card onto the battlefield tapped, F flip, Z face-down, G graveyard, E exile, H hand, B battlefield, A attach, J counter, D draw, U untap all, S shuffles when hovering your Library, X mills one card when hovering your Library, L opens Search Library, I info, V magnifier, R calls In response!, Space pass turn, Ctrl+Z undo.
 - UI preferences Chris has stated: subdued, readable, nothing that scrolls on the table, no card-specific
   buttons, EDHPlay is the reference look.
 

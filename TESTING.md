@@ -24,3 +24,9 @@ Tested by Chris: he likes #37, reports Undo works as it should, and says In resp
 - Changed JS/test syntax, all 21 cache/version links and diff checks pass. The downloadable archive is verified against the exact publication head.
 
 Assistant browser checks use localhost HTTP; Chris's flow is extract/double-click above. Publication is authorized. Paused draft PR #11 remains untouched.
+
+## Publication verification
+
+Objectives #37, #35 and #40 merged through PRs #58–#60 after Chris's testing and approval of the final label/color adjustments. The automatic annotated tag targets were verified: v0.40.0 → `f7233f17bbbf2f63902a95d64377af295a1155c0`, v0.41.0 → `5609e8385d00424efe0dcd4647c63eb9fb928de4`, v0.42.0 → `52fa038c1fa48c3899ca53898b3f39eeeb979d5d`. Pages build/deploy, Workers Builds and release-tag checks succeeded for all three releases.
+
+The live-page browser check was blocked by `net::ERR_TUNNEL_CONNECTION_FAILED`; its footer and live rendering remain unverified here despite successful deployment pipelines. Merged feature branches/worktrees were cleaned after confirming exact heads and no unpublished changes. Only paused draft PR #11 remains open. Pre-game wording polish is tracked separately as Objective #41, awaiting a design choice.
