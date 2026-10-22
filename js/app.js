@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.47.0';
+const APP_VERSION = '0.48.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -4145,7 +4145,7 @@ function drawTargetArrows(time) {
     if (!item) {
       item = document.createElementNS('http://www.w3.org/2000/svg', 'g');
       item.dataset.arrowId = arrow.id; item.classList.add('ct-arrow-item'); item.setAttribute('role', 'button'); item.setAttribute('tabindex', '0');
-      item.innerHTML = '<title></title><defs><marker viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z"/></marker></defs><line class="ct-arrow-shadow"/><line class="ct-arrow-line"/><circle class="ct-arrow-player-target" r="7"/><line class="ct-arrow-hit"/>';
+      item.innerHTML = '<title></title><defs><marker viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z"/></marker></defs><rect class="ct-arrow-source-outline" rx="5"/><line class="ct-arrow-shadow"/><line class="ct-arrow-line"/><circle class="ct-arrow-player-target" r="7"/><line class="ct-arrow-hit"/><g class="ct-arrow-source"><circle r="11"/><text text-anchor="middle" dominant-baseline="central"></text></g><g class="ct-arrow-order"><circle r="12"/><text text-anchor="middle" dominant-baseline="central"></text></g>';
       const markerId = 'ct-arrow-tip-' + arrow.id;
       item.querySelector('marker').id = markerId;
       item.querySelector('.ct-arrow-line').setAttribute('marker-end', 'url(#' + markerId + ')');
@@ -4158,9 +4158,25 @@ function drawTargetArrows(time) {
     if (coords) {
       item.style.color = colorOf(arrow.by);
       item.querySelector('marker path').setAttribute('fill', colorOf(arrow.by));
-      const dot = item.querySelector('circle');
+      const dot = item.querySelector('.ct-arrow-player-target');
       dot.style.display = arrow.to.kind === 'player' ? '' : 'none';
       dot.setAttribute('cx', b.left + b.width / 2); dot.setAttribute('cy', b.top + b.height / 2);
+      const outline = item.querySelector('.ct-arrow-source-outline');
+      outline.style.display = arrow.from.kind === 'card' ? '' : 'none';
+      if (arrow.from.kind === 'card') {
+        outline.setAttribute('x', (a.left - 2).toFixed(1)); outline.setAttribute('y', (a.top - 2).toFixed(1));
+        outline.setAttribute('width', (a.width + 4).toFixed(1)); outline.setAttribute('height', (a.height + 4).toFixed(1));
+      }
+      const numbered = S.targetArrows.length > 1;
+      const source = item.querySelector('.ct-arrow-source');
+      source.setAttribute('transform', `translate(${coords.x1.toFixed(1)} ${coords.y1.toFixed(1)})`);
+      source.querySelector('text').textContent = numbered ? index + 1 : '';
+      const order = item.querySelector('.ct-arrow-order');
+      order.style.display = numbered ? '' : 'none';
+      if (numbered) {
+        order.setAttribute('transform', `translate(${((coords.x1 + coords.x2) / 2).toFixed(1)} ${((coords.y1 + coords.y2) / 2).toFixed(1)})`);
+        order.querySelector('text').textContent = index + 1;
+      }
       item.querySelectorAll('line').forEach(el => Object.entries(coords).forEach(([k, v]) => el.setAttribute(k, v.toFixed(1))));
     }
   });

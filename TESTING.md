@@ -1,15 +1,14 @@
-# Entry color choices and UI polish — v0.47.0 test copy
+# Arrow sources and order — v0.48.0 test copy (Objective #50)
 
-Extract the ZIP and double-click **index.html**; no terminal or local server is needed. This change was published in v0.47.0 through PR #70 after Chris said it looked great and approved publication.
+Extract the ZIP and double-click **index.html**. The change is on a test branch and is not published to the live site yet.
 
-1. Host a game. Under the opening rule, confirm the heading reads **Would you like to turn on auto-actions?** and Auto-Draw and Auto Untap All can still be chosen independently. Cancel, then join or host again and check the same wording in the Join flow.
-2. At **Choose your player color**, confirm ten choices appear: the original six plus **Orange**, **Pink**, **Lime** and **White**. Pick a new color. A second player should see that color as taken and be able to choose another. The room still allows the same number of players.
-3. In a game with two players, use **In response!** and draw a targeting arrow. Both should use the initiating player's selected color. Check Sidebar and Grid if possible.
-4. Move a mouse over **↶ Undo**. Its yellow hover border should be complete on all four sides, including next to the ▾ history button. Hover ▾ separately and check its border too; keyboard focus should also show the full border.
-5. On a smaller screen, confirm the color picker can scroll to every option and its Cancel button.
-
-The separate iPhone Touch mode height fix remains in PR #69. This copy starts from published v0.46.1; if PR #69 publishes first, this branch will be refreshed before it is published. Paused draft PR #11 is untouched.
+1. With two players, draw one arrow from a battlefield card to another card or player. Its source card should have a thin outline in your player color, and a colored circle should sit where the line leaves it. The line still follows both cards as boards move or resize.
+2. Draw two or more arrows, including from the same card. Each source circle and the middle of its line should show matching **1**, **2**, and so on in the order you drew them. Remove an arrow by clicking/tapping its line; the remaining numbers should close the gap. The numbers show drawing order, not combat damage order.
+3. Have the second player draw an arrow in their own color. Check both Sidebar and Grid, and try viewing the opponent's board; the outlines and numbers should follow the right cards and remain legible. Try an arrow from a player's name or empty board area, which should get a source circle but no card outline.
+4. Confirm a card under an arrow can still be used normally and a line can still be removed by keyboard (Tab, then Enter or Space). On touch, check that the line remains easy to tap.
 
 ## Assistant verification
 
-Chromium over localhost HTTP checked the Host and Join auto-action heading, ten picker choices and new color selection at 1366×768, 844×390 and 390×844, and the full Undo/history yellow hover border at 1366×768. No page errors occurred. Color, response and targeting unit checks pass, along with changed JavaScript syntax and diff whitespace checks. Live multiplayer response/arrow appearance, real iPhone Safari and direct file:// opening remain for Chris to check. Tested by Chris: “looks great.” Specific color or multiplayer steps were not reported.
+Node targeting regression and JavaScript syntax checks pass. Chromium on the local app at 1366×768 rendered one arrow's outline and unnumbered source circle, then two arrows with matching source/line numbers and player color. It confirmed line hit targets remain active, number badges are click-through, and numbers disappear again after removing one arrow. No page errors occurred. The browser check used a solo board with three visible test cards and a simulated public copy; multiplayer, Sidebar/Grid switching, and real touch behavior still need Chris's review.
+
+Objective #18's separate iPhone Touch mode fix remains open in PR #69. Paused draft PR #11 is untouched.
