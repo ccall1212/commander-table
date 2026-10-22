@@ -1,7 +1,8 @@
 # Commander Table relay: setup (Cloudflare, no local tools needed)
 
-The relay is a tiny Cloudflare Worker (`worker.js`) plus one Durable Object per game room. It only
-passes messages between players; it never reads game data. You do NOT need Node or npm. Cloudflare
+The relay is a tiny Cloudflare Worker (`worker.js`) plus one Durable Object per game room. It passes
+messages between players and temporarily stores room recovery data and public spectator snapshots.
+You do NOT need Node or npm. Cloudflare
 builds and deploys it from the GitHub repo (Workers Builds), which also applies the Durable Object
 migration in `wrangler.jsonc`.
 
