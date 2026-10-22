@@ -61,11 +61,11 @@ When someone enters a game by hosting, joining, resuming or starting solo practi
 
 Chris initially suggested **X** for Exile, but the published shortcut is **E**; **X** currently mills the top card when hovering your Library. Use the player's current custom bindings in the reminder when they differ from the defaults. Put a **Don't show again** checkbox at the bottom and save that choice in this browser so future game entries skip the popup. Leave the full **Hotkeys** list available from the in-game menu. This is a future objective; no implementation or test ZIP yet.
 
-## 47. Preview backgrounds larger — QUEUED
+## 47. Preview backgrounds larger — IN PROGRESS (v0.52.0 test branch)
 
 The Arcane Star and Shadow Black card-back presets and images were removed in v0.45.1 through PR #66. Older saved selections fall back to Ruby Sigil. The larger background preview below remains open.
 
-On the start screen, let players inspect each play-area background in a larger view before choosing it. The existing thumbnail click should still select the background; provide a separate, obvious preview action so inspection does not silently change their selection. Show the full-size image without the dark gameplay overlay, fit it within desktop and smaller screens, and make the preview easy to close. Cover presets and a saved custom background when present. The larger background preview is independent of creating more backgrounds. No test ZIP for the preview yet.
+On the start screen, let players inspect each play-area background in a larger view before choosing it. The existing thumbnail click should still select the background; provide a separate, obvious preview action so inspection does not silently change their selection. Show the full-size image without the dark gameplay overlay, fit it within desktop and smaller screens, and make the preview easy to close. Cover presets and a saved custom background when present. The larger background preview is independent of creating more backgrounds. Implemented on `feat/background-preview` for review: separate Preview controls for presets and saved uploads, full-image dialog, no selection changes, and responsive sizing. See the branch PR for the exact-commit test ZIP and `TESTING.md`. Awaiting Chris’s hands-on test and publication approval.
 
 ## 48. More distinctive play-area backgrounds — QUEUED AS A SEPARATE ART PROJECT
 

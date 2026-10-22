@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.51.0';
+const APP_VERSION = '0.52.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -5608,7 +5608,11 @@ function renderDeckList() {
 function bindLobby() {
   $('#ver').textContent = APP_VERSION;
   $('#cardBackPicker').addEventListener('click', e => { trackAdminEntry(e); chooseAppearance(e, 'cardBack'); });
-  $('#backgroundPicker').addEventListener('click', e => chooseAppearance(e, 'background'));
+  $('#backgroundPicker').addEventListener('click', e => {
+    const preview = e.target.closest('[data-background-preview]');
+    if (preview) { showBackgroundPreview(preview.dataset.backgroundPreview); return; }
+    chooseAppearance(e, 'background');
+  });
   $('#customBackFile').addEventListener('change', e => readCustomImage(e.target.files && e.target.files[0], 'cardBack'));
   $('#customBackgroundFile').addEventListener('change', e => readCustomImage(e.target.files && e.target.files[0], 'background'));
   $('#resetCustomBack').addEventListener('click', () => resetCustomImage('cardBack'));
@@ -5772,6 +5776,33 @@ function renderAppearancePickers() {
   const bs = $('#customBackStatus'), gs = $('#customBackgroundStatus');
   if (bs) bs.textContent = custom.cardBack ? (custom.cardBackActive ? 'Saved in this browser · currently in use.' : 'Saved in this browser · not currently selected.') : 'No saved card-back image.';
   if (gs) gs.textContent = custom.background ? (custom.backgroundActive ? 'Saved in this browser · currently in use.' : 'Saved in this browser · not currently selected.') : 'No saved background image.';
+}
+function showBackgroundPreview(id) {
+  const preset = CTAppearance.backgroundOptions.find(x => x.id === id);
+  const src = id === 'custom-local' ? CTAppearance.getCustom().background : preset?.src;
+  if (!src) return;
+  const name = id === 'custom-local' ? 'Your upload' : preset.name;
+  const content = document.createElement('div');
+  content.className = 'background-preview-content';
+  const image = document.createElement('img');
+  image.alt = name;
+  image.className = 'background-preview-image';
+  const status = document.createElement('p');
+  status.className = 'muted small';
+  status.setAttribute('role', 'status');
+  status.textContent = 'Loading preview…';
+  image.onload = () => { status.textContent = 'Preview only · your selected background has not changed.'; };
+  image.onerror = () => { image.hidden = true; status.textContent = 'This background could not be loaded. Close the preview and try again.'; };
+  image.src = src;
+  content.append(image, status);
+  const modal = UI.modal({ title: name, className: 'background-preview-dialog', el: content });
+  modal.dialog.setAttribute('aria-label', name + ' background preview');
+  const close = document.createElement('button');
+  close.type = 'button';
+  close.textContent = 'Close preview';
+  close.addEventListener('click', modal.close);
+  content.appendChild(close);
+  close.focus();
 }
 function readCustomImage(file, kind) {
   const status = $(kind === 'cardBack' ? '#customBackStatus' : '#customBackgroundStatus');
