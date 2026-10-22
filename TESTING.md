@@ -1,13 +1,13 @@
 # Card-back preset removal — v0.45.1
 
-This is a test copy. Extract the ZIP and double-click **index.html**; no terminal or local server is needed.
+This change was published as v0.45.1 through PR #66. To check a downloaded copy, extract the ZIP and double-click **index.html**; no terminal or local server is needed.
 
 1. On the opening screen, open **Your look**. The card-back picker should have ten presets. Arcane Star and Shadow Black should be absent; the remaining presets should show their images.
 2. Choose another preset, then host or join a game. Face-down cards in your Library and hand should use that backing. Check an opponent's face-down cards if a second player is available. Try Sidebar and Grid at 1920×1080 and 1366×768 if practical.
 3. If you had previously chosen Arcane Star or Shadow Black, the selection should now show Ruby Sigil; your face-down cards should remain visible. A collection backup containing either older choice should also restore to Ruby Sigil.
 4. If you have a custom uploaded card backing, it should still be available from **Your look** and work in game.
 
-Please tell me which steps and browsers you tried. This PR is a test copy and has not been published.
+The change was published after Chris requested “Push.” No additional hands-on test details were reported for this copy.
 
 ## Assistant verification
 
