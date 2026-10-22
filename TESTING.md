@@ -1,13 +1,15 @@
-# iPhone Touch mode menu access — v0.46.1 test copy
+# Entry color choices and UI polish — v0.47.0 test copy
 
-Extract the ZIP and double-click **index.html**; no terminal or local server is needed. This change was published as v0.46.1 through PR #68 after Chris requested “Push.” The live iPhone test remains outstanding.
+Extract the ZIP and double-click **index.html**; no terminal or local server is needed. This change has not been published.
 
-1. On an iPhone, open a saved game or enter Practice solo. In portrait, the **☰** menu button should be visible at the top right. Tap it and choose **Touch mode: Off**. It should switch on and show **Touch mode: On** when you reopen the menu.
-2. Rotate to landscape. The **☰** button should still be visible and usable; turn Touch mode off and on again. Confirm you can reach the menu both before and after switching modes.
-3. If you play with others, check the same in a joined room. Try Sidebar and Grid if available. On a desktop-width browser, check that the top bar still works normally.
+1. Host a game. Under the opening rule, confirm the heading reads **Would you like to turn on auto-actions?** and Auto-Draw and Auto Untap All can still be chosen independently. Cancel, then join or host again and check the same wording in the Join flow.
+2. At **Choose your player color**, confirm ten choices appear: the original six plus **Orange**, **Pink**, **Lime** and **White**. Pick a new color. A second player should see that color as taken and be able to choose another. The room still allows the same number of players.
+3. In a game with two players, use **In response!** and draw a targeting arrow. Both should use the initiating player's selected color. Check Sidebar and Grid if possible.
+4. Move a mouse over **↶ Undo**. Its yellow hover border should be complete on all four sides, including next to the ▾ history button. Hover ▾ separately and check its border too; keyboard focus should also show the full border.
+5. On a smaller screen, confirm the color picker can scroll to every option and its Cancel button.
 
-Please tell me which iPhone/browser and orientations you tried. Chris reported that the hamburger was unreachable on iPhone in both orientations before this fix; no post-fix iPhone test has been reported yet.
+The separate iPhone Touch mode height fix remains in PR #69. This copy starts from published v0.46.1; if PR #69 publishes first, this branch will be refreshed before it is published. Paused draft PR #11 is untouched.
 
 ## Assistant verification
 
-Mobile Chromium reproduced the old problem: the menu began around x=1,200 on 390px portrait and 844px landscape screens. After the fix, the button was inside 320×690 and 390×844 portrait and 844×390 landscape viewports; opening the menu and toggling Touch mode both on and off worked with no page errors. The portrait landscape tip stayed below the top bar. A desktop-width control also worked at 1366×768. Tests used localhost HTTP because file:// access is blocked by this environment’s browser policy. Real iPhone Safari and multiplayer remain to be checked by Chris. Paused draft PR #11 is untouched.
+Chromium over localhost HTTP checked the Host and Join auto-action heading, ten picker choices and new color selection at 1366×768, 844×390 and 390×844, and the full Undo/history yellow hover border at 1366×768. No page errors occurred. Color, response and targeting unit checks pass, along with changed JavaScript syntax and diff whitespace checks. Live multiplayer response/arrow appearance, real iPhone Safari and direct file:// opening remain for Chris to check. Chris has not reported hands-on testing of this copy yet.

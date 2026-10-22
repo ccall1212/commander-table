@@ -22,6 +22,15 @@ assert.equal(colors.claim(['host', 'alice'], starting, 'alice', 'gold'), null, '
 assert.equal(colors.claim(['host', 'alice', 'bob'], starting, 'bob', 'red').bob, 'red', 'a competing available claim can succeed');
 assert.equal(colors.claim(['host', 'alice'], aliceClaim, 'alice', 'purple'), null, 'a confirmed color cannot be changed');
 
+for (const id of ['orange', 'pink', 'lime', 'white']) {
+  const chosen = colors.claim(['host', 'alice', 'bob'], starting, 'alice', id);
+  assert.equal(chosen.alice, id, `${id} can be chosen at entry`);
+  assert.equal(colors.claim(['host', 'alice', 'bob'], chosen, 'bob', id), null,
+    `${id} cannot be claimed by another seated player`);
+  assert.equal(colors.normalize(['host', 'alice', 'bob'], chosen).alice, id,
+    `${id} survives a saved-room normalization`);
+}
+
 const reconnectCopy = JSON.parse(JSON.stringify({ seats, colors: aliceClaim }));
 assert.deepEqual(colors.normalize(reconnectCopy.seats, reconnectCopy.colors, false), aliceClaim,
   'chosen colors survive JSON table persistence and reconnect');

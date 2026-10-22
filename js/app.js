@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.46.1';
+const APP_VERSION = '0.47.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -5587,8 +5587,8 @@ function bindLobby() {
 
 let hostOpeningPromptOpen = false;
 function autoActionChoices() {
-  return `<fieldset class="ct-entry-auto-actions" aria-label="Your turn options">
-    <legend>Your turn</legend>
+  return `<fieldset class="ct-entry-auto-actions">
+    <legend>Would you like to turn on auto-actions?</legend>
     <label><input type="checkbox" name="entry-auto-draw"><span><b>Auto-Draw</b><small>Draw a card at the start of your turn.</small></span></label>
     <label><input type="checkbox" name="entry-auto-untap"><span><b>Auto Untap All</b><small>Untap your cards at the start of your turn.</small></span></label>
   </fieldset><p class="muted small ct-entry-auto-note">These apply only to your board. You can change either setting in-game.</p>`;

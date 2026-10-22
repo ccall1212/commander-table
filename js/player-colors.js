@@ -8,7 +8,11 @@
     { id: 'green', name: 'Green', value: '#3fbf7f' },
     { id: 'red', name: 'Red', value: '#e5534b' },
     { id: 'purple', name: 'Purple', value: '#a35cff' },
-    { id: 'teal', name: 'Teal', value: '#2ec4c4' }
+    { id: 'teal', name: 'Teal', value: '#2ec4c4' },
+    { id: 'orange', name: 'Orange', value: '#ff8c42' },
+    { id: 'pink', name: 'Pink', value: '#ff70b7' },
+    { id: 'lime', name: 'Lime', value: '#b8d94b' },
+    { id: 'white', name: 'White', value: '#e9edf7' }
   ];
   const byId = new Map(PALETTE.map(c => [c.id, c]));
 
