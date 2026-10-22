@@ -35,7 +35,6 @@
   // Connection route ("transport"):
   //   'relay' - WebSocket to the Cloudflare relay (js/relay-peer.js); works through firewalls
   //   'p2p'   - PeerJS / WebRTC directly between browsers (needs a network that allows it)
-  //   'lan'   - the LAN server this page was loaded from (window.Peer is LanPeer)
   // js/net-config.js sets window.CT_NET = {relayUrl, mode: 'auto'|'relay'|'p2p'};
   // ?net=relay|p2p in the page URL overrides the mode (handy for testing).
   function netConfig() {
@@ -50,7 +49,7 @@
     } catch (_) { /* ignore */ }
     return { relayUrl: String(relayUrl).replace(/\/+$/, ''), mode: mode };
   }
-  function hasPeerJS() { return typeof Peer === 'function' && Peer !== window.LanPeer; }
+  function hasPeerJS() { return typeof Peer === 'function'; }
   function hasRelay(nc) { return !!nc.relayUrl && typeof window.RelayPeer === 'function'; }
 
   function log() {
@@ -102,8 +101,7 @@
     var nc = netConfig();
     var auto = false;
     var transport;
-    if (window.CT_LAN && typeof Peer === 'function') transport = 'lan';
-    else if (nc.mode === 'p2p' || !hasRelay(nc)) transport = 'p2p';
+    if (nc.mode === 'p2p' || !hasRelay(nc)) transport = 'p2p';
     else if (nc.mode === 'relay' || !hasPeerJS()) transport = 'relay';
     else { transport = 'relay'; auto = true; }
     var notFound = 0;            // client: consecutive "room not found" answers
@@ -158,7 +156,6 @@
           key: cfg.key || null, label: 'relay'
         });
       }
-      if (transport === 'lan') return new Peer(id || null, { key: cfg.key || null });
       return id ? new Peer(id, peerOptions()) : new Peer(peerOptions());
     }
     // Auto mode: switch between relay and direct. Returns true if it switched.
@@ -170,7 +167,7 @@
       transport = next;
       return true;
     }
-    function routeName() { return transport === 'relay' ? 'relay' : transport === 'lan' ? 'LAN server' : 'direct connection'; }
+    function routeName() { return transport === 'relay' ? 'relay' : 'direct connection'; }
     function isSignalingError(type) {
       return type === 'server-error' || type === 'network' || type === 'socket-error' || type === 'socket-closed';
     }
@@ -185,7 +182,7 @@
     var enc = typeof TextEncoder !== 'undefined' ? new TextEncoder() : null;
     function byteLen(s) { return enc ? enc.encode(s).length : s.length * 3; }
 
-    // The relay / LAN server accept much bigger frames than PeerJS (peer.maxMsg, from its hello).
+    // The relay accepts much bigger frames than PeerJS (peer.maxMsg, from its hello).
     function sizeLimits() {
       var mm = peer && peer.maxMsg;
       if (mm && mm > 50000) {

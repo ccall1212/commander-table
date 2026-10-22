@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.44.0';
+const APP_VERSION = '0.44.1';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -4937,8 +4937,8 @@ async function passTurn() {
   const seq = Math.max(1, num(T.turnSeq, num(T.turn)));
   toHost({ t: 'op', op: { k: 'pass', turn: seq, turnSeq: seq } });
 }
-// Invite link = this page's address (works on GitHub Pages' /commander-table/ path, the
-// LAN server and file://) + ?join=CODE. The bare room code still works as a fallback.
+// Invite link = this page's address (works on GitHub Pages' /commander-table/ path,
+// a local HTTP preview and file://) + ?join=CODE. The bare room code still works as a fallback.
 function inviteLink(room) {
   const u = new URL(location.href);
   u.search = ''; u.hash = '';
@@ -5504,11 +5504,6 @@ function showLobby() {
     ib.innerHTML = `<b>You're invited to room ${esc(inv)}.</b><span class="muted">Enter your name and pick a deck, then press <b>Join</b>.</span>`;
     ib.classList.remove('hidden');
   } else ib.classList.add('hidden');
-  const lan = window.CT_LAN, li = $('#lanInfo');
-  if (lan && lan.urls && lan.urls.length) {
-    li.innerHTML = `<b>LAN game</b> — players on your network open ${lan.urls.map(u => `<code>${esc(u)}</code>`).join(' or ')}, then join with the room code.`;
-    li.classList.remove('hidden');
-  } else li.classList.add('hidden');
   const last = LS.get('ct.last', null);
   const sess = last && last !== S.pid ? loadSession(last) : null;
   const rb = $('#resumeBox');
@@ -5857,7 +5852,7 @@ function versionGuard() {
 }
 let updateNoticed = false;
 async function checkForNewVersion() {
-  if (updateNoticed || location.protocol === 'file:' || window.CT_LAN) return; // LAN games use js/updates.js
+  if (updateNoticed || location.protocol === 'file:') return;
   try {
     const u = new URL(location.href); u.search = ''; u.hash = ''; u.searchParams.set('check', Date.now());
     const m = (await (await fetch(u.href, { cache: 'no-store' })).text()).match(/<meta name="app-version" content="([^"]+)"/);

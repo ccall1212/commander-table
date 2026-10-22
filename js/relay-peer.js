@@ -1,9 +1,9 @@
 /* relay-peer.js - RelayPeer: a drop-in stand-in for the subset of PeerJS's Peer API that
  * js/net.js uses, relaying everything over a WebSocket to a relay broker (the Cloudflare
- * relay or lan-server.py) speaking protocol v2 (see docs/relay-protocol.md).
+ * relay) speaking protocol v2 (see docs/relay-protocol.md).
  *
- * Always defines window.RelayPeer; it does NOT replace window.Peer by itself (js/lan.js and
- * js/net.js decide when to use it).
+ * Always defines window.RelayPeer; it does NOT replace window.Peer by itself.
+ * js/net.js decides when to use it.
  *
  * new RelayPeer(id?, opts)   opts.url  (required) full ws:// or wss:// URL
  *                            opts.key  (string|null) takeover key sent in 'reg'

@@ -51,7 +51,7 @@ The normal flow for game changes is:
 - **Syntax:** if your environment has Node, run `node --check js/<file>.js` on every changed file.
   If not, re-read each changed function and check that braces, brackets, parentheses and template
   literals (backticks, `${…}`) are balanced, and that no `const`/`let` is declared twice in the same scope.
-- **Python:** run `python -m py_compile lan-server.py tools/bump-version.py tests/test_relay_protocol.py`
+- **Python:** run `python -m py_compile tools/bump-version.py tests/test_relay_protocol.py`
   if you changed any of them.
 - **Cross-check names:** grep that every function, CSS class, `data-a="…"` action and element id you
   use actually exists, and that every one you renamed or removed has no remaining references.
@@ -73,8 +73,8 @@ The normal flow for game changes is:
   from `main`, root folder).
 - Online play goes through a Cloudflare relay (`relay/`, Worker + Durable Object). The browser side is
   `js/relay-peer.js` and `js/net.js`; see `docs/NETWORKING.md` and `docs/relay-protocol.md`.
-- LAN mode (`lan-server.py`, `Start LAN game.bat`, `js/lan.js`, `js/updates.js`) is **unused** — nobody plays
-  that way. Don't build features for it; it's a candidate for removal.
+- Legacy LAN launchers/server/shims and the LAN-only updater were removed. Keep online relay play,
+  PeerJS fallback and extract/double-click `index.html` working; do not reintroduce a player-run server.
 
 ## Files you'll touch most
 
@@ -154,14 +154,14 @@ A new release does not change an existing commit ZIP. Explain when a feature bra
    - Check layouts at 1920×1080 and 1366×768, and in the Sidebar and Grid views if the UI changed.
    - Network regression suite (13 checks, real relay):
      `http://127.0.0.1:8099/tests/net-harness.html?relay=https://commander-table-relay.chris-call1212.workers.dev&net=relay&auto=1`
-   - Protocol tests (only if relay/LAN code changed): `python tests/test_relay_protocol.py`
-     (local LAN server) or with `--url wss://commander-table-relay.chris-call1212.workers.dev/room/TESTX`.
+   - Protocol tests (if relay or transport code changed): `python tests/test_relay_protocol.py --url ws://127.0.0.1:8111/room/TESTX`
+     against a locally running Worker, or `--url wss://commander-table-relay.chris-call1212.workers.dev/room/TESTX`.
    - Stop the test server afterwards.
 5. **Set the version** (semantic versioning: `0.MINOR.PATCH`; new features bump MINOR, fixes bump PATCH):
    ```bash
    python tools/bump-version.py 0.7.6
    ```
-   This updates `<meta name="app-version">` in `index.html`, the `?v=` on all 14 css/js links, and
+   This updates `<meta name="app-version">` in `index.html`, the `?v=` on all local css/js links, and
    `APP_VERSION` in `js/app.js`. **Never edit those by hand.** The `?v=` links stop browsers mixing
    cached old files with a new release, because GitHub Pages caches files for 10 minutes.
 6. **Update `CHANGELOG.md`** ([Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format): add a
@@ -194,7 +194,7 @@ A new release does not change an existing commit ZIP. Explain when a feature bra
 
 - **Relay changes (`relay/`)** deploy through Cloudflare Workers Builds (project `commander-table-relay`,
   root directory `relay`), from the branch set as its production branch in the Cloudflare dashboard.
-  Changing the relay protocol needs matching changes in `js/relay-peer.js`, `lan-server.py`,
+  Changing the relay protocol needs matching changes in `js/relay-peer.js`,
   `docs/relay-protocol.md` and the tests, and it must stay backward compatible during rollout.
 - **Board geometry:** the logical board is `BW = 1000` wide; positions/layouts are shared between players
   (published `bw`). Changing `BW` needs a migration (see `cleanPub` / `normalizeMe` in `js/app.js`).
