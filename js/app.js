@@ -3584,14 +3584,20 @@ function renderOpps(idx) {
 }
 // The YOU tile: a read-only miniature of my board while I'm looking at someone else's; just a label otherwise.
 function renderYouTile(el, idx) {
-  const viewingMe = !S.focus, T = S.table || {};
-  el.classList.toggle('viewing', viewingMe);
+  const spectator = S.role === 'spectator', viewingMe = !S.focus, T = S.table || {};
+  el.classList.toggle('viewing', viewingMe && !spectator);
+  el.classList.toggle('tile', spectator || !viewingMe);
   el.classList.toggle('active', T.active === S.pid);
-  el.querySelector('.ohead').innerHTML = `<span class="dot" style="--pc:${colorOf(S.pid)}"></span><span class="pname">${esc(S.me.name)}</span><span class="tag you">${S.role === 'spectator' ? 'VIEW' : 'YOU'}</span>
+  el.querySelector('.ohead').innerHTML = `<span class="dot" style="--pc:${colorOf(S.pid)}"></span><span class="pname">${esc(S.me.name)}</span>${spectator ? '' : '<span class="tag you">YOU</span>'}
     ${T.active === S.pid ? '<span class="tag">TURN</span>' : ''}<span class="life-ro">♥ <b>${S.me.life}</b></span>`;
+  if (spectator) {
+    el.querySelector('.obf').removeAttribute('style');
+    setHTML(el.querySelector('.obf'), `<div class="boardwrap tile" data-board="${esc(S.pid)}" style="${esc(appearanceBoardStyleFor(S.pid))}">${boardHTML(S.pid, idx, 'tile')}</div>`);
+    return;
+  }
   // Keep separate arrow anchors while stripping gameplay ids from this read-only miniature.
-  el.querySelector('.obf').innerHTML = viewingMe ? `<div class="viewing-note">👁 Viewing ${S.role === 'spectator' ? esc(S.me.name) + "'s" : 'your'} board</div>`
-    : `<div class="boardwrap thumb" data-board="thumb:${esc(S.pid)}">${boardHTML(S.pid, idx).replace(/ data-(iid|pid|zone|region|c)="([^"]*)"/g, (attr, key, value) =>
+  el.querySelector('.obf').innerHTML = viewingMe ? '<div class="viewing-note">👁 Viewing your board</div>'
+    : `<div class="boardwrap thumb tile" data-board="thumb:${esc(S.pid)}" style="${esc(appearanceBoardStyleFor(S.pid))}">${boardHTML(S.pid, idx, 'tile').replace(/ data-(iid|pid|zone|region|c)="([^"]*)"/g, (attr, key, value) =>
         ['iid', 'pid', 'zone'].includes(key) ? ` data-arrow-${key}="${value}"` : '')}</div>`;
 }
 // Grid: my own quadrant is drawn exactly like the opponents' miniatures (hand fan, piles and life drawn inside the scaled board).
@@ -3678,7 +3684,7 @@ function myTileOverlayHTML(bh, bw) {
 function renderMyTile(el, idx) {
   const T = S.table || {}, m = S.me;
   el.classList.toggle('active', T.active === S.pid);
-  setHTML(el.querySelector('.ohead'), `<span class="dot" style="--pc:${colorOf(S.pid)}"></span><span class="pname" data-phead="${esc(S.pid)}" title="Right-click for options">${esc(m.name)}</span><span class="tag you">${S.role === 'spectator' ? 'VIEW' : 'YOU'}</span>
+  setHTML(el.querySelector('.ohead'), `<span class="dot" style="--pc:${colorOf(S.pid)}"></span><span class="pname" data-phead="${esc(S.pid)}" title="Right-click for options">${esc(m.name)}</span>${S.role === 'spectator' ? '' : '<span class="tag you">YOU</span>'}
     ${T.active === S.pid ? '<span class="tag">TURN</span>' : ''}${T.monarch === S.pid ? '<span title="Monarch">👑</span>' : ''}${T.initiative === S.pid ? '<span title="Initiative">🏰</span>' : ''}`);
   el.querySelector('.obf').removeAttribute('style');
   setHTML(el.querySelector('.obf'), `<div class="boardwrap tile" data-board="${esc(S.pid)}" style="${esc(appearanceBoardStyleFor(S.pid))}">${boardHTML(S.pid, idx, 'tile')}</div>`);
