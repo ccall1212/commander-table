@@ -200,7 +200,7 @@ For a hovered card, **+ / =** adds a +1/+1 counter and **− / _** adds a −1/�
 ## Targeting arrows
 
 - Right-click a battlefield card or a player's name, choose **Send arrow to…**, then click a different battlefield card or empty space on a player's battlefield to target that player. Clicking their name also works on small screens. Repeat for more attackers or effects: existing arrows remain visible. Everyone sees the shared arrows, colored for the player who drew them.
-- A colored outline identifies an arrow's starting card, and a colored circle marks where its line begins. With two or more arrows, matching numbers at each starting point and line center show the order they were drawn. The numbers update when an arrow is removed; they do not set combat damage order or rules priority.
+- A colored outline identifies an arrow's starting card, and a colored circle marks where its line begins.
 - On touch, use the card preview's **Actions → Send arrow to…**, or **☰ → Targeting arrow…** and tap the starting card/player, then the target. Picking endpoints does not tap, drag, or change life totals. Press **Escape**, right-click, or tap **Cancel** to cancel picking.
 - Click or tap anywhere along an arrow line, or its player-target marker, to remove only that arrow. You can also focus an arrow with Tab and press Enter or Space. Any seated player can remove an arrow. Use **Clear all** near the top of the table or **☰ → Clear all targeting arrows** to remove all arrows.
 - Click **×** on the floating controls to hide them locally without removing arrows. If you are still picking an endpoint, this also cancels that pick. **☰ → Show arrow controls** reopens them; starting another arrow also brings them back.

@@ -4140,18 +4140,18 @@ function drawTargetArrows(time) {
     if (!anchors.has(key)) anchors.set(key, arrowAnchor(ep));
     return anchors.get(key);
   };
-  S.targetArrows.forEach((arrow, index) => {
+  S.targetArrows.forEach(arrow => {
     let item = present.get(arrow.id); present.delete(arrow.id);
     if (!item) {
       item = document.createElementNS('http://www.w3.org/2000/svg', 'g');
       item.dataset.arrowId = arrow.id; item.classList.add('ct-arrow-item'); item.setAttribute('role', 'button'); item.setAttribute('tabindex', '0');
-      item.innerHTML = '<title></title><defs><marker viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z"/></marker></defs><rect class="ct-arrow-source-outline" rx="5"/><line class="ct-arrow-shadow"/><line class="ct-arrow-line"/><circle class="ct-arrow-player-target" r="7"/><line class="ct-arrow-hit"/><g class="ct-arrow-source"><circle r="11"/><text text-anchor="middle" dominant-baseline="central"></text></g><g class="ct-arrow-order"><circle r="12"/><text text-anchor="middle" dominant-baseline="central"></text></g>';
+      item.innerHTML = '<title></title><defs><marker viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z"/></marker></defs><rect class="ct-arrow-source-outline" rx="5"/><line class="ct-arrow-shadow"/><line class="ct-arrow-line"/><circle class="ct-arrow-player-target" r="7"/><line class="ct-arrow-hit"/><circle class="ct-arrow-source" r="7"/>';
       const markerId = 'ct-arrow-tip-' + arrow.id;
       item.querySelector('marker').id = markerId;
       item.querySelector('.ct-arrow-line').setAttribute('marker-end', 'url(#' + markerId + ')');
       svg.appendChild(item);
     }
-    const label = `Remove targeting arrow ${index + 1} by ${pname(arrow.by)}`;
+    const label = `Remove targeting arrow by ${pname(arrow.by)}`;
     item.setAttribute('aria-label', label); item.querySelector('title').textContent = label;
     const a = anchor(arrow.from), b = anchor(arrow.to), coords = a && b && CTTargeting.line(a, b);
     item.style.display = coords ? '' : 'none';
@@ -4167,16 +4167,8 @@ function drawTargetArrows(time) {
         outline.setAttribute('x', (a.left - 2).toFixed(1)); outline.setAttribute('y', (a.top - 2).toFixed(1));
         outline.setAttribute('width', (a.width + 4).toFixed(1)); outline.setAttribute('height', (a.height + 4).toFixed(1));
       }
-      const numbered = S.targetArrows.length > 1;
       const source = item.querySelector('.ct-arrow-source');
-      source.setAttribute('transform', `translate(${coords.x1.toFixed(1)} ${coords.y1.toFixed(1)})`);
-      source.querySelector('text').textContent = numbered ? index + 1 : '';
-      const order = item.querySelector('.ct-arrow-order');
-      order.style.display = numbered ? '' : 'none';
-      if (numbered) {
-        order.setAttribute('transform', `translate(${((coords.x1 + coords.x2) / 2).toFixed(1)} ${((coords.y1 + coords.y2) / 2).toFixed(1)})`);
-        order.querySelector('text').textContent = index + 1;
-      }
+      source.setAttribute('cx', coords.x1.toFixed(1)); source.setAttribute('cy', coords.y1.toFixed(1));
       item.querySelectorAll('line').forEach(el => Object.entries(coords).forEach(([k, v]) => el.setAttribute(k, v.toFixed(1))));
     }
   });

@@ -9,7 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ## [0.48.0] - 2026-10-22
 
 ### Added
-- Targeting arrows now outline their starting card and mark the line's origin in the arrow owner's color. With multiple arrows, matching numbers at each origin and line center show the order the visible arrows were drawn; removing one renumbers those remaining.
+- Targeting arrows now outline their starting card and mark the line's origin in the arrow owner's color, making the source clearer on crowded boards.
 
 ## [0.47.0] - 2026-10-22
 

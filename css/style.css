@@ -1304,9 +1304,7 @@ body.touch-mode #myBar .ctrpanel {
 #ct-target-arrow .ct-arrow-shadow { stroke:#080b10; stroke-width:7; opacity:.85; }
 #ct-target-arrow .ct-arrow-line { stroke:currentColor; stroke-width:3; opacity:.95; }
 #ct-target-arrow .ct-arrow-source-outline { fill:none; stroke:currentColor; stroke-width:2; opacity:.85; pointer-events:none; }
-#ct-target-arrow .ct-arrow-source, #ct-target-arrow .ct-arrow-order { pointer-events:none; }
-#ct-target-arrow .ct-arrow-source circle, #ct-target-arrow .ct-arrow-order circle { fill:#141a24; stroke:currentColor; stroke-width:3; }
-#ct-target-arrow .ct-arrow-source text, #ct-target-arrow .ct-arrow-order text { fill:#fff; font:800 12px system-ui,sans-serif; paint-order:stroke; stroke:#141a24; stroke-width:2px; }
+#ct-target-arrow .ct-arrow-source { fill:currentColor; stroke:#080b10; stroke-width:2; pointer-events:none; }
 #ct-arrow-controls { position:fixed; top:58px; left:50%; transform:translateX(-50%); z-index:610; display:flex; align-items:center; gap:10px; max-width:calc(100vw - 24px); padding:5px 8px; border:1px solid #566176; border-radius:8px; background:#141a24ee; color:#eef1f6; font-size:13px; }
 #ct-arrow-controls button { min-height:36px; white-space:nowrap; }
 .touch-mode #ct-arrow-controls button { min-height:44px; }
