@@ -31,7 +31,7 @@ Include Objective numbers, statuses and these ZIP links whenever Chris asks for 
 | Objective | Open item | Previously supplied ZIP | Status |
 |---|---|---|---|
 | #18 | iPhone Touch mode table height (PR #69) | [v0.46.2 test ZIP](https://github.com/ccall1212/commander-table/archive/68a6341d2f9859783581af70f59df461ead05eee.zip) | In progress; awaits Chris’s iPhone retest |
-| #52 | Own-board miniature while viewing others (PR #74) | [v0.50.0 ZIP](https://codeload.github.com/ccall1212/commander-table/zip/d599a7e610f6b67578ceb618d52dd0366d2b4160) | Chris confirmed Spectate works live; v0.50.1 fix ZIP pending for regular game and spectator miniatures |
+| #52 | Own-board miniature while viewing others (PR #74) | [v0.50.1 branch ZIP](https://github.com/ccall1212/commander-table/archive/refs/heads/fix/admin-spectate-deployment-status.zip) | Chris confirmed Spectate works live; regular game and spectator miniature fixes await his test |
 | #9 | Random deck/website import (PR #11) | [Archived draft ZIP](https://github.com/ccall1212/commander-table/archive/a415ef5a9d13531a9c6b5877ab40adf84388c6dc.zip) | Paused; its separate test service is not deployed; do not resume |
 
 
