@@ -164,6 +164,7 @@
 .w-dialog.w-wide { width: min(900px, 100%); }
 .w-dialog.w-display-dialog { width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 32px); }
 .w-dialog.ct-player-color-dialog { width: min(520px, calc(100vw - 32px)); max-height: calc(100vh - 32px); }
+@supports (height: 100dvh) { .w-dialog.ct-player-color-dialog { max-height: calc(100dvh - 32px); } }
 .ct-player-color-dialog .w-modal-body { overflow-y: auto; }
 .ct-player-color-dialog .w-modal-x { display: none; }
 .ct-player-color-intro { margin: 0 0 8px; color: var(--muted, #8b93a7); }
