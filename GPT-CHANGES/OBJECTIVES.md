@@ -43,3 +43,20 @@ Add an optional **Touch mode** for iPad Safari, launched from the top-right hamb
 - In Touch mode, lock page gestures on the hand row and draggable board surfaces so a bottom-edge hand drag stays on the table. Use the live visual viewport height and safe-area insets, while leaving internal menu, log and dialog scrolling enabled.
 - Fit the game to the dynamic mobile viewport height. On narrow phones in portrait, show a dismissible landscape recommendation rather than trying to force orientation lock (ordinary mobile Safari pages cannot reliably force it).
 - Test in real iPhone/iPad Safari in portrait and landscape, including enabling/disabling Touch mode, host and joiner sessions, card inspection, card actions, dragging from the bottom edge of the hand, intentional group selection/movement, internal dialog scrolling, menu dismissal, and both Sidebar and Grid layouts. Desktop emulation alone is not sufficient for marking this complete.
+
+## 45. Brief hotkey reminder on game entry — QUEUED
+
+When someone enters a game by hosting, joining, resuming or starting solo practice, show a **very short** hotkey popup after the entry flow is complete. It should be quick to dismiss and must not cover the color picker or other required entry dialogs. Include only these eight compact lines:
+
+| Key | Reminder |
+|---|---|
+| **T** | Hover your battlefield card to tap/untap; hover empty battlefield space to open Tokens. |
+| **Space** | Pass turn. |
+| **R** | In response! |
+| **D** | Draw a card. |
+| **G** | Move your hovered card to Graveyard. |
+| **E** | Move your hovered card to Exile. |
+| **U** | Untap all. |
+| **Ctrl+Z / ⌘Z** | Undo your last personal action. |
+
+Chris initially suggested **X** for Exile, but the published shortcut is **E**; **X** currently mills the top card when hovering your Library. Preserve the current bindings. Put a **Don't show again** checkbox at the bottom and save that choice in this browser so future game entries skip the popup. Leave the full **Hotkey list** available from the in-game menu. This is a future objective; no implementation or test ZIP yet.

@@ -16,6 +16,7 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 - **Paused again at Chris's request (2026-10-20):** draft [PR #11](https://github.com/ccall1212/commander-table/pull/11), website import/random deck picker. Preserve the branch and recovery checkpoint. Do not resume implementation, deploy its test Worker, merge, or publish until Chris asks to resume; see the investigation note.
 - **Layouts:** Sidebar and Grid only.
 - **Open work:** see `OBJECTIVES.md`. #38's Deck Builder backup placement and #43's host/join Auto-Draw and Auto Untap All choices shipped together in v0.45.0 through PR #65 after Chris reported “Looks good” and approved publication. The only open PR is paused draft #11. Chris dropped #42; PR #63 was closed without publishing, and the existing appearance controls are retained.
+- **Queued:** Objective #45 is a very brief hotkey reminder when entering a game, with a browser-saved **Don't show again** choice. The published Exile shortcut is **E**; **X** mills a card from a hovered Library. No test ZIP yet.
 - **Slam sound:** Chris wants to keep refining the Commander slam sound. Do that on a separate branch and leave the published behaviour alone until he approves.
 
 ## Existing test ZIPs for open work
