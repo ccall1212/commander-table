@@ -49,7 +49,7 @@ async function main() {
   const owner = { defs: {}, zones: { battlefield: [], hand: [], graveyard: [], exile: [], command: [] }, tokens: [] };
   const views = [];
   const gallerySet = new Set();
-  let promptValue = 1, created = [], toastCount = 0;
+  let promptValue = 1, created = [], toastCount = 0, battlefieldOpen = true;
   const S = { me: owner };
   const UI = {
     prompt: async () => promptValue,
@@ -63,8 +63,14 @@ async function main() {
     },
     printPicker: config => { UI.picker = config; }
   };
-  const createToken = (def, n) => created.push([def.id, n]);
-  const quantity = bindFunction('createTokenQuantity', { S, UI, createToken, dname: d => d.name });
+  const createToken = (def, n) => { created.push([def.id, n]); return true; };
+  const canEnterBattlefield = () => battlefieldOpen;
+  const quantity = bindFunction('createTokenQuantity', { S, UI, createToken, canEnterBattlefield, dname: d => d.name });
+  battlefieldOpen = false;
+  const promptBeforeBlocked = toastCount;
+  assert.equal(await quantity(mkToken('prestart-token')), false, 'pre-start token quantity creation is blocked');
+  assert.equal(toastCount, promptBeforeBlocked + 1, 'pre-start token creation gives a warning');
+  battlefieldOpen = true;
   let tokenGallery;
   tokenGallery = bindFunction('tokenGallery', {
     S, Deck, UI, tokenGalleries: gallerySet, dname: d => d.name,
@@ -83,7 +89,7 @@ async function main() {
   for (const result of [null, 0, 61, 1.5, '2']) {
     const fresh = new Set();
     const localQuantity = bindFunction('createTokenQuantity', {
-      S, UI: { ...UI, prompt: async () => result }, createToken, dname: d => d.name
+      S, UI: { ...UI, prompt: async () => result }, createToken, canEnterBattlefield, dname: d => d.name
     });
     const localGallery = bindFunction('tokenGallery', {
       S, Deck, UI: { ...UI, viewer: UI.viewer }, tokenGalleries: fresh,
@@ -101,7 +107,7 @@ async function main() {
   let resolvePrompt;
   const delayedUI = { ...UI, prompt: () => new Promise(resolve => { resolvePrompt = resolve; }) };
   const delayedCreate = bindFunction('createTokenQuantity', {
-    S, UI: delayedUI, createToken, dname: d => d.name
+    S, UI: delayedUI, createToken, canEnterBattlefield, dname: d => d.name
   });
   const delayedGallery = bindFunction('tokenGallery', {
     S, Deck, UI: delayedUI, tokenGalleries: new Set(), dname: d => d.name,
