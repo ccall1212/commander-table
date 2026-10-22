@@ -15,10 +15,10 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 - **Version:** the newest entry in `CHANGELOG.md` (do not write a version number here; it goes stale).
 - **Paused again at Chris's request (2026-10-20):** draft [PR #11](https://github.com/ccall1212/commander-table/pull/11), website import/random deck picker. Preserve the branch and recovery checkpoint. Do not resume implementation, deploy its test Worker, merge, or publish until Chris asks to resume; see the investigation note.
 - **Layouts:** Sidebar and Grid only.
-- **Open work:** see `OBJECTIVES.md`. #38's Deck Builder backup placement and #43's host/join Auto-Draw and Auto Untap All choices shipped together in v0.45.0 through PR #65 after Chris reported “Looks good” and approved publication. The only open PR is paused draft #11. Chris dropped #42; PR #63 was closed without publishing, and the existing appearance controls are retained.
+- **Open work:** see `OBJECTIVES.md`. #38's Deck Builder backup placement and #43's host/join Auto-Draw and Auto Untap All choices shipped together in v0.45.0 through PR #65 after Chris reported “Looks good” and approved publication. Open PRs are paused draft #11 and card-back removal [PR #66](https://github.com/ccall1212/commander-table/pull/66). Chris dropped #42; PR #63 was closed without publishing, and the existing appearance controls are retained.
 - **Queued:** Objective #45 is a very brief hotkey reminder when entering a game, with a browser-saved **Don't show again** choice. The published Exile shortcut is **E**; **X** mills a card from a hovered Library. No test ZIP yet.
 - **Queued:** Objective #46 adds **C** to copy a hovered visible card using the existing right-click copy action. When shipped, include C in #45's eight-line reminder in place of the optional U row. No test ZIP yet.
-- **Queued:** Objective #47 replaces the Arcane Star and Shadow Black card-back art and adds a larger background preview on the start screen. Objective #48 is a separate project for more distinctive original backgrounds. Neither has a test ZIP yet.
+- **In progress:** Objective #47 removes the Arcane Star and Shadow Black card-back presets in a v0.45.1 test branch; a larger background preview remains queued. Objective #48 is a separate project for more distinctive original backgrounds. The card-back removal has a [v0.45.1 test ZIP](https://github.com/ccall1212/commander-table/archive/e1faedf49fe425a9365d777575d16f9f55efa25d.zip); the preview and new-background projects have no test ZIP yet.
 - **Slam sound:** Chris wants to keep refining the Commander slam sound. Do that on a separate branch and leave the published behaviour alone until he approves.
 
 ## Existing test ZIPs for open work
@@ -27,6 +27,7 @@ Include Objective numbers, statuses and these ZIP links whenever Chris asks for 
 
 | Objective | Open item | Previously supplied ZIP | Status |
 |---|---|---|---|
+| #47 | Card-back removal (PR #66); larger background preview still queued | [v0.45.1 test ZIP](https://github.com/ccall1212/commander-table/archive/e1faedf49fe425a9365d777575d16f9f55efa25d.zip) | In progress; card-back removal awaits Chris’s test and approval |
 | #9 | Random deck/website import (PR #11) | [Archived draft ZIP](https://github.com/ccall1212/commander-table/archive/a415ef5a9d13531a9c6b5877ab40adf84388c6dc.zip) | Paused; its separate test service is not deployed; do not resume |
 
 
