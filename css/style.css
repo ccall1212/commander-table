@@ -66,7 +66,7 @@ kbd { background: var(--panel2); border: 1px solid var(--border); border-radius:
 .pill.online { color: var(--good); border-color: var(--good); }
 .pill.reconnecting, .pill.connecting { color: var(--accent); border-color: var(--accent); }
 .pill.error, .pill.offline { color: var(--danger); border-color: var(--danger); }
-#turnBox { display: flex; align-items: center; gap: 8px; min-width: 0; }
+#turnBox { display: flex; align-items: center; gap: 8px; min-width: 0; flex-shrink: 0; }
 #turnActions { display: flex; align-items: center; flex: none; }
 @media (max-width: 1150px) { .turn-actions .ztool > button { padding-inline: 5px; } #turnBox { gap: 4px; } }
 @media (max-width: 760px) { #turnActions .tgl { display: none; } .turn-actions { gap: 4px; } .turn-actions .ztool > button { padding-inline: 4px; } }
@@ -326,6 +326,14 @@ body.attaching .board .card:hover { outline: 3px solid #7c4dff; }
   box-shadow: 0 8px 24px rgba(0,0,0,.5); }
 #mullBar button { white-space: nowrap; }
 .ct-opening-rule { display: inline-flex; align-items: center; padding: 3px 6px; color: var(--muted); font-size: 12px; white-space: nowrap; }
+#turnBox [data-a="openingstatus"] { white-space: nowrap; }
+.w-dialog.ct-opening-roster-dialog { width: min(380px, calc(100vw - 24px)); }
+.ct-opening-roster-list { list-style: none; margin: 0; padding: 0; }
+.ct-opening-roster-list li { display: flex; align-items: center; gap: 20px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.ct-opening-player { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.ct-opening-status { flex: none; color: var(--muted); font-size: 12px; }
+.ct-opening-status.ready { color: var(--good); }
+.ct-opening-roster-dialog p { margin: 16px 0 0; font-size: 12px; }
 
 /* Optional iPad touch mode: keep card previews actionable and suppress Safari callouts. */
 body.touch-mode #pv.floatpv { pointer-events: auto; width: min(320px, calc(100vw - 24px)); max-height: calc(var(--ct-viewport-height, 100dvh) - 24px); overflow-y: auto; }
@@ -1176,7 +1184,12 @@ body.touch-mode #myBar .ctrpanel {
 }
 .ct-response-name { max-width: 90vw; font-size: .55em; letter-spacing: .04em; overflow-wrap: anywhere; }
 #responseBtn { white-space: nowrap; border-color: var(--accent); }
-@media (max-width: 1500px) { #topbar .brand { display: none; } }
+@media (max-width: 1500px) {
+  #topbar .brand { display: none; }
+  #topbar { gap: 8px; font-size: 13px; }
+  #topbar button { font-size: 13px; padding-inline: 8px; }
+  #topbar .tb-left, #topbar .tb-right { gap: 6px; }
+}
 @media (max-width: 900px) { #responseBtn { padding: 3px 6px; font-size: 12px; } }
 @keyframes ct-response-banner {
   0% { opacity: 1; transform: scale(.97); }

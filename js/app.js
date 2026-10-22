@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.42.0';
+const APP_VERSION = '0.43.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -619,6 +619,24 @@ function openingPending(T = S.table) {
   return T.seats.filter(pid => !T.out[pid]).filter(pid => {
     const p = S.players[pid];
     return !p || !p.kept || p.openingDeal !== T.openingDeal;
+  });
+}
+
+let openingRoster = null;
+function openingRosterHTML(T) {
+  const pending = new Set(openingPending(T));
+  return T.seats.filter(pid => !T.out[pid]).map(pid => `<li data-pid="${esc(pid)}"><span class="ct-opening-player">${esc(pname(pid))}</span><span class="ct-opening-status${pending.has(pid) ? '' : ' ready'}">${pending.has(pid) ? 'Choosing' : 'Ready'}</span></li>`).join('');
+}
+function refreshOpeningRoster() {
+  if (!openingRoster) return;
+  if (!S.table || S.table.started || !S.table.seats.includes(S.pid)) { openingRoster.close(); return; }
+  setHTML(openingRoster.el.querySelector('.ct-opening-roster-list'), openingRosterHTML(S.table));
+}
+function showOpeningRoster() {
+  if (!S.table || S.table.started || openingRoster) return;
+  openingRoster = UI.modal({ title: 'Opening hands', className: 'ct-opening-roster-dialog',
+    html: `<ul class="ct-opening-roster-list" aria-live="polite">${openingRosterHTML(S.table)}</ul><p class="muted">The host can start once everyone is ready.</p>`,
+    onClose: () => { openingRoster = null; $('#turnBox [data-a="openingstatus"]')?.focus(); }
   });
 }
 
@@ -3449,11 +3467,9 @@ function renderTop() {
   if (!T) html = `<span class="muted">${esc(S.net.text || 'Connecting to the host…')}</span>`;
   else if (!T.started) {
     const pending = openingPending(T);
-    const readiness = pending.length
-      ? `<span class="muted" title="Every seated player must keep a hand from this deal">Waiting for ${esc(pending.map(pname).join(', '))} to keep</span>`
-      : '<span class="muted">Everyone has kept</span>';
-    html = `${ruleControl}<span class="muted">Not started · ${plural(T.seats.length, 'player')} seated</span> ${readiness}` +
-      (S.role !== 'client' ? ` <button class="primary" data-a="start" title="Uses the rolled order, or randomizes if you have not rolled"${pending.length ? ' disabled' : ''}>Start game</button>` : ' <span class="muted">— waiting for the host to start</span>');
+    const total = T.seats.filter(pid => !T.out[pid]).length;
+    html = `${ruleControl}<button data-a="openingstatus" aria-haspopup="dialog" title="View opening-hand readiness">Hands ready: ${total - pending.length}/${total}</button>` +
+      (S.role !== 'client' ? ` <button class="primary" data-a="start" title="${pending.length ? 'Everyone must keep an opening hand first' : 'Uses the rolled order, or randomizes if you have not rolled'}"${pending.length ? ' disabled' : ''}>Start game</button>` : '');
   } else if (!T.active) {
     html = `${ruleControl}<span class="muted">No active player · everyone has conceded</span>`;
   } else {
@@ -3461,6 +3477,7 @@ function renderTop() {
     html = `${ruleControl}<span>Round <b>${T.turn}</b> · <b style="color:${colorOf(T.active)}">${esc(mine ? 'Your' : pname(T.active) + "'s")}</b> turn</span>`;
   }
   $('#turnBox').innerHTML = html;
+  refreshOpeningRoster();
   updateChatButton();
   const turnActions = $('#turnActions');
   if (turnActions) {
@@ -4873,6 +4890,7 @@ function onButton(a, btn, e) {
     case 'undohistory': undoHistoryMenu(btn); break;
     case 'menu': mainMenu(r.right - 240, r.bottom + 4); break;
     case 'openingrule': openingRulesMenu(btn); break;
+    case 'openingstatus': showOpeningRoster(); break;
     case 'copyroom': copyRoom(); break;
     case 'arrange': toggleArrange(); break;
     case 'tidy': act(() => { tidyBoard(); return ['tidied up their battlefield']; }); break;
@@ -5468,6 +5486,7 @@ function leaveGame() {
 // =====================================================================
 let selDeck = null;
 function showLobby() {
+  if (openingRoster) openingRoster.close();
   clearResponseNotice();
   S.targetArrows = []; S.arrowControlsDismissed = false; endTargeting();
   $('#game').classList.add('hidden'); $('#lobby').classList.remove('hidden');
