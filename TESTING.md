@@ -1,6 +1,6 @@
 # Hidden admin access and spectating — v0.50.0 live test (Objective #52)
 
-The v0.50.0 code is merged. Extract the ZIP and double-click `index.html` to try the lobby sequence locally. Live Spectate also requires the Cloudflare relay update and a private `ADMIN_PASSPHRASE` secret set in Cloudflare; the ZIP alone cannot activate the server-side room feed. See [admin setup](docs/ADMIN.md).
+The v0.50.0 code is merged. Extract the ZIP and double-click `index.html` to try the lobby sequence locally. Chris’s first live Spectate attempt showed “Not found” while the relay was outdated. The automatic tag and relay Worker have since caught up; `/health` now lists `admin-spectate-v1`. The private `ADMIN_PASSPHRASE` secret is configured. Retest live Spectate with this copy or the v0.50.0 Pages site; see [admin setup](docs/ADMIN.md).
 
 1. On the lobby, confirm no Admin link is visible. Click the **Tree of Life**, **Dragon Flame**, **Obsidian Gem**, then **Gilded Knight** card backs. A small Admin link should appear. An out-of-order click should reset the sequence. The selected card back should still change normally. Open the link; a wrong passphrase should not reveal rooms.
 2. With two browsers in a throwaway relay room, sign into the dashboard and choose **Spectate**. The viewer should show both public boards, arrows, life totals, log and chat in Sidebar and Grid. The admin should not take a player seat, appear in the roster or trigger a host/player prompt. Publicly revealed cards should still be visible; unrevealed hands and libraries should show backs/counts only.
@@ -9,4 +9,4 @@ The v0.50.0 code is merged. Extract the ZIP and double-click `index.html` to try
 
 ## Assistant verification
 
-Node tests cover protected spectator snapshots, public-card filtering, join/close regression and relay frames. Chromium with a simulated relay snapshot showed two boards, log, chat, Grid switching, blocked draw hotkey, hidden hand cards and the lobby sequence with no page errors. The actual Worker and live two-player flow have not been exercised by the assistant; Chris's multiplayer test is still needed. Objective #18's separate iPhone fix remains open in PR #69. Paused draft PR #11 is untouched.
+Node tests cover protected spectator snapshots, public-card filtering, join/close regression and relay frames. Chromium with a simulated relay snapshot showed two boards, log, chat, Grid switching, blocked draw hotkey, hidden hand cards and the lobby sequence with no page errors. The actual Worker and successful live two-player spectator flow have not been exercised by the assistant; Chris’s first live test identified the missing deployment, which has since caught up. Objective #18's separate iPhone fix remains open in PR #69. Paused draft PR #11 is untouched.
