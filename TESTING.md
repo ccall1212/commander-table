@@ -23,4 +23,9 @@ The unused Windows/macOS/Linux LAN launchers, Python LAN server, LAN-only browse
 - The 13-case network harness passes all 11 relay/app checks, including host reload and shared state. Direct-PeerJS checks t12/t13 fail with host-registration timeouts in both this proposal and the published v0.44.0 baseline; proxy tunnel errors prevent verification of that path here. No bypass was attempted.
 - Changed JS/Python syntax, cache/version links, reference checks and diff checks pass. All 18 local CSS/JS references resolve to files. Worker, relay configuration, TURN configuration and the RelayPeer implementation are unchanged. Historical changelog entries retain old LAN details.
 
-Assistant browser checks use HTTP; no file:// or real-device Safari result is claimed. No publication approval has been given for this cleanup. Paused draft PR #11 remains untouched.
+Assistant browser checks use HTTP; no file:// or real-device Safari result is claimed. Tested by Chris: “Looks good.” Chris approved completing the cleanup on 2026-10-22. Paused draft PR #11 remains untouched.
+
+
+## Publication
+
+Objective #44 merged through PR #64 as v0.44.1. The automatic annotated release tag was verified against merge commit `079e036ddc04f49b0e385f6745ea399616c62692`. Build, Pages deploy and tag checks succeeded. No Workers build was associated with this commit; relay Worker code is unchanged. The live Chromium check was blocked by `net::ERR_TUNNEL_CONNECTION_FAILED`, so its footer/version and live rendering remain unverified here. The merged head branch was deleted automatically; its clean local worktree/branch was removed after verifying the exact approved head and no unpublished changes. The approved game files are unchanged by the merge.
