@@ -34,10 +34,18 @@ const deck = { id: 'response-deck', name: 'Response test deck', commanders: [com
     await guest.locator('.ct-player-color-option[data-color="red"]').click();
     await host.waitForFunction(() => CT.S.table?.seats.length === 2 && Object.keys(CT.S.players).length === 2);
     await guest.waitForFunction(() => CT.S.table?.seats.length === 2 && Object.keys(CT.S.players).length === 2);
+    await host.waitForFunction(() => document.querySelector('#topbar .ct-opening-rule'));
+    await guest.waitForFunction(() => document.querySelector('#topbar .ct-opening-rule'));
+    assert.equal(await host.locator('#topbar .ct-opening-rule').count(), 1, 'host sees the opening rule before keeping');
+    assert.equal(await guest.locator('#topbar .ct-opening-rule').count(), 1, 'guest sees the opening rule before keeping');
     await host.locator('[data-a="keep"]').click(); await guest.locator('[data-a="keep"]').click();
     await host.locator('#topbar [data-a="start"]').click();
     await host.waitForFunction(() => CT.S.table?.started && CT.S.table.active);
     await guest.waitForFunction(() => CT.S.table?.started && CT.S.table.active);
+    await host.waitForFunction(() => !document.querySelector('#topbar .ct-opening-rule'));
+    await guest.waitForFunction(() => !document.querySelector('#topbar .ct-opening-rule'));
+    assert.equal(await host.locator('#topbar .ct-opening-rule').count(), 0, 'host no longer sees the opening rule after the game starts');
+    assert.equal(await guest.locator('#topbar .ct-opening-rule').count(), 0, 'guest no longer sees the opening rule after the game starts');
     // The host appends start/roll log entries after the shared table arrives.
     await host.waitForFunction(() => CT.S.log.length >= 5);
     await guest.waitForFunction(() => CT.S.log.length >= 5);
