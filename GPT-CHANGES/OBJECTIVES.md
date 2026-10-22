@@ -60,3 +60,9 @@ When someone enters a game by hosting, joining, resuming or starting solo practi
 | **Ctrl+Z / ⌘Z** | Undo your last personal action. |
 
 Chris initially suggested **X** for Exile, but the published shortcut is **E**; **X** currently mills the top card when hovering your Library. Preserve the current bindings. Put a **Don't show again** checkbox at the bottom and save that choice in this browser so future game entries skip the popup. Leave the full **Hotkey list** available from the in-game menu. This is a future objective; no implementation or test ZIP yet.
+
+## 46. C shortcut to copy a hovered card — QUEUED
+
+Press **C** while hovering a visible card that currently offers **Copy this card** in its right-click menu. Create the same token copy on your battlefield without opening the menu. This should work on your eligible cards and visible opponents' cards in Sidebar and Grid, including when viewing an opponent's board. Preserve the existing restrictions: hidden/face-down cards cannot be copied and no copy can enter the battlefield before the game starts. Ignore key repeat so holding C does not create a flood of copies; typing in chat or another input must never copy a card. Add **C — Copy hovered card** to the full Hotkey list and show **C** as the hint beside the matching menu action.
+
+When this shortcut ships, show **C** in Objective #45's brief entry reminder in place of the optional **U** row, keeping that reminder to eight lines. Do not advertise C in the reminder before the shortcut works. This is a future objective; no implementation or test ZIP yet.
