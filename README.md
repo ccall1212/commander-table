@@ -25,4 +25,6 @@ A free, browser-based Magic: The Gathering Commander table for playing with frie
 - **[Changelog](CHANGELOG.md):** what changed in each version.
 - **[AGENTS.md](AGENTS.md):** how the project is built, tested and released (for contributors and AI assistants).
 
-Unofficial fan project, not affiliated with Wizards of the Coast. Card data and images © their owners, via Scryfall. MIT licensed; please don't charge money for it.
+Commander Table is unofficial Fan Content permitted under the Fan Content Policy. Not approved/endorsed by Wizards. Portions of the materials used are property of Wizards of the Coast. ©Wizards of the Coast LLC.
+
+Card data and images © their owners, via Scryfall. MIT licensed; please don't charge money for it.
