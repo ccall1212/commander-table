@@ -62,6 +62,22 @@ const snapshot = {
     assert.equal(await lobby.locator('#adminEntry').isVisible(), true);
     assert.equal(await lobby.locator('#adminEntry').getAttribute('href'), 'admin.html');
     assert.deepEqual(errors, []);
+    const unavailable = await browser.newPage({ viewport: { width: 1366, height: 768 } });
+    await unavailable.addInitScript(() => sessionStorage.setItem('ct.admin.passphrase', 'private-test-passphrase'));
+    let deployed = false;
+    await unavailable.route('**/admin/rooms/ABCDE/spectate', route => route.fulfill({
+      status: deployed ? 200 : 404, contentType: deployed ? 'application/json' : 'text/plain',
+      body: deployed ? JSON.stringify(snapshot) : 'Not found',
+      headers: { 'Access-Control-Allow-Origin': '*' }
+    }));
+    await unavailable.goto('http://127.0.0.1:8099/index.html?adminSpectate=ABCDE');
+    await unavailable.getByText('Spectating is not available yet').waitFor();
+    assert.equal(await unavailable.locator('#table').isVisible(), false, 'unsupported relay never shows an empty game board');
+    assert.equal(await unavailable.getByText('Return to Admin rooms').isVisible(), true);
+    deployed = true;
+    await unavailable.locator('#game .card[data-iid="p1_one"]').first().waitFor({ timeout: 7000 });
+    assert.equal(await unavailable.locator('#spectatorStatus').isVisible(), false, 'spectator recovers automatically after relay update');
+    await unavailable.close();
     console.log('PASS admin spectator browser: two public boards, chat/log, grid, no seat/action, no page errors');
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

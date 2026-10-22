@@ -35,6 +35,14 @@ body.admin-spectator .life-adjust, body.admin-spectator .life-edit, body.admin-s
 body.admin-spectator .life-adjust, body.admin-spectator #side #help { display: none !important; }
 body.admin-spectator #spectatorBack { display: inline-flex; align-items: center; color: #d4b45c; white-space: nowrap; font-size: 12px; }
 body.admin-spectator #chatPanel .ct-chat-foot { display: none; }
+body.admin-spectator-pending #table, body.admin-spectator-pending #side,
+body.admin-spectator-pending #sideBtn, body.admin-spectator-pending #chatBtn,
+body.admin-spectator-pending .viewsw { display: none !important; }
+#spectatorStatus:not(.hidden) { grid-area: table; display: grid; place-items: center; padding: 20px; }
+.spectator-status-card { max-width: 560px; padding: 28px; text-align: center; background: var(--panel);
+  border: 1px solid var(--border); border-radius: 12px; }
+.spectator-status-card h2 { margin: 0 0 8px; color: var(--accent); font-size: 20px; }
+.spectator-status-card p { margin: 0 0 18px; color: var(--muted); }
 .lob-wrap { max-width: 760px; margin: 0 auto; padding: 28px 16px 40px; }
 .lob-head h1 { margin: 0 0 4px; font-size: 30px; letter-spacing: .5px; color: var(--accent); }
 .box { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin: 14px 0; }

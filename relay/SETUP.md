@@ -14,8 +14,8 @@ migration in `wrangler.jsonc`.
    repo in Cloudflare.
 2. On the setup form:
    - **Project name:** exactly `commander-table-relay` (must match `name` in `wrangler.jsonc`).
-   - **Production branch:** `feature/relay-netcode` for now. After that branch is merged, switch it
-     to `main` (project -> Settings -> Builds).
+   - **Production branch:** `main` (project -> Settings -> Builds). Confirm this is still the branch
+     Cloudflare watches if the site's game version updates but the relay does not.
    - **Root directory / path:** `relay`
    - **Build command:** leave empty.
    - **Deploy command:** `npx wrangler deploy` (the default).
@@ -43,6 +43,9 @@ The optional site-admin dashboard uses one Worker secret, `ADMIN_PASSPHRASE`. It
 
 Push to the production branch. Cloudflare rebuilds and redeploys automatically. To change which
 websites may connect, edit the `ALLOWED_ORIGINS` list at the top of `relay/worker.js`.
+If `/health` does not list `admin-spectate-v1` after the v0.50.0 release, the Worker is still running
+an older build. Check **Deployments** for a failed/pending production build and retry the latest
+`main` deployment. The admin page cannot spectate until that Worker version is live.
 
 ## Troubleshooting
 

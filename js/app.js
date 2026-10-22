@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.50.0';
+const APP_VERSION = '0.50.1';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -5955,18 +5955,26 @@ async function startAdminSpectate(room) {
   const base = String(window.CT_NET && window.CT_NET.relayUrl || '').replace(/\/$/, '');
   if (!base.startsWith('https://') && !base.startsWith('http://127.0.0.1:')) { location.replace('admin.html'); return; }
   S.role = 'spectator'; S.room = room; S.net = { state: 'online', text: 'Read-only admin view' };
-  document.body.classList.add('admin-spectator');
+  document.body.classList.add('admin-spectator', 'admin-spectator-pending');
   $('#spectatorBack').classList.remove('hidden');
   $('#lobby').classList.add('hidden'); $('#game').classList.remove('hidden');
-  const banner = $('#banner');
+  $('#netPill').textContent = 'Spectating';
+  const status = (title, detail) => {
+    $('#spectatorStatusTitle').textContent = title;
+    $('#spectatorStatusDetail').textContent = detail;
+    $('#spectatorStatus').classList.remove('hidden');
+    document.body.classList.add('admin-spectator-pending');
+  };
+  status('Connecting to the table…', 'Waiting for a public board snapshot.');
   const poll = async () => {
     try {
       const response = await fetch(`${base}/admin/rooms/${room}/spectate`, {
         cache: 'no-store', headers: { Authorization: 'Bearer ' + passphrase }
       });
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
       if (response.status === 401) { sessionStorage.removeItem('ct.admin.passphrase'); location.replace('admin.html'); return; }
-      if (response.status === 202) { banner.textContent = 'Waiting for the host’s public table view…'; banner.classList.remove('hidden'); return; }
+      if (response.status === 202) { status('Waiting for the table…', 'The host is preparing a public board snapshot. This page will update automatically.'); return; }
+      if (response.status === 404) { status('Spectating is not available yet', 'The live relay has not deployed the Spectate update. Deploy commander-table-relay from main in Cloudflare; this page will retry automatically.'); return; }
       if (!response.ok) throw new Error(data.error || `Spectator request failed (${response.status}).`);
       const table = cleanTable(data.table), players = {};
       if (!table || table.room !== room) throw new Error('Room snapshot is unavailable.');
@@ -5981,8 +5989,10 @@ async function startAdminSpectate(room) {
       S.targetArrows = CTTargeting.cleanList(data.arrows, players, table.seats);
       if (!S.spectatorStarted) { S.spectatorStarted = true; showGame(); }
       renderChatHistory(false);
-      banner.classList.add('hidden'); render();
-    } catch (error) { banner.textContent = error.message; banner.classList.remove('hidden'); }
+      document.body.classList.remove('admin-spectator-pending');
+      $('#spectatorStatus').classList.add('hidden');
+      render();
+    } catch (error) { status('Cannot show the table yet', error.message); }
   };
   await poll();
   setInterval(poll, 3000);
