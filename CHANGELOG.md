@@ -9,7 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ## [0.46.0] - 2026-10-22
 
 ### Added
-- Two new card backs in **Your look**: Gilded Knight (an armored knight in front of a stained-glass window) and Amethyst Gem (a glowing purple gem in a gothic frame). There are now twelve card-back presets.
+- Two new card backs in **Your look**: Gilded Knight (an armored knight in front of a stained-glass window) and Obsidian Gem (a dark faceted gem wrapped in silver smoke inside a gothic silver frame). There are now twelve card-back presets.
 
 ## [0.45.1] - 2026-10-22
 

@@ -13,7 +13,7 @@
     {id:'radiant-sun',name:'Radiant Sun',src:'assets/card-backs/radiant-sun.webp'},
     {id:'stained-glass',name:'Stained Glass',src:'assets/card-backs/stained-glass.webp'},
     {id:'gilded-knight',name:'Gilded Knight',src:'assets/card-backs/gilded-knight.webp'},
-    {id:'amethyst-gem',name:'Amethyst Gem',src:'assets/card-backs/amethyst-gem.webp'}
+    {id:'obsidian-gem',name:'Obsidian Gem',src:'assets/card-backs/obsidian-gem.webp'}
   ];
   const BACKGROUNDS = [
     {id:'dragons-lair',name:"Dragon's Lair",src:'assets/backgrounds/dragons-lair.webp',thumb:'assets/backgrounds/thumb-dragons-lair.webp'},
