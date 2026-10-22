@@ -1,6 +1,6 @@
 # Entry options and Deck Builder backup — Objectives #43 and #38, v0.45.0
 
-Extract this ZIP and double-click **index.html**. You do not need a terminal or local server. These changes are a test copy; the published game stays at v0.44.1 until Chris approves publication.
+This is the original exact-head test copy for the now-published v0.45.0 change. Extract the ZIP and double-click **index.html**; no terminal or local server is needed.
 
 ## Click list
 
@@ -17,6 +17,10 @@ When you report results, let me know which steps and browsers you tried. Existin
 - Collection backup unit checks pass, including download data, restore planning/merge, optional appearance/preferences, and rollback on storage failure.
 - Actual Chromium checks over localhost HTTP cover Deck Builder backup access with a deck and with an empty collection, file restore into an empty collection, Host/Join cancel and confirmation, all three opening rules, all four Auto-Draw/Auto Untap combinations across the two players, pregame redeal, an in-game toggle, and no page errors. Host/join checks use a local copy of the existing relay Worker.
 - Browser layout checks include Sidebar and Grid at 1366×768 and 1920×1080. JavaScript syntax, cache/version references and diff whitespace checks pass.
-- Chris's hands-on ZIP result is pending. The assistant browser checks use HTTP; file:// and real Safari were not verified here.
+- Tested by Chris: “Looks good.” The assistant browser checks use HTTP; file:// and real Safari were not verified here.
 
 Paused draft PR #11 remains untouched.
+
+## Publication
+
+Objectives #38 and #43 merged through PR #65 as v0.45.0. The automatic annotated release tag points to merge commit `a21c263050351a2e4746c46833c539c2bb0dec44`. The approved branch was deleted automatically, and the Pages deployment workflow succeeded. A live-page check from this environment was blocked by the network proxy (`CONNECT tunnel failed, response 403`), so live rendering could not be verified here.

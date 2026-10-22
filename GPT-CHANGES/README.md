@@ -15,13 +15,12 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 - **Version:** the newest entry in `CHANGELOG.md` (do not write a version number here; it goes stale).
 - **Paused again at Chris's request (2026-10-20):** draft [PR #11](https://github.com/ccall1212/commander-table/pull/11), website import/random deck picker. Preserve the branch and recovery checkpoint. Do not resume implementation, deploy its test Worker, merge, or publish until Chris asks to resume; see the investigation note.
 - **Layouts:** Sidebar and Grid only.
-- **Open work:** see `OBJECTIVES.md`. #41's compact readiness roster and #39's Host Game rule dialog are published after Chris's testing and approval. #44's unused LAN cleanup is published after Chris's testing and approval. The only open PR is paused draft #11. Chris dropped #42; PR #63 was closed without publishing, and the existing appearance controls are retained.
-- **In testing:** Moving backup/restore into Deck Builder #38 and the host/join Auto-Draw / Auto Untap All choices #43 are proposed together in v0.45.0, awaiting Chris's ZIP test and publication approval. Other open, paused and deferred items are listed in `OBJECTIVES.md`.
+- **Open work:** see `OBJECTIVES.md`. #38's Deck Builder backup placement and #43's host/join Auto-Draw and Auto Untap All choices shipped together in v0.45.0 through PR #65 after Chris reported “Looks good” and approved publication. The only open PR is paused draft #11. Chris dropped #42; PR #63 was closed without publishing, and the existing appearance controls are retained.
 - **Slam sound:** Chris wants to keep refining the Commander slam sound. Do that on a separate branch and leave the published behaviour alone until he approves.
 
 ## Existing test ZIPs for open work
 
-Include Objective numbers, statuses and these ZIP links whenever Chris asks for an open-work summary; Objective numbers differ from PR numbers. The archived paused import/randomizer draft is listed below. #43 is unimplemented and has no test ZIP. Existing commit ZIPs remain unchanged.
+Include Objective numbers, statuses and these ZIP links whenever Chris asks for an open-work summary; Objective numbers differ from PR numbers. The archived paused import/randomizer draft is listed below. Existing commit ZIPs remain unchanged.
 
 | Objective | Open item | Previously supplied ZIP | Status |
 |---|---|---|---|
