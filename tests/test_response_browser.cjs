@@ -65,7 +65,7 @@ const deck = { id: 'response-deck', name: 'Response test deck', commanders: [com
       assert.equal(now.table, expected.table, 'cue does not change shared table state');
     };
     const notice = page => page.locator('#responseNotice .ct-response-notice');
-    const checkCue = async (page, pid, name, id) => {
+    const checkCue = async (page, pid, name, id, color) => {
       try { await page.waitForFunction(({ pid, name, id }) => {
         const el = document.querySelector('#responseNotice .ct-response-notice');
         return el?.dataset.responseId === id && el.textContent.includes('IN RESPONSE!') && el.textContent.includes(name);
@@ -77,6 +77,15 @@ const deck = { id: 'response-deck', name: 'Response test deck', commanders: [com
       assert.equal(await notice(page).getAttribute('data-response-id'), id);
       assert.equal(await notice(page).evaluate(el => el.querySelector('.ct-response-name').textContent), name);
       assert.equal(await notice(page).evaluate(el => getComputedStyle(el).pointerEvents), 'none');
+      const renderedColors = await notice(page).evaluate(el => {
+        const style = getComputedStyle(el);
+        return { text: style.color, background: style.backgroundImage, token: el.style.getPropertyValue('--ct-response-color'), glow: el.style.getPropertyValue('--ct-response-glow') };
+      });
+      const rgb = color.match(/[\da-f]{2}/gi).map(part => parseInt(part, 16)).join(', ');
+      assert.equal(renderedColors.text, `rgb(${rgb})`, `${name}'s cue uses their locked player color for text`);
+      assert.ok(renderedColors.background.includes(`rgba(${rgb},`), `${name}'s cue background gradient uses their locked player color: ${renderedColors.background}`);
+      assert.equal(renderedColors.token, color, `${name}'s cue color token matches their locked player color`);
+      assert.equal(renderedColors.glow, `${color}3d`, `${name}'s cue glow token matches their locked player color`);
       const rect = await notice(page).evaluate(el => { const r = el.getBoundingClientRect(); return { x: r.x, y: r.y, right: r.right, bottom: r.bottom, w: innerWidth, h: innerHeight }; });
       assert.ok(rect.x >= 0 && rect.y >= 0 && rect.right <= rect.w && rect.bottom <= rect.h, `cue fits viewport: ${JSON.stringify(rect)}`);
     };
@@ -90,21 +99,22 @@ const deck = { id: 'response-deck', name: 'Response test deck', commanders: [com
     await guest.keyboard.press('r');
     await guest.waitForFunction(() => !!document.querySelector('#responseNotice .ct-response-notice'));
     const firstId = await getId(guest);
-    await checkCue(host, guestPid, 'Response guest', firstId);
+    await checkCue(host, guestPid, 'Response guest', firstId, '#e5534b');
     await assertNoMutation(host, hostBefore); await assertNoMutation(guest, guestBefore);
     await guest.waitForTimeout(250);
     hostBefore = await captureState(host); guestBefore = await captureState(guest);
     await guest.keyboard.press('r');
     await guest.waitForFunction(id => document.querySelector('#responseNotice .ct-response-notice')?.dataset.responseId !== id, firstId);
     const secondId = await getId(guest);
-    await checkCue(host, guestPid, 'Response guest', secondId);
+    await checkCue(host, guestPid, 'Response guest', secondId, '#e5534b');
     assert.notEqual(secondId, firstId, 'separate presses are not deduped');
     await assertNoMutation(host, hostBefore); await assertNoMutation(guest, guestBefore);
 
     // The host's toolbar button also reaches the guest and host.
     hostBefore = await captureState(host); guestBefore = await captureState(guest);
     await host.locator('#responseBtn').click();
-    await checkCue(guest, hostPid, 'Response host', await getId(host));
+    await checkCue(guest, hostPid, 'Response host', await getId(host), '#4f8cff');
+    await checkCue(host, hostPid, 'Response host', await getId(host), '#4f8cff');
     await assertNoMutation(host, hostBefore); await assertNoMutation(guest, guestBefore);
 
     // Current animation can be replayed while active; holding R sends once only.
@@ -116,7 +126,7 @@ const deck = { id: 'response-deck', name: 'Response test deck', commanders: [com
     await guest.evaluate(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'r', repeat: true, bubbles: true, cancelable: true })));
     assert.notEqual(afterFirstDown, beforeHold);
     assert.equal(await getId(guest), afterFirstDown, 'repeated keydown while held does not send again');
-    await checkCue(host, guestPid, 'Response guest', afterFirstDown);
+    await checkCue(host, guestPid, 'Response guest', afterFirstDown, '#e5534b');
     await assertNoMutation(host, hostBefore); await assertNoMutation(guest, guestBefore);
 
     // Switching layouts while active does not move the viewport-level cue under a board.
@@ -182,8 +192,8 @@ const deck = { id: 'response-deck', name: 'Response test deck', commanders: [com
           await guest.waitForFunction(id => document.querySelector('#responseNotice .ct-response-notice')?.dataset.responseId !== id, oldId);
           const id = await getId(guest);
           assert.notEqual(id, oldId, `${method} creates a fresh cue while focused on the opponent`);
-          await checkCue(guest, guestPid, 'Response guest', id);
-          await checkCue(host, guestPid, 'Response guest', id);
+          await checkCue(guest, guestPid, 'Response guest', id, '#e5534b');
+          await checkCue(host, guestPid, 'Response guest', id, '#e5534b');
           await assertNoMutation(host, hostBefore); await assertNoMutation(guest, guestBefore);
           await guest.waitForTimeout(250);
           assert.equal(await guest.evaluate(() => CT.S.focus), hostPid, `cue leaves focused board intact (${mode}, ${method})`);
@@ -222,7 +232,7 @@ const deck = { id: 'response-deck', name: 'Response test deck', commanders: [com
     await guest.emulateMedia({ reducedMotion: 'reduce' });
     hostBefore = await captureState(host); guestBefore = await captureState(guest);
     await host.keyboard.press('r');
-    await checkCue(guest, hostPid, 'Response host', await getId(host));
+    await checkCue(guest, hostPid, 'Response host', await getId(host), '#4f8cff');
     assert.equal(await notice(guest).evaluate(el => getComputedStyle(el).animationName), 'none', 'reduced motion disables the cue animation');
     assert.equal(await notice(guest).evaluate(el => getComputedStyle(el).opacity), '1', 'reduced motion keeps the cue static and visible');
     await guest.waitForFunction(() => !document.querySelector('#responseNotice').firstElementChild, { timeout: 5000 });

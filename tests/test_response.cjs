@@ -9,7 +9,7 @@ let timerId = 0, modal = false;
 const slot = { firstElementChild: null, replaceChildren(...nodes) { this.firstElementChild = nodes[0] || null; } };
 const game = { classList: { contains: () => false } };
 const storage = { getItem: () => null, setItem() {}, removeItem() {} };
-const node = () => ({ dataset: {}, children: [], append(...children) { this.children.push(...children); } });
+const node = () => ({ dataset: {}, style: { values: {}, setProperty(k, v) { this.values[k] = v; } }, children: [], append(...children) { this.children.push(...children); } });
 const context = vm.createContext({ console, URL, URLSearchParams, Set, Map, Uint32Array, performance,
   innerWidth: 1920, innerHeight: 1080,
   location: { search: '?nettest', protocol: 'http:', href: 'http://localhost/?nettest' },
@@ -29,7 +29,7 @@ vm.runInContext(source, context);
 const CT = context.CT, S = CT.S;
 S.pid = 'host'; S.role = 'host'; S.room = 'CUE01'; S.net = { state: 'online' };
 S.me = { pid: 'host', name: 'Host', openingDeal: 'deal', zones: { hand: [{ id: 'private-card' }] } };
-S.table = { room: 'CUE01', started: true, openingDeal: 'deal', seats: ['host', 'guest'], out: {}, active: 'host', turn: 1, turnSeq: 1, phase: 3 };
+S.table = { room: 'CUE01', started: true, openingDeal: 'deal', seats: ['host', 'guest'], colors: { host: 'blue', guest: 'red' }, out: {}, active: 'host', turn: 1, turnSeq: 1, phase: 3 };
 S.players = { host: { name: 'Host' }, guest: { name: '<Guest & friend>' } };
 S.log = []; S.undo = [{ state: 'existing history' }];
 const before = JSON.stringify({ me: S.me, table: S.table, players: S.players, undo: S.undo, log: S.log });
@@ -40,6 +40,8 @@ assert.equal(sent[0].name, '<Guest & friend>', 'host uses the seated sender name
 const first = slot.firstElementChild;
 assert.ok(first); assert.equal(first.children[0].textContent, 'IN RESPONSE!');
 assert.equal(first.children[1].textContent, '<Guest & friend>', 'name is rendered as text, never markup');
+assert.equal(first.style.values['--ct-response-color'], '#e5534b', 'cue uses the responding guest color on the host screen');
+assert.equal(first.style.values['--ct-response-glow'], '#e5534b3d', 'background glow matches the responding player');
 const staleTimer = [...timers.values()].at(-1);
 CT.hostRecv({ t: 'response', deal: 'deal' }, 'guest');
 const second = slot.firstElementChild;
@@ -65,7 +67,15 @@ S.net.state = 'offline'; CT.sendResponse(); assert.equal(sent.length, count, 'of
 S.net.state = 'online'; S.table.out.guest = true; CT.sendResponse(); assert.equal(sent.length, count); delete S.table.out.guest;
 S.role = 'solo'; S.pid = 'host'; S.net.state = 'offline'; CT.sendResponse();
 assert.ok(slot.firstElementChild, 'Practice goes through host validation and shows the cue locally');
+assert.equal(slot.firstElementChild.style.values['--ct-response-color'], '#4f8cff', 'host response uses host blue rather than guest red');
 CT.clearResponseNotice(); assert.equal(slot.firstElementChild, null);
+for (const color of context.CTPlayerColors.PALETTE) {
+  S.table.colors.guest = color.id;
+  CT.showResponseNotice({ t: 'response', pid: 'guest', name: 'Guest', deal: 'deal', id: 'palette-' + color.id });
+  assert.equal(slot.firstElementChild.style.values['--ct-response-color'], color.value, `supports ${color.id} player color`);
+  assert.equal(slot.firstElementChild.style.values['--ct-response-glow'], color.value + '3d');
+}
+S.table.colors.guest = 'red'; CT.clearResponseNotice();
 
 S.role = 'client'; S.pid = 'guest'; S.net.state = 'online';
 const target = blocked => ({ closest: selector => blocked && selector.includes(blocked) ? {} : null });

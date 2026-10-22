@@ -1137,6 +1137,9 @@ function showResponseNotice(msg) {
   if (seenResponses.size > 64) seenResponses.delete(seenResponses.values().next().value);
   const cue = document.createElement('div');
   cue.className = 'ct-turn-notice ct-response-notice';
+  const color = colorOf(msg.pid);
+  cue.style.setProperty('--ct-response-color', color);
+  cue.style.setProperty('--ct-response-glow', color + '3d');
   cue.dataset.responseId = msg.id;
   const title = document.createElement('strong'); title.textContent = 'IN RESPONSE!';
   const name = document.createElement('span'); name.className = 'ct-response-name';

@@ -9,7 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ## [0.42.0] - 2026-10-21
 
 ### Added
-- **In response!** button and **R** shortcut: flash a turn-banner-style cue with your name on everyone's screen. Each separate press repeats the cue, which fades away after a short pause. Alerts are live and are not replayed after reconnecting.
+- **In response!** button and **R** shortcut: flash a turn-banner-style cue with your name and chosen player color on everyone's screen. Each separate press repeats the cue, which fades away after a short pause. Alerts are live and are not replayed after reconnecting.
 
 ## [0.41.0] - 2026-10-21
 

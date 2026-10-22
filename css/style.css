@@ -1170,6 +1170,8 @@ body.touch-mode #myBar .ctrpanel {
 .ct-response-notice {
   position: fixed; inset: 46px 0 0; z-index: 870; flex-direction: column; gap: 12px;
   font-size: clamp(24px, 3.2vw, 44px); white-space: normal;
+  color: var(--ct-response-color, #e0a33a);
+  background: radial-gradient(ellipse at center, var(--ct-response-glow, #e0a33a3d), rgba(10,13,18,.04) 68%, transparent 100%);
   animation: ct-response-banner 1.8s ease-out both;
 }
 .ct-response-name { max-width: 90vw; font-size: .55em; letter-spacing: .04em; overflow-wrap: anywhere; }
