@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="app-version" content="0.49.0">
+<title>Commander Table · Admin</title>
+<link rel="stylesheet" href="css/admin.css?v=0.49.0">
+</head>
+<body>
+<main>
+  <header><div><p class="eyebrow">Commander Table</p><h1>Active games</h1></div><a href="index.html">Back to table</a></header>
+  <p class="intro">Private room management. Only games connected through the Commander Table relay appear here; direct-connection fallback games cannot be managed from this page.</p>
+  <section class="signin" id="signin"><label for="passphrase">Admin passphrase</label><div class="signin-row"><input id="passphrase" type="password" autocomplete="off" spellcheck="false" placeholder="Enter your private passphrase"><button id="signIn" type="button">Sign in</button></div><p>Your passphrase is kept only in this browser tab.</p></section>
+  <section id="dashboard" hidden><div class="toolbar"><p id="count" role="status">Checking rooms…</p><div><button id="refresh" type="button">Refresh</button><button id="signOut" type="button">Sign out</button></div></div><div id="rooms" class="rooms"></div></section>
+  <p id="message" role="status" aria-live="polite"></p>
+</main>
+<script src="js/net-config.js?v=0.49.0"></script>
+<script src="js/admin.js?v=0.49.0"></script>
+</body>
+</html>

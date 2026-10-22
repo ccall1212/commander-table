@@ -343,6 +343,10 @@
         hostOnConnection(conn);
       });
 
+      p.on('admin-join-request', function (id) {
+        if (!dead && p === peer) safeCall(cfg.onAdminJoinRequest, id);
+      });
+
       p.on('disconnected', function () {
         if (dead || p !== peer) return;
         log('host signalling disconnected');
@@ -362,6 +366,7 @@
         log('host peer error', type, err && err.message);
         if (dead || p !== peer) return;
         if (type === 'browser-incompatible') { fatal('This browser does not support WebRTC', 'signaling'); return; }
+        if (type === 'room-closed') { fatal('This room was closed by the site admin.', 'room-closed'); return; }
         if (type === 'replaced') { fatal('This game was opened in another tab or window — carry on there.', 'replaced'); return; }
         if (type === 'peer-unavailable' || type === 'webrtc' || type === 'disconnected') return;
         if (type === 'unavailable-id') {
@@ -507,6 +512,7 @@
         }
         log('client peer error', type, err && err.message);
         if (type === 'browser-incompatible') { fatal('This browser does not support WebRTC', 'signaling'); return; }
+        if (type === 'room-closed') { fatal('This room was closed by the site admin.', 'room-closed'); return; }
         if (type === 'room-full') { fatal('Room ' + room.toUpperCase() + ' is full.', 'room-full'); return; }
         if (type === 'replaced') { fatal('This game was opened in another tab or window — carry on there.', 'replaced'); return; }
         if (type === 'webrtc' || type === 'disconnected' || type === 'negotiation-failed') return;
@@ -793,6 +799,8 @@
         if (!isHost || !peer || typeof peer.roomVault !== 'function') return Promise.reject(new Error('Room board recovery requires the relay host.'));
         return peer.roomVault(action, payload);
       },
+      adminPresence: function (summary) { return isHost && peer && typeof peer.adminPresence === 'function' && peer.adminPresence(summary); },
+      adminJoinDecision: function (id, allow) { return isHost && peer && typeof peer.adminJoinDecision === 'function' && peer.adminJoinDecision(id, allow); },
       diag: function () {
         return { role: cfg.role, room: room.toUpperCase(), transport: transport, auto: auto, state: state, code: code,
           text: lastText, peerOpen: !!(peer && peer.open), players: isHost ? Array.from(conns.keys()) : null,
@@ -851,6 +859,8 @@
     },
 
     roomVault: function (action, payload) { return current ? current.roomVault(action, payload) : Promise.reject(new Error('Room server is not connected.')); },
+    adminPresence: function (summary) { return current ? current.adminPresence(summary) : false; },
+    adminJoinDecision: function (id, allow) { return current ? current.adminJoinDecision(id, allow) : false; },
 
     // Snapshot of the connection for the diagnostics panel / bug reports.
     diag: function () {

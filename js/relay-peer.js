@@ -245,6 +245,10 @@
       case 'pong':
         break;
 
+      case 'admin-join-request':
+        if (typeof m.id === 'string') this.emit('admin-join-request', m.id);
+        break;
+
       case 'open':
         this.id = m.id;
         this.open = true;
@@ -264,6 +268,8 @@
           this._fatal('replaced', 'This game was opened in another tab or window');
         } else if (m.type === 'room-full') {
           this._fatal('room-full', m.message || 'This room is full');
+        } else if (m.type === 'room-closed') {
+          this._fatal('room-closed', m.message || 'This game was closed by the site admin');
         } else {
           this.emit('error', mkErr(m.type || 'server-error', m.message));
         }
@@ -329,6 +335,18 @@
       try { self._ws.send(JSON.stringify(Object.assign({}, payload || {}, { op: 'vault', rid: rid, action: action }))); }
       catch (e) { clearTimeout(timer); delete self._vaultPending[rid]; reject(e); }
     });
+  };
+
+  RelayPeer.prototype.adminPresence = function (summary) {
+    if (!this.open || !this._ws || this._ws.readyState !== 1 || this.features.indexOf('admin-directory-v1') < 0) return false;
+    this._ws.send(JSON.stringify(Object.assign({ op: 'admin-presence' }, summary)));
+    return true;
+  };
+
+  RelayPeer.prototype.adminJoinDecision = function (id, allow) {
+    if (!this.open || !this._ws || this._ws.readyState !== 1 || this.features.indexOf('admin-directory-v1') < 0) return false;
+    this._ws.send(JSON.stringify({ op: 'admin-join-decision', id: id, allow: !!allow }));
+    return true;
   };
 
   // Close the websocket without any further events from it.

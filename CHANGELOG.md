@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.49.0] - 2026-10-22
+
+### Added
+- Private admin dashboard for relay-connected rooms: see active room count, host, players and whether play has started. An admin may request to join; the host must approve before the dashboard reveals its normal join link. An admin may also close a relay room, ending its connections and blocking that code from reconnecting for 24 hours.
+
 ## [0.48.0] - 2026-10-22
 
 ### Added
@@ -132,7 +137,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.48.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.49.0...HEAD
+[0.49.0]: https://github.com/ccall1212/commander-table/compare/v0.48.0...v0.49.0
 [0.48.0]: https://github.com/ccall1212/commander-table/compare/v0.47.0...v0.48.0
 [0.47.0]: https://github.com/ccall1212/commander-table/compare/v0.46.1...v0.47.0
 [0.46.1]: https://github.com/ccall1212/commander-table/compare/v0.46.0...v0.46.1

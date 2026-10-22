@@ -1,0 +1,26 @@
+/* Check relay-peer's new optional admin frames without a live Worker. */
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+const path = require('node:path');
+const context = vm.createContext({ console, URL, WebSocket: class {}, setTimeout, clearTimeout, setInterval, clearInterval });
+context.window = context;
+vm.runInContext(fs.readFileSync(path.join(__dirname, '../js/relay-peer.js'), 'utf8'), context);
+const frames = [];
+const peer = Object.create(context.RelayPeer.prototype);
+peer.open = true; peer.features = ['admin-directory-v1']; peer._conns = {}; peer._pending = {}; peer._vaultPending = {};
+peer._ws = { readyState: 1, send: frame => frames.push(JSON.parse(frame)), close() {} };
+let requestId = null, closedError = null;
+peer.on('admin-join-request', id => { requestId = id; });
+peer.on('error', error => { closedError = error; });
+assert.equal(peer.adminPresence({ host: 'Chris', players: [], started: false }), true);
+assert.equal(frames[0].op, 'admin-presence');
+assert.equal(peer.adminJoinDecision('request-1', true), true);
+assert.deepEqual(frames[1], { op: 'admin-join-decision', id: 'request-1', allow: true });
+peer._onMessage(peer._ws, { op: 'admin-join-request', id: 'request-1' });
+assert.equal(requestId, 'request-1');
+peer._onMessage(peer._ws, { op: 'err', type: 'room-closed', message: 'Closed' });
+assert.equal(closedError.type, 'room-closed');
+assert.equal(peer.destroyed, true);
+assert.equal(peer.open, false);
+console.log('PASS admin transport: presence, visible join request/decision and fatal room close');

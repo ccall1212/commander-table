@@ -36,7 +36,7 @@ hibernate and cost nothing. A 4-player game is a few hundred "requests" per hour
 If you ever hit the free limit, the relay refuses new work until 00:00 UTC, and the game falls back
 to direct PeerJS connections between players.
 
-No secrets or API keys are involved anywhere.
+The optional site-admin dashboard uses one Worker secret, `ADMIN_PASSPHRASE`. It must be configured privately in Cloudflare, not placed in GitHub, `wrangler.jsonc`, a source file, a URL, or a room message. The dashboard rejects every admin request while that secret is absent. See [Admin dashboard](../docs/ADMIN.md).
 
 ## Updating
 

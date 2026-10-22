@@ -60,7 +60,7 @@ GitHub Pages (static site)                Cloudflare Worker "commander-table-rel
 ```
 
 - **Protocol:** `docs/relay-protocol.md` (v2). `relay/worker.js` implements the broker framing and may additionally advertise
-  `room-vault-v1`, a host-authenticated private-board backup API.
+  `room-vault-v1`, a host-authenticated private-board backup API, and `admin-directory-v1` for the private room dashboard.
 - **Authority:** unchanged — every player owns their own cards and publishes a public view; the host
   owns the table (turns, seats, log) and relays. The relay never interprets game messages.
 - **Route choice (`js/net-config.js`):** `mode:'auto'` = relay first; if the relay can't be reached
@@ -76,6 +76,7 @@ GitHub Pages (static site)                Cloudflare Worker "commander-table-rel
   returns a private snapshot only to that authenticated host socket; it is not broadcast. A room
   binding prevents a different host key from claiming the saved data after disconnect. This is
   server-side storage, not end-to-end encryption.
+- **Admin directory:** on a Worker advertising `admin-directory-v1`, a relay-connected host sends a small roster (host/player names, connectivity and started status) periodically. A separate Durable Object keeps recent room summaries; entries expire after 90 seconds without an update. `GET /admin/rooms` and the join/close controls require the Worker-only `ADMIN_PASSPHRASE` secret. The relay still does not inspect ordinary game messages or put card identities in the directory. Admin close blocks that room code for 24 hours. Direct PeerJS fallback traffic bypasses the Worker and cannot appear in this dashboard or be closed from it. See [Admin dashboard](ADMIN.md).
 - **Cost (Workers Free plan, per Cloudflare's pricing page, Oct 2026):** Durable Objects with SQLite
   storage are included; 100,000 requests/day, incoming WebSocket messages count 20:1, 13,000 GB-s/day,
   idle (hibernated) rooms cost nothing; keepalive pings are auto-answered without waking the object.
