@@ -100,7 +100,7 @@ S.me.kept = true;
 S.undo = [JSON.stringify({ ...S.me, kept: false })];
 CT.tableOp({ k: 'start' }, 'host');
 assert.equal(S.table.started, true, 'host can start after every live seat keeps the current deal');
-assert.equal(S.undo.length, 0, 'the opening-hand undo history is cleared when this deal starts');
+assert.equal(S.undo.filter(entry => entry.kind !== 'checkpoint').length, 0, 'the opening-hand undo actions are cleared when this deal starts');
 CT.undo();
 assert.equal(S.me.kept, true, 'undo after Start cannot restore the unkept snapshot');
 const rollCount = sent.filter(message => message.t === 'firstroll').length;

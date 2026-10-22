@@ -6,6 +6,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.41.0] - 2026-10-21
+
+### Added
+- Open the dropdown beside Undo to restore your board to before a recent personal action or to a saved phase checkpoint. Save named checkpoints during your turn; the shared turn and other players' boards stay where they are.
+
+### Fixed
+- Reset personal history at turn, card-transfer, incoming-effect and automatic board-resize boundaries, preventing Undo from duplicating transferred cards or reversing another player's effects. Restores retain unique card IDs and current room-save metadata.
+
 ## [0.40.0] - 2026-10-21
 
 ### Changed
@@ -67,7 +75,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.40.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.41.0...HEAD
+[0.41.0]: https://github.com/ccall1212/commander-table/compare/v0.40.0...v0.41.0
 [0.40.0]: https://github.com/ccall1212/commander-table/compare/v0.39.0...v0.40.0
 [0.39.0]: https://github.com/ccall1212/commander-table/compare/v0.38.0...v0.39.0
 [0.38.0]: https://github.com/ccall1212/commander-table/compare/v0.37.0...v0.38.0

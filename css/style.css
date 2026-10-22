@@ -57,6 +57,9 @@ kbd { background: var(--panel2); border: 1px solid var(--border); border-radius:
   border-bottom: 1px solid var(--border); }
 .tb-left, .tb-right { display: flex; align-items: center; gap: 8px; }
 .tb-right { margin-left: auto; }
+.ct-undo-controls { display: inline-flex; flex: none; }
+.ct-undo-controls button:first-child { border-radius: 5px 0 0 5px; }
+.ct-undo-controls button:last-child { border-radius: 0 5px 5px 0; margin-left: -1px; padding-inline: 7px; }
 .brand { font-weight: 700; color: var(--accent); }
 .room { font-weight: 700; letter-spacing: 2px; }
 .pill { font-size: 12px; padding: 2px 9px; border-radius: 10px; border: 1px solid var(--border); color: var(--muted); }
