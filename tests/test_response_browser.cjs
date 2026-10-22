@@ -32,6 +32,7 @@ const deck = { id: 'response-deck', name: 'Response test deck', commanders: [com
     const room = await host.evaluate(() => CT.S.room);
     const guest = await player('Response guest');
     await guest.locator('#joinIn').fill(room); await guest.locator('#joinBtn').click();
+    await guest.getByRole('button', { name: 'Join game', exact: true }).click();
     await guest.locator('.ct-player-color-option[data-color="red"]').click();
     await host.waitForFunction(() => CT.S.table?.seats.length === 2 && Object.keys(CT.S.players).length === 2);
     await guest.waitForFunction(() => CT.S.table?.seats.length === 2 && Object.keys(CT.S.players).length === 2);

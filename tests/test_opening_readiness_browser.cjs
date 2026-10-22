@@ -95,6 +95,7 @@ const deck = {
     guest = await player('Ready guest', 1366, 768);
     await guest.page.locator('#joinIn').fill(room);
     await guest.page.locator('#joinBtn').click();
+    await guest.page.getByRole('button', { name: 'Join game', exact: true }).click();
     await guest.page.locator('.ct-player-color-option[data-color="red"]').click();
     await host.page.waitForFunction(() => Object.keys(CT.S.players).length === 2, { timeout: 30000 });
     await guest.page.waitForFunction(() => CT.S.table?.seats.length === 2, { timeout: 30000 });

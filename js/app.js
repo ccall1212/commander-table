@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.44.1';
+const APP_VERSION = '0.45.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -156,7 +156,7 @@ function newPlayer(deck, name, prev, mode = 'london', dealId = null) {
     pid: S.pid, name, appearance: CTAppearance.getPrefs(), life: 40, poison: 0, ctr: {}, cmdDmg: {}, casts: {}, mull: 0, kept: false,
     openingDeal: dealId,
     revealHand: false, revealTop: false, revealTopOnce: null, seq: 0, lastTurn: 0, lastTurnSeq: 0,
-    autoUntap: false, autoDraw: false, // always start a game with these off
+    autoUntap: !!(prev && prev.autoUntap), autoDraw: !!(prev && prev.autoDraw),
     layout: prev && prev.layout ? cloneLayout(prev.layout) : defaultLayout(),
     // auto = untouched default zones: they (and the cards in them) stretch to fit whichever view is used
     layoutAuto: prev && prev.layout ? !!prev.layoutAuto : !LS.get('ct.layout2', null),
@@ -5532,7 +5532,6 @@ function renderDeckList() {
       <input type="radio" name="deck" ${d.id === selDeck ? 'checked' : ''} tabindex="-1">
       <span class="dn">${esc(d.name)}</span><span class="dc">${esc(d.commanderNames.join(' + ') || 'no commander')} · ${d.count} cards</span>
       <button class="x" data-del="${esc(d.id)}" title="Delete deck">✕</button></div>`).join('');
-  $('#editDeckBtn').disabled = !selDeck || !Deck.get(selDeck);
 }
 function bindLobby() {
   $('#ver').textContent = APP_VERSION;
@@ -5543,7 +5542,6 @@ function bindLobby() {
   $('#resetCustomBack').addEventListener('click', () => resetCustomImage('cardBack'));
   $('#resetCustomBackground').addEventListener('click', () => resetCustomImage('background'));
   $('#editDeckBtn').onclick = () => {
-    if (!selDeck) { UI.toast('Select or import a saved deck first.', { kind: 'warn' }); return; }
     CTDeckEditor.open(selDeck, renderDeckList, { onHover: d => preview(d), onLeave: () => hidePreview() });
   };
   $('#deckList').addEventListener('click', async e => {
@@ -5563,7 +5561,6 @@ function bindLobby() {
       selDeck = row.dataset.deck; LS.set('ct.selDeck', selDeck); renderDeckList();
     }
   });
-  $('#backupBtn').onclick = () => CTBackup.open();
   $('#importBtn').onclick = () => { $('#importBox').classList.remove('hidden'); $('#importBtn').classList.add('hidden'); $('#deckText').focus(); };
   $('#cancelImport').onclick = closeImport;
   $('#loadDeck').onclick = loadDeck;
@@ -5576,12 +5573,29 @@ function bindLobby() {
     finally { hostStartPending = false; }
   };
   $('#soloBtn').onclick = () => begin('solo');
-  $('#joinBtn').onclick = () => begin('client');
+  let joinStartPending = false;
+  const joinGame = async () => {
+    if (joinStartPending) return;
+    joinStartPending = true;
+    try { await begin('client'); }
+    finally { joinStartPending = false; }
+  };
+  $('#joinBtn').onclick = joinGame;
   $('#joinIn').addEventListener('input', e => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); });
-  $('#joinIn').addEventListener('keydown', e => { if (e.key === 'Enter') begin('client'); });
+  $('#joinIn').addEventListener('keydown', e => { if (e.key === 'Enter') joinGame(); });
 }
 
 let hostOpeningPromptOpen = false;
+function autoActionChoices() {
+  return `<fieldset class="ct-entry-auto-actions" aria-label="Your turn options">
+    <legend>Your turn</legend>
+    <label><input type="checkbox" name="entry-auto-draw"><span><b>Auto-Draw</b><small>Draw a card at the start of your turn.</small></span></label>
+    <label><input type="checkbox" name="entry-auto-untap"><span><b>Auto Untap All</b><small>Untap your cards at the start of your turn.</small></span></label>
+  </fieldset><p class="muted small ct-entry-auto-note">These apply only to your board. You can change either setting in-game.</p>`;
+}
+function selectedAutoActions(form) {
+  return { autoDraw: form.elements['entry-auto-draw'].checked, autoUntap: form.elements['entry-auto-untap'].checked };
+}
 function chooseHostOpeningMode() {
   if (hostOpeningPromptOpen) return Promise.resolve(null);
   hostOpeningPromptOpen = true;
@@ -5607,6 +5621,7 @@ function chooseHostOpeningMode() {
       </label>`).join('')}
     </fieldset>
     <p class="muted small ct-host-opening-note">You can change this after joining the game. The host can grant extra mulligans.</p>
+    ${autoActionChoices()}
     <div class="row ct-host-opening-actions"><button type="button" data-host-opening-cancel>Cancel</button><button type="submit" class="primary">Continue</button></div>
   </form>`;
   const promise = new Promise(resolve => {
@@ -5625,7 +5640,7 @@ function chooseHostOpeningMode() {
       if (!input) return;
       const mode = CTMulligan.normalizeMode(input.value);
       finish(mode);
-      resolve(mode);
+      resolve({ openingMode: mode, ...selectedAutoActions(form) });
     });
     form.querySelector('[data-host-opening-cancel]').addEventListener('click', () => {
       done = true;
@@ -5634,6 +5649,33 @@ function chooseHostOpeningMode() {
     });
   });
   return promise.finally(() => { hostOpeningPromptOpen = false; });
+}
+
+function chooseJoinAutoActions() {
+  let done = false;
+  let modal;
+  const promise = new Promise(resolve => {
+    modal = UI.modal({
+      title: 'Choose your turn options',
+      className: 'ct-host-opening-dialog',
+      html: `<form class="ct-host-opening-form">${autoActionChoices()}<div class="row ct-host-opening-actions"><button type="button" data-entry-cancel>Cancel</button><button type="submit" class="primary">Join game</button></div></form>`,
+      onClose() { if (!done) { done = true; resolve(null); } }
+    });
+    const form = modal.el.querySelector('form');
+    form.addEventListener('submit', event => {
+      event.preventDefault();
+      done = true;
+      const options = selectedAutoActions(form);
+      modal.close();
+      resolve(options);
+    });
+    form.querySelector('[data-entry-cancel]').addEventListener('click', () => {
+      done = true;
+      modal.close();
+      resolve(null);
+    });
+  });
+  return promise;
 }
 
 function renderAppearancePickers() {
@@ -5780,9 +5822,16 @@ async function begin(role) {
   }
   if (role !== 'solo' && typeof Peer === 'undefined') { UI.toast('Online play needs an internet connection — try Practice solo.', { kind: 'error' }); return; }
   let openingMode = 'london';
+  let autoActions = { autoDraw: false, autoUntap: false };
   if (role === 'host') {
-    openingMode = await chooseHostOpeningMode();
-    if (!openingMode) return;
+    const choices = await chooseHostOpeningMode();
+    if (!choices) return;
+    openingMode = choices.openingMode;
+    autoActions = choices;
+  } else if (role === 'client') {
+    const choices = await chooseJoinAutoActions();
+    if (!choices) return;
+    autoActions = choices;
   }
   if (role === 'host') room = Net.makeRoomCode();
   try { // the invite has done its job; keep any ?net= override
@@ -5793,6 +5842,8 @@ async function begin(role) {
   S.players = {}; S.log = []; S.online = {}; S.undo = [];
   const openingDeal = role === 'client' ? null : uid();
   S.me = newPlayer(deck, name, null, openingMode, openingDeal);
+  S.me.autoDraw = autoActions.autoDraw;
+  S.me.autoUntap = autoActions.autoUntap;
   S.table = role === 'client' ? null : newTable(room, openingMode, openingDeal);
   S.colorFlow = role !== 'solo'; S.colorRequestPending = false;
   S.net = { state: role === 'solo' ? 'online' : 'connecting', text: '' };

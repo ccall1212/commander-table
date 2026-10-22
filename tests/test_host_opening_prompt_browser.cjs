@@ -53,6 +53,9 @@ const deck = {
     await dialog.waitFor();
     assert.match(await dialog.innerText(), /You can change this after joining the game\./);
     assert.equal(await dialog.locator('input[name="host-opening-mode"]').count(), 3, 'all three opening rules are available');
+    assert.equal(await dialog.locator('input[name="entry-auto-draw"]').isChecked(), false);
+    assert.equal(await dialog.locator('input[name="entry-auto-untap"]').isChecked(), false);
+    assert.match(await dialog.innerText(), /You can change either setting in-game/);
     assert.equal(await host.evaluate(() => CT.S.room), null, 'room is not created before the rule is confirmed');
     assert.equal(await host.evaluate(() => CT.S.role), null, 'no host session starts before confirmation');
     assert.equal(await host.evaluate(() => Object.keys(localStorage).filter(key => key.startsWith('ct.sess.')).length), 0, 'no session is saved before confirmation');
@@ -92,11 +95,14 @@ const deck = {
       const session = await player(`Mode host ${index + 1}`, { 'ct.openingMode': 'london' }, savedDeck);
       await session.locator('#hostBtn').click();
       await session.locator(`input[name="host-opening-mode"][value="${option.mode}"]`).check();
+      if (index === 1) await session.locator('input[name="entry-auto-draw"]').check();
+      if (index === 2) await session.locator('input[name="entry-auto-untap"]').check();
       await session.getByRole('button', { name: 'Continue', exact: true }).click();
       await session.locator(`.ct-player-color-option[data-color="${option.color}"]`).waitFor();
       assert.equal(await session.evaluate(() => JSON.parse(localStorage.getItem('ct.openingMode'))), option.mode, `${option.mode} becomes the saved preference`);
       assert.equal(await session.evaluate(() => CT.S.table.openingMode), option.mode, `${option.mode} is used for the table`);
       assert.equal(await session.evaluate(() => CT.S.me.zones.hand.length), option.hand, `${option.mode} deals ${option.hand} cards`);
+      assert.deepEqual(await session.evaluate(() => [CT.S.me.autoDraw, CT.S.me.autoUntap]), [index === 1, index === 2], 'host turn choices are independent');
       if (option.landsOnly) {
         const lands = await session.evaluate(() => CT.S.me.zones.hand.filter(card => /\bLand\b/.test(CT.S.me.defs[card.id]?.type || '')).length);
         assert.ok(lands >= 3, 'Three Lands deals a hand with at least three lands when the deck has enough');
@@ -116,10 +122,27 @@ const deck = {
     const ruleGuest = await player('Rule-change guest');
     await ruleGuest.locator('#joinIn').fill(room);
     await ruleGuest.locator('#joinBtn').click();
+    const joinDialog = ruleGuest.locator('.ct-host-opening-dialog');
+    await joinDialog.waitFor();
+    assert.equal(await ruleGuest.evaluate(() => CT.S.role), null, 'join waits for turn choices');
+    await joinDialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+    assert.equal(await ruleGuest.evaluate(() => CT.S.role), null, 'cancelled join leaves no session');
+    await ruleGuest.locator('#joinBtn').click();
+    await ruleGuest.locator('input[name="entry-auto-draw"]').check();
+    await ruleGuest.locator('input[name="entry-auto-untap"]').check();
+    await ruleGuest.getByRole('button', { name: 'Join game', exact: true }).click();
     await ruleGuest.locator('.ct-player-color-option[data-color="red"]').waitFor();
     await ruleGuest.locator('.ct-player-color-option[data-color="red"]').click();
     await ruleHost.waitForFunction(() => Object.keys(CT.S.players).length === 2, { timeout: 30000 });
     await ruleGuest.waitForFunction(() => CT.S.table?.seats.length === 2, { timeout: 30000 });
+    assert.deepEqual(await ruleGuest.evaluate(() => [CT.S.me.autoDraw, CT.S.me.autoUntap]), [true, true], 'guest turn choices apply to their own board');
+    assert.deepEqual(await ruleHost.evaluate(() => [CT.S.me.autoDraw, CT.S.me.autoUntap]), [false, false], 'guest choices do not change host board');
+    await ruleGuest.setViewportSize({ width: 1920, height: 1080 });
+    await ruleGuest.locator('[data-a="view"][data-v="grid"]').click();
+    assert.equal(await ruleGuest.evaluate(() => CT.S.view), 'grid');
+    assert.deepEqual(await ruleGuest.evaluate(() => [CT.S.me.autoDraw, CT.S.me.autoUntap]), [true, true], 'turn choices remain set in Grid view');
+    await ruleGuest.setViewportSize({ width: 1366, height: 768 });
+    await ruleGuest.locator('[data-a="view"][data-v="side"]').click();
     const oldDeal = await ruleHost.evaluate(() => CT.S.table.openingDeal);
     await ruleHost.locator('.ct-opening-rule[data-a="openingrule"]').click();
     await ruleHost.getByText('Draw 10, bottom 3', { exact: true }).click();
@@ -132,6 +155,9 @@ const deck = {
       assert.equal(await page.evaluate(() => CT.S.me.openingDeal), await page.evaluate(() => CT.S.table.openingDeal), 'both boards receive the new opening deal');
       assert.equal(await page.evaluate(() => CT.S.me.kept), false, 'both players return to choosing an opening hand');
     }
+    assert.deepEqual(await ruleGuest.evaluate(() => [CT.S.me.autoDraw, CT.S.me.autoUntap]), [true, true], 'pregame redeal keeps guest choices');
+    await ruleGuest.locator('input[data-a="autodraw"]').first().uncheck();
+    assert.deepEqual(await ruleGuest.evaluate(() => [CT.S.me.autoDraw, CT.S.me.autoUntap]), [false, true], 'in-game Auto-Draw toggle still works');
 
     const solo = await player('Solo player');
     await solo.locator('#soloBtn').click();
@@ -139,7 +165,7 @@ const deck = {
     assert.equal(await solo.locator('.ct-host-opening-dialog').count(), 0, 'solo play skips the host rule prompt');
     assert.equal(await solo.evaluate(() => CT.S.table.openingMode), 'london', 'solo keeps its existing London opening rule');
     assert.deepEqual(errors, [], errors.join('\n'));
-    console.log('PASS Host Game opening prompt: Cancel/Escape preserve preference and focus; prompt is single-instance and fits both viewport sizes; all three confirmed rules save and deal correctly; two-player rule change redeals both hands; solo skips the prompt. Screenshot: /tmp/ct-host-opening-prompt.png');
+    console.log('PASS entry options: Host/Join cancel and choices, four auto-action combinations, independent boards, redeal and in-game toggle, three opening rules, Sidebar/Grid at both viewport sizes; solo skips the prompt. Screenshot: /tmp/ct-host-opening-prompt.png');
   } finally {
     for (const ctx of contexts) {
       try { await ctx.pages()[0]?.evaluate(() => Net.stop()); } catch {}

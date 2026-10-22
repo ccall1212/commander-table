@@ -29,6 +29,13 @@ const deck = {
     await page.locator('#editDeckBtn').click();
     const dialog = page.locator('.w-viewer-dialog');
     await dialog.waitFor();
+    assert.equal(await page.locator('#backupBtn').count(), 0, 'backup button is removed from opening screen');
+    await dialog.getByRole('button', { name: 'Back up / restore…' }).click();
+    await page.getByRole('heading', { name: 'Back up / restore collection' }).waitFor();
+    assert.equal(await page.getByRole('button', { name: 'Download backup' }).isVisible(), true);
+    assert.equal(await page.locator('input[data-backup-file]').count(), 1, 'restore file control remains available');
+    await page.keyboard.press('Escape');
+    assert.equal(await dialog.isVisible(), true, 'closing backup returns to Deck Builder');
     const summary = dialog.locator('.deck-health');
     assert.match(await summary.innerText(), /112 cards including commanders/);
     const notes = summary.locator('ul');
@@ -56,6 +63,19 @@ const deck = {
     assert.equal(errors.length, 0, errors.join('\n'));
     await page.setViewportSize({ width: 1366, height: 768 });
     assert.equal(await page.locator('.deck-health').isVisible(), true);
-    console.log('PASS actual Chromium Deck Builder: partner color union, outside identity warning, count includes commanders, duplicate grouping and printed exceptions, dismiss/edit/reopen updates at 1920x1080 and 1366x768; no page errors');
+    const backup = await page.evaluate(() => JSON.stringify(CTBackup.create(localStorage)));
+    const empty = await browser.newContext({ viewport: { width: 1366, height: 768 } });
+    const emptyPage = await empty.newPage();
+    emptyPage.on('pageerror', error => errors.push(error.message));
+    await emptyPage.goto('http://127.0.0.1:8108/index.html');
+    await emptyPage.locator('#editDeckBtn').click();
+    await emptyPage.getByRole('button', { name: 'Back up / restore…' }).click();
+    assert.equal(await emptyPage.getByRole('button', { name: 'Download backup' }).isVisible(), true, 'backup is accessible before importing any deck');
+    await emptyPage.locator('input[data-backup-file]').setInputFiles({ name: 'collection.json', mimeType: 'application/json', buffer: Buffer.from(backup) });
+    await emptyPage.locator('[data-backup-preview]').getByText(/1 decks in backup: 1 to add/).waitFor();
+    await Promise.all([emptyPage.waitForNavigation(), emptyPage.getByRole('button', { name: 'Restore and reload' }).click()]);
+    assert.equal(await emptyPage.locator('#deckList .deck-row').count(), 1, 'empty collection restores its first deck');
+    await empty.close();
+    console.log('PASS actual Chromium Deck Builder: backup opens inside Builder, closes back to Builder, restores into an empty collection; deck checks and editing remain correct at 1920x1080 and 1366x768; no page errors');
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });
