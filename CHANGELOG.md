@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.50.1] - 2026-10-22
+
+### Fixed
+- When the live relay has not yet deployed Spectate, the admin view explains the missing update instead of showing a blank table and “Not found.” It checks again automatically and displays the boards once the relay is ready.
+- When viewing another player's board, the own-board sidebar miniature now keeps its cards and playmat in both live games and admin Spectate. Spectate no longer labels the host as “YOU.”
+
 ## [0.50.0] - 2026-10-22
 
 ### Added
