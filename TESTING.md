@@ -1,6 +1,6 @@
 # iPhone Touch mode menu access — v0.46.1 test copy
 
-Extract the ZIP and double-click **index.html**; no terminal or local server is needed. This change has not been published.
+Extract the ZIP and double-click **index.html**; no terminal or local server is needed. This change was published as v0.46.1 through PR #68 after Chris requested “Push.” The live iPhone test remains outstanding.
 
 1. On an iPhone, open a saved game or enter Practice solo. In portrait, the **☰** menu button should be visible at the top right. Tap it and choose **Touch mode: Off**. It should switch on and show **Touch mode: On** when you reopen the menu.
 2. Rotate to landscape. The **☰** button should still be visible and usable; turn Touch mode off and on again. Confirm you can reach the menu both before and after switching modes.
