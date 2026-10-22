@@ -67,11 +67,11 @@ Press **C** while hovering a visible card that currently offers **Copy this card
 
 When this shortcut ships, show **C** in Objective #45's brief entry reminder in place of the optional **U** row, keeping that reminder to eight lines. Do not advertise C in the reminder before the shortcut works. This is a future objective; no implementation or test ZIP yet.
 
-## 47. Replace two card-back presets and preview backgrounds larger — QUEUED
+## 47. Remove two card-back presets and preview backgrounds larger — PARTLY IN PROGRESS
 
-Chris wants to replace the **Arcane Star** and **Shadow Black** card-back images because they look too much like the Magic: The Gathering icon. Create clearly original replacement artwork, review the designs at both thumbnail and card size, and retain the existing preset IDs so players who selected them and collection backups still resolve correctly. Update names if the new designs warrant it. This is a visual precaution, not a legal determination about the current images.
+Chris asked to remove **Arcane Star** and **Shadow Black** because they look too much like the Magic: The Gathering icon. Their presets and images are removed in the v0.45.1 test branch; saved selections and collection backups using either name fall back to Ruby Sigil. This is a visual precaution, not a legal determination about the images. The larger background preview below remains queued.
 
-On the start screen, let players inspect each play-area background in a larger view before choosing it. The existing thumbnail click should still select the background; provide a separate, obvious preview action so inspection does not silently change their selection. Show the full-size image without the dark gameplay overlay, fit it within desktop and smaller screens, and make the preview easy to close. Cover presets and a saved custom background when present. These small appearance-picker changes may be tested in one batch, separate from creating more backgrounds. No implementation or test ZIP yet.
+On the start screen, let players inspect each play-area background in a larger view before choosing it. The existing thumbnail click should still select the background; provide a separate, obvious preview action so inspection does not silently change their selection. Show the full-size image without the dark gameplay overlay, fit it within desktop and smaller screens, and make the preview easy to close. Cover presets and a saved custom background when present. The larger background preview remains a separate appearance-picker change, independent of creating more backgrounds. No test ZIP for the preview yet.
 
 ## 48. More distinctive play-area backgrounds — QUEUED AS A SEPARATE ART PROJECT
 

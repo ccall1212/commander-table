@@ -4,14 +4,12 @@
   const BACKS = [
     {id:'ruby-sigil',name:'Ruby Sigil',src:'assets/card-backs/ruby-sigil.webp'},
     {id:'dragon-flame',name:'Dragon Flame',src:'assets/card-backs/dragon-flame.webp'},
-    {id:'arcane-star',name:'Arcane Star',src:'assets/card-backs/arcane-star.webp'},
     {id:'astral-void',name:'Astral Void',src:'assets/card-backs/astral-void.webp'},
     {id:'ocean-depths',name:'Ocean Depths',src:'assets/card-backs/ocean-depths.webp'},
     {id:'frost-crystal',name:'Frost Crystal',src:'assets/card-backs/frost-crystal.webp'},
     {id:'tree-of-life',name:'Tree of Life',src:'assets/card-backs/tree-of-life.webp'},
     {id:'bone-necromancer',name:'Bone Necromancer',src:'assets/card-backs/bone-necromancer.webp'},
     {id:'mystic-skull',name:'Mystic Skull',src:'assets/card-backs/mystic-skull.webp'},
-    {id:'shadow-black',name:'Shadow Black',src:'assets/card-backs/shadow-black.webp'},
     {id:'radiant-sun',name:'Radiant Sun',src:'assets/card-backs/radiant-sun.webp'},
     {id:'stained-glass',name:'Stained Glass',src:'assets/card-backs/stained-glass.webp'}
   ];

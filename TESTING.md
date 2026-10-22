@@ -1,26 +1,14 @@
-# Entry options and Deck Builder backup — Objectives #43 and #38, v0.45.0
+# Card-back preset removal — v0.45.1
 
-This is the original exact-head test copy for the now-published v0.45.0 change. Extract the ZIP and double-click **index.html**; no terminal or local server is needed.
+This is a test copy. Extract the ZIP and double-click **index.html**; no terminal or local server is needed.
 
-## Click list
+1. On the opening screen, open **Your look**. The card-back picker should have ten presets. Arcane Star and Shadow Black should be absent; the remaining presets should show their images.
+2. Choose another preset, then host or join a game. Face-down cards in your Library and hand should use that backing. Check an opponent's face-down cards if a second player is available. Try Sidebar and Grid at 1920×1080 and 1366×768 if practical.
+3. If you had previously chosen Arcane Star or Shadow Black, the selection should now show Ruby Sigil; your face-down cards should remain visible. A collection backup containing either older choice should also restore to Ruby Sigil.
+4. If you have a custom uploaded card backing, it should still be available from **Your look** and work in game.
 
-1. On the opening screen, notice the separate **Back up / restore…** button is gone. Open **Deck Builder** with a saved deck, then use **Back up / restore…** at the bottom. Confirm **Download backup** still saves a JSON file and the restore file picker still previews a selected backup. Close the backup window; Deck Builder should still be open.
-2. In a fresh/private browser with no decks, **Deck Builder** should still open. Use its **Back up / restore…** button to restore the JSON file, review the preview, then press **Restore and reload**. Your deck should appear. Check optional preference/appearance restore only if you want those settings imported.
-3. Host a game. The opening-rule dialog now has independent **Auto-Draw** and **Auto Untap All** checkboxes. Try Cancel once: it should return to the opening screen without a room. Open it again, choose either, both, or neither, then Continue and choose your color.
-4. Join that room from a second browser. Choose its own two options and a different color. Try Cancel first if convenient; it should leave the browser on the opening screen. Host and joiner should each have the options they selected, independently of the other.
-5. While still choosing opening hands, change the opening rule and choose **Redeal everyone**. The Auto-Draw/Auto Untap All choices should remain. Start a game and confirm the in-game switches can still change each option. Try Sidebar and Grid at 1920×1080 and 1366×768 if available.
-
-When you report results, let me know which steps and browsers you tried. Existing saved sessions resume with their saved options.
+Please tell me which steps and browsers you tried. This PR is a test copy and has not been published.
 
 ## Assistant verification
 
-- Collection backup unit checks pass, including download data, restore planning/merge, optional appearance/preferences, and rollback on storage failure.
-- Actual Chromium checks over localhost HTTP cover Deck Builder backup access with a deck and with an empty collection, file restore into an empty collection, Host/Join cancel and confirmation, all three opening rules, all four Auto-Draw/Auto Untap combinations across the two players, pregame redeal, an in-game toggle, and no page errors. Host/join checks use a local copy of the existing relay Worker.
-- Browser layout checks include Sidebar and Grid at 1366×768 and 1920×1080. JavaScript syntax, cache/version references and diff whitespace checks pass.
-- Tested by Chris: “Looks good.” The assistant browser checks use HTTP; file:// and real Safari were not verified here.
-
-Paused draft PR #11 remains untouched.
-
-## Publication
-
-Objectives #38 and #43 merged through PR #65 as v0.45.0. The automatic annotated release tag points to merge commit `a21c263050351a2e4746c46833c539c2bb0dec44`. The approved branch was deleted automatically, and the Pages deployment workflow succeeded. A live-page check from this environment was blocked by the network proxy (`CONNECT tunnel failed, response 403`), so live rendering could not be verified here.
+Chromium over localhost HTTP at 1366×768 and 1920×1080 showed ten picker choices, all ten remaining images returned successfully, both removed saved IDs normalized to Ruby Sigil, and no page errors. JavaScript syntax and diff whitespace checks passed. Multiplayer, Sidebar/Grid face-down cards, custom uploads and file:// opening still need Chris’s hands-on check. Paused draft PR #11 is untouched.
