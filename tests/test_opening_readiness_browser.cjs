@@ -33,7 +33,7 @@ const deck = {
       localStorage.setItem('ct.decks.v1', JSON.stringify([savedDeck]));
       localStorage.setItem('ct.name', JSON.stringify(playerName));
     }, { savedDeck: deck, playerName: name });
-    await page.goto('http://127.0.0.1:8106/index.html?net=relay');
+    await page.goto('http://127.0.0.1:8106/index.html?relay=http%3A%2F%2F127.0.0.1%3A8111&net=relay');
     return { ctx, page };
   }
 
@@ -61,6 +61,10 @@ const deck = {
     await guest.page.locator('.ct-player-color-option[data-color="red"]').click();
     await host.page.waitForFunction(() => Object.keys(CT.S.players).length === 2, { timeout: 30000 });
     await guest.page.waitForFunction(() => CT.S.table?.seats.length === 2, { timeout: 30000 });
+    for (const session of [host, guest]) {
+      await session.page.locator('.ct-opening-rule').waitFor();
+      assert.match(await session.page.locator('.ct-opening-rule').innerText(), /10 → 7/);
+    }
 
     for (const size of [{ width: 1920, height: 1080 }, { width: 1366, height: 768 }]) {
       await host.page.setViewportSize(size);
@@ -100,6 +104,9 @@ const deck = {
     await host.page.locator('[data-a="start"]').click();
     await host.page.waitForFunction(() => CT.S.table.started, { timeout: 20000 });
     await guest.page.waitForFunction(() => CT.S.table.started, { timeout: 20000 });
+    for (const session of [host, guest]) {
+      assert.equal(await session.page.locator('.ct-opening-rule').count(), 0, 'opening-hand rule is hidden after Start for both players');
+    }
     const playable = guest.page.locator('[data-zone="hand"][data-iid]').first();
     await playable.hover();
     await guest.page.keyboard.press('b');
@@ -110,10 +117,11 @@ const deck = {
     await host.page.getByRole('button', { name: 'New game', exact: true }).click();
     await host.page.waitForFunction(() => !CT.S.table.started && CT.S.me.openingDeal === CT.S.table.openingDeal, { timeout: 15000 });
     await guest.page.waitForFunction(() => !CT.S.table.started && CT.S.me.openingDeal === CT.S.table.openingDeal, { timeout: 15000 });
+    for (const session of [host, guest]) await session.page.locator('.ct-opening-rule').waitFor();
     await host.page.waitForFunction(() => document.querySelector('[data-a="start"]')?.disabled);
     assert.match(await host.page.locator('#turnBox').innerText(), /Ready host, Ready guest to keep/);
     assert.deepEqual(errors, [], errors.join('\n'));
-    console.log('PASS opening readiness browser flow: layouts/sizes, Draw 10 bottoming, pre-start B/menu, reload, post-start B, New Game reset; no page errors.');
+    console.log('PASS opening readiness browser flow: layouts/sizes, pregame rule visible to both players, post-Start rule hidden for both, Draw 10 bottoming, pre-start B/menu, reload, post-start B, New Game restores rule; no page errors.');
   } finally {
     for (const session of [guest, host]) {
       if (!session) continue;

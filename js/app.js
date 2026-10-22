@@ -3277,7 +3277,7 @@ function renderTop() {
   pill.title = S.net.text || '';
   let html;
   const rule = T ? CTMulligan.normalizeMode(T.openingMode) : 'london';
-  const ruleControl = T ? (S.role === 'client' || T.started
+  const ruleControl = T && !T.started ? (S.role === 'client'
     ? `<span class="muted ct-opening-rule" title="${esc(openingModeName(rule))}">${esc(openingModeShort(rule))}</span>`
     : `<button class="ct-opening-rule" data-a="openingrule" title="Change opening-hand rule">Opening: ${esc(openingModeShort(rule))}</button>`)
     : '';

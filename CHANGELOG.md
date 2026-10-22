@@ -10,6 +10,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 - The host can start only after every seated player who is still in the game has kept an opening hand from the current deal. The lobby names players still choosing; battlefield moves, tokens and copies remain blocked until the game starts.
+- The opening-hand rule is shown during the lobby and hidden after Start, including when no player is active. It returns for a new game. Tested by Chris: Objective #37 looks good.
 
 ## [0.39.0] - 2026-10-21
 
