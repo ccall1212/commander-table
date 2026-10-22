@@ -15,17 +15,21 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 - **Version:** the newest entry in `CHANGELOG.md` (do not write a version number here; it goes stale).
 - **Paused again at Chris's request (2026-10-20):** draft [PR #11](https://github.com/ccall1212/commander-table/pull/11), website import/random deck picker. Preserve the branch and recovery checkpoint. Do not resume implementation, deploy its test Worker, merge, or publish until Chris asks to resume; see the investigation note.
 - **Layouts:** Sidebar and Grid only.
-- **Open work:** see `OBJECTIVES.md`. Opening readiness, personal Undo and In response are published. The only open PR is paused draft #11.
-- **Queued:** Moving backup/restore into Deck Builder #38, choosing mulligan rules after Host Game #39, and cleaner pre-game readiness wording #41 remain unimplemented; #41 is awaiting a design choice. Other open, paused and deferred items are listed in `OBJECTIVES.md`.
+- **Open work:** see `OBJECTIVES.md`. Opening readiness, personal Undo and In response are published. [PR #61](https://github.com/ccall1212/commander-table/pull/61) (#41, compact readiness roster) is ready for Chris to test. #39 (Host Game rule dialog) is ready in [PR #62](https://github.com/ccall1212/commander-table/pull/62), stacked on #41. Neither is approved for publication.
+- **Queued:** Moving backup/restore into Deck Builder #38 remains queued. Chris chose the compact Hands ready roster for #41 and requested #39 next; both test copies are ready. Other open, paused and deferred items are listed in `OBJECTIVES.md`.
 - **Slam sound:** Chris wants to keep refining the Commander slam sound. Do that on a separate branch and leave the published behaviour alone until he approves.
 
 ## Existing test ZIPs for open work
 
-Include Objective numbers, statuses and these ZIP links whenever Chris asks for an open-work summary; Objective numbers differ from PR numbers. The remaining previously supplied open-work ZIP is the paused import/randomizer draft. Existing commit ZIPs remain unchanged.
+Include Objective numbers, statuses and these ZIP links whenever Chris asks for an open-work summary; Objective numbers differ from PR numbers. Current test copies and the archived paused import/randomizer draft are listed below. Existing commit ZIPs remain unchanged.
 
 | Objective | Open item | Previously supplied ZIP | Status |
 |---|---|---|---|
+| #39 | Host Game rule dialog (PR #62, includes #41) | [v0.44.0 combined test ZIP](https://github.com/ccall1212/commander-table/archive/b429c17e0b019e3408fde4bc666cf9d0367cb61b.zip) | Ready for Chris to test; stacked on PR #61; not published |
+| #41 | Compact opening-hand roster (PR #61) | [v0.43.0 test ZIP](https://github.com/ccall1212/commander-table/archive/8e92dc71781562475c8688832a41e2d84821201f.zip) | Ready for Chris to test; not published |
 | #9 | Random deck/website import (PR #11) | [Archived draft ZIP](https://github.com/ccall1212/commander-table/archive/a415ef5a9d13531a9c6b5877ab40adf84388c6dc.zip) | Paused; its separate test service is not deployed; do not resume |
+
+**Publication order:** PR #61 first; then retarget PR #62 from `feat/opening-roster` to `main` before merging. Do not merge #62 into its current feature base. Both require Chris’s explicit approval. Active objective/ZIP tracking is maintained on main so game PRs do not overwrite these records.
 
 Other queued items have no separate feature test ZIP yet. Touch support’s existing shipped behavior is in the normal game; its remaining real-device testing/refinements have no new test copy.
 
