@@ -51,3 +51,9 @@ Chris requested this for later on 2026-10-21 after Objectives #29 and #30 were p
 ## 43. Choose Auto-Draw and Auto Untap All when hosting or joining — QUEUED
 
 Chris requested this on 2026-10-22. When a player hosts or joins a game, ask whether they want to enable **Auto-Draw** and/or **Auto Untap All** for their own board. Offer independent choices so they can turn on either, both or neither. Include a short note that these settings can be adjusted in-game, and preserve the existing in-game toggles. This is queued for later; no implementation or test ZIP yet.
+
+## 44. Remove unused LAN launchers and server — READY FOR CHRIS TO TEST
+
+Chris requested this on 2026-10-22, specifically the old **Start LAN game.bat** and related unused LAN files, while preserving the current game. [PR #64](https://github.com/ccall1212/commander-table/pull/64) removes Windows/macOS/Linux launchers, the Python server, LAN-only shims/updater and dead UI/styles. Online relay play, direct PeerJS fallback, normal update notices and extract/double-click `index.html` remain. Developer protocol tests target an explicit relay URL and retain all 15 shared broker cases against the actual Worker.
+
+[Verified v0.44.1 test ZIP](https://github.com/ccall1212/commander-table/archive/94f840e8afff32dfb1a40fa066bbb0c777c7602e.zip), based on published v0.44.0. Assistant checks passed: 15 Node suites, 15 protocol cases, two-player host/join, hand rules, readiness, shared card/life actions, host/guest reload, Undo and online update notices; both layouts at 1920×1080 and 1366×768. Network harness t1–t11 pass; t12/t13 direct-PeerJS timeouts match the published baseline under this environment's proxy. Chris has not tested or approved publishing this cleanup. Paused PR #11 remains untouched.
