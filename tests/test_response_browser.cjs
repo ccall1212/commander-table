@@ -26,6 +26,7 @@ const deck = { id: 'response-deck', name: 'Response test deck', commanders: [com
     }
     const host = await player('Response host');
     await host.locator('#hostBtn').click();
+    await host.getByRole('button', { name: 'Continue', exact: true }).click();
     await host.locator('.ct-player-color-option[data-color="blue"]').click();
     await host.waitForFunction(() => CT.S.room && CT.S.net.state === 'online');
     const room = await host.evaluate(() => CT.S.room);

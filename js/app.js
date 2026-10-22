@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.43.0';
+const APP_VERSION = '0.44.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -5573,17 +5573,74 @@ function bindLobby() {
   $('#cancelImport').onclick = closeImport;
   $('#loadDeck').onclick = loadDeck;
   $('#nameIn').addEventListener('change', () => LS.set('ct.name', $('#nameIn').value.trim()));
-  $('#hostBtn').onclick = () => begin('host');
-  const hostRule = $('#hostMulligan');
-  if (hostRule) {
-    hostRule.value = CTMulligan.normalizeMode(LS.get('ct.openingMode', 'london'));
-    hostRule.addEventListener('change', () => LS.set('ct.openingMode', CTMulligan.normalizeMode(hostRule.value)));
-  }
+  let hostStartPending = false;
+  $('#hostBtn').onclick = async () => {
+    if (hostStartPending) return;
+    hostStartPending = true;
+    try { await begin('host'); }
+    finally { hostStartPending = false; }
+  };
   $('#soloBtn').onclick = () => begin('solo');
   $('#joinBtn').onclick = () => begin('client');
   $('#joinIn').addEventListener('input', e => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); });
   $('#joinIn').addEventListener('keydown', e => { if (e.key === 'Enter') begin('client'); });
 }
+
+let hostOpeningPromptOpen = false;
+function chooseHostOpeningMode() {
+  if (hostOpeningPromptOpen) return Promise.resolve(null);
+  hostOpeningPromptOpen = true;
+  const options = [
+    ['london', 'London (7; first free)', 'Draw 7. First mulligan free; later mulligans cost one card each.'],
+    ['three-lands', 'At least 3 lands', 'Deal 7 with 3 lands if available. One mulligan.'],
+    ['ten-bottom-three', 'Draw 10, bottom 3', 'Draw 10 and bottom 3. One mulligan.']
+  ];
+  let done = false;
+  let modal;
+  const finish = mode => {
+    if (done) return;
+    done = true;
+    if (mode) LS.set('ct.openingMode', CTMulligan.normalizeMode(mode));
+    modal.close();
+  };
+  const saved = CTMulligan.normalizeMode(LS.get('ct.openingMode', 'london'));
+  const html = `<form class="ct-host-opening-form">
+    <fieldset class="ct-host-opening-options" aria-label="Opening-hand rule">
+      ${options.map(([mode, label, hint]) => `<label class="ct-host-opening-option">
+        <input type="radio" name="host-opening-mode" value="${mode}"${mode === saved ? ' checked' : ''}>
+        <span class="ct-host-opening-copy"><b>${label}</b><span>${hint}</span></span>
+      </label>`).join('')}
+    </fieldset>
+    <p class="muted small ct-host-opening-note">You can change this after joining the game. The host can grant extra mulligans.</p>
+    <div class="row ct-host-opening-actions"><button type="button" data-host-opening-cancel>Cancel</button><button type="submit" class="primary">Continue</button></div>
+  </form>`;
+  const promise = new Promise(resolve => {
+    modal = UI.modal({
+      title: 'Choose an opening-hand rule',
+      className: 'ct-host-opening-dialog',
+      html,
+      onClose() {
+        if (!done) { done = true; resolve(null); }
+      }
+    });
+    const form = modal.el.querySelector('form');
+    form.addEventListener('submit', event => {
+      event.preventDefault();
+      const input = form.querySelector('input[name="host-opening-mode"]:checked');
+      if (!input) return;
+      const mode = CTMulligan.normalizeMode(input.value);
+      finish(mode);
+      resolve(mode);
+    });
+    form.querySelector('[data-host-opening-cancel]').addEventListener('click', () => {
+      done = true;
+      modal.close();
+      resolve(null);
+    });
+  });
+  return promise.finally(() => { hostOpeningPromptOpen = false; });
+}
+
 function renderAppearancePickers() {
   const prefs = CTAppearance.getPrefs(), custom = CTAppearance.getCustom();
   $('#cardBackPicker').innerHTML = CTAppearance.renderCardBacks(custom.cardBack && custom.cardBackActive ? 'custom-local' : prefs.cardBack);
@@ -5727,6 +5784,11 @@ async function begin(role) {
     }
   }
   if (role !== 'solo' && typeof Peer === 'undefined') { UI.toast('Online play needs an internet connection — try Practice solo.', { kind: 'error' }); return; }
+  let openingMode = 'london';
+  if (role === 'host') {
+    openingMode = await chooseHostOpeningMode();
+    if (!openingMode) return;
+  }
   if (role === 'host') room = Net.makeRoomCode();
   try { // the invite has done its job; keep any ?net= override
     const u = new URL(location.href);
@@ -5734,7 +5796,6 @@ async function begin(role) {
   } catch (e) { /* ignore */ }
   S.role = role; S.room = room; S.deckId = deck.id;
   S.players = {}; S.log = []; S.online = {}; S.undo = [];
-  const openingMode = role === 'host' ? CTMulligan.normalizeMode($('#hostMulligan').value) : 'london';
   const openingDeal = role === 'client' ? null : uid();
   S.me = newPlayer(deck, name, null, openingMode, openingDeal);
   S.table = role === 'client' ? null : newTable(room, openingMode, openingDeal);
