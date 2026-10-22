@@ -15,16 +15,17 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 - **Version:** the newest entry in `CHANGELOG.md` (do not write a version number here; it goes stale).
 - **Paused again at Chris's request (2026-10-20):** draft [PR #11](https://github.com/ccall1212/commander-table/pull/11), website import/random deck picker. Preserve the branch and recovery checkpoint. Do not resume implementation, deploy its test Worker, merge, or publish until Chris asks to resume; see the investigation note.
 - **Layouts:** Sidebar and Grid only.
-- **Open work:** see `OBJECTIVES.md`. #41's compact readiness roster and #39's Host Game rule dialog are published after Chris's testing and approval. #42 (visible removal of saved uploaded backgrounds/card backs) is being prepared on `feat/remove-saved-appearance`; no test ZIP yet.
+- **Open work:** see `OBJECTIVES.md`. #41's compact readiness roster and #39's Host Game rule dialog are published after Chris's testing and approval. #42 (visible removal of saved uploaded backgrounds/card backs) is ready for Chris to test in [PR #63](https://github.com/ccall1212/commander-table/pull/63), not published.
 - **Queued:** Moving backup/restore into Deck Builder #38 remains queued. Other open, paused and deferred items are listed in `OBJECTIVES.md`.
 - **Slam sound:** Chris wants to keep refining the Commander slam sound. Do that on a separate branch and leave the published behaviour alone until he approves.
 
 ## Existing test ZIPs for open work
 
-Include Objective numbers, statuses and these ZIP links whenever Chris asks for an open-work summary; Objective numbers differ from PR numbers. The archived paused import/randomizer draft is listed below. #42 has no test ZIP yet. Existing commit ZIPs remain unchanged.
+Include Objective numbers, statuses and these ZIP links whenever Chris asks for an open-work summary; Objective numbers differ from PR numbers. The current #42 test copy and archived paused import/randomizer draft are listed below. Existing commit ZIPs remain unchanged.
 
 | Objective | Open item | Previously supplied ZIP | Status |
 |---|---|---|---|
+| #42 | Remove saved uploaded backgrounds/card backs (PR #63) | [v0.45.0 test ZIP](https://github.com/ccall1212/commander-table/archive/cb056b57eef38c8518a430351715d5cf9b3bf137.zip) | Ready for Chris to test; includes published v0.44.0; not published |
 | #9 | Random deck/website import (PR #11) | [Archived draft ZIP](https://github.com/ccall1212/commander-table/archive/a415ef5a9d13531a9c6b5877ab40adf84388c6dc.zip) | Paused; its separate test service is not deployed; do not resume |
 
 
