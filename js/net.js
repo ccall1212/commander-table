@@ -715,6 +715,9 @@
         Array.from(conns.values()).forEach(function (rec) { sendOrKill(rec, msg); });
       } else {
         if (cconn && !cconn.lost && sendOrKill(cconn, msg)) return;
+        // A response cue is useful only at the moment it is pressed. Never
+        // replay it from the offline queue after the connection returns.
+        if (msg.t === 'response') return;
         enqueue(msg); // not connected (or the send just failed): deliver after reconnect
       }
     }

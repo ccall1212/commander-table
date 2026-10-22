@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.42.0] - 2026-10-21
+
+### Added
+- **In response!** button and **R** shortcut: flash a turn-banner-style cue with your name and chosen player color on everyone's screen. Each separate press repeats the cue, which fades away after a short pause. Alerts are live and are not replayed after reconnecting.
+
 ## [0.41.0] - 2026-10-21
 
 ### Added
@@ -75,7 +80,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.41.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.42.0...HEAD
+[0.42.0]: https://github.com/ccall1212/commander-table/compare/v0.41.0...v0.42.0
 [0.41.0]: https://github.com/ccall1212/commander-table/compare/v0.40.0...v0.41.0
 [0.40.0]: https://github.com/ccall1212/commander-table/compare/v0.39.0...v0.40.0
 [0.39.0]: https://github.com/ccall1212/commander-table/compare/v0.38.0...v0.39.0
