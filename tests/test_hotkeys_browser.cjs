@@ -21,6 +21,7 @@ const deck = { id: 'hotkey-deck', name: 'Hotkey test deck', commanders: [], card
     await page.waitForFunction(() => CT.S.table?.started);
     const copies = () => page.evaluate(() => CT.S.me.zones.battlefield.filter(c => c.cp).length);
     const hoverOpponent = async () => {
+      await page.mouse.move(0, 0);
       await page.locator('#opps .opp[data-opp="hotkey-opponent"] .card[data-iid="opponent-card"]').hover();
       await page.waitForFunction(() => CT.S.hover?.pid === 'hotkey-opponent' && CT.S.hover.iid === 'opponent-card');
     };
@@ -39,7 +40,11 @@ const deck = { id: 'hotkey-deck', name: 'Hotkey test deck', commanders: [], card
     const dialog = page.locator('.w-hotkey-list-dialog');
     await dialog.locator('[data-hotkey-set="copy"]').click();
     await page.keyboard.press('g');
-    await dialog.getByText('Already assigned', { exact: false }).waitFor();
+    assert.equal(await dialog.locator('[data-hotkey="copy"] kbd').innerText(), 'G');
+    assert.equal(await dialog.locator('[data-hotkey="graveyard"] kbd').innerText(), 'Unassigned', 'occupied key moves to the new action');
+    await dialog.locator('[data-hotkey-clear="copy"]').click();
+    assert.equal(await dialog.locator('[data-hotkey="copy"] kbd').innerText(), 'Unassigned', 'Clear removes the shortcut');
+    await dialog.locator('[data-hotkey-set="copy"]').click();
     await page.keyboard.press('p');
     assert.equal(await dialog.locator('[data-hotkey="copy"] kbd').innerText(), 'P');
     await page.keyboard.press('Escape');
@@ -84,9 +89,19 @@ const deck = { id: 'hotkey-deck', name: 'Hotkey test deck', commanders: [], card
     await page.evaluate(() => { const input = document.createElement('input'); input.id = 'hotkey-test-input'; document.body.appendChild(input); input.focus(); });
     await page.keyboard.press('p');
     assert.equal(await copies(), 5, 'typing in an input does not copy a card');
+    await page.evaluate(() => { CT.S.role = 'host'; CT.S.net.state = 'online'; document.querySelector('#hotkey-test-input').blur(); });
+    await page.keyboard.press('Backquote');
+    assert.equal(await page.locator('#chatPanel').evaluate(el => !el.classList.contains('hidden')), true, 'backtick opens Chat');
+    assert.equal(await page.evaluate(() => document.activeElement?.id), 'chatInput', 'Chat input is focused immediately');
+    await page.keyboard.type('Test chat message');
+    await page.keyboard.press('Enter');
+    assert.equal(await page.locator('#chatInput').inputValue(), '', 'Enter sends and clears the Chat input');
+    await page.keyboard.press('Backquote');
+    assert.equal(await page.locator('#chatPanel').evaluate(el => el.classList.contains('hidden')), true, 'backtick closes Chat after sending');
+    await page.evaluate(() => { CT.S.role = 'solo'; });
     await page.reload();
     assert.equal(await page.evaluate(() => CTHotkeys.key('copy')), 'P', 'custom key persists across reloads');
     assert.deepEqual(errors, []);
-    console.log('PASS hotkeys browser: card context, C copy, conflict, custom binding, Sidebar/Grid opponent copy, hidden-card block, typing and persistence');
+    console.log('PASS hotkeys browser: card context, C copy, occupied-key move and Clear, Sidebar/Grid opponent copy, hidden-card block, typing, Chat focus/send/close and persistence');
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

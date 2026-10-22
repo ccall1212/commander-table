@@ -3015,10 +3015,10 @@ function showHotkeyList() {
   const modal = UI.modal({ title: 'Hotkeys', className: 'w-hotkey-list-dialog', html: '<div class="ct-hotkey-list"></div>', onClose: () => document.removeEventListener('keydown', capture, true) });
   const root = modal.el.querySelector('.ct-hotkey-list');
   function drawList(message = '') {
-    root.innerHTML = '<p class="muted small">Choose Set, then press a key or combination. Shortcuts are saved in this browser. Hover a card or your Library for the matching actions.</p>' +
+    root.innerHTML = '<p class="muted small">Choose Set, then press a key or combination. A key already in use moves to the new action; the old action becomes unassigned. Tab stays available for navigation. Shortcuts are saved in this browser.</p>' +
       `<p class="ct-hotkey-status" role="status">${esc(message)}</p>` +
       groups.map(group => `<section class="ct-hotkey-group"><h3>${esc(group)}</h3><table><tbody>` +
-        CTHotkeys.actions.filter(a => a.group === group).map(a => `<tr data-hotkey="${esc(a.id)}"><td><kbd>${esc(CTHotkeys.key(a.id) || 'Unassigned')}</kbd></td><td>${esc(a.label)}</td><td class="ct-hotkey-buttons"><button type="button" data-hotkey-set="${esc(a.id)}">Set</button><button type="button" data-hotkey-reset="${esc(a.id)}"${CTHotkeys.key(a.id) === a.key ? ' disabled' : ''}>Reset</button></td></tr>`).join('') +
+        CTHotkeys.actions.filter(a => a.group === group).map(a => `<tr data-hotkey="${esc(a.id)}"><td><kbd>${esc(CTHotkeys.key(a.id) || 'Unassigned')}</kbd></td><td>${esc(a.label)}</td><td class="ct-hotkey-buttons"><button type="button" data-hotkey-set="${esc(a.id)}">Set</button><button type="button" data-hotkey-clear="${esc(a.id)}"${CTHotkeys.key(a.id) ? '' : ' disabled'}>Clear</button><button type="button" data-hotkey-reset="${esc(a.id)}"${CTHotkeys.key(a.id) === a.key ? ' disabled' : ''}>Reset</button></td></tr>`).join('') +
         '</tbody></table></section>').join('') +
       '<button type="button" data-hotkey-reset-all>Restore all defaults</button>';
   }
@@ -3029,15 +3029,18 @@ function showHotkeyList() {
     if (e.key === 'Escape') { recording = null; drawList('Shortcut change cancelled.'); return; }
     if (['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) return;
     const id = recording, binding = CTHotkeys.chord(e);
+    const moved = CTHotkeys.actions.filter(a => a.id !== id && CTHotkeys.key(a.id) === binding && !(binding === 'T' && ['tap', 'tokens'].includes(a.id) && ['tap', 'tokens'].includes(id)));
     const error = CTHotkeys.set(id, binding);
     if (error) { drawList(error + ' Press another key, or Escape to cancel.'); return; }
     recording = null;
-    drawList(`${CTHotkeys.actions.find(a => a.id === id).label}: ${binding}`);
+    drawList(`${CTHotkeys.actions.find(a => a.id === id).label}: ${binding}${moved.length ? '. Cleared ' + moved.map(a => a.label).join(' and ') + '.' : ''}`);
   }
   root.addEventListener('click', e => {
     const set = e.target.closest('[data-hotkey-set]');
+    const clear = e.target.closest('[data-hotkey-clear]');
     const reset = e.target.closest('[data-hotkey-reset]');
     if (set) { recording = set.dataset.hotkeySet; drawList(`Press a key for ${CTHotkeys.actions.find(a => a.id === recording).label}. Escape cancels.`); }
+    else if (clear) { recording = null; drawList(CTHotkeys.clear(clear.dataset.hotkeyClear) || 'Hotkey cleared.'); }
     else if (reset) { recording = null; drawList(CTHotkeys.reset(reset.dataset.hotkeyReset) || 'Default restored.'); }
     else if (e.target.closest('[data-hotkey-reset-all]')) { recording = null; drawList(CTHotkeys.resetAll() || 'All defaults restored.'); }
   });
@@ -3050,7 +3053,7 @@ function displaySettings() {
     <div class="display-settings">
       <div>
         <div class="display-setting-head"><label for="ctLensSize"><b>Magnifier size</b></label><strong id="ctLensValue">${r0}px</strong></div>
-        <small>Hold <kbd>V</kbd> over the table: every card inside the circle is shown large. A bigger circle catches more cards at once.</small>
+        <small>Hold <kbd>${esc(CTHotkeys.key('lens') || 'your magnifier key')}</kbd> over the table: every card inside the circle is shown large. A bigger circle catches more cards at once.</small>
         <input class="display-scale" id="ctLensSize" type="range" min="40" max="260" step="10" value="${r0}" aria-label="Magnifier size">
         <div class="display-scale-ends"><span>Small</span><span>Large</span></div>
       </div>
@@ -3943,8 +3946,10 @@ function renderChatHistory(forceBottom, highlightEntry) {
   if (pinned) requestAnimationFrame(() => { if (box.isConnected) box.scrollTop = box.scrollHeight; });
   updateChatButton();
 }
+let chatSentSinceOpen = false;
 function setChatPanelOpen(open) {
   S.chatOpen = !!open && S.role !== 'solo';
+  if (S.chatOpen) chatSentSinceOpen = false;
   if (S.chatOpen) S.chatUnread = 0;
   const panel = $('#chatPanel');
   if (panel) panel.classList.toggle('hidden', !S.chatOpen);
@@ -3981,7 +3986,7 @@ function sendChatFromForm(e) {
   e.preventDefault();
   const input = $('#chatInput');
   if (!input) return;
-  if (sendChat(input.value)) { input.value = ''; input.focus(); }
+  if (sendChat(input.value)) { input.value = ''; input.focus(); chatSentSinceOpen = true; }
 }
 
 // --- preview panel
@@ -5046,6 +5051,9 @@ function onKey(e) {
   if (S.role === 'spectator') return;
   if (!S.me || $('#game').classList.contains('hidden')) return;
   if (e.target.closest && e.target.closest('#chatPanel')) {
+    if (S.chatOpen && chatSentSinceOpen && !$('#chatInput').value && CTHotkeys.matches(e, 'chat')) {
+      setChatPanelOpen(false); $('#chatBtn').focus(); e.preventDefault(); return;
+    }
     if (e.key === 'Escape' && S.chatOpen) { setChatPanelOpen(false); $('#chatBtn').focus(); e.preventDefault(); }
     return;
   }

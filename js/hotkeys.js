@@ -34,7 +34,7 @@
     { id: 'undo', group: 'General', label: 'Undo personal action', key: 'Ctrl+Z' },
     { id: 'lens', group: 'General', label: 'Hold to use magnifier', key: 'V' },
     { id: 'arrow', group: 'General', label: 'Start a targeting arrow', key: '' },
-    { id: 'chat', group: 'General', label: 'Open or close chat', key: '' },
+    { id: 'chat', group: 'General', label: 'Open or close chat', key: '`' },
     { id: 'log', group: 'General', label: 'Open or close log', key: '' }
   ];
   const byId = Object.fromEntries(actions.map(a => [a.id, a]));
@@ -46,6 +46,7 @@
     if (key === ' ') key = 'Space';
     else if (key === 'Esc') key = 'Escape';
     else if (key.length === 1) key = key.toUpperCase();
+    if (e.code === 'Backquote') key = '`';
     if (key === '=' && e.shiftKey) key = '+';
     if (key === '_' || (key === '-' && e.shiftKey)) key = '-';
     if (e.code === 'Digit1' && e.shiftKey) key = '1';
@@ -75,31 +76,27 @@
   }
   function set(id, binding) {
     if (!byId[id]) return 'Unknown action.';
-    if (binding && !/^(?:(?:Ctrl|Alt|Shift)\+)*([A-Z0-9]|Space|Enter|Backspace|Delete|ArrowUp|ArrowDown|ArrowLeft|ArrowRight|\+|-)$/.test(binding)) return 'Choose a letter, number, arrow, Space, or editing key.';
-    if (binding && (/^Ctrl\+/.test(binding) || /^Alt\+(ArrowLeft|ArrowRight|Space)$/.test(binding))) return 'That combination is reserved for the browser or system.';
-    if (binding && actions.some(a => a.id !== id && key(a.id) === binding)) return `Already assigned to ${actions.find(a => a.id !== id && key(a.id) === binding).label}.`;
-    const previous = saved[id], hadPrevious = Object.prototype.hasOwnProperty.call(saved, id);
-    if (binding === byId[id].key) delete saved[id]; else saved[id] = binding;
-    try { localStorage.setItem(STORE, JSON.stringify(saved)); }
-    catch (_) { if (hadPrevious) saved[id] = previous; else delete saved[id]; return 'Could not save shortcuts in this browser.'; }
+    if (binding && !/^(?:(?:Ctrl|Alt|Shift)\+)*([A-Z0-9]|Space|Enter|Backspace|Delete|ArrowUp|ArrowDown|ArrowLeft|ArrowRight|\+|-|`)$/.test(binding)) return 'Choose a letter, number, arrow, Space, `, or editing key.';
+    if (binding && binding !== byId[id].key && (/^Ctrl\+/.test(binding) || /^Alt\+(ArrowLeft|ArrowRight|Space)$/.test(binding))) return 'That combination is reserved for the browser or system.';
+    const next = { ...saved };
+    if (binding) actions.forEach(a => {
+      if (a.id === id || key(a.id) !== binding) return;
+      if (binding === 'T' && ['tap', 'tokens'].includes(id) && ['tap', 'tokens'].includes(a.id)) return;
+      next[a.id] = '';
+    });
+    if (binding === byId[id].key) delete next[id]; else next[id] = binding;
+    try { localStorage.setItem(STORE, JSON.stringify(next)); }
+    catch (_) { return 'Could not save shortcuts in this browser.'; }
+    saved = next;
     return '';
   }
-  function reset(id) {
-    if (!byId[id]) return 'Unknown action.';
-    const defaultKey = byId[id].key;
-    const conflict = actions.find(a => a.id !== id && key(a.id) === defaultKey && !(defaultKey === 'T' && ['tap', 'tokens'].includes(a.id) && ['tap', 'tokens'].includes(id)));
-    if (defaultKey && conflict) return `Default key is assigned to ${conflict.label}. Change that shortcut first.`;
-    const previous = saved[id], hadPrevious = Object.prototype.hasOwnProperty.call(saved, id);
-    delete saved[id];
-    try { localStorage.setItem(STORE, JSON.stringify(saved)); }
-    catch (_) { if (hadPrevious) saved[id] = previous; return 'Could not save shortcuts in this browser.'; }
-    return '';
-  }
+  function clear(id) { return set(id, ''); }
+  function reset(id) { return byId[id] ? set(id, byId[id].key) : 'Unknown action.'; }
   function resetAll() {
     const previous = saved;
     saved = {};
     try { localStorage.removeItem(STORE); } catch (_) { saved = previous; return 'Could not save shortcuts in this browser.'; }
     return '';
   }
-  window.CTHotkeys = { actions, chord, key, matches, actionFor, set, reset, resetAll };
+  window.CTHotkeys = { actions, chord, key, matches, actionFor, set, clear, reset, resetAll };
 })();
