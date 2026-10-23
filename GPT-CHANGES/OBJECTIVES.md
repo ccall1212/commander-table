@@ -68,7 +68,7 @@ Chris would like additional backgrounds with stronger identity because several c
 
 ## Ideas from Chris and a friend — recorded 2026-10-22
 
-**Objectives #53–#58 are ideas only.** Chris explicitly requested that they be saved for discussion and possible experiments, not implemented now. Each needs a separate decision before implementation. Screenshot details are described below so the ideas remain understandable without the original chat images. No branches, implementations, or test ZIPs exist for these ideas.
+**Objectives #53–#59 are ideas only.** Chris explicitly requested that they be saved for discussion and possible experiments, not implemented now. Each needs a separate decision before implementation. Screenshot details are described below so the ideas remain understandable without the original chat images. No branches, implementations, or test ZIPs exist for these ideas.
 
 ## 53. Quick Grab basic lands from the Library — IDEA ONLY
 
@@ -78,14 +78,14 @@ When hovering over your Library, offer a **Quick Grab** basic-land button/contro
 - Before implementation, decide the exact destination (for example hand or battlefield), whether a played land enters tapped, and whether grabbing it also shuffles. The screenshot’s **Play card & shuffle** action is inspiration, not a finalized rule for this proposal.
 - Consider how the control would be reached on touch devices, where hover is unavailable.
 
-## 54. Drag targeting arrows to player boards and redirect them to blockers — IDEA ONLY
+## 54. W hotkey and targeting arrows ending at player names — IDEA ONLY
 
-Explore click-and-drag targeting-arrow controls like EDHPlay, with **W** as the proposed default hotkey. Reference: Chris’s fifth screenshot shows a large blue arrow from a battlefield card toward a **Player 2** label, indicating the destination player’s board.
+Explore click-and-drag targeting-arrow controls like EDHPlay, with **W** as the default hotkey. Arrows aimed at a player should end at **that player’s name**, rather than going directly into the middle of their board. Reference: Chris’s fifth screenshot shows a large blue arrow from a battlefield card toward a **Player 2** name label.
 
-- Make the player’s board a clear arrow destination rather than relying only on their life points.
-- If player 1 sends an attacking-card arrow toward player 2, let player 2 drag an arrow from their blocking card onto that incoming attacker. The incoming arrow would then move from the player/life destination onto that specific blocking card.
-- Define the gesture and how attacker/blocker relationships are represented before implementation, including multiple attackers or blockers and clearing/changing a block.
-- Keep W a proposal until its interaction with existing configurable Hotkeys is checked. This overlaps with #55 and #58 but does not by itself authorize automatic combat or damage rules.
+- Keep W integrated with the existing configurable Hotkeys, preserving a player’s custom bindings rather than silently overwriting them.
+- Keep the player-name destination clear in Sidebar and Grid, including when a player is shown in a miniature or focused board view.
+- **Possible related layout change, not decided:** move life points to the **top middle of the board**. Chris raised this as a possibility alongside the name-targeted arrows; decide its placement and relationship to the player name before implementation.
+- Blocker relationships are a separate idea in **#59**. This objective covers the targeting interaction, hotkey and arrow destination; it does not include automatic combat or damage rules.
 
 ## 55. Combat-phase incoming-power / damage helper — IDEA ONLY
 
@@ -94,7 +94,7 @@ Explore a combat phase that counts damage coming toward a player. Chris’s exam
 - Decide how attackers are explicitly identified; merely tapping a card may represent something other than attacking, and vigilance attackers need not tap.
 - Distinguish a useful incoming-power total from actual damage after blocks. Do not assume the display can calculate final damage from power alone.
 - Chris specifically raised **trample** as a complication: decide whether this remains a manual aid or includes combat rules. Blocking, damage assignment and abilities such as trample, first/double strike or damage prevention need a defined scope before automatic totals or life changes are considered.
-- Coordinate with #54’s blocker redirection and #58’s drag-to-target idea. No combat automation is approved.
+- Coordinate with #59’s blocker relationships, #54’s name-targeted arrows and #58’s drag-to-target idea. No combat automation is approved.
 
 ## 56. Card status toggles, keyword counters and visual icons — IDEA ONLY
 
@@ -120,5 +120,15 @@ Explore replacing the current drag-to-another-player card-giving gesture: draggi
 
 - Chris proposed a **vigilance** exception: a vigilance card would return without tapping. Decide whether vigilance is marked manually (see #56) or recognized from card data before programming any automatic behavior.
 - Define whether this gesture declares an attack or only creates a targeting arrow; not every card or player-targeted action is combat.
-- Coordinate with #54’s player-board arrows and #55’s possible combat helper, and decide how intentional card transfers would remain available if the drag gesture is repurposed.
+- Coordinate with #54’s name-targeted arrows, #59’s blocker relationships and #55’s possible combat helper, and decide how intentional card transfers would remain available if the drag gesture is repurposed.
 - Original-position restoration, tapping and ownership/control must have clear behavior before an experiment is built. Existing drag/give behavior remains unchanged for now.
+
+
+## 59. Blocker relationships and incoming-arrow redirection — IDEA ONLY
+
+Keep blocker relationships separate from #54’s W hotkey and player-name arrow destinations. If player 1 sends an attacking-card arrow toward player 2, let player 2 drag an arrow from their blocking card onto that incoming attacker. Chris’s original idea is for the incoming arrow to move from its player destination onto that specific blocking card instead.
+
+- Define how attacker/blocker relationships are represented, including multiple blockers, multiple attackers, and clearing or changing a block.
+- Decide how the attacked player remains identifiable when an arrow is redirected to a blocking card. The exact display and gesture still need discussion.
+- Coordinate with #55’s possible combat helper and #58’s drag-to-target idea, while keeping this objective independently reviewable.
+- This is a visual relationship idea; automatic damage assignment or life changes are not included. No implementation or test ZIP yet.
