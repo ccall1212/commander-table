@@ -1,6 +1,6 @@
 # Immediate arrow preview — v0.54.1 (Objective #54 follow-up)
 
-Download the PR's exact-commit ZIP, extract it, and double-click `index.html`. No terminal or server is needed. This preview awaits Chris's test and publication approval.
+Download the PR's exact-commit ZIP, extract it, and double-click `index.html`. No terminal or server is needed. Published through PR #81 after Chris reported “I like the interaction” and approved publication. Specific device/test coverage was not supplied.
 
 1. Enter Practice or host/join a game and play a card onto the battlefield. Hover the card and press **W**. Move the pointer away from the card without clicking it or holding a mouse button. The dashed arrow should immediately follow your pointer.
 2. Move to another battlefield card, a player's name or their empty board space, and click once to place the arrow. A player-targeted arrow should end at the player's name. The source card should keep its position and tapped state.
@@ -16,4 +16,4 @@ Download the PR's exact-commit ZIP, extract it, and double-click `index.html`. N
 - Generic W with one source pick, Escape/right-click cancellation, window-blur cancellation and held-drag compatibility passed in both layouts. The blur boundary was exercised with a dispatched browser event, not a real operating-system window switch.
 - This environment's Chromium blocks file:// navigation with ERR_BLOCKED_BY_ADMINISTRATOR. Assistant browser checks used local HTTP; Chris's extract-and-double-click launch and real-device touch behavior remain unverified.
 
-Objective #61 is checkpointed separately on feat/selected-card-counters. Its counter changes are not in this ZIP.
+Objective #61 continues separately on feat/selected-card-counters. Its counter changes are not part of this release.
