@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.52.1] - 2026-10-22
+
+### Changed
+- Background thumbnails now enlarge on double-click, replacing the separate Preview buttons for a cleaner picker. Single-click still selects; Shift+Enter previews a focused thumbnail with a keyboard.
+
 ## [0.52.0] - 2026-10-22
 
 ### Added
@@ -160,7 +165,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.52.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.52.1...HEAD
+[0.52.1]: https://github.com/ccall1212/commander-table/compare/v0.52.0...v0.52.1
 [0.52.0]: https://github.com/ccall1212/commander-table/compare/v0.51.0...v0.52.0
 [0.51.0]: https://github.com/ccall1212/commander-table/compare/v0.50.1...v0.51.0
 [0.50.1]: https://github.com/ccall1212/commander-table/compare/v0.50.0...v0.50.1

@@ -47,8 +47,7 @@
     const current=selected==='custom-local'&&hasCustom?'custom-local':(map[selected]?selected:(kind==='cardBack'?'ruby-sigil':'haunted-ruins'));
     function tile(id,name,isCustom){
       const choice='<button type="button" class="appearance-choice'+(isCustom?' custom-upload-choice':'')+(id===current?' selected':'')+'" data-appearance-id="'+id+'" aria-pressed="'+(id===current)+'" title="'+esc(isCustom?'Use your saved custom image':name)+'"><span class="appearance-thumb '+extra+'" style="'+esc(styleFn(id))+'"></span><span class="appearance-name">'+esc(name)+'</span>'+(isCustom?'<span class="custom-saved-label">Saved here</span>':'')+'</button>';
-      if(kind!=='background')return choice;
-      return '<div class="background-option">'+choice+'<button type="button" class="background-preview-button" data-background-preview="'+id+'" aria-label="'+esc('Preview '+name)+'">Preview</button></div>';
+      return choice;
     }
     return (hasCustom?tile('custom-local','Your upload',true):'')+items.map(x=>tile(x.id,x.name,false)).join('');
   }
