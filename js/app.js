@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.54.1';
+const APP_VERSION = '0.55.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -2129,10 +2129,26 @@ function tidyCounters(c) {
   if (m > 0) { c['+1/+1'] = a - m; c['-1/-1'] = b - m; }
   for (const k of Object.keys(c)) if (c[k] <= 0 && k !== 'Loyalty') delete c[k];
 }
-function addCounter(iid, name, d) {
-  const f = findCard(iid); if (!f) return;
-  act(() => { const c = f.card.c; c[name] = (c[name] || 0) + d; tidyCounters(c); });
+function counterName(value) {
+  const name = typeof value === 'string' ? value.trim().slice(0, 20) : '';
+  return name && !Object.prototype.hasOwnProperty.call(Object.prototype, name) ? name : '';
 }
+function recentCounter() { return counterName(LS.get('ct.recentCardCounter', '')); }
+function addCounters(iids, name, delta, owner = S.me, battlefieldOnly = false) {
+  name = counterName(name);
+  if (!name || !Number.isInteger(delta) || !delta || S.me !== owner || boardTransferLock) return;
+  const cards = [...new Set(iids)].map(findCard).filter(f => f && (!battlefieldOnly || f.zone === 'battlefield'));
+  if (!cards.length) return;
+  act(() => {
+    for (const f of cards) {
+      const c = f.card.c;
+      c[name] = (c[name] || 0) + delta;
+      tidyCounters(c);
+    }
+  }, cards.length > 1 ? { label: `${delta > 0 ? 'Added' : 'Removed'} ${Math.abs(delta)} ${name} counter${Math.abs(delta) === 1 ? '' : 's'} ${delta > 0 ? 'to' : 'from'} each of ${cards.length} cards` } : undefined);
+  if (delta > 0) LS.set('ct.recentCardCounter', name);
+}
+function addCounter(iid, name, d) { addCounters([iid], name, d); }
 // mode: 'inc' | 'dec' | 'double' | 'reset' — applies to every counter on the card
 function allCounters(iid, mode) {
   const f = findCard(iid); if (!f) return;
@@ -2146,11 +2162,15 @@ function allCounters(iid, mode) {
     return mode === 'double' ? ['doubled the counters on {0}', [defOf(f.card)]] : null;
   });
 }
-async function customCounter(iid) {
-  const name = await UI.prompt({ title: 'Add a counter', label: `Counter name (e.g. ${CARD_COUNTERS.join(', ')})`, value: 'Charge' });
-  if (!name) return;
-  const n = await UI.prompt({ title: `How many ${name} counters?`, type: 'number', value: 1, min: -99, max: 99 });
-  if (n) addCounter(iid, String(name).trim().slice(0, 20), n);
+async function customCounter(iid, targets) {
+  const owner = S.me, iids = targets ? [...targets] : [iid];
+  const group = iids.length > 1;
+  const name = await UI.prompt({ title: group ? `Add counters to ${iids.length} selected cards` : 'Add a counter', label: `Counter name (e.g. ${CARD_COUNTERS.join(', ')})`, value: recentCounter() || 'Charge' });
+  if (!name || S.me !== owner) return;
+  const cleaned = counterName(name);
+  if (!cleaned) { UI.toast('Please choose a different counter name.'); return; }
+  const n = await UI.prompt({ title: `How many ${cleaned} counters${group ? ' per card' : ''}?`, label: group ? `Add this amount to each of the ${iids.length} selected cards.` : undefined, type: 'number', value: 1, min: -99, max: 99 });
+  if (n) addCounters(iids, cleaned, n, owner, !!targets);
 }
 
 // --- power / toughness: optional base override (pb "3/3") + modifiers (dp, dt), plus +1/+1 / -1/-1 counters
@@ -2640,7 +2660,9 @@ function cardMenu(x, y, iid) {
     items.push({ label: attachable ? (/Equipment/.test(d.type || '') ? 'Equip to…' : 'Enchant / attach to…') : 'Attach to…', hint: CTHotkeys.key('attach'), onClick: () => startAttach(iid) });
     if (d.imgBack || d.backName) items.push({ label: 'Transform / flip', hint: CTHotkeys.key('flip'), onClick: () => flip(iid) });
     items.push({ sep: true });
-    items.push({ label: 'Counters', sub: counterItems(iid) });
+    pruneSelection();
+    const counterTargets = S.selected.has(iid) ? [...S.selected] : [iid];
+    items.push({ label: counterTargets.length > 1 ? `Counters · ${counterTargets.length} selected` : 'Counters', sub: counterItems(iid, counterTargets) });
     items.push({ label: 'Power / Toughness', sub: ptItems(iid) });
     items.push({ sep: true });
     items.push({ label: c.fd ? 'Turn face up' : 'Turn face down', hint: CTHotkeys.key('face'), onClick: () => toggleFaceDown(iid) });
@@ -2698,18 +2720,26 @@ function oppCardMenu(x, y, pid, iid) {
   );
   UI.menu(x, y, items);
 }
-function counterItems(iid) {
+function counterItems(iid, targets = [iid]) {
   const f = findCard(iid); const c = (f && f.card.c) || {};
-  const d = f && defOf(f.card);
+  const d = f && defOf(f.card), owner = S.me;
+  const group = targets.length > 1;
   const has = Object.keys(c).length > 0;
+  const add = (name, n) => addCounters(targets, name, n, owner, true);
   const items = [
-    { label: 'Add +1/+1 counter', hint: CTHotkeys.key('plus'), onClick: () => addCounter(iid, '+1/+1', 1) },
-    { label: 'Add −1/−1 counter', hint: CTHotkeys.key('minus'), onClick: () => addCounter(iid, '-1/-1', 1) }
+    { label: 'Add +1/+1 counter', hint: group ? '1 per card' : CTHotkeys.key('plus'), onClick: () => add('+1/+1', 1) },
+    { label: 'Add −1/−1 counter', hint: group ? '1 per card' : CTHotkeys.key('minus'), onClick: () => add('-1/-1', 1) }
   ];
-  if (d && /Planeswalker/.test(d.type || '')) {
-    items.push({ label: 'Loyalty +1', onClick: () => addCounter(iid, 'Loyalty', 1) }, { label: 'Loyalty −1', onClick: () => addCounter(iid, 'Loyalty', -1) });
+  const recent = recentCounter();
+  if (recent) items.push({ label: `Most recent: ${recent}`, hint: group ? '+1 per card' : '+1', onClick: () => add(recent, 1) });
+  items.push({ label: 'Add a counter…', hint: group ? 'amount per card' : CTHotkeys.key('counter'), onClick: () => customCounter(iid, targets) });
+  if (group) {
+    items.push({ sep: true }, { label: 'Manage this card only', sub: counterItems(iid) });
+    return items;
   }
-  items.push({ label: 'Add a counter…', hint: CTHotkeys.key('counter'), onClick: () => customCounter(iid) });
+  if (d && /Planeswalker/.test(d.type || '')) {
+    items.push({ label: 'Loyalty +1', onClick: () => add('Loyalty', 1) }, { label: 'Loyalty −1', onClick: () => add('Loyalty', -1) });
+  }
   // one-click +/- for any other counters already on the card
   Object.keys(c).filter(k => !['+1/+1', '-1/-1', 'Loyalty'].includes(k)).forEach(k => {
     items.push({ label: `${k} (${c[k]})`, sub: [{ label: '+1', onClick: () => addCounter(iid, k, 1) }, { label: '−1', onClick: () => addCounter(iid, k, -1) }] });

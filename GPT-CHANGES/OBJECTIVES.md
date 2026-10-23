@@ -70,7 +70,7 @@ Chris would like additional backgrounds with stronger identity because several c
 
 Current work: **#61**. #54’s immediate pointer-following correction shipped in v0.54.1 through PR #81 after Chris liked the interaction and approved publication. #53 shipped in v0.53.0 and #54 shipped in v0.54.0. Keep each change focused and reviewable; publication still requires Chris’s approval.
 
-Chris asked to retain #55–#59 and #61 in the backlog and mark the more difficult items **On Hold** or **Deferred**. **Queued** items are candidates for future work, with their open choices resolved when taken up; this documentation update does not start implementation. All descriptions and screenshot-reference details are retained below. #61 is in progress on `feat/selected-card-counters`. Other remaining objectives in this group have no implementations or test ZIPs yet.
+Chris asked to retain #55–#59 and #61 in the backlog and mark the more difficult items **On Hold** or **Deferred**. **Queued** items are candidates for future work, with their open choices resolved when taken up; this documentation update does not start implementation. All descriptions and screenshot-reference details are retained below. #61 is in progress on `feat/selected-card-counters`. Its branch PR includes the exact-commit test ZIP. Other remaining objectives in this group have no implementations or test ZIPs yet.
 
 | Objective | Status | Difficulty / reason |
 |---|---|---|
@@ -138,12 +138,12 @@ Keep blocker relationships separate from #54’s W hotkey and player-name arrow 
 
 ## 61. Apply counters to selected cards and reuse the most recent counter — IN PROGRESS
 
-Keep this separate from #56’s statuses and icons, which Chris wants to address first. Make adding counters to several cards straightforward through the existing selection and right-click workflow.
+Keep this separate from #56’s statuses and icons; Chris selected #61 to follow #54. Make adding counters to several cards straightforward through the existing selection and right-click workflow.
 
 - **Exact requested example:** click and drag a selection box around **three cards you control**, right-click one of those selected cards, and choose **Add +1/+1 counter**. Add one +1/+1 counter to **each of the three selected cards**, rather than just the card that was right-clicked.
-- Preserve the selected group when right-clicking a card within it, and make clear that the counter action applies to the group. Define right-click behavior for a card outside the current selection before implementation.
+- Preserve the selected group when right-clicking a card within it, and make clear that the counter action applies to the group. Right-clicking outside the selected group affects only the clicked card and preserves the group.
 - Support other counter types as well, including Chris’s earlier example of adding a **Trample counter** to all selected cards. If choosing a quantity, make clear that the amount is added to each selected card, not divided among them.
 - **Most recent counter used:** retain the last-used counter type across all cards you control so it can be added again without retyping its name. This should help both single-card and selected-group actions.
 - Keep actual counters separate from #56’s non-counter status toggles, and make accidental group changes reversible.
 - Counter copying, dragging and transfers are not part of this objective. Chris dropped cross-player counter actions (#60); changes between players can be handled manually. Keep this feature scoped to cards the acting player controls.
-- Implementation resumed on `feat/selected-card-counters`; earlier two-player Sidebar/Grid checks and focused boundary checks passed. Integrating v0.54.1, documentation, final review and a verified test ZIP remain. No #61 test ZIP yet. #56 and #61 remain separate changes.
+- Current test branch `feat/selected-card-counters` (v0.55.0) includes v0.54.1’s published arrow correction. Group additions use one Undo, quantity is per card, and the most-recent counter type is browser-local. Existing badge/hotkey and maintenance actions stay single-card. See the branch PR’s verified exact-commit ZIP and TESTING.md; awaiting Chris’s test and publication approval. #56 remains separate.
