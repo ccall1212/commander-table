@@ -1,6 +1,6 @@
-# Quick Grab basic lands — v0.53.0 test copy (Objective #53)
+# Quick Grab basic lands — v0.53.0 checks (Objective #53)
 
-Download the PR's exact-commit ZIP, extract it, and double-click `index.html`. No terminal or server is needed. This is a test branch awaiting Chris's review; the live game remains v0.52.1.
+Download the PR's exact-commit ZIP, extract it, and double-click `index.html`. No terminal or server is needed. Published through PR #79 after Chris reported “Perfect” and approved publication.
 
 1. Select a deck containing basic lands and enter Practice or host/join a room. Before Start game, right-click your Library: **Quick grab basic land** should be directly below **Search library…**, disabled with an **after Start game** hint.
 2. Keep your opening hand and start the game. Right-click your Library → **Quick grab basic land**. It should list the basic lands still in your Library with counts, such as Forest (6) or Island (4). Drawn/played lands should not be counted. Different printings of Forest should share one Forest entry; snow-covered basics and Wastes should appear when present. Nonbasic lands should not appear.
@@ -18,3 +18,5 @@ Download the PR's exact-commit ZIP, extract it, and double-click `index.html`. N
 - The environment's Chromium blocks `file://` navigation with `ERR_BLOCKED_BY_ADMINISTRATOR`; Chris's extract-and-double-click check remains. Real-device touch behavior and subjective sound have not been checked.
 
 The counted submenu is the chosen first version; a separate random-basic command is not included. Chris confirmed shuffle afterward. Requested work order after this feature: Objective #54, then #61; each remains a separate change.
+
+Tested by Chris: reported “Perfect” for the supplied copy and approved publication; specific device and interaction coverage was not supplied.
