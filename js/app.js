@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.55.0';
+const APP_VERSION = '0.55.1';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -1252,7 +1252,10 @@ function turnNoticeHTML(pid) {
 }
 
 // After the shared table changes: run my turn-start automation once per turn.
+let openingAutoDrawTimer = null;
 function afterTable() {
+  if (openingAutoDrawTimer) clearTimeout(openingAutoDrawTimer);
+  openingAutoDrawTimer = null;
   const T = S.table, m = S.me;
   if (!T || !m) return;
   preparePersonalHistory();
@@ -1264,8 +1267,13 @@ function afterTable() {
   const turnSeq = Math.max(1, num(T.turnSeq, num(T.turn)));
   const lastTurnSeq = num(m.lastTurnSeq, num(m.lastTurn));
   if (T.active === S.pid && turnSeq > lastTurnSeq) {
-    m.lastTurnSeq = turnSeq; m.lastTurn = turnSeq;
     const skipDraw = turnSeq === 1 && T.order.length === 2; // 2-player: first player skips first draw
+    if (m.autoDraw && !skipDraw && m.zones.library.length && document.querySelector('.first-roll-overlay')) {
+      // Re-read the current table when the dice/results overlay has completely left.
+      openingAutoDrawTimer = setTimeout(afterTable, 100);
+      return;
+    }
+    m.lastTurnSeq = turnSeq; m.lastTurn = turnSeq;
     const bits = [];
     let drew = 0;
     act(() => {
