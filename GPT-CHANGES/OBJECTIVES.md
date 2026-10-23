@@ -72,11 +72,14 @@ Chris would like additional backgrounds with stronger identity because several c
 
 ## 53. Quick Grab basic lands from the Library — IDEA ONLY
 
-When hovering over your Library, offer a **Quick Grab** basic-land button/control so players can find a basic land quickly. Reference: Chris’s sixth screenshot shows a Library menu with **Search Library**, **Shuffle Library**, **Draw random card**, and **Play card & shuffle**; the latter opens a submenu listing cards such as Forest, Island and Plains.
+Add a shortcut similar to the existing **Search Library** flow, available from the Library controls/menu. Chris recalls another game having **Quick grab basic land** directly below its search-deck option. The aim is to get a basic land quickly without opening the full Library search. Two alternative designs are still under consideration:
 
-- Explore a compact basic-land picker rather than requiring a full Library search each time.
-- Before implementation, decide the exact destination (for example hand or battlefield), whether a played land enters tapped, and whether grabbing it also shuffles. The screenshot’s **Play card & shuffle** action is inspiration, not a finalized rule for this proposal.
-- Consider how the control would be reached on touch devices, where hover is unavailable.
+- **Random basic land:** choose **Quick grab basic land** to look through the player’s current Library and retrieve a basic land at random from the basic lands actually remaining. The destination for this variant still needs to be decided.
+- **Counted basic-land submenu:** based on the loaded deck and commander, show the relevant basic-land choices and **how many of each remain in the Library**. Let the player choose a basic land and place it directly onto the **battlefield**. Chris’s earlier sixth screenshot is the reference for this submenu approach: **Search Library**, **Shuffle Library**, **Draw random card**, and **Play card & shuffle**, with a submenu containing cards such as Forest, Island and Plains.
+
+Counts and available choices should reflect the current Library, not just the original imported deck; lands already drawn or moved elsewhere are not still available to grab. Use actual cards from that Library rather than generating a new land. The exact use of commander/deck information to organize the choices remains open.
+
+Before implementation, choose between these approaches or decide whether both belong in the menu. Confirm whether grabbing also shuffles and whether a land placed on the battlefield enters tapped or untapped. The screenshot’s **Play card & shuffle** action is inspiration, not a finalized shuffle rule. Keep the shortcut reachable on touch devices as well as through mouse-based Library controls. This remains an idea only; no implementation or test ZIP yet.
 
 ## 54. W hotkey and targeting arrows ending at player names — IDEA ONLY
 
