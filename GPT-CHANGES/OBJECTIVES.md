@@ -118,6 +118,8 @@ Keep blocker relationships separate from #54’s W hotkey and player-name arrow 
 
 Longer-term ideas for mana assistance and combat bookkeeping. **Recording these ideas does not authorize implementation.** They are **Deferred** because the complete systems would significantly change the current manual tabletop and need separate design work. A proposed direction is optional assistance with manual corrections/overrides, introduced in independently useful stages rather than full rules enforcement. #55 and #58 retain their existing numbers, descriptions and Deferred status. #56 statuses/icons and #59 visual blocker relationships remain outside this section.
 
+**Research reference suggested by Chris:** [Card-Forge/forge](https://github.com/Card-Forge/forge). When revisiting automation, study how Forge organizes its existing rules engine, card abilities, mana production, cost payment and player choices. Use it to understand the design and scope before deciding what fits Commander Table; this note does not start an integration or implementation.
+
 | Objective | Status | Difficulty / dependency |
 |---|---|---|
 | #55 Combat power / damage helper | Deferred | High; combat rules, damage assignment and trample |
