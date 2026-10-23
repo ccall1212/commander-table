@@ -1,6 +1,6 @@
 # Selected-card counters and recent reuse — v0.55.0 (Objective #61)
 
-Download the PR's exact-commit ZIP, extract it, and double-click `index.html`. No terminal or server is needed. This preview includes the published v0.54.1 arrow correction and awaits Chris's test/publication approval.
+Download the PR's exact-commit ZIP, extract it, and double-click `index.html`. No terminal or server is needed. Published through PR #82 after Chris reported “Perfect” and approved publication. Includes the v0.54.1 arrow correction.
 
 1. Enter Practice or host/join a room. Play at least four cards onto your battlefield and space them apart. Drag a selection box around three cards, then right-click one of those three. The menu should show **Counters · 3 selected** and keep their selection outlines.
 2. Choose **Add +1/+1 counter**. Each selected card should gain one; the fourth card should not change. Press **Ctrl+Z / ⌘Z** once: the addition should undo for all three together. Try −1/−1 as well; opposing counters should cancel on each card separately.
@@ -19,3 +19,5 @@ Download the PR's exact-commit ZIP, extract it, and double-click `index.html`. N
 - Assistant browser checks used local HTTP because this environment's Chromium blocks file:// with ERR_BLOCKED_BY_ADMINISTRATOR. Chris's extract-and-double-click launch and real-device touch remain unverified.
 
 This feature adds real counters. Status toggles/icons (#56), counter copying/dragging and cross-player counter transfers are separate or excluded from this objective.
+
+Tested by Chris: reported “Perfect” for the supplied copy and approved publication. Specific device and interaction coverage was not supplied.
