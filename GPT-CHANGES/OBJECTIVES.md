@@ -92,6 +92,8 @@ After #62–#64, explore recognizing straightforward mana abilities and suggesti
 
 Keep manual fallbacks and explicit payment confirmation. Full rules enforcement and automatic card-effect resolution would need separate scope.
 
-## Unassigned idea
+## Layout ideas
 
-- Consider moving life points to the top middle of the board. Placement is undecided.
+### 66. Life points at the top middle of the board — Idea only
+
+Consider moving life points to the top middle of each player’s board. Placement and its relationship to the player’s name are undecided.
