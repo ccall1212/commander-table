@@ -68,18 +68,18 @@ Chris would like additional backgrounds with stronger identity because several c
 
 ## Objectives from Chris and a friend — recorded and prioritized 2026-10-22
 
-Chris asked to retain all of #53–#60 in the backlog and mark the more difficult items **On Hold** or **Deferred**. **Queued** items are candidates for future work, with their open choices resolved when taken up; this documentation update does not start implementation. All descriptions and screenshot-reference details are retained below. No branches, implementations, or test ZIPs exist for these objectives.
+Chris asked to retain #53–#59 and #61 in the backlog and mark the more difficult items **On Hold** or **Deferred**. **Queued** items are candidates for future work, with their open choices resolved when taken up; this documentation update does not start implementation. All descriptions and screenshot-reference details are retained below. No branches, implementations, or test ZIPs exist for these objectives.
 
 | Objective | Status | Difficulty / reason |
 |---|---|---|
 | #53 Quick Grab basic lands | Queued | Low–moderate; choose random versus counted picker, destination and shuffle/tapped behavior |
 | #54 W hotkey and arrows to names | Queued | Moderate; keep custom hotkeys and player-name anchors working across layouts. Life-point relocation remains optional and undecided |
 | #55 Combat power / damage helper | Deferred | High for accurate damage automation; a narrower incoming-power aid could be reconsidered separately |
-| #56 Statuses, counter icons and counter tools for your own cards | Queued | Moderate; distinguish statuses from true counters, keep icons readable, and support recent-counter reuse, bulk application and copying/dragging between your own cards |
+| #56 Status toggles, keyword counters and icons | Queued | Moderate; distinguish statuses from true counters and keep the visual display readable |
 | #57 Deck-size limit / Whtz exception | On Hold | Low–moderate technically, but count definition and strict blocking versus warnings need a decision |
 | #58 Drag-to-target / attack | Deferred | High interaction risk; clarify attack versus target, vigilance and intentional transfers first |
 | #59 Blocker relationships | On Hold | Moderate–high; settle attack/block representation and multiple-blocker behavior after #54’s targeting work |
-| #60 Cross-player counter actions | On Hold | Higher complexity; copying, dragging or transferring counters between players needs interaction, synchronization and undo design |
+| #61 Counters on selected cards and recent-counter reuse | Queued | Moderate; preserve the selected group when opening a card menu and apply the chosen counter to every selected card you control |
 
 
 ## 53. Quick Grab basic lands from the Library — QUEUED
@@ -113,22 +113,14 @@ Explore a combat phase that counts damage coming toward a player. Chris’s exam
 - Chris specifically raised **trample** as a complication: decide whether this remains a manual aid or includes combat rules. Blocking, damage assignment and abilities such as trample, first/double strike or damage prevention need a defined scope before automatic totals or life changes are considered.
 - Coordinate with #59’s blocker relationships, #54’s name-targeted arrows and #58’s drag-to-target idea. No combat automation is approved.
 
-## 56. Card statuses, keyword counters, icons and counter tools for your own cards — QUEUED
+## 56. Card status toggles, keyword counters and visual icons — QUEUED
 
-Explore nonmovable on/off card markers for effects that are **not counters**, while retaining separate true-counter versions where applicable so counter interactions such as proliferate can be represented. Chris also wants visual icons/art for the markers, inspired by the supplied references; no assets are being created now. This objective also covers recent-counter reuse, bulk application and copying/dragging between **your own cards**. Actions involving another player’s cards are tracked separately in **#60**.
+Explore nonmovable on/off card markers for effects that are **not counters**, while retaining separate true-counter versions where applicable so counter interactions such as proliferate can be represented. Chris also wants visual icons/art for the markers, inspired by the supplied references; no assets are being created now. Focus on statuses and icons first. Applying counters to multiple selected cards and recent-counter reuse are tracked separately in **#61**. Counter copying and dragging are not requested.
 
 - References: screenshots 1, 3 and 4 show a card with **Goaded** and **Prepared** labels, small ability icons beside the card, and a menu listing **Toggle Goaded**, **Toggle Prepared**, plus counter toggles for **Deathtouch, Double Strike, First Strike, Flying, Haste, Hexproof, Indestructible, Lifelink, Menace, Reach, Shield, Trample and Vigilance**.
 - Keep a non-counter status distinct from an actual counter; a status toggle must not become proliferatable merely because it has an icon. Decide which effects have meaningful counter versions rather than assuming every status does.
 - Preserve the ability to represent/count applicable real counters separately. Define how toggles, quantities, removal and proliferate should interact before implementation.
 - Explore creating readable icons inspired by the examples and pairing them with clear labels/tooltips. The icon designs, placement and behavior are still open.
-
-Chris also wants easier counter reuse and copying, so the same counter does not have to be typed separately for every card:
-
-- **Most recent counter used:** make the last-used counter type available across **all of your cards**, rather than remembering it only on the card where it was added. For example, after adding a **Trample counter** once, offer an immediate way to add that same counter to other cards without retyping its name.
-- **Apply to several cards:** explore a quick repeat action and/or applying the chosen counter to a selection of cards. Chris’s example is giving a Trample counter to all of his cards; the exact bulk-selection gesture is still open.
-- **Copy or drag counters:** explore copying an existing **+1/+1 counter or any other counter type**, and/or clicking and dragging its visible counter marker from one card to another. This objective covers cards you control; cross-player actions belong to #60.
-- Keep **copy/add** distinct from **move/transfer**: copying leaves the source counter in place and adds one at the destination; moving removes the chosen quantity from the source and adds it at the destination. Decide how the gesture distinguishes these actions and whether it handles one counter or a chosen quantity.
-- Keep counter shortcuts distinct from non-counter status toggles, and define how accidental changes to your own cards can be reversed. These tools can be implemented in stages without waiting for cross-player counter actions.
 
 ## 57. A 100-card size limit with a Whtz commander exception — ON HOLD
 
@@ -164,13 +156,14 @@ Keep blocker relationships separate from #54’s W hotkey and player-name arrow 
 - Coordinate with #55’s possible combat helper and #58’s drag-to-target idea, while keeping this objective independently reviewable.
 - This is a visual relationship idea; automatic damage assignment or life changes are not included. No implementation or test ZIP yet.
 
+## 61. Apply counters to selected cards and reuse the most recent counter — QUEUED
 
-## 60. Cross-player counter actions — ON HOLD
+Keep this separate from #56’s statuses and icons, which Chris wants to address first. Make adding counters to several cards straightforward through the existing selection and right-click workflow.
 
-Extend counter actions to cards controlled by **different players**, separately from #56’s statuses and counter tools for your own cards. Chris wants to be able to copy and/or click and drag a **+1/+1 counter or any other counter type** from one player’s card to another player’s card.
-
-- Include adding/reusing a counter on another player’s card, as well as copying, dragging or transferring existing counters across players. The “most recent counter” shortcut across all cards can extend to other players’ cards when this objective is taken up; reuse across your own cards remains in #56.
-- Keep **copy/add** distinct from **move/transfer**: copying leaves the source counter in place; moving removes the chosen quantity from the source and adds it at the destination. Decide how the gesture chooses the action and quantity.
-- Define how edits to another player’s card are requested/applied, how both players’ counts stay synchronized, and how accidental actions are reversed.
-- Preserve #56’s distinction between actual counters and non-counter status toggles.
-- **On Hold** because cross-player interaction, synchronization and undo need design before implementation. #56 can proceed independently. No implementation or test ZIP yet.
+- **Exact requested example:** click and drag a selection box around **three cards you control**, right-click one of those selected cards, and choose **Add +1/+1 counter**. Add one +1/+1 counter to **each of the three selected cards**, rather than just the card that was right-clicked.
+- Preserve the selected group when right-clicking a card within it, and make clear that the counter action applies to the group. Define right-click behavior for a card outside the current selection before implementation.
+- Support other counter types as well, including Chris’s earlier example of adding a **Trample counter** to all selected cards. If choosing a quantity, make clear that the amount is added to each selected card, not divided among them.
+- **Most recent counter used:** retain the last-used counter type across all cards you control so it can be added again without retyping its name. This should help both single-card and selected-group actions.
+- Keep actual counters separate from #56’s non-counter status toggles, and make accidental group changes reversible.
+- Counter copying, dragging and transfers are not part of this objective. Chris dropped cross-player counter actions (#60); changes between players can be handled manually. Keep this feature scoped to cards the acting player controls.
+- No implementation or test ZIP yet. #56 and #61 remain separate, reviewable pieces of future work.
