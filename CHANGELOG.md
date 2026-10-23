@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.54.1] - 2026-10-22
+
+### Fixed
+- Starting a targeting arrow from a hovered battlefield card with W, or from a card/player menu, now immediately attaches the preview to your pointer. Move to the destination and click once; selecting the source again or holding a mouse button is no longer required.
+
 ## [0.54.0] - 2026-10-22
 
 ### Added
@@ -178,7 +183,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.54.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.54.1...HEAD
+[0.54.1]: https://github.com/ccall1212/commander-table/compare/v0.54.0...v0.54.1
 [0.54.0]: https://github.com/ccall1212/commander-table/compare/v0.53.0...v0.54.0
 [0.53.0]: https://github.com/ccall1212/commander-table/compare/v0.52.1...v0.53.0
 [0.52.1]: https://github.com/ccall1212/commander-table/compare/v0.52.0...v0.52.1

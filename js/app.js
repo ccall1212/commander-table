@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.54.0';
+const APP_VERSION = '0.54.1';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -4114,6 +4114,7 @@ function startTargeting(from) {
   S.arrowControlsDismissed = false;
   S.arrowPick = { from: source };
   refreshTargeting();
+  if (source) paintArrowDrag(pvMouse.x, pvMouse.y);
 }
 function clearArrowDrag(cancelled = false) {
   if (arrowDrag && (cancelled || arrowDrag.moved)) { suppressArrowClickUntil = Date.now() + 400; lastArrowPickAt = Date.now(); }
@@ -4122,7 +4123,8 @@ function clearArrowDrag(cancelled = false) {
 }
 function endTargeting() { clearArrowDrag(true); S.arrowPick = null; refreshTargeting(); }
 function paintArrowDrag(x, y) {
-  const a = arrowDrag && arrowAnchor(arrowDrag.from);
+  const from = S.arrowPick && S.arrowPick.from;
+  const a = from && arrowAnchor(from);
   const coords = a && CTTargeting.line(a, { left: x - 1, top: y - 1, width: 2, height: 2 });
   let draft = $('#ct-arrow-draft');
   if (!coords) { if (draft) draft.style.display = 'none'; return; }
@@ -4178,7 +4180,7 @@ function pickArrowEndpoint(target) {
   doPublish();
   const ep = CTTargeting.endpoint(raw, S.players, arrowSeats());
   if (!ep) { UI.toast('Choose a battlefield card, empty battlefield space, or a player’s name.'); return; }
-  if (!S.arrowPick.from) { S.arrowPick.from = ep; refreshTargeting(); return; }
+  if (!S.arrowPick.from) { S.arrowPick.from = ep; refreshTargeting(); paintArrowDrag(pvMouse.x, pvMouse.y); return; }
   if (CTTargeting.same(S.arrowPick.from, ep)) { UI.toast('Choose a different target.'); return; }
   const from = CTTargeting.endpoint(S.arrowPick.from, S.players, arrowSeats());
   if (!from) { endTargeting(); UI.toast('The starting card or player is no longer available.'); return; }
@@ -4219,7 +4221,7 @@ function refreshTargeting() {
       $('#game').appendChild(controls);
     }
     controls.querySelector('span').textContent = picking
-      ? (S.arrowPick.from ? 'Click a target, or drag to a card, board, or name.' : 'Drag between cards/players, or click a starting point.')
+      ? (S.arrowPick.from ? 'Move the pointer, then click a target card, board, or name.' : 'Choose a starting card or player.')
       : `${S.targetArrows.length} targeting arrow${S.targetArrows.length === 1 ? '' : 's'} · click a line to remove it`;
     controls.querySelector('[data-arrow-clear]').textContent = picking ? 'Cancel' : 'Clear all';
   } else if (controls) controls.remove();
@@ -4310,7 +4312,12 @@ function bindGame() {
     if (from) arrowDrag = { pointerId: e.pointerId, x: e.clientX, y: e.clientY, from, moved: false };
   }, true);
   window.addEventListener('pointermove', e => {
-    if (!arrowDrag || e.pointerId !== arrowDrag.pointerId || !S.arrowPick) return;
+    if (!S.arrowPick) return;
+    if (!arrowDrag) {
+      if (S.arrowPick.from) paintArrowDrag(e.clientX, e.clientY);
+      return;
+    }
+    if (e.pointerId !== arrowDrag.pointerId) return;
     if (!arrowDrag.moved && Math.hypot(e.clientX - arrowDrag.x, e.clientY - arrowDrag.y) < 6) return;
     e.preventDefault(); e.stopImmediatePropagation();
     arrowDrag.moved = true;
@@ -4329,7 +4336,7 @@ function bindGame() {
     else pickArrowEndpoint(target);
   }, true);
   window.addEventListener('pointercancel', e => { if (arrowDrag && e.pointerId === arrowDrag.pointerId) endTargeting(); }, true);
-  window.addEventListener('blur', () => { if (arrowDrag) endTargeting(); });
+  window.addEventListener('blur', () => { if (S.arrowPick) endTargeting(); });
   g.addEventListener('click', e => {
     if (Date.now() < suppressArrowClickUntil) { suppressArrowClickUntil = 0; e.preventDefault(); e.stopImmediatePropagation(); return; }
     if (e.target.closest('#chatPanel, #chatBtn')) return;
