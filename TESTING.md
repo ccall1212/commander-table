@@ -1,6 +1,6 @@
 # W and name-targeted arrows — v0.54.0 (Objective #54)
 
-Download the PR's exact-commit ZIP, extract it, and double-click `index.html`. No terminal or server is needed. This is a preview copy awaiting Chris's test and publication approval.
+Download the PR's exact-commit ZIP, extract it, and double-click `index.html`. No terminal or server is needed. Published through PR #80 after Chris approved publication with “Push”. Chris did not supply specific hands-on test results for this version.
 
 1. Enter Practice or host/join a room and play a card onto the battlefield. Hover it and press **W**. Drag from the card to another player's name (or their empty board space) and release. A dashed preview should follow your pointer; the finished arrow should end at their name. The source card should keep its position and tapped state.
 2. Move away from cards and press **W**. Drag between battlefield cards or players. Try clicking the source and then the target instead: the existing click-to-pick flow should still work. Player arrows should end at names, including when empty board space was chosen.
