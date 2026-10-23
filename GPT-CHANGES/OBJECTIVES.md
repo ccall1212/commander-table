@@ -68,19 +68,26 @@ Chris would like additional backgrounds with stronger identity because several c
 
 ## Objectives from Chris and a friend — recorded and prioritized 2026-10-22
 
-Current requested next work: **#61**. #53 shipped in v0.53.0 and #54 shipped in v0.54.0. Keep each change focused and reviewable; publication still requires Chris’s approval.
+Current work: **#54 arrow interaction follow-up**, then resume **#61**. #53 shipped in v0.53.0 and #54 shipped in v0.54.0. Keep each change focused and reviewable; publication still requires Chris’s approval.
 
-Chris asked to retain #55–#59 and #61 in the backlog and mark the more difficult items **On Hold** or **Deferred**. **Queued** items are candidates for future work, with their open choices resolved when taken up; this documentation update does not start implementation. All descriptions and screenshot-reference details are retained below. Remaining objectives in this group have no implementations or test ZIPs yet.
+Chris asked to retain #55–#59 and #61 in the backlog and mark the more difficult items **On Hold** or **Deferred**. **Queued** items are candidates for future work, with their open choices resolved when taken up; this documentation update does not start implementation. All descriptions and screenshot-reference details are retained below. #54’s follow-up is on `fix/automatic-arrow-preview`; #61 has a checkpoint on `feat/selected-card-counters` while the arrow fix is reviewed. Other remaining objectives in this group have no implementations or test ZIPs yet.
 
 | Objective | Status | Difficulty / reason |
 |---|---|---|
+| #54 Immediate pointer-following arrow preview | In progress | Follow-up to v0.54.0; W / Send arrow should start the preview without another source press |
 | #55 Combat power / damage helper | Deferred | High for accurate damage automation; a narrower incoming-power aid could be reconsidered separately |
 | #56 Status toggles, keyword counters and icons | Queued | Moderate; distinguish statuses from true counters and keep the visual display readable |
 | #57 Deck-size limit / Whtz exception | On Hold | Low–moderate technically, but count definition and strict blocking versus warnings need a decision |
 | #58 Drag-to-target / attack | Deferred | High interaction risk; clarify attack versus target, vigilance and intentional transfers first |
 | #59 Blocker relationships | On Hold | Moderate–high; settle attack/block representation and multiple-blocker behavior following #54’s published targeting work |
-| #61 Counters on selected cards and recent-counter reuse | Queued | Moderate; preserve the selected group when opening a card menu and apply the chosen counter to every selected card you control |
+| #61 Counters on selected cards and recent-counter reuse | Paused for #54 follow-up | Moderate; preserve the selected group when opening a card menu and apply the chosen counter to every selected card you control |
 
+
+## 54. Immediate pointer-following arrow preview — IN PROGRESS (v0.54.1 test branch)
+
+The W shortcut, name-targeted arrows and drag controls shipped in v0.54.0 through PR #80. Chris found the extra source press/drag unsatisfactory: pressing W over a card or choosing **Send arrow to…** should immediately make the arrow follow the pointer. Move to a destination and click once to place it. Keep this correction separate from #61. Life-point relocation remains undecided and blocker relationships remain separate #59.
+
+Current branch: `fix/automatic-arrow-preview`. Publication awaits Chris’s approval of this follow-up.
 
 ## 55. Combat-phase incoming-power / damage helper — DEFERRED
 
@@ -136,7 +143,7 @@ Keep blocker relationships separate from #54’s W hotkey and player-name arrow 
 - Coordinate with #55’s possible combat helper and #58’s drag-to-target idea, while keeping this objective independently reviewable.
 - This is a visual relationship idea; automatic damage assignment or life changes are not included. No implementation or test ZIP yet.
 
-## 61. Apply counters to selected cards and reuse the most recent counter — QUEUED
+## 61. Apply counters to selected cards and reuse the most recent counter — PAUSED FOR #54 FOLLOW-UP
 
 Keep this separate from #56’s statuses and icons, which Chris wants to address first. Make adding counters to several cards straightforward through the existing selection and right-click workflow.
 
@@ -146,4 +153,4 @@ Keep this separate from #56’s statuses and icons, which Chris wants to address
 - **Most recent counter used:** retain the last-used counter type across all cards you control so it can be added again without retyping its name. This should help both single-card and selected-group actions.
 - Keep actual counters separate from #56’s non-counter status toggles, and make accidental group changes reversible.
 - Counter copying, dragging and transfers are not part of this objective. Chris dropped cross-player counter actions (#60); changes between players can be handled manually. Keep this feature scoped to cards the acting player controls.
-- No implementation or test ZIP yet. #56 and #61 remain separate, reviewable pieces of future work.
+- Implementation checkpoint on `feat/selected-card-counters`; two-player Sidebar/Grid checks and focused boundary checks passed. Documentation, final review and a verified test ZIP are pending while #54’s arrow correction is handled. No #61 test ZIP yet. #56 and #61 remain separate changes.
