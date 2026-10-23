@@ -1,18 +1,18 @@
-# Background previews — v0.52.0 checks (Objective #47)
+# Double-click background previews — v0.52.1 test copy
 
-Objective #47 shipped in v0.52.0 through PR #77 after Chris approved publication. For a downloaded copy, extract the ZIP and double-click `index.html`; no terminal or server is needed. The steps below remain useful for checking background previews.
+Download the PR's exact-commit ZIP, extract it, and double-click `index.html`. No terminal or server is needed. This is the revised Objective #47 test copy; the live game remains v0.52.0 until Chris approves publication.
 
-1. On the opening screen, find **Your look → Play area background**. Click **Preview** below any background. The complete, larger image should appear without the gameplay dark overlay. Previewing must leave the selected thumbnail unchanged.
-2. Close with **Close preview**, ×, Escape, or a click outside the dialog. Reopen another preview. Try keyboard Tab and Enter too; closing should return focus to the preview button.
-3. Click a background thumbnail itself. It should still select the background. Preview a different image and close it: the thumbnail you selected should stay selected. Start Practice with an existing deck and check your chosen background is used.
-4. Open **Upload your own images** and upload a landscape JPG, PNG, or WebP at least 1280 × 720. Its **Your upload** tile should have its own Preview button. Choose a preset, preview Your upload, and confirm the preset remains selected. Select Your upload, preview a preset, and confirm Your upload remains selected. Reopen the page and confirm the saved upload still previews.
-5. Try a maximized desktop window, roughly 1920 × 1080 and 1366 × 768, then a narrow window and landscape phone if available. The full image should fit without cropping or stretching, and the close controls should be reachable. Background preview is on the opening screen; normal Sidebar and Grid gameplay should retain their usual background rendering.
+1. Find **Your look → Play area background** on the opening screen. The individual Preview buttons should be gone; a short hint explains click and double-click.
+2. Click a thumbnail once: it should select that background without opening a dialog. Double-click a different thumbnail: it should select that background and open its full-size image without the gameplay dark overlay. Try an already-selected thumbnail too.
+3. Close with **Close preview**, ×, Escape, or a click outside the dialog. The selected background should remain selected. Double-click the image area and the name beneath it to check both work.
+4. With a keyboard, Tab to a different thumbnail and press **Shift+Enter**. It should enlarge without changing your selection. Escape should return focus to that thumbnail. Enter or Space by itself should select it.
+5. Upload a JPG, PNG, or WebP background at least 1280 × 720 using **Upload your own images**. Select a preset, then double-click **Your upload**: the saved image should become selected and enlarge. Close and double-click a preset to switch back. Reload the page and check the saved upload can still enlarge.
+6. Try desktop windows around 1920 × 1080 and 1366 × 768, a narrow window, and a short landscape window. The image should fit and the close controls should remain reachable. If available, check double-tap on your real phone/tablet; touch-device behavior needs your check.
 
 ## Assistant verification
 
-- Node syntax checks for both changed JavaScript files and `git diff --check` passed.
-- Chromium over local HTTP: all ten preset images loaded from full-size assets at 1920 × 1080, 1366 × 768, 390 × 844 and 844 × 390. Dialog and image stayed within each viewport; previewing preserved stored appearance settings.
-- A real file-input upload was optimized and saved by the app, then previewed while a preset was selected. Previewing a preset while the custom background was active also preserved the selection. Close button, ×, Escape and backdrop dismissal worked.
-- Focus returned to the preview button after keyboard dismissal. A deliberately failed image request showed the readable error message and could be dismissed.
-- A Luna subagent reviewed the implementation and found no actionable issues.
-- Chromium blocks `file://` navigation here with `ERR_BLOCKED_BY_ADMINISTRATOR`; double-click launch still needs Chris's check. Real-device touch testing and live multiplayer were not performed for this lobby change.
+Node syntax checks for both changed JavaScript files and `git diff --check` passed. Chromium over local HTTP double-clicked all ten initially unselected preset backgrounds at 1920 × 1080, 1366 × 768, 390 × 844 and 844 × 390. Each opened the full-size image, selected the clicked background and fit the dialog inside the viewport. Close button, × and Escape worked and returned focus to the thumbnail.
+
+A real file-input upload, switching between saved upload and presets, custom-image preview after reload, Shift+Enter preview without selection, Enter selection and backdrop dismissal passed. No JavaScript page errors occurred. A Luna subagent reviewed the revision and found no actionable issues.
+
+This environment blocks Chromium `file://` navigation with `ERR_BLOCKED_BY_ADMINISTRATOR`, so extract-and-double-click launch still needs Chris's check. The narrow viewport checks used desktop Chromium, not a real touch device. Live multiplayer and Sidebar/Grid gameplay were not rerun for this lobby-only interaction revision.

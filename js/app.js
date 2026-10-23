@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.52.0';
+const APP_VERSION = '0.52.1';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -5608,10 +5608,17 @@ function renderDeckList() {
 function bindLobby() {
   $('#ver').textContent = APP_VERSION;
   $('#cardBackPicker').addEventListener('click', e => { trackAdminEntry(e); chooseAppearance(e, 'cardBack'); });
-  $('#backgroundPicker').addEventListener('click', e => {
-    const preview = e.target.closest('[data-background-preview]');
-    if (preview) { showBackgroundPreview(preview.dataset.backgroundPreview); return; }
-    chooseAppearance(e, 'background');
+  $('#backgroundPicker').addEventListener('click', e => chooseAppearance(e, 'background'));
+  $('#backgroundPicker').addEventListener('dblclick', e => {
+    const choice = e.target.closest('[data-appearance-id]');
+    if (choice) { e.preventDefault(); showBackgroundPreview(choice.dataset.appearanceId); }
+  });
+  $('#backgroundPicker').addEventListener('keydown', e => {
+    const choice = e.target.closest('[data-appearance-id]');
+    if (choice && e.key === 'Enter' && e.shiftKey) {
+      e.preventDefault();
+      if (!e.repeat) showBackgroundPreview(choice.dataset.appearanceId);
+    }
   });
   $('#customBackFile').addEventListener('change', e => readCustomImage(e.target.files && e.target.files[0], 'cardBack'));
   $('#customBackgroundFile').addEventListener('change', e => readCustomImage(e.target.files && e.target.files[0], 'background'));
@@ -5766,10 +5773,18 @@ function chooseJoinAutoActions() {
   return promise;
 }
 
-function renderAppearancePickers() {
+function renderAppearancePickers(preserveBackground = false) {
   const prefs = CTAppearance.getPrefs(), custom = CTAppearance.getCustom();
   $('#cardBackPicker').innerHTML = CTAppearance.renderCardBacks(custom.cardBack && custom.cardBackActive ? 'custom-local' : prefs.cardBack);
-  $('#backgroundPicker').innerHTML = CTAppearance.renderBackgrounds(custom.background && custom.backgroundActive ? 'custom-local' : prefs.background);
+  const background = custom.background && custom.backgroundActive ? 'custom-local' : prefs.background;
+  // Keep thumbnail nodes during selection so the browser can recognize a double-click.
+  if (preserveBackground) {
+    $('#backgroundPicker').querySelectorAll('[data-appearance-id]').forEach(choice => {
+      const selected = choice.dataset.appearanceId === background;
+      choice.classList.toggle('selected', selected);
+      choice.setAttribute('aria-pressed', String(selected));
+    });
+  } else $('#backgroundPicker').innerHTML = CTAppearance.renderBackgrounds(background);
   const rb = $('#resetCustomBack'), rg = $('#resetCustomBackground');
   if (rb) rb.disabled = !custom.cardBack;
   if (rg) rg.disabled = !custom.background;
@@ -5791,7 +5806,7 @@ function showBackgroundPreview(id) {
   status.className = 'muted small';
   status.setAttribute('role', 'status');
   status.textContent = 'Loading preview…';
-  image.onload = () => { status.textContent = 'Preview only · your selected background has not changed.'; };
+  image.onload = () => { status.textContent = 'Full image · without the gameplay dark overlay.'; };
   image.onerror = () => { image.hidden = true; status.textContent = 'This background could not be loaded. Close the preview and try again.'; };
   image.src = src;
   content.append(image, status);
@@ -5852,7 +5867,7 @@ function chooseAppearance(e, kind) {
     prefs[kind] = id;
     CTAppearance.savePrefs(prefs);
   }
-  renderAppearancePickers();
+  renderAppearancePickers(kind === 'background');
   if (!$('#game').classList.contains('hidden')) render();
 }
 function closeImport() {
