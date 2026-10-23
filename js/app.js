@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.53.0';
+const APP_VERSION = '0.54.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -3807,7 +3807,7 @@ function renderOpp(el, pid, idx) {
       : Array.from({ length: shown }, (_, i) => backAt(i)).join('');
   const handTitle = revealed ? ' (revealed — hover to read)' : revCards.length ? ` (${revCards.length} card${revCards.length === 1 ? '' : 's'} revealed — hover to read)` : '';
   const handHTML = `<span class="ohhand${revealed ? ' revealed' : revCards.length ? ' partial-reveal' : ''}${handN ? '' : ' empty'}" title="${esc(p.name)} has ${plural(handN, 'card')} in hand${handTitle}">${handCards}<b class="ohn">${handN}</b></span>`;
-  setHTML(el.querySelector('.ohead'), `${curView() === 'grid' ? '<button data-a="viewme" title="Back to my board">← My board</button>' : ''}<span class="dot" style="--pc:${colorOf(pid)}"></span>
+  setHTML(el.querySelector('.ohead'), `${curView() === 'grid' ? `<button data-a="viewme" title="Back to my board">← My board${S.role !== 'spectator' ? ` · <span class="pname" data-phead="${esc(S.pid)}">${esc(S.me.name)}</span>` : ''}</button>` : ''}<span class="dot" style="--pc:${colorOf(pid)}"></span>
     <span class="pname" data-phead="${esc(pid)}" title="Right-click for options">${esc(p.name)}</span>
     ${off ? '<span class="tag off">RECONNECTING</span>' : ''}${T.out && T.out[pid] ? '<span class="tag off">OUT</span>' : ''}
     ${T.active === pid ? '<span class="tag">TURN</span>' : ''}${T.monarch === pid ? '<span title="Monarch">👑</span>' : ''}${T.initiative === pid ? '<span title="Initiative">🏰</span>' : ''}
@@ -4099,11 +4099,13 @@ function previewFromEl(cardEl) {
 //  Shared targeting arrows (transient public visuals, outside saved game state)
 // =====================================================================
 let arrowFrame = 0, lastArrowPickAt = 0, arrowSerial = 0, lastArrowPaint = 0;
+let arrowDrag = null, suppressArrowClickUntil = 0;
 function arrowSeats() { return (S.table && S.table.seats) || []; }
 function startTargeting(from) {
   if (!S.me || !S.table) return;
   if (S.role !== 'solo' && S.net.state !== 'online') { UI.toast('Reconnect before drawing an arrow.', { kind: 'warn' }); return; }
   if (S.arrange) { UI.toast('Finish arranging zones before drawing an arrow.'); return; }
+  if (drag || selectionDrag || S.regionDrag) { UI.toast('Finish moving cards before drawing an arrow.'); return; }
   doPublish(); // solo and host validation must see freshly played cards too
   const source = from ? CTTargeting.endpoint(from, S.players, arrowSeats()) : null;
   if (from && !source) return;
@@ -4113,7 +4115,26 @@ function startTargeting(from) {
   S.arrowPick = { from: source };
   refreshTargeting();
 }
-function endTargeting() { S.arrowPick = null; refreshTargeting(); }
+function clearArrowDrag(cancelled = false) {
+  if (arrowDrag && (cancelled || arrowDrag.moved)) { suppressArrowClickUntil = Date.now() + 400; lastArrowPickAt = Date.now(); }
+  arrowDrag = null;
+  const draft = $('#ct-arrow-draft'); if (draft) draft.remove();
+}
+function endTargeting() { clearArrowDrag(true); S.arrowPick = null; refreshTargeting(); }
+function paintArrowDrag(x, y) {
+  const a = arrowDrag && arrowAnchor(arrowDrag.from);
+  const coords = a && CTTargeting.line(a, { left: x - 1, top: y - 1, width: 2, height: 2 });
+  let draft = $('#ct-arrow-draft');
+  if (!coords) { if (draft) draft.style.display = 'none'; return; }
+  if (!draft) {
+    draft = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    draft.id = 'ct-arrow-draft'; draft.setAttribute('aria-hidden', 'true');
+    draft.innerHTML = '<defs><marker id="ct-arrow-draft-tip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="currentColor"/></marker></defs><line marker-end="url(#ct-arrow-draft-tip)"/>';
+    $('#game').appendChild(draft);
+  }
+  draft.style.display = ''; draft.style.color = colorOf(S.pid);
+  Object.entries(coords).forEach(([k, v]) => draft.querySelector('line').setAttribute(k, v.toFixed(1)));
+}
 function hideTargetingControls() { S.arrowControlsDismissed = true; endTargeting(); }
 function showTargetingControls() { S.arrowControlsDismissed = false; refreshTargeting(); }
 function clearTargetArrows() {
@@ -4140,6 +4161,7 @@ function arrowEndpointAt(target) {
   if (card) return card.dataset.zone === 'battlefield' ? { kind: 'card', pid: card.dataset.pid, iid: card.dataset.iid } : null;
   const player = target.closest('[data-phead]');
   if (player) return { kind: 'player', pid: player.dataset.phead };
+  if (target.closest('.opp.youtile .pname')) return { kind: 'player', pid: S.pid };
   if (target.closest('[data-pile], .tstrip, .thand, .tpile, #myRow, .lifebox, button, input, textarea, .rlabel, .grip')) return null;
   const board = target.closest('.board'), wrap = target.closest('.boardwrap');
   const pid = board && board.dataset.pid || (wrap && wrap.firstElementChild && wrap.firstElementChild.dataset.pid);
@@ -4166,25 +4188,20 @@ function pickArrowEndpoint(target) {
   toHost({ t: 'arrows', k: 'add', arrow: { from, to: ep } });
 }
 function arrowAnchor(ep) {
-  // A player/card may appear twice (large board and miniature). Choose the largest visible copy.
-  const nodes = ep.kind === 'card' ? document.querySelectorAll('#game .board .card[data-zone="battlefield"], #game .board .card[data-arrow-zone="battlefield"]')
-    : document.querySelectorAll('#game .boardwrap');
+  // Player arrows always land at a visible name, including the read-only YOU miniature.
+  const nodes = ep.kind === 'card'
+    ? document.querySelectorAll('#game .board .card[data-zone="battlefield"], #game .board .card[data-arrow-zone="battlefield"]')
+    : document.querySelectorAll('#game [data-phead], #game .opp.youtile .pname');
   let best = null;
   nodes.forEach(el => {
     const match = ep.kind === 'card'
       ? (el.dataset.pid === ep.pid && el.dataset.iid === ep.iid) || (el.dataset.arrowPid === ep.pid && el.dataset.arrowIid === ep.iid)
-      : el.firstElementChild && (el.firstElementChild.dataset.pid === ep.pid || el.firstElementChild.dataset.arrowPid === ep.pid);
+      : el.dataset.phead === ep.pid || (ep.pid === S.pid && el.closest('.opp.youtile'));
     if (!match || getComputedStyle(el).visibility === 'hidden') return;
     const r = el.getBoundingClientRect();
     if (!r.width || !r.height || r.right <= 0 || r.bottom <= 0 || r.left >= innerWidth || r.top >= innerHeight) return;
     if (!best || r.width * r.height > best.width * best.height) best = r;
   });
-  if (ep.kind === 'player') {
-    // Player arrows land inside the board, independent of where it was clicked.
-    if (best) return { left: best.left + best.width / 2 - 6, top: best.top + best.height / 2 - 6, width: 12, height: 12 };
-    const name = [...document.querySelectorAll('#game [data-phead]')].find(el => el.dataset.phead === ep.pid && el.getBoundingClientRect().width);
-    return name ? name.getBoundingClientRect() : null;
-  }
   return best;
 }
 function refreshTargeting() {
@@ -4202,7 +4219,7 @@ function refreshTargeting() {
       $('#game').appendChild(controls);
     }
     controls.querySelector('span').textContent = picking
-      ? (S.arrowPick.from ? 'Choose a target card, empty board, or name.' : 'Choose a starting card, empty board, or name.')
+      ? (S.arrowPick.from ? 'Click a target, or drag to a card, board, or name.' : 'Drag between cards/players, or click a starting point.')
       : `${S.targetArrows.length} targeting arrow${S.targetArrows.length === 1 ? '' : 's'} · click a line to remove it`;
     controls.querySelector('[data-arrow-clear]').textContent = picking ? 'Cancel' : 'Clear all';
   } else if (controls) controls.remove();
@@ -4254,7 +4271,7 @@ function drawTargetArrows(time) {
       item.querySelector('marker path').setAttribute('fill', colorOf(arrow.by));
       const dot = item.querySelector('.ct-arrow-player-target');
       dot.style.display = arrow.to.kind === 'player' ? '' : 'none';
-      dot.setAttribute('cx', b.left + b.width / 2); dot.setAttribute('cy', b.top + b.height / 2);
+      dot.setAttribute('cx', coords.x2); dot.setAttribute('cy', coords.y2);
       const outline = item.querySelector('.ct-arrow-source-outline');
       outline.style.display = arrow.from.kind === 'card' ? '' : 'none';
       if (arrow.from.kind === 'card') {
@@ -4282,12 +4299,39 @@ function bindGame() {
   }, true);
   // Picking is handled before normal clicks/drags, including touch inspection and life buttons.
   g.addEventListener('pointerdown', e => {
+    suppressArrowClickUntil = 0; // a fresh press is intentional, not the click synthesized after the drag
     if (e.target.closest('#chatPanel, #chatBtn')) return;
     if (!S.arrowPick && e.target.closest('[data-arrow-id]')) { e.stopImmediatePropagation(); return; }
     if (!S.arrowPick || e.target.closest('#ct-arrow-controls')) return;
     e.stopImmediatePropagation();
+    if (e.button !== 0) return;
+    doPublish();
+    const from = S.arrowPick.from || CTTargeting.endpoint(arrowEndpointAt(e.target), S.players, arrowSeats());
+    if (from) arrowDrag = { pointerId: e.pointerId, x: e.clientX, y: e.clientY, from, moved: false };
   }, true);
+  window.addEventListener('pointermove', e => {
+    if (!arrowDrag || e.pointerId !== arrowDrag.pointerId || !S.arrowPick) return;
+    if (!arrowDrag.moved && Math.hypot(e.clientX - arrowDrag.x, e.clientY - arrowDrag.y) < 6) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    arrowDrag.moved = true;
+    S.arrowPick.from = arrowDrag.from;
+    paintArrowDrag(e.clientX, e.clientY);
+  }, { capture: true, passive: false });
+  window.addEventListener('pointerup', e => {
+    if (!arrowDrag || e.pointerId !== arrowDrag.pointerId) return;
+    const moved = arrowDrag.moved, from = arrowDrag.from;
+    clearArrowDrag();
+    if (!moved || !S.arrowPick) return; // a simple click still uses the existing endpoint picker
+    e.preventDefault(); e.stopImmediatePropagation();
+    const target = document.elementFromPoint(e.clientX, e.clientY);
+    const to = target && CTTargeting.endpoint(arrowEndpointAt(target), S.players, arrowSeats());
+    if (!to || CTTargeting.same(from, to)) endTargeting();
+    else pickArrowEndpoint(target);
+  }, true);
+  window.addEventListener('pointercancel', e => { if (arrowDrag && e.pointerId === arrowDrag.pointerId) endTargeting(); }, true);
+  window.addEventListener('blur', () => { if (arrowDrag) endTargeting(); });
   g.addEventListener('click', e => {
+    if (Date.now() < suppressArrowClickUntil) { suppressArrowClickUntil = 0; e.preventDefault(); e.stopImmediatePropagation(); return; }
     if (e.target.closest('#chatPanel, #chatBtn')) return;
     if (handleArrowRemoval(e)) return;
     if (!S.arrowPick || e.target.closest('#ct-arrow-controls')) return;
@@ -5134,7 +5178,7 @@ function onKey(e) {
   }
   const general = {
     response: sendResponse, draw: () => draw(1), untapAll, library: () => viewZone(S.pid, 'library'),
-    arrow: () => startTargeting(h && anyCard && !anyCard.c.fd ? { kind: 'card', pid: h.pid, iid: h.iid } : undefined),
+    arrow: () => startTargeting(h && CTTargeting.endpoint({ kind: 'card', pid: h.pid, iid: h.iid }, S.players, arrowSeats()) || undefined),
     chat: () => setChatPanelOpen(!S.chatOpen), log: () => $('#sideBtn').click()
   };
   if (general[action]) { e.preventDefault(); general[action](); return; }

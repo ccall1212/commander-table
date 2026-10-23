@@ -70,11 +70,11 @@ Chris would like additional backgrounds with stronger identity because several c
 
 Current requested next work: **#54, then #61**. #53 shipped in v0.53.0. Keep each change focused and reviewable; publication still requires Chris’s approval.
 
-Chris asked to retain #54–#59 and #61 in the backlog and mark the more difficult items **On Hold** or **Deferred**. **Queued** items are candidates for future work, with their open choices resolved when taken up; this documentation update does not start implementation. All descriptions and screenshot-reference details are retained below. The remaining objectives in this group have no implementations or test ZIPs yet.
+Chris asked to retain #54–#59 and #61 in the backlog and mark the more difficult items **On Hold** or **Deferred**. **Queued** items are candidates for future work, with their open choices resolved when taken up; this documentation update does not start implementation. All descriptions and screenshot-reference details are retained below. #54 is in progress on `feat/name-targeted-arrows`; see its branch PR for the exact-commit test ZIP. Other remaining objectives in this group have no implementations or test ZIPs yet.
 
 | Objective | Status | Difficulty / reason |
 |---|---|---|
-| #54 W hotkey and arrows to names | Queued | Moderate; keep custom hotkeys and player-name anchors working across layouts. Life-point relocation remains optional and undecided |
+| #54 W hotkey and arrows to names | In progress | Moderate; keep custom hotkeys and player-name anchors working across layouts. Life-point relocation remains optional and undecided |
 | #55 Combat power / damage helper | Deferred | High for accurate damage automation; a narrower incoming-power aid could be reconsidered separately |
 | #56 Status toggles, keyword counters and icons | Queued | Moderate; distinguish statuses from true counters and keep the visual display readable |
 | #57 Deck-size limit / Whtz exception | On Hold | Low–moderate technically, but count definition and strict blocking versus warnings need a decision |
@@ -83,13 +83,14 @@ Chris asked to retain #54–#59 and #61 in the backlog and mark the more difficu
 | #61 Counters on selected cards and recent-counter reuse | Queued | Moderate; preserve the selected group when opening a card menu and apply the chosen counter to every selected card you control |
 
 
-## 54. W hotkey and targeting arrows ending at player names — QUEUED
+## 54. W hotkey and targeting arrows ending at player names — IN PROGRESS (v0.54.0 test branch)
 
 Explore click-and-drag targeting-arrow controls like EDHPlay, with **W** as the default hotkey. Arrows aimed at a player should end at **that player’s name**, rather than going directly into the middle of their board. Reference: Chris’s fifth screenshot shows a large blue arrow from a battlefield card toward a **Player 2** name label.
 
 - Keep W integrated with the existing configurable Hotkeys, preserving a player’s custom bindings rather than silently overwriting them.
 - Keep the player-name destination clear in Sidebar and Grid, including when a player is shown in a miniature or focused board view.
 - **Possible related layout change, not decided:** move life points to the **top middle of the board**. Chris raised this as a possibility alongside the name-targeted arrows; decide its placement and relationship to the player name before implementation.
+- Current test branch `feat/name-targeted-arrows` adds W by default, preserves custom shortcuts, supports drag-to-draw plus click-to-pick, and anchors player arrows at visible names. Life points have not been moved. Awaiting Chris’s test and publication approval.
 - Blocker relationships are a separate idea in **#59**. This objective covers the targeting interaction, hotkey and arrow destination; it does not include automatic combat or damage rules.
 
 ## 55. Combat-phase incoming-power / damage helper — DEFERRED

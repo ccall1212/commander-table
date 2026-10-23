@@ -33,7 +33,7 @@
     { id: 'pass', group: 'General', label: 'Pass turn', key: 'Space' },
     { id: 'undo', group: 'General', label: 'Undo personal action', key: 'Ctrl+Z' },
     { id: 'lens', group: 'General', label: 'Hold to use magnifier', key: 'V' },
-    { id: 'arrow', group: 'General', label: 'Start a targeting arrow', key: '' },
+    { id: 'arrow', group: 'General', label: 'Start a targeting arrow', key: 'W' },
     { id: 'chat', group: 'General', label: 'Open or close chat', key: '`' },
     { id: 'log', group: 'General', label: 'Open or close log', key: '' }
   ];
@@ -59,7 +59,13 @@
     if (e.shiftKey && !['+', '-'].includes(key)) mods.push('Shift');
     return mods.concat(key).join('+');
   }
-  function key(id) { const value = saved[id]; return typeof value === 'string' ? value : (byId[id] || {}).key || ''; }
+  function key(id) {
+    const value = saved[id];
+    if (typeof value === 'string') return value;
+    // W was previously unassigned: a saved custom W binding takes precedence over this new default.
+    if (id === 'arrow' && actions.some(a => a.id !== id && saved[a.id] === 'W')) return '';
+    return (byId[id] || {}).key || '';
+  }
   function matches(e, id) {
     const binding = key(id);
     return !!binding && chord(e) === binding;
