@@ -6,6 +6,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.54.0] - 2026-10-22
+
+### Added
+- W starts targeting by default. Draw an arrow by dragging between battlefield cards or players while targeting; the existing click-to-pick controls still work. Existing custom hotkeys are preserved.
+
+### Changed
+- Arrows aimed at players now end at their visible names instead of the middle of their boards, including focused and miniature views. Life-point placement is unchanged.
+
 ## [0.53.0] - 2026-10-22
 
 ### Added
@@ -170,7 +178,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.53.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.54.0...HEAD
+[0.54.0]: https://github.com/ccall1212/commander-table/compare/v0.53.0...v0.54.0
 [0.53.0]: https://github.com/ccall1212/commander-table/compare/v0.52.1...v0.53.0
 [0.52.1]: https://github.com/ccall1212/commander-table/compare/v0.52.0...v0.52.1
 [0.52.0]: https://github.com/ccall1212/commander-table/compare/v0.51.0...v0.52.0
