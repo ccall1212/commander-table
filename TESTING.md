@@ -1,6 +1,6 @@
-# Double-click background previews — v0.52.1 test copy
+# Double-click background previews — v0.52.1 checks
 
-Download the PR's exact-commit ZIP, extract it, and double-click `index.html`. No terminal or server is needed. This is the revised Objective #47 test copy; the live game remains v0.52.0 until Chris approves publication.
+This Objective #47 refinement shipped through PR #78 after Chris reported “Amazing” and approved publication. For a downloaded copy, extract the ZIP and double-click `index.html`; no terminal or server is needed. The steps below remain useful for checking the feature.
 
 1. Find **Your look → Play area background** on the opening screen. The individual Preview buttons should be gone; a short hint explains click and double-click.
 2. Click a thumbnail once: it should select that background without opening a dialog. Double-click a different thumbnail: it should select that background and open its full-size image without the gameplay dark overlay. Try an already-selected thumbnail too.
@@ -16,3 +16,5 @@ Node syntax checks for both changed JavaScript files and `git diff --check` pass
 A real file-input upload, switching between saved upload and presets, custom-image preview after reload, Shift+Enter preview without selection, Enter selection and backdrop dismissal passed. No JavaScript page errors occurred. A Luna subagent reviewed the revision and found no actionable issues.
 
 This environment blocks Chromium `file://` navigation with `ERR_BLOCKED_BY_ADMINISTRATOR`, so extract-and-double-click launch still needs Chris's check. The narrow viewport checks used desktop Chromium, not a real touch device. Live multiplayer and Sidebar/Grid gameplay were not rerun for this lobby-only interaction revision.
+
+Tested by Chris: reviewed the supplied test copy, reported “Amazing,” and approved publication. Specific device and interaction coverage was not supplied.
