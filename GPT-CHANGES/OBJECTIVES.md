@@ -4,10 +4,6 @@ Open work and future ideas. Original objective numbers are kept so earlier discu
 
 ## Active and queued
 
-### 67. Auto-Draw after opening dice — In progress
-
-Wait until the first-player dice/results overlay closes before the opening automatic draw. Test copy on `fix/autodraw-after-opening-roll` (v0.55.1); see its PR for the ZIP.
-
 ### 18. Phone and tablet support — In progress
 
 Retest and improve Touch mode on real iPhone/iPad Safari: table height, bottom-edge hand dragging, card inspection/actions, group selection and menu scrolling. Check portrait/landscape and both layouts while preserving desktop controls.

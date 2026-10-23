@@ -1,6 +1,6 @@
 # Opening Auto-Draw timing — v0.55.1 (Objective #67)
 
-Download the PR’s exact-commit ZIP, extract it and double-click `index.html`. No terminal or server is needed. This preview awaits Chris’s test and publication approval.
+Download the PR’s exact-commit ZIP, extract it and double-click `index.html`. No terminal or server is needed. Published through PR #83 after Chris approved publication with “Push”. No specific hands-on test results were supplied.
 
 1. Host a game with **three or more players**. Enable Auto-Draw for each player, keep opening hands and start the game.
 2. While the opening dice and results are visible, everyone’s hand should stay at seven. When the results fully close, the starting player should automatically draw exactly one card. Other players should not draw yet.

@@ -12,7 +12,6 @@ Handoff folder between ChatGPT, Chris, and (as backup) Claude Code. It holds **o
 
 ## Current state
 
-- **In progress:** #67 opening Auto-Draw timing, `fix/autodraw-after-opening-roll` (v0.55.1). Waits for dice/results to close; its PR includes the exact-commit ZIP.
 
 - **Version:** the newest entry in `CHANGELOG.md` (do not write a version number here; it goes stale).
 - **Paused again at Chris's request (2026-10-20):** draft [PR #11](https://github.com/ccall1212/commander-table/pull/11), website import/random deck picker. Preserve the branch and recovery checkpoint. Do not resume implementation, deploy its test Worker, merge, or publish until Chris asks to resume; see the investigation note.
