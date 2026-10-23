@@ -1,20 +1,20 @@
-# Double-click background previews — v0.52.1 checks
+# Quick Grab basic lands — v0.53.0 test copy (Objective #53)
 
-This Objective #47 refinement shipped through PR #78 after Chris reported “Amazing” and approved publication. For a downloaded copy, extract the ZIP and double-click `index.html`; no terminal or server is needed. The steps below remain useful for checking the feature.
+Download the PR's exact-commit ZIP, extract it, and double-click `index.html`. No terminal or server is needed. This is a test branch awaiting Chris's review; the live game remains v0.52.1.
 
-1. Find **Your look → Play area background** on the opening screen. The individual Preview buttons should be gone; a short hint explains click and double-click.
-2. Click a thumbnail once: it should select that background without opening a dialog. Double-click a different thumbnail: it should select that background and open its full-size image without the gameplay dark overlay. Try an already-selected thumbnail too.
-3. Close with **Close preview**, ×, Escape, or a click outside the dialog. The selected background should remain selected. Double-click the image area and the name beneath it to check both work.
-4. With a keyboard, Tab to a different thumbnail and press **Shift+Enter**. It should enlarge without changing your selection. Escape should return focus to that thumbnail. Enter or Space by itself should select it.
-5. Upload a JPG, PNG, or WebP background at least 1280 × 720 using **Upload your own images**. Select a preset, then double-click **Your upload**: the saved image should become selected and enlarge. Close and double-click a preset to switch back. Reload the page and check the saved upload can still enlarge.
-6. Try desktop windows around 1920 × 1080 and 1366 × 768, a narrow window, and a short landscape window. The image should fit and the close controls should remain reachable. If available, check double-tap on your real phone/tablet; touch-device behavior needs your check.
+1. Select a deck containing basic lands and enter Practice or host/join a room. Before Start game, right-click your Library: **Quick grab basic land** should be directly below **Search library…**, disabled with an **after Start game** hint.
+2. Keep your opening hand and start the game. Right-click your Library → **Quick grab basic land**. It should list the basic lands still in your Library with counts, such as Forest (6) or Island (4). Drawn/played lands should not be counted. Different printings of Forest should share one Forest entry; snow-covered basics and Wastes should appear when present. Nonbasic lands should not appear.
+3. Choose a basic land → **To battlefield & shuffle**. Exactly one existing card should move from your Library onto your battlefield untapped, and the remaining Library should shuffle. Reopen the menu: that land's count should decrease by one.
+4. Press **Ctrl+Z / ⌘Z** once. The land should return to the Library and the shuffle should be undone as the same action. Repeat with **To battlefield tapped & shuffle** and check the land arrives tapped.
+5. If no basic lands remain, the submenu should say **No basic lands remaining**. Grabbing the final card in the Library should work, leaving an empty Library rather than creating an extra card.
+6. In a real room with a second player watching, check both players can grab from their own Library. The other player should see the played land, its tapped state and the updated Library count; your private remaining basic-land choices/counts must not appear in their menu. Repeat in Sidebar and Grid at roughly 1920 × 1080 and 1366 × 768.
+7. If using a phone/tablet, open the Library menu through the existing Touch mode long-press control and tap each submenu level. The nested menu supports clicks/taps as well as hover; real-device behavior needs your check.
 
 ## Assistant verification
 
-Node syntax checks for both changed JavaScript files and `git diff --check` passed. Chromium over local HTTP double-clicked all ten initially unselected preset backgrounds at 1920 × 1080, 1366 × 768, 390 × 844 and 844 × 390. Each opened the full-size image, selected the clicked background and fit the dialog inside the viewport. Close button, × and Escape worked and returned focus to the thumbnail.
+- Node syntax and `git diff --check` passed; a Luna subagent reviewed the implementation with no actionable findings.
+- Chromium Practice at 1920 × 1080 and 1366 × 768: correct remaining counts and grouping across printings; nonbasic exclusion; tapped/untapped placement; shuffle; reveal-top clearing; one Undo restoring the exact original Library order. Snow-covered basics, Wastes, the last remaining land, no-basics/empty Library, and a stale-menu action after the selected land left the Library passed. The Practice tests used a known deck fixture.
+- Two real browser players connected through the live relay, with host and guest each grabbing from their own Library: Sidebar at 1920 × 1080 and Grid at 1366 × 768 passed. The observer saw the played card and correct tapped state; its own Library was unchanged. Public snapshots contained no private Library/hand arrays, and focusing/right-clicking the opponent’s Library did not expose Quick Grab choices. These room tests used known deck fixtures, not simulated opponent snapshots.
+- The environment's Chromium blocks `file://` navigation with `ERR_BLOCKED_BY_ADMINISTRATOR`; Chris's extract-and-double-click check remains. Real-device touch behavior and subjective sound have not been checked.
 
-A real file-input upload, switching between saved upload and presets, custom-image preview after reload, Shift+Enter preview without selection, Enter selection and backdrop dismissal passed. No JavaScript page errors occurred. A Luna subagent reviewed the revision and found no actionable issues.
-
-This environment blocks Chromium `file://` navigation with `ERR_BLOCKED_BY_ADMINISTRATOR`, so extract-and-double-click launch still needs Chris's check. The narrow viewport checks used desktop Chromium, not a real touch device. Live multiplayer and Sidebar/Grid gameplay were not rerun for this lobby-only interaction revision.
-
-Tested by Chris: reviewed the supplied test copy, reported “Amazing,” and approved publication. Specific device and interaction coverage was not supplied.
+The counted submenu is the chosen first version; a separate random-basic command is not included. Chris confirmed shuffle afterward. Requested work order after this feature: Objective #54, then #61; each remains a separate change.

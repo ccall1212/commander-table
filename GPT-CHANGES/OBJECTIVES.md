@@ -68,11 +68,13 @@ Chris would like additional backgrounds with stronger identity because several c
 
 ## Objectives from Chris and a friend — recorded and prioritized 2026-10-22
 
-Chris asked to retain #53–#59 and #61 in the backlog and mark the more difficult items **On Hold** or **Deferred**. **Queued** items are candidates for future work, with their open choices resolved when taken up; this documentation update does not start implementation. All descriptions and screenshot-reference details are retained below. No branches, implementations, or test ZIPs exist for these objectives.
+Current requested work order: **#53, then #54, then #61**. Keep each change focused and reviewable; publication still requires Chris’s approval.
+
+Chris asked to retain #53–#59 and #61 in the backlog and mark the more difficult items **On Hold** or **Deferred**. **Queued** items are candidates for future work, with their open choices resolved when taken up; this documentation update does not start implementation. All descriptions and screenshot-reference details are retained below. #53 is now in progress; the other objectives in this group have no implementations or test ZIPs yet.
 
 | Objective | Status | Difficulty / reason |
 |---|---|---|
-| #53 Quick Grab basic lands | Queued | Low–moderate; choose random versus counted picker, destination and shuffle/tapped behavior |
+| #53 Quick Grab basic lands | In progress | v0.53.0 test branch: counted submenu, tapped/untapped battlefield placement, then shuffle |
 | #54 W hotkey and arrows to names | Queued | Moderate; keep custom hotkeys and player-name anchors working across layouts. Life-point relocation remains optional and undecided |
 | #55 Combat power / damage helper | Deferred | High for accurate damage automation; a narrower incoming-power aid could be reconsidered separately |
 | #56 Status toggles, keyword counters and icons | Queued | Moderate; distinguish statuses from true counters and keep the visual display readable |
@@ -82,7 +84,7 @@ Chris asked to retain #53–#59 and #61 in the backlog and mark the more difficu
 | #61 Counters on selected cards and recent-counter reuse | Queued | Moderate; preserve the selected group when opening a card menu and apply the chosen counter to every selected card you control |
 
 
-## 53. Quick Grab basic lands from the Library — QUEUED
+## 53. Quick Grab basic lands from the Library — IN PROGRESS (v0.53.0 test branch)
 
 Add a shortcut similar to the existing **Search Library** flow, available from the Library controls/menu. Chris recalls another game having **Quick grab basic land** directly below its search-deck option. The aim is to get a basic land quickly without opening the full Library search. Two alternative designs are still under consideration:
 
@@ -91,7 +93,7 @@ Add a shortcut similar to the existing **Search Library** flow, available from t
 
 Counts and available choices should reflect the current Library, not just the original imported deck; lands already drawn or moved elsewhere are not still available to grab. Use actual cards from that Library rather than generating a new land. The exact use of commander/deck information to organize the choices remains open.
 
-Before implementation, choose between these approaches or decide whether both belong in the menu. Confirm whether grabbing also shuffles and whether a land placed on the battlefield enters tapped or untapped. The screenshot’s **Play card & shuffle** action is inspiration, not a finalized shuffle rule. Keep the shortcut reachable on touch devices as well as through mouse-based Library controls. Queued for future work; no implementation or test ZIP yet.
+Current implementation on `feat/quick-grab-basic-lands` uses the counted submenu with tapped and untapped battlefield choices. Chris confirmed **shuffle afterward**. The random-basic option remains an alternative, not part of this first version. The menu uses click-to-open submenus as well as mouse hover. One Undo restores both the move and the original Library order. Awaiting Chris’s test and publication approval; see the branch PR for its exact-commit test ZIP.
 
 ## 54. W hotkey and targeting arrows ending at player names — QUEUED
 

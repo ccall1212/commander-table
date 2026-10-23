@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.52.1';
+const APP_VERSION = '0.53.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -2737,6 +2737,50 @@ function ptItems(iid) {
     { label: 'Reset power/toughness', disabled: !mod, onClick: () => resetPT(iid) }
   ];
 }
+function basicLandGroups() {
+  const groups = new Map();
+  for (const card of S.me.zones.library) {
+    const def = defOf(card);
+    if (!def || !/\bBasic\b/.test(def.type || '') || !/\bLand\b/.test(def.type || '')) continue;
+    const name = dname(def);
+    if (!groups.has(name)) groups.set(name, []);
+    groups.get(name).push(card);
+  }
+  return groups;
+}
+function quickGrabBasicLand(name, tapped, owner) {
+  if (!S.me || S.me !== owner) return;
+  if (!canEnterBattlefield()) { UI.toast('The battlefield opens when the host starts the game.', { kind: 'warn' }); return; }
+  // Recheck the current Library: a menu can outlive a draw, move or shuffle.
+  const pool = basicLandGroups().get(name);
+  if (!pool || !pool.length) { UI.toast('No ' + name + ' remains in your library.', { kind: 'warn' }); return; }
+  const card = pool[rnd(pool.length)];
+  let result = null;
+  act(() => {
+    result = moveCard(card.iid, 'battlefield', { tapped });
+    if (!result) return null;
+    result.card.t = !!tapped;
+    S.me.revealTopOnce = null;
+    shuffle(S.me.zones.library);
+    return ['put {0} onto the battlefield' + (tapped ? ' tapped' : '') + ' from their library and shuffled', [result.def]];
+  });
+  if (!result) return;
+  emitCardPlaceSound(result.card.iid);
+  animateOwnPile('library', 'shuffling');
+  playShuffleSound();
+}
+function quickGrabBasicLandItems() {
+  const owner = S.me;
+  const groups = [...basicLandGroups()].sort(([a], [b]) => a.localeCompare(b));
+  if (!groups.length) return [{ label: 'No basic lands remaining', disabled: true }];
+  return groups.map(([name, cards]) => ({
+    label: name + ' (' + cards.length + ')',
+    sub: [
+      { label: 'To battlefield & shuffle', onClick: () => quickGrabBasicLand(name, false, owner) },
+      { label: 'To battlefield tapped & shuffle', onClick: () => quickGrabBasicLand(name, true, owner) }
+    ]
+  }));
+}
 function libraryMenu(x, y) {
   UI.menu(x, y, [
     { label: 'Draw', hint: CTHotkeys.key('draw'), onClick: () => draw(1) },
@@ -2744,6 +2788,7 @@ function libraryMenu(x, y) {
     { label: 'Shuffle', hint: CTHotkeys.key('shuffle'), onClick: shuffleLib },
     { sep: true },
     { label: 'Search library…', hint: CTHotkeys.key('library'), onClick: () => viewZone(S.pid, 'library') },
+    { label: 'Quick grab basic land', disabled: !canEnterBattlefield(), hint: canEnterBattlefield() ? '' : 'after Start game', sub: quickGrabBasicLandItems() },
     { label: 'Look at top X (scry)…', onClick: () => lookTop() },
     { label: 'Reveal top card', onClick: revealTop },
     { label: 'Play with top card revealed', checked: S.me.revealTop, onClick: () => act(() => { S.me.revealTop = !S.me.revealTop; return [S.me.revealTop ? 'is playing with the top card revealed' : 'stopped revealing the top card']; }) },

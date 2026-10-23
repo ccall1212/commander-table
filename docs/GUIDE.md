@@ -159,6 +159,7 @@ Dropped connections and crashed tabs happen, and recovering from them is the mai
 **Library**
 
 - Click your Library to draw; the card lifts out in a smooth arc, flips during its flight, and settles into your hand. Other players see the card-back animation without seeing its face.
+- After the host starts the game, right-click your Library → **Quick grab basic land**, directly below Search library. The submenu lists basic lands actually remaining in your Library with counts, grouping different printings of the same name. Choose a land, then **To battlefield & shuffle** or **To battlefield tapped & shuffle**. Snow-covered basics and Wastes are included when present; nonbasic lands are excluded. It moves one existing card and shuffles the remaining Library. One Undo restores the entire action. Counts stay private; other players see the chosen land only when it reaches the battlefield.
 - Right-click it for search, scry or look at the top X, mill, or **Reveal top card**. **Reveal top card** shows that card face up to everyone until it leaves the top of your library (draw, shuffle, etc.). **Play with top card revealed** is a separate, always-on option.
 
 **Graveyard and exile**
