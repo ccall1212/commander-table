@@ -105,6 +105,14 @@ Explore nonmovable on/off card markers for effects that are **not counters**, wh
 - Preserve the ability to represent/count applicable real counters separately. Define how toggles, quantities, removal and proliferate should interact before implementation.
 - Explore creating readable icons inspired by the examples and pairing them with clear labels/tooltips. The icon designs, placement and behavior are still open.
 
+Chris also wants easier counter reuse and copying, so the same counter does not have to be typed separately for every card:
+
+- **Most recent counter used:** make the last-used counter type available across **all cards**, rather than remembering it only on the card where it was added. For example, after adding a **Trample counter** once, offer an immediate way to add that same counter to other cards without retyping its name.
+- **Apply to several cards:** explore a quick repeat action and/or applying the chosen counter to a selection of cards. Chris’s example is giving a Trample counter to all of his cards; the exact bulk-selection gesture is still open.
+- **Copy or drag counters:** explore copying an existing **+1/+1 counter or any other counter type**, and/or clicking and dragging its visible counter marker from one card to another. Include cards controlled by different players, not just cards on the same board.
+- Keep **copy/add** distinct from **move/transfer**: copying leaves the source counter in place and adds one at the destination; moving removes the chosen quantity from the source and adds it at the destination. Decide how the gesture distinguishes these actions and whether it handles one counter or a chosen quantity.
+- Define how edits to another player’s card are requested/applied, how counts stay synchronized, and how accidental actions are reversed. These shortcuts concern actual counters; they must preserve the separate non-counter status toggles above. All remain ideas for discussion, not implementation now.
+
 ## 57. A 100-card size limit with a Whtz commander exception — IDEA ONLY
 
 Chris proposed that total Library cards be capped at **100**, and that an oversized deck could not be played unless **Whtz, the Bibliophile** is the commander.
