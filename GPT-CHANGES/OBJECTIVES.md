@@ -70,27 +70,17 @@ Chris would like additional backgrounds with stronger identity because several c
 
 The requested sequence **#53 → #54 → #61** is complete; #61 shipped in v0.55.0 through PR #82 after Chris reported “Perfect” and approved publication. No further objective has been selected for implementation. #54’s immediate pointer-following correction shipped in v0.54.1 through PR #81 after Chris liked the interaction and approved publication. #53 shipped in v0.53.0 and #54 shipped in v0.54.0. Keep each change focused and reviewable; publication still requires Chris’s approval.
 
-Chris asked to retain #55–#59 in the backlog and mark the more difficult items **On Hold** or **Deferred**. **Queued** items are candidates for future work, with their open choices resolved when taken up; this documentation update does not start implementation. All descriptions and screenshot-reference details are retained below. Remaining objectives in this group have no implementations or test ZIPs yet.
+Chris asked to retain #55–#59 in the backlog and mark the more difficult items **On Hold** or **Deferred**. **Queued** items are candidates for future work, with their open choices resolved when taken up; this documentation update does not start implementation. All descriptions and screenshot-reference details are retained below. Automation-related #55 and #58 are grouped under **Automation** with the newer mana ideas; their original numbers and statuses are preserved. Remaining objectives in this group have no implementations or test ZIPs yet.
 
 | Objective | Status | Difficulty / reason |
 |---|---|---|
-| #55 Combat power / damage helper | Deferred | High for accurate damage automation; a narrower incoming-power aid could be reconsidered separately |
+| #55 Combat power / damage helper | Deferred — Automation | High for accurate damage automation; a narrower incoming-power aid could be reconsidered separately |
 | #56 Status toggles, keyword counters and icons | Queued | Moderate; distinguish statuses from true counters and keep the visual display readable |
 | #57 Deck-size limit / Whtz exception | On Hold | Low–moderate technically, but count definition and strict blocking versus warnings need a decision |
-| #58 Drag-to-target / attack | Deferred | High interaction risk; clarify attack versus target, vigilance and intentional transfers first |
+| #58 Drag-to-target / attack | Deferred — Automation | High interaction risk; clarify attack versus target, vigilance and intentional transfers first |
 | #59 Blocker relationships | On Hold | Moderate–high; settle attack/block representation and multiple-blocker behavior following #54’s published targeting work |
 
 
-## 55. Combat-phase incoming-power / damage helper — DEFERRED
-
-**Deferred because of combat-rules complexity.** A manual incoming-power aid would be a smaller possible first step, but its scope must be chosen before work starts.
-
-Explore a combat phase that counts damage coming toward a player. Chris’s example: enter combat, tap attacking cards and send arrows toward another player; show the combined power heading that way. Players would still choose their blockers.
-
-- Decide how attackers are explicitly identified; merely tapping a card may represent something other than attacking, and vigilance attackers need not tap.
-- Distinguish a useful incoming-power total from actual damage after blocks. Do not assume the display can calculate final damage from power alone.
-- Chris specifically raised **trample** as a complication: decide whether this remains a manual aid or includes combat rules. Blocking, damage assignment and abilities such as trample, first/double strike or damage prevention need a defined scope before automatic totals or life changes are considered.
-- Coordinate with #59’s blocker relationships, #54’s name-targeted arrows and #58’s drag-to-target idea. No combat automation is approved.
 
 ## 56. Card status toggles, keyword counters and visual icons — QUEUED
 
@@ -112,17 +102,6 @@ Chris proposed that total Library cards be capped at **100**, and that an oversi
 - Decide when any limit is checked and how it would interact with existing deck validation and casual play. The proposed Whtz exception concerns having it as commander, not merely including it somewhere in the deck.
 - Record the requested exception without adding other legality restrictions or enforcing a size rule now.
 
-## 58. Drag a card toward a player to target/attack instead of giving it away — DEFERRED
-
-**Deferred because this changes an established gesture and mixes targeting, attacking and tapping.** Resolve the targeting/blocker design and vigilance behavior before revisiting it.
-
-Explore replacing the current drag-to-another-player card-giving gesture: dragging a card toward another player would target that player, return the card to its original position, and leave it tapped.
-
-- Chris proposed a **vigilance** exception: a vigilance card would return without tapping. Decide whether vigilance is marked manually (see #56) or recognized from card data before programming any automatic behavior.
-- Define whether this gesture declares an attack or only creates a targeting arrow; not every card or player-targeted action is combat.
-- Coordinate with #54’s name-targeted arrows, #59’s blocker relationships and #55’s possible combat helper, and decide how intentional card transfers would remain available if the drag gesture is repurposed.
-- Original-position restoration, tapping and ownership/control must have clear behavior before an experiment is built. Existing drag/give behavior remains unchanged for now.
-
 
 ## 59. Blocker relationships and incoming-arrow redirection — ON HOLD
 
@@ -134,3 +113,80 @@ Keep blocker relationships separate from #54’s W hotkey and player-name arrow 
 - Decide how the attacked player remains identifiable when an arrow is redirected to a blocking card. The exact display and gesture still need discussion.
 - Coordinate with #55’s possible combat helper and #58’s drag-to-target idea, while keeping this objective independently reviewable.
 - This is a visual relationship idea; automatic damage assignment or life changes are not included. No implementation or test ZIP yet.
+
+## Automation
+
+Longer-term ideas for mana assistance and combat bookkeeping. **Recording these ideas does not authorize implementation.** They are **Deferred** because the complete systems would significantly change the current manual tabletop and need separate design work. A proposed direction is optional assistance with manual corrections/overrides, introduced in independently useful stages rather than full rules enforcement. #55 and #58 retain their existing numbers, descriptions and Deferred status. #56 statuses/icons and #59 visual blocker relationships remain outside this section.
+
+| Objective | Status | Difficulty / dependency |
+|---|---|---|
+| #55 Combat power / damage helper | Deferred | High; combat rules, damage assignment and trample |
+| #58 Drag-to-target / attack | Deferred | High interaction risk; automatic tapping, vigilance and intentional transfers |
+| #62 Manual floating mana pool | Deferred | Moderate; useful independently, but clearing/timing and multiplayer display need decisions |
+| #63 Configurable mana production for permanents | Deferred | High for broad coverage; lands, creatures, artifacts and changing production effects |
+| #64 Editable spell costs and explicit mana payment | Deferred | High; depends on the mana pool and source workflow, with player-selected payment combinations |
+| #65 Optional automation for supported mana abilities | Deferred | Very high for broad coverage; start only after the manual mana systems have clear scope |
+
+### 55. Combat-phase incoming-power / damage helper — DEFERRED
+
+**Deferred because of combat-rules complexity.** A manual incoming-power aid would be a smaller possible first step, but its scope must be chosen before work starts.
+
+Explore a combat phase that counts damage coming toward a player. Chris’s example: enter combat, tap attacking cards and send arrows toward another player; show the combined power heading that way. Players would still choose their blockers.
+
+- Decide how attackers are explicitly identified; merely tapping a card may represent something other than attacking, and vigilance attackers need not tap.
+- Distinguish a useful incoming-power total from actual damage after blocks. Do not assume the display can calculate final damage from power alone.
+- Chris specifically raised **trample** as a complication: decide whether this remains a manual aid or includes combat rules. Blocking, damage assignment and abilities such as trample, first/double strike or damage prevention need a defined scope before automatic totals or life changes are considered.
+- Coordinate with #59’s blocker relationships, #54’s name-targeted arrows and #58’s drag-to-target idea. No combat automation is approved.
+
+### 58. Drag a card toward a player to target/attack instead of giving it away — DEFERRED
+
+**Deferred because this changes an established gesture and mixes targeting, attacking and tapping.** Resolve the targeting/blocker design and vigilance behavior before revisiting it.
+
+Explore replacing the current drag-to-another-player card-giving gesture: dragging a card toward another player would target that player, return the card to its original position, and leave it tapped.
+
+- Chris proposed a **vigilance** exception: a vigilance card would return without tapping. Decide whether vigilance is marked manually (see #56) or recognized from card data before programming any automatic behavior.
+- Define whether this gesture declares an attack or only creates a targeting arrow; not every card or player-targeted action is combat.
+- Coordinate with #54’s name-targeted arrows, #59’s blocker relationships and #55’s possible combat helper, and decide how intentional card transfers would remain available if the drag gesture is repurposed.
+- Original-position restoration, tapping and ownership/control must have clear behavior before an experiment is built. Existing drag/give behavior remains unchanged for now.
+
+### 62. Manual floating mana pool — DEFERRED
+
+Track floating white, blue, black, red, green and colorless mana, with manual add/remove controls. Keep this independently useful before automatic mana production or spell payment is attempted. Chris’s Forge reference shows floating mana beside the player’s board; the desired presentation should be cleaner and readable within Commander Table.
+
+- Keep **generic cost** distinct from **colorless mana**: a {2} cost can be paid with two red mana, whereas {C} specifically requires colorless mana. Generic is not a seventh mana type in the pool.
+- Reference: screenshot 2 shows Hero’s Blade waiting for its {2} casting payment while the player has two red mana floating. Those two red mana can cover the cost.
+- Decide how to clear the pool: mana normally empties at the end of each step and phase, with exceptions. Our phase controls, accidental phase advances, effects that retain mana and Undo need an explicit design; do not assume clearing once per turn is sufficient.
+- Decide what other players see and how updates are synchronized. Keep pool edits reversible and provide manual correction when the game does not model an effect.
+- This is an idea only, recorded as Deferred; no implementation or test ZIP yet.
+
+### 63. Configurable mana production for lands and other permanents — DEFERRED
+
+Let a player activate a mana source, choose its output where necessary, tap it when the chosen ability requires tapping, and add the produced mana to the pool. Chris’s first Forge screenshot shows **Rootbound Crag** asking whether to produce red or green. He prefers a nicer chooser, possibly red/green semicircles inspired by MTG Arena, with clear symbols/labels rather than color alone.
+
+- Cover **lands, mana-producing creatures, artifacts and other permanents**, rather than building a land-only system. Some effects also let creatures tap for mana when they normally could not.
+- Allow editable production choices and amounts: a source might produce two of one color, its normal mana plus an extra color, or another combination. Chris specifically raised cards that make each land tap for two or add an extra second color.
+- Keep mana **production** configuration separate from editable spell **costs** (#64). Card colors alone do not identify what its mana abilities produce.
+- A proposed first scope is straightforward sources with manual configuration/fallback. Conditional or restricted mana, extra activation costs, Treasures and changing effects need decisions before automated support is promised.
+- Preserve ordinary tapping for combat and other actions. Choose an explicit mana activation flow so every tap is not assumed to generate mana; define how cancellation and Undo affect the source and pool.
+- This is an idea only, recorded as Deferred; no implementation or test ZIP yet.
+
+### 64. Editable spell costs and explicit mana payment — DEFERRED
+
+When the player chooses to play/cast a card, show a payment panel for its editable cost. Let them spend existing floating mana, activate more sources and explicitly choose a payment before confirming the play. Inspecting/previewing a card should remain separate from casting it.
+
+- Reference: Hero’s Blade costs {2} generic and can be paid with two floating red mana. Show the outstanding cost, available mana, chosen payment and clear confirm/cancel controls.
+- Chris explicitly wants **editable costs**, because effects can change what is required. Separately consider reductions, additional/alternative costs, commander tax, X, hybrid and Phyrexian symbols; define the supported subset and manual override rather than assuming all costs can be inferred.
+- Preserve the Wildgrowth Archaic example: its two **{2/G}** symbols can be paid as **GG**, **{2} + G**, or **{4}**. Each symbol is a separate choice. Do not automatically spend two green mana or commit another payment without the player explicitly choosing/confirming it.
+- Let the player choose the actual colors spent for generic portions too. **Converge** on Wildgrowth Archaic makes those colors relevant to the result; a legal automatic payment may not be the payment the player wants. Recording payment colors would not itself authorize automating converge counters or other card effects.
+- A compact panel near the card is a possible presentation; avoid obscuring the board. Define cancellation, source/pool changes, Undo and ordinary manual play before implementation, including how payment relates to existing casting/resolution behavior.
+- This is an idea only, recorded as Deferred; no implementation or test ZIP yet. Depends on #62 and a usable source workflow from #63.
+
+### 65. Optional automation for supported mana abilities — DEFERRED
+
+Explore narrowly supported automatic mana production and payment suggestions after #62–#64 are designed and useful manually. This is a possible later stage, not a commitment to turn Commander Table into a full Magic rules engine.
+
+- Straightforward basic-land production could be immediate; sources with a color choice still need the player’s choice. Recognizing supported abilities must not rely only on a card’s colors or type.
+- Effects that double mana, add another color, grant mana abilities to creatures, restrict mana spending or depend on changing board conditions make broad automation difficult. Define supported effects and clear manual fallbacks rather than silently guessing.
+- Suggested payments must remain editable and require explicit confirmation. Preserve the player’s choices for {2/G} and colors spent for generic costs/converge; do not automatically accept GG just because it is available.
+- Evaluate the effect on play: less arithmetic and fewer payment mistakes versus extra prompts, configuration upkeep and slower casting. Optional assistance and ordinary manual play should remain part of the design discussion.
+- This is an idea only, recorded as Deferred; no implementation or test ZIP yet. Full rules enforcement and automatic card-effect resolution are not approved.
