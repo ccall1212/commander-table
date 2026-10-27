@@ -10,7 +10,7 @@ A free, browser-based Magic: The Gathering Commander table for playing with frie
 
 - **Bring your deck:** paste a decklist from Moxfield or Archidekt; card data and images come from Scryfall.
 - **Play with friends:** host a game and send the invite link. Friends join from their browser, and a small relay lets the game connect on most networks.
-- **A free-form table:** drag cards anywhere, tap, flip, add counters and tokens, attach auras, give a card to another player, and track life, commander damage and turns. Choose a Sidebar or Grid layout, your card back and a table background. It works on iPad with Touch mode.
+- **A free-form table:** drag cards anywhere, tap, flip, add counters and tokens, attach auras, give a card to another player, and track life, commander damage and turns. Choose a Sidebar or Grid layout, your card back and a table background. iPad and phone play through Touch mode is in **beta**.
 - **A sandbox:** like a real table, it doesn't enforce the rules, so players keep each other honest.
 
 ## Getting started

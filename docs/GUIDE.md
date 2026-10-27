@@ -55,6 +55,8 @@ To restore, open the same control and select your backup file. Review how many d
 
 ## iPad and touch controls
 
+**Beta:** touch support is still being tested on real iPads and iPhones, so some things may feel rough. Desktop play with a mouse and keyboard is the best-tested way to play.
+
 On an iPad or phone, open the top-right **☰** menu and turn on **Touch mode**. On narrow screens the menu button stays pinned to the visible top-right corner, including in landscape. The setting is saved only in that browser on that device, and does not change what other players see. Touch mode keeps the page fixed while dragging cards, including near the bottom edge of your hand, and uses the visible mobile screen height. Card menus, the game log, and dialogs can still scroll internally. On a phone in portrait, a reminder recommends rotating to landscape for more room; you can dismiss it and keep playing upright. Turn Touch mode off from the same menu to restore standard page behavior.
 
 ## Display settings
