@@ -6,7 +6,7 @@ Open work and future ideas. Original objective numbers are kept so earlier discu
 
 ### 18. Phone and tablet support — In progress
 
-Retest and improve Touch mode on real iPhone/iPad Safari: table height, bottom-edge hand dragging, card inspection/actions, group selection and menu scrolling. Check portrait/landscape and both layouts while preserving desktop controls.
+Touch support is labelled **Beta** in `README.md` and `docs/GUIDE.md` until it passes a real-device retest; remove those labels (and this note) when it does. Retest and improve Touch mode on real iPhone/iPad Safari: table height, bottom-edge hand dragging, card inspection/actions, group selection and menu scrolling. Check portrait/landscape and both layouts while preserving desktop controls.
 
 [PR #69](https://github.com/ccall1212/commander-table/pull/69) awaits Chris’s iPhone retest. [Older v0.46.2 test ZIP](https://github.com/ccall1212/commander-table/archive/68a6341d2f9859783581af70f59df461ead05eee.zip) — predates current main and needs refreshing before being offered as a current copy.
 
@@ -29,6 +29,23 @@ Develop a small set of original background concepts and review the art direction
 Add readable markers such as **Goaded** and **Prepared**, plus icons for abilities. Keep on/off statuses separate from real counters that can be counted or proliferated.
 
 Reference abilities: deathtouch, double strike, first strike, flying, haste, hexproof, indestructible, lifelink, menace, reach, shield, trample and vigilance. Decide icon placement, counter quantities and removal behavior. Counter copying/dragging is outside scope.
+
+## Road to 1.0
+
+### 67. 1.0 readiness — Queued
+
+Goal: version 1.0 means the game is safe to share beyond friends, and what players have saved keeps working. The game stays a rules-free sandbox, so rules automation is not a 1.0 requirement. No implementation or test ZIP yet.
+
+**Must have**
+1. **Release-candidate multiplayer test.** Play a full 4-player game in real Chrome, Firefox, Edge and Safari, including the host dropping out, a laptop sleeping, and rejoining. Record who tested what and the results. Most automated tests are headless or solo, so this needs real people.
+2. **Touch support.** Finish #18 or keep the **Beta** label. The label is already in `README.md` and `docs/GUIDE.md`.
+3. **Licensing and artwork audit.** The license was changed from MIT to the PolyForm Noncommercial License 1.0.0 (versions up to and including 0.55.1 were MIT), so the "please don't charge money" request now matches the license. Still to do: check all card backs and backgrounds for look-alikes of Wizards branding (two card backs were removed for this), check use of Scryfall against its API guidelines, and consider a quick professional opinion on the license change and the Fan Content Policy. This is not legal advice.
+4. **Saved-data safety.** Add a test that loads saved decks, collections and backups from older versions into the current one, and decide what compatibility 1.0 promises.
+5. **Relay abuse protection.** Room codes are 5 characters from a 32-character set (about 33 million codes) and the relay has no rate limiting. Confirm what stops a stranger who guesses a code, and consider throttling admin passphrase attempts. The admin passphrase itself is already required to be at least 20 characters and compared safely.
+
+**Should have:** a bug-report link, a short known-limitations list, a stated list of supported browsers, and a "relay is down" note for the owner.
+
+**After 1.0:** the automation ideas (#55, #58, #62–65), #48, #4, #45 and #66.
 
 ## Paused and on hold
 

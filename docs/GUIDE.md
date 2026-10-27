@@ -55,6 +55,8 @@ To restore, open the same control and select your backup file. Review how many d
 
 ## iPad and touch controls
 
+**Beta:** touch support is still being tested on real iPads and iPhones, so some things may feel rough. Desktop play with a mouse and keyboard is the best-tested way to play.
+
 On an iPad or phone, open the top-right **☰** menu and turn on **Touch mode**. On narrow screens the menu button stays pinned to the visible top-right corner, including in landscape. The setting is saved only in that browser on that device, and does not change what other players see. Touch mode keeps the page fixed while dragging cards, including near the bottom edge of your hand, and uses the visible mobile screen height. Card menus, the game log, and dialogs can still scroll internally. On a phone in portrait, a reminder recommends rotating to landscape for more room; you can dismiss it and keep playing upright. Turn Touch mode off from the same menu to restore standard page behavior.
 
 ## Display settings
@@ -254,7 +256,7 @@ For a hovered card, **+ / =** adds a +1/+1 counter and **− / _** adds a −1/�
 - `docs/NETWORKING.md` explains how online play works. `docs/relay-protocol.md` describes the relay protocol, and `relay/SETUP.md` covers setting up the Cloudflare relay.
 - Tests: `tests/net-harness.html` and `tests/test_relay_protocol.py`.
 - Releases follow [semantic versioning](https://semver.org/). Each release is tagged `vX.Y.Z` and listed in [CHANGELOG.md](../CHANGELOG.md).
-- Licensed under MIT (see [LICENSE](../LICENSE)). Card data and images are © their owners, via Scryfall. This is an unofficial fan project, not affiliated with Wizards of the Coast.
+- Free for noncommercial use under the PolyForm Noncommercial License 1.0.0 (see [LICENSE](../LICENSE)); versions up to and including 0.55.1 were released under the MIT License. Card data and images are © their owners, via Scryfall. This is an unofficial fan project, not affiliated with Wizards of the Coast.
 - Releasing: `python tools/bump-version.py X.Y.Z` (sets the version in index.html, its `?v=` file links and js/app.js), add a CHANGELOG.md entry, and merge after Chris approves publication. GitHub Actions creates the release tag automatically.
 
 ## Moderators, recovery and board handoffs
