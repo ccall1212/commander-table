@@ -1,6 +1,6 @@
 # Commander Table
 
-[![Version](https://img.shields.io/github/v/tag/ccall1212/commander-table?label=version&sort=semver&color=blue)](CHANGELOG.md) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Version](https://img.shields.io/github/v/tag/ccall1212/commander-table?label=version&sort=semver&color=blue)](CHANGELOG.md) [![License: PolyForm Noncommercial](https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-blue.svg)](LICENSE)
 
 A free, browser-based Magic: The Gathering Commander table for playing with friends online, in the spirit of Tabletop Simulator. Nothing to install and no accounts.
 
@@ -27,4 +27,4 @@ A free, browser-based Magic: The Gathering Commander table for playing with frie
 
 Commander Table is unofficial Fan Content permitted under the Fan Content Policy. Not approved/endorsed by Wizards. Portions of the materials used are property of Wizards of the Coast. ©Wizards of the Coast LLC.
 
-Card data and images © their owners, via Scryfall. MIT licensed; please don't charge money for it.
+Card data and images © their owners, via Scryfall. Commander Table is free for noncommercial use under the [PolyForm Noncommercial License 1.0.0](LICENSE): please don't charge money for it or use it to make money. Versions up to and including 0.55.1 were released under the MIT License.

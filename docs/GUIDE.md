@@ -256,7 +256,7 @@ For a hovered card, **+ / =** adds a +1/+1 counter and **− / _** adds a −1/�
 - `docs/NETWORKING.md` explains how online play works. `docs/relay-protocol.md` describes the relay protocol, and `relay/SETUP.md` covers setting up the Cloudflare relay.
 - Tests: `tests/net-harness.html` and `tests/test_relay_protocol.py`.
 - Releases follow [semantic versioning](https://semver.org/). Each release is tagged `vX.Y.Z` and listed in [CHANGELOG.md](../CHANGELOG.md).
-- Licensed under MIT (see [LICENSE](../LICENSE)). Card data and images are © their owners, via Scryfall. This is an unofficial fan project, not affiliated with Wizards of the Coast.
+- Free for noncommercial use under the PolyForm Noncommercial License 1.0.0 (see [LICENSE](../LICENSE)); versions up to and including 0.55.1 were released under the MIT License. Card data and images are © their owners, via Scryfall. This is an unofficial fan project, not affiliated with Wizards of the Coast.
 - Releasing: `python tools/bump-version.py X.Y.Z` (sets the version in index.html, its `?v=` file links and js/app.js), add a CHANGELOG.md entry, and merge after Chris approves publication. GitHub Actions creates the release tag automatically.
 
 ## Moderators, recovery and board handoffs
