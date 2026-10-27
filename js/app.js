@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.55.1';
+const APP_VERSION = '0.55.2';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -3057,7 +3057,7 @@ function mainMenu(x, y) {
     { label: S.arrange ? 'Done arranging zones' : 'Arrange my zones', onClick: toggleArrange },
     { label: 'Tidy up my cards', onClick: () => act(() => { tidyBoard(); return ['tidied up their battlefield']; }) },
     { label: 'Display settings…', onClick: displaySettings },
-    { label: `Touch mode: ${S.touchMode ? 'On' : 'Off'}`, checked: S.touchMode, onClick: () => setTouchMode(!S.touchMode) },
+    { label: `Touch mode (Beta): ${S.touchMode ? 'On' : 'Off'}`, checked: S.touchMode, onClick: () => setTouchMode(!S.touchMode) },
     { label: 'Hotkeys', onClick: showHotkeyList },
     { sep: true },
     { label: 'Auto-untap on my turn', checked: m.autoUntap, onClick: () => act(() => { m.autoUntap = !m.autoUntap; }, { noUndo: true }) },

@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.55.2] - 2026-10-27
+
+### Changed
+- The ☰ menu item is now labelled **Touch mode (Beta)**, because touch support is still being tested on real iPads and iPhones.
+
 ## [0.55.1] - 2026-10-22
 
 ### Fixed
@@ -194,7 +199,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.55.1...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.55.2...HEAD
+[0.55.2]: https://github.com/ccall1212/commander-table/compare/v0.55.1...v0.55.2
 [0.55.1]: https://github.com/ccall1212/commander-table/compare/v0.55.0...v0.55.1
 [0.55.0]: https://github.com/ccall1212/commander-table/compare/v0.54.1...v0.55.0
 [0.54.1]: https://github.com/ccall1212/commander-table/compare/v0.54.0...v0.54.1
