@@ -6,6 +6,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.56.0] - 2026-10-29
+
+### Added
+- **Report a bug** and **Privacy** links at the bottom of the start screen. The player guide has a new **Privacy** section explaining what stays in your browser and what is sent to Scryfall, the game relay and the direct-connection fallback, and the README links to GitHub Issues for bug reports.
+- Automatic checks now run on every proposed change and every update to `main`: script syntax, the version number matching everywhere, and the unit tests that do not need a browser.
+
+### Changed
+- The direct-connection library (PeerJS 1.5.4) now ships inside the game instead of loading from a public CDN, so a CDN problem can no longer break or tamper with online play, and the game has one less outside dependency.
+
+### Fixed
+- Two out-of-date unit tests (power/toughness and targeting arrows) were updated to match the game; they had been failing since newer features were added.
+
 ## [0.55.2] - 2026-10-27
 
 ### Changed
@@ -199,7 +211,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.55.2...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.56.0...HEAD
+[0.56.0]: https://github.com/ccall1212/commander-table/compare/v0.55.2...v0.56.0
 [0.55.2]: https://github.com/ccall1212/commander-table/compare/v0.55.1...v0.55.2
 [0.55.1]: https://github.com/ccall1212/commander-table/compare/v0.55.0...v0.55.1
 [0.55.0]: https://github.com/ccall1212/commander-table/compare/v0.54.1...v0.55.0

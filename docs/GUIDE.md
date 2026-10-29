@@ -245,9 +245,21 @@ For a hovered card, **+ / =** adds a +1/+1 counter and **− / _** adds a −1/�
 - Please don't charge money for it.
 - After an update, everyone should reload the page with **Ctrl+F5**. Players on older versions are handled automatically, but a reload makes sure you have the new layout.
 
+## Privacy
+
+Commander Table has no accounts, no ads, no cookies and no analytics or tracking. Here is where your information goes:
+
+- **Stays in your browser:** your name, saved decks, collection backups, card back and background choices (including images you upload), hotkeys, display settings and your last game so you can resume it. Nothing here is sent anywhere unless you use a feature below. Clearing your browser's site data erases it.
+- **Scryfall:** when you import a deck, search for cards or tokens, or switch printings, the card names and search text you use are sent to [Scryfall](https://scryfall.com), and card pictures are loaded from Scryfall's servers.
+- **The game relay (Cloudflare):** while you play online, game actions, the public table, the game log and chat pass through the project's relay server on Cloudflare. To let a disconnected player get their seat back, the relay may also hold a recovery copy of each player's private board (including hand, library and saved deck) for up to 24 hours. That copy is only given back to the host of that room, but it is not end-to-end encrypted.
+- **Direct connection fallback:** if the relay can't be used, players connect directly to each other with PeerJS. The public PeerJS matchmaking server (`0.peerjs.com`) helps them find each other, and the players' network addresses are visible to each other, as with any direct connection.
+- **Site admin:** the site owner can see a list of active relay games (room code, host and player names). With the host's approval the admin can join a game as a normal player. For moderation the admin can also quietly watch a relay game's public table, log and chat. Private hands and libraries are not shown.
+- **Hosting providers:** GitHub Pages (which serves the game), Cloudflare and Scryfall may keep ordinary connection logs under their own policies.
+
 ## Troubleshooting
 
 - **Join says it can't reach the host:** check the room code (or use the invite link), and make sure the host still has the game open. ☰ → **Connection details…** shows a report you can copy and send if you need help.
+- **Found a bug or have an idea?** [Open an issue on GitHub](https://github.com/ccall1212/commander-table/issues). Say what you did, what you expected, and what happened, and include the version number shown at the bottom of the start screen.
 - Very strict work and school networks can still block the connection. If Join keeps failing, try a different network and share the report from **Connection details…**.
 
 ## For developers
