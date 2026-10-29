@@ -67,10 +67,11 @@ assert.deepEqual(anchorRect(), { left: 100, top: 120, width: 32, height: 45 }, '
 const largeVisibleReal = box(600, 120, 80, 112); Object.assign(largeVisibleReal.dataset, { pid: 'p1', iid: 'own-card', zone: 'battlefield' });
 arrowNodes = [hiddenReal, miniCard, largeVisibleReal];
 assert.deepEqual(anchorRect(), { left: 600, top: 120, width: 80, height: 112 }, 'largest visible real copy wins when both copies can be seen');
-const miniBoard = box(900, 100, 240, 180); miniBoard.firstElementChild = { dataset: { arrowPid: 'p1' } };
-arrowNodes = [miniBoard];
+// Since v0.54.0 a player arrow lands on the visible name, including the name inside the read-only YOU miniature.
+const youName = box(900, 100, 60, 14); youName.closest = selector => selector === '.opp.youtile' ? {} : null;
+arrowNodes = [youName];
 const playerAnchor = context.CT.arrowAnchor({ kind: 'player', pid: 'p1' });
-assert.deepEqual(JSON.parse(JSON.stringify(playerAnchor)), { left: 1014, top: 184, width: 12, height: 12 }, 'own player marker follows the read-only miniature board');
+assert.deepEqual(JSON.parse(JSON.stringify({ left: playerAnchor.left, top: playerAnchor.top, width: playerAnchor.width, height: playerAnchor.height })), { left: 900, top: 100, width: 60, height: 14 }, 'own player arrow lands on the visible name in the read-only YOU miniature')
 arrowNodes = [];
 const card = { kind: 'card', pid: 'p1', iid: 'p6u6wnase_1' };
 const player = { kind: 'player', pid: 'p2' };
