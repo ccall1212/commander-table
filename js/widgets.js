@@ -322,6 +322,7 @@
    * Internal options: className, onEscape() -> true if it handled Escape.
    * `html` is inserted raw — callers must esc() any untrusted text.
    */
+  let modalSerial = 0; // gives each dialog title a unique id for aria-labelledby
   function makeModal(o) {
     o = o || {};
     const prevFocus = document.activeElement;
@@ -333,6 +334,8 @@
 
     const head = h('div', 'w-modal-head');
     const titleEl = h('h2', 'w-modal-title', o.title || '');
+    titleEl.id = 'w-modal-title-' + (++modalSerial);
+    dialog.setAttribute('aria-labelledby', titleEl.id);
     const extra = h('div', 'w-modal-extra');
     const x = h('button', 'w-modal-x', '✕');
     x.type = 'button';
