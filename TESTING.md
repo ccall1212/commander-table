@@ -1,12 +1,16 @@
-# Touch mode (Beta) menu label — v0.55.2 test copy
+# Bundled PeerJS, footer links, privacy note and automatic checks — v0.56.0 test copy
 
 To check this copy, extract the ZIP and double-click **index.html**. No terminal or local server is needed.
 
-1. Enter a name, pick or import a deck, and click **Practice solo**.
-2. Click the **☰** menu at the top right. The item should now read **Touch mode (Beta): Off**.
-3. Click it. A message says Touch mode is on, and reopening the menu should read **Touch mode (Beta): On**. Click it again to turn it off.
-4. Everything else in the menu should look and work as before. Check that the longer label is not cut off or wrapped awkwardly on your screen. If you have an iPhone or iPad, look at it in portrait and landscape.
+Most of this release is behind the scenes. The things you can see or feel:
 
-## Assistant verification (headless Chromium, opened from file://)
+1. **Footer:** at the bottom of the start screen you should now see **Report a bug · Privacy · v0.56.0** after the Scryfall and Wizards line. **Report a bug** opens the project's GitHub Issues page. **Privacy** opens the guide on GitHub; until this version is published it won't show the new Privacy section yet. Check that the footer looks tidy on your screen and on a phone or iPad if you have one.
+2. **Online play still works (this is the important one):** the direct-connection library now comes from the ZIP instead of the internet. Host a game in one tab or browser, join from another (or have a friend join), move a few cards, tap something and send a chat message. It should behave exactly as before. If hosting or joining ever fails with "PeerJS failed to load" or "needs an internet connection", tell us right away.
+3. **Practice solo** should work exactly as before.
+4. Read the new **Privacy** section in `docs/GUIDE.md` and tell us if anything in it is wrong or you would word it differently. Please read the "Site admin" line especially, because it describes the admin's ability to quietly watch a game's public table and chat.
 
-At 1600×900 and at phone sizes (390×844 portrait, 844×390 landscape) the menu item reads "Touch mode (Beta): Off", is fully on screen, and flips to "On" when clicked, with no page errors. Not checked on a real iPhone or iPad.
+## Assistant verification
+
+- **Headless Chromium, opened from file://:** the `Peer` library is present and can be created, the page makes no requests to any CDN, "Host a game" opens its dialog, the footer links are correct and fit at 1600×900 and 390×844 with no sideways scrolling, and there were no page errors. The bundled PeerJS file is the unmodified 1.5.4 package file; its package checksum matched npm's published value.
+- **Automatic checks, run locally on Node 22:** JavaScript and Python syntax, version numbers (26 places), and 17 unit-test files all pass. Two out-of-date tests (power/toughness and targeting arrows) were fixed first because newer features had broken them.
+- **Not checked:** a real two-player online game (relay or direct connection), the checks running on GitHub itself (they run on the pull request), and real iPhone or iPad.

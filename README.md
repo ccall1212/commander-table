@@ -23,6 +23,7 @@ A free, browser-based Magic: The Gathering Commander table for playing with frie
 
 - **[Player guide](docs/GUIDE.md):** every control, shortcut and menu.
 - **[Changelog](CHANGELOG.md):** what changed in each version.
+- **[Report a bug or suggest a feature](https://github.com/ccall1212/commander-table/issues):** open an issue on GitHub.
 - **[AGENTS.md](AGENTS.md):** how the project is built, tested and released (for contributors and AI assistants).
 
 Commander Table is unofficial Fan Content permitted under the Fan Content Policy. Not approved/endorsed by Wizards. Portions of the materials used are property of Wizards of the Coast. ©Wizards of the Coast LLC.

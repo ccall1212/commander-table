@@ -7,7 +7,7 @@ const context = vm.createContext({
   console, URLSearchParams, Set, Map, Uint32Array,
   location: { search: '?nettest', protocol: 'file:' },
   document: { querySelector: () => null },
-  setTimeout: () => 1, clearTimeout() {}, requestAnimationFrame: () => 1,
+  setTimeout: () => 1, clearTimeout() {}, setInterval: () => 1, requestAnimationFrame: () => 1,
   CTAppearance: { normalizePrefs: p => p || {}, getCustom: () => ({}) },
   CTMulligan: {
     CAP: 7, MAX_EXTRA: 20, MAX_LIMIT: 21,
