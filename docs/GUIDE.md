@@ -7,7 +7,7 @@ A full tour of the controls. For a short overview see the [README](../README.md)
 
 ## What you need
 
-- Chrome, Edge or Firefox
+- A current desktop browser. **Most tested: Chrome and Edge.** Firefox and Safari on a computer should also work but get less testing. iPad and iPhone Safari work through Touch mode, which is in **beta** (see below). Very old browsers aren't supported.
 - An internet connection. Card images and data come from Scryfall, and games connect through a small relay server.
 - Nothing to install
 
@@ -66,6 +66,14 @@ Open ☰ → **Display settings…** to adjust how things look on your screen:
 - **Magnifier size:** how big the magnifier circle is (see **Magnifier** under **Cards on the table** below).
 - **Hand size:** a slider for how big your hand cards are, with a **Reset** button.
 - On very wide monitors (2500px and up), opponent names get a bit larger.
+
+## Accessibility
+
+- **Keyboard:** the start screen, the top bar, menus and dialogs work with the keyboard. Use **Tab** to move, **Enter** or **Space** to press a button, the arrow keys to choose a deck, and **Esc** to close a dialog. A dialog keeps keyboard focus inside it and puts it back where it was when you close it. Every dialog and button has a name for screen readers, and the page can be zoomed.
+- **Hotkeys:** every game shortcut can be reassigned from ☰ → **Hotkeys**.
+- **Motion:** if your device is set to reduce motion, the game's animations are toned down or replaced with a brief static flash.
+- **Not supported yet:** cards on the table can't be moved or acted on from the keyboard alone, because dragging, right-clicking and hover shortcuts need a mouse or touch. Playing the table with only a keyboard or a screen reader isn't possible yet. The Deck Builder's card list has small buttons inside list items, which some screen readers announce awkwardly.
+- If something gets in your way, please [report it](https://github.com/ccall1212/commander-table/issues).
 
 ## If something goes wrong
 

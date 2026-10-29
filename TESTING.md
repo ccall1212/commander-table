@@ -1,16 +1,18 @@
-# Bundled PeerJS, footer links, privacy note and automatic checks — v0.56.0 test copy
+# Accessibility pass, supported browsers and 1.0 plan — v0.56.1 test copy
 
 To check this copy, extract the ZIP and double-click **index.html**. No terminal or local server is needed.
 
-Most of this release is behind the scenes. The things you can see or feel:
+Almost nothing looks different. Things to try:
 
-1. **Footer:** at the bottom of the start screen you should now see **Report a bug · Privacy · v0.56.0** after the Scryfall and Wizards line. **Report a bug** opens the project's GitHub Issues page. **Privacy** opens the guide on GitHub; until this version is published it won't show the new Privacy section yet. Check that the footer looks tidy on your screen and on a phone or iPad if you have one.
-2. **Online play still works (this is the important one):** the direct-connection library now comes from the ZIP instead of the internet. Host a game in one tab or browser, join from another (or have a friend join), move a few cards, tap something and send a chat message. It should behave exactly as before. If hosting or joining ever fails with "PeerJS failed to load" or "needs an internet connection", tell us right away.
-3. **Practice solo** should work exactly as before.
-4. Read the new **Privacy** section in `docs/GUIDE.md` and tell us if anything in it is wrong or you would word it differently. Please read the "Site admin" line especially, because it describes the admin's ability to quietly watch a game's public table and chat.
+1. **Start screen looks the same** as before (cards backs, backgrounds, deck list, buttons, footer).
+2. **Choose a deck with the keyboard.** If you have two or more saved decks, press **Tab** until a deck's round button is focused, then use the **Up/Down arrow keys**. The highlighted deck should change. Clicking a deck with the mouse should still work.
+3. **Dialogs.** Open **Deck Builder**, then in a game open **☰ → Hotkeys** and **☰ → Display settings…**. Each should open, keep Tab inside it, and close with **Esc**, returning you to where you were.
+4. **Practice solo and a normal online game** should play exactly as before.
+5. Read the new **Accessibility** section and the new browser line under **What you need** in `docs/GUIDE.md`, and tell us if either is wrong or you would word it differently. In particular: do you agree that Chrome and Edge are the browsers you have tested most?
 
 ## Assistant verification
 
-- **Headless Chromium, opened from file://:** the `Peer` library is present and can be created, the page makes no requests to any CDN, "Host a game" opens its dialog, the footer links are correct and fit at 1600×900 and 390×844 with no sideways scrolling, and there were no page errors. The bundled PeerJS file is the unmodified 1.5.4 package file; its package checksum matched npm's published value.
-- **Automatic checks, run locally on Node 22:** JavaScript and Python syntax, version numbers (26 places), and 17 unit-test files all pass. Two out-of-date tests (power/toughness and targeting arrows) were fixed first because newer features had broken them.
-- **Not checked:** a real two-player online game (relay or direct connection), the checks running on GitHub itself (they run on the pull request), and real iPhone or iPad.
+- **Automatic accessibility scanner (axe 4.10) in headless Chromium, opened from file://:** before the changes it found an unlabeled deck radio button (critical), three dialogs without names (serious), nested controls in the Deck Builder's card list (serious) and missing page landmarks (moderate). After the changes the start screen, practice game (Sidebar and Grid), Hotkeys and Display settings dialogs are clean. Still reported: the Deck Builder's nested controls (documented, not fixed) and a harmless landmark note on pop-up menus.
+- **Keyboard checks:** Tab order across the start screen and top bar is sensible with visible focus rings; dialogs keep focus inside, close on Esc and return focus to the opener; picking a deck with the arrow keys works. Cards on the table can't be reached by keyboard (documented).
+- **Automatic checks:** syntax, version numbers (26 places) and 17 unit-test files pass.
+- **Not checked:** a real screen reader, text contrast over the background pictures (the scanner can't measure it), Firefox or Safari (only Chromium is available here), a real iPad.

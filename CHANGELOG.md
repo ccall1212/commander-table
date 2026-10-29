@@ -6,6 +6,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.56.1] - 2026-10-29
+
+### Fixed
+- Accessibility pass: every dialog now has a name for screen readers, the saved-deck list can be used with the keyboard (Tab to the list, arrow keys to choose a deck) and each deck is named, and the start screen is marked as the page's main content.
+
+### Changed
+- The player guide now lists which browsers are most tested and has an **Accessibility** section describing what works with a keyboard or screen reader and what doesn't yet.
+
 ## [0.56.0] - 2026-10-29
 
 ### Added
@@ -211,7 +219,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.56.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.56.1...HEAD
+[0.56.1]: https://github.com/ccall1212/commander-table/compare/v0.56.0...v0.56.1
 [0.56.0]: https://github.com/ccall1212/commander-table/compare/v0.55.2...v0.56.0
 [0.55.2]: https://github.com/ccall1212/commander-table/compare/v0.55.1...v0.55.2
 [0.55.1]: https://github.com/ccall1212/commander-table/compare/v0.55.0...v0.55.1

@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.56.0';
+const APP_VERSION = '0.56.1';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -5735,7 +5735,7 @@ function renderDeckList() {
   if (selDeck && !decks.some(d => d.id === selDeck)) selDeck = null;
   if (!selDeck && decks.length) selDeck = decks[0].id;
   $('#deckList').innerHTML = decks.map(d => `<div class="deck-row ${d.id === selDeck ? 'sel' : ''}" data-deck="${esc(d.id)}">
-      <input type="radio" name="deck" ${d.id === selDeck ? 'checked' : ''} tabindex="-1">
+      <input type="radio" name="deck" aria-label="${esc(d.name)}" ${d.id === selDeck ? 'checked' : ''}>
       <span class="dn">${esc(d.name)}</span><span class="dc">${esc(d.commanderNames.join(' + ') || 'no commander')} · ${d.count} cards</span>
       <button class="x" data-del="${esc(d.id)}" title="Delete deck">✕</button></div>`).join('');
 }

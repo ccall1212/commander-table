@@ -32,18 +32,21 @@ Reference abilities: deathtouch, double strike, first strike, flying, haste, hex
 
 ## Road to 1.0
 
-### 67. 1.0 readiness — Queued
+### 67. 1.0 readiness — In progress
 
-Goal: version 1.0 means the game is safe to share beyond friends, and what players have saved keeps working. The game stays a rules-free sandbox, so rules automation is not a 1.0 requirement. No implementation or test ZIP yet.
+Goal: version 1.0 means the game is safe to share beyond friends, and what players have saved keeps working. The game stays a rules-free sandbox, so rules automation is not a 1.0 requirement. Touch support stays labelled **Beta** at 1.0 (Chris's decision, 2026-10-29); #18 continues afterward.
 
-**Must have**
-1. **Release-candidate multiplayer test.** Play a full 4-player game in real Chrome, Firefox, Edge and Safari, including the host dropping out, a laptop sleeping, and rejoining. Record who tested what and the results. Most automated tests are headless or solo, so this needs real people.
-2. **Touch support.** Finish #18 or keep the **Beta** label. The label is already in `README.md` and `docs/GUIDE.md`.
-3. **Licensing and artwork audit.** The license was changed from MIT to the PolyForm Noncommercial License 1.0.0 (versions up to and including 0.55.1 were MIT), so the "please don't charge money" request now matches the license. Still to do: check all card backs and backgrounds for look-alikes of Wizards branding (two card backs were removed for this), check use of Scryfall against its API guidelines, and consider a quick professional opinion on the license change and the Fan Content Policy. This is not legal advice.
-4. **Saved-data safety.** Add a test that loads saved decks, collections and backups from older versions into the current one, and decide what compatibility 1.0 promises.
-5. **Relay abuse protection.** Room codes are 5 characters from a 32-character set (about 33 million codes) and the relay has no rate limiting. Confirm what stops a stranger who guesses a code, and consider throttling admin passphrase attempts. The admin passphrase itself is already required to be at least 20 characters and compared safely.
+**Done:** automatic checks on every pull request (v0.56.0); PeerJS bundled instead of loaded from a CDN (v0.56.0); Report a bug and Privacy links and a Privacy section in the guide (v0.56.0); license changed to PolyForm Noncommercial (docs); accessibility pass on dialogs, labels and landmarks, supported-browsers list and an Accessibility section in the guide (v0.56.1).
 
-**Should have:** a bug-report link, a short known-limitations list, a stated list of supported browsers, and a "relay is down" note for the owner.
+**Still to do (Chris asked to finish all of these except full touch support):**
+1. **Lock down a room.** Let the host stop new players from joining (and decide how blocking a kicked player works). Kicking currently blocks only that browser's saved ID, so a fresh tab or private window may get back in, and anyone with the 5-character room code can join. Design is pending Chris's choice (lock only, host approval of each joiner, or both). Must be enforced by the host, validated like other host messages, and tolerated by older clients.
+2. **Release-candidate multiplayer test.** A full 4-player game in real Chrome, Edge, Firefox and Safari, including the host dropping out, a laptop sleeping and rejoining. Record who tested what. Needs real people; an assistant can prepare the checklist.
+3. **Artwork and Scryfall audit.** Check all card backs and backgrounds for look-alikes of Wizards branding (two card backs were removed for this), and check use of Scryfall against its API guidelines. Consider a quick professional opinion on the license change and the Fan Content Policy. Not legal advice.
+4. **Saved-data upgrade test.** Load saved decks, collections, backups and saved games made by older versions into the current one, and decide what compatibility 1.0 promises.
+5. **Relay abuse protection.** Room codes are 5 characters from a 32-character set (about 33 million codes) with no rate limiting on the relay, and admin passphrase guesses are not throttled (the passphrase itself must be at least 20 characters and is compared safely). Relay changes deploy through Cloudflare and must stay backward compatible.
+6. **Accessibility leftovers.** Cards on the table cannot be used from the keyboard alone, and the Deck Builder's card list has small buttons nested inside list items. Text over background images was not checked by the automatic scanner, so contrast there needs a manual look.
+
+**Should have:** a short "relay is down" note for the owner and a known-limitations list in the guide.
 
 **After 1.0:** the automation ideas (#55, #58, #62–65), #48, #4, #45 and #66.
 
