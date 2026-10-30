@@ -46,9 +46,23 @@ Goal: version 1.0 means the game is safe to share beyond friends, and what playe
 5. **Relay abuse protection.** Room codes are 5 characters from a 32-character set (about 33 million codes) with no rate limiting on the relay, and admin passphrase guesses are not throttled (the passphrase itself must be at least 20 characters and is compared safely). Relay changes deploy through Cloudflare and must stay backward compatible.
 6. **Accessibility leftovers.** Cards on the table cannot be used from the keyboard alone, and the Deck Builder's card list has small buttons nested inside list items. Text over background images was not checked by the automatic scanner, so contrast there needs a manual look.
 
-**Should have:** a short "relay is down" note for the owner and a known-limitations list in the guide.
+**Should have:** a short "relay is down" note for the owner, a known-limitations list in the guide, and the sync code (#68) if it is ready in time (1.0 can ship without it).
 
 **After 1.0:** the automation ideas (#55, #58, #62–65), #48, #4, #45 and #66.
+
+### 68. Sync code to move decks between computers — Queued
+
+A friend wants his saved decks on more than one laptop. Today the only way is Deck Builder → Back up / restore: download a file, send it to yourself somehow, and restore it, which Chris finds clunky. Chris chose a **sync code** over full logins (accounts would break the "no accounts" promise and add password, email, privacy-law and support work). The browser-only game stays exactly as it is for anyone who does not use it.
+
+**How it should work**
+- Deck Builder gets **Sync across computers…**. **Create sync code** makes a long random secret (at least 80 bits, shown in groups such as `XXXX-XXXX-XXXX-XXXX`) and uploads the collection. On another computer, **Use a sync code** takes the code and downloads the collection.
+- Start with explicit **Upload this computer's decks** and **Download decks from sync** buttons, not automatic syncing. Downloading reuses the existing restore rules (nothing is deleted; exact matches are skipped; changed decks with the same ID arrive as **(restored)** copies), so two laptops can never overwrite each other silently.
+- **Encrypt in the browser** with a key derived from the code, and store it on the relay under an ID derived separately from the code, so the server and anyone who sees its storage cannot read the decks and never sees the code itself. Say plainly in the guide's Privacy section that anyone who has the code can read and replace the synced decks, so it must be kept private, and that a lost code cannot be recovered (the local copy and file backups still work).
+- Decks, tokens, printings and preferences only. Leave out uploaded images, chat, saved games and room identities, as the file backup does. Cap the stored size (the relay's room vault uses about 900 KB) and expire a synced copy after a long period of no use, with a **Delete synced copy** button.
+- On the relay: new sync endpoints with the same origin checks as the rest, size and rate limits, and a stored-data check that matches the restore validator. Advertise a `sync-v1` feature so the browser only offers sync when the relay supports it, and keep older relays and older browsers working. Relay changes deploy through Cloudflare, so keep them backward compatible.
+- Keep Back up / restore as it is, as the offline fallback.
+
+**Done when:** a second browser can pull decks made in the first with only the code, the server holds only unreadable data, a wrong or expired code gives a clear message, and tests cover the encryption, the stored format, the size limit and the merge rules. Needs a real two-computer test by Chris.
 
 ## Paused and on hold
 
