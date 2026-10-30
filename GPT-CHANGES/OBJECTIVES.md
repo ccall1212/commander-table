@@ -49,7 +49,7 @@ Goal: version 1.0 means the game is safe to share beyond friends, and what playe
 
 **After 1.0:** the automation ideas (#55, #58, #62–65), #48, #4, #45 and #66.
 
-### 68. Sync code to move decks between computers — Queued
+### 68. Sync code to move decks between computers — Built (v0.58.0); relay part first, then the browser part, each awaiting Chris's publish
 
 A friend wants his saved decks on more than one laptop. Today the only way is Deck Builder → Back up / restore: download a file, send it to yourself somehow, and restore it, which Chris finds clunky. Chris chose a **sync code** over full logins (accounts would break the "no accounts" promise and add password, email, privacy-law and support work). The browser-only game stays exactly as it is for anyone who does not use it.
 
@@ -58,7 +58,7 @@ A friend wants his saved decks on more than one laptop. Today the only way is De
 - **Short and easy to keep (Chris's decision, 2026-10-30):** 9 characters in three groups, such as `K7M-4QX-9TD`, from the same 32 letters and digits as room codes (no look-alikes such as 0/O or 1/I), and not case-sensitive. The browser saves the code on that computer, so it only has to be typed when setting up a new computer. **Show my code** in the sync dialog displays it any time, and **Make a new code** replaces it if it leaks: it moves the synced copy to the new code and the **old code stops working** (Chris's decision, 2026-10-30), so a computer still using the old code gets a clear message to enter the new one. Normally every computer just uses the same code: a second computer that enters it is linked to the same synced copy, and a third computer can use it too, with no new code needed. Each computer keeps its own decks in its browser either way; the code only decides which synced copy the upload and download buttons use. The code is not put in file backups.
 - Start with explicit **Upload this computer's decks** and **Download decks from sync** buttons, not automatic syncing. Downloading reuses the existing restore rules (nothing is deleted; exact matches are skipped; changed decks with the same ID arrive as **(restored)** copies), so two laptops can never overwrite each other silently.
 - **Keep it simple (Chris's decision, 2026-10-30):** Chris does not mind that someone could guess a short code and will tighten it later if the game grows, so do not build slow key derivation, per-address guess limits or other anti-guessing machinery. Still encrypt the stored decks in the browser with a key made from the code (a few lines of the browser's built-in crypto, no effect on how it feels to use) so the relay does not hold readable decklists, and say plainly in the Privacy section that anyone who has or guesses the code can read and replace the synced decks. Keep only the protections that guard the free relay's storage rather than guessing: a size cap, a basic limit on how often one address can write, and expiry of unused copies. If sync later becomes popular, strengthen the code or add an optional password.
-- Decks, tokens, printings and preferences only. Leave out uploaded images, chat, saved games and room identities, as the file backup does. Cap the stored size (the relay's room vault uses about 900 KB) and expire a synced copy after a long period of no use, with a **Delete synced copy** button.
+- Decks, tokens, printings and preferences, **including the uploaded card back and background pictures** (Chris's decision, 2026-10-30). Leave out chat, saved games and room identities, as the file backup does. Cap the stored size (2.5 MB: two uploaded pictures are up to about 800 KB each; if everything together is too big the pictures are left out and the user is told) and expire a synced copy after a long period of no use, with a **Delete synced copy** button.
 - On the relay: new sync endpoints with the same origin checks as the rest, size and rate limits, and a stored-data check that matches the restore validator. Advertise a `sync-v1` feature so the browser only offers sync when the relay supports it, and keep older relays and older browsers working. Relay changes deploy through Cloudflare, so keep them backward compatible.
 - Keep Back up / restore as it is, as the offline fallback.
 
@@ -85,6 +85,10 @@ Let a defender connect a blocking card to an incoming attacker, redirecting the 
 ### 4. Larger cards on big displays — Deferred
 
 Explore roughly 15–20% larger battlefield cards on 2K displays without changing 1080p and smaller screens or crowding the board.
+
+### 69. Several uploaded card backs and backgrounds — Idea only
+
+The game keeps one uploaded card back and one uploaded background ("Your upload"), so sync carries at most those two pictures. Chris may want more than one of each. If so: let players keep several uploads, choose between them, and raise the sync size limit in `relay/worker.js` (`SYNC_MAX_BYTES`, currently 2.5 MB for two pictures of up to about 800 KB each) and in `js/sync.js` (`MAX_STORED`) to match. No implementation yet.
 
 ## Automation
 

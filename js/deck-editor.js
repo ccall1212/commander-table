@@ -334,10 +334,11 @@
     if (!Deck.get(deckId)) {
       deckViewer = UI.modal({
         title: 'Deck Builder',
-        html: '<p>Import a deck to start editing. You can restore a saved collection here first.</p><button type="button" id="ctDeckBackupEmpty">Back up / restore…</button>',
+        html: '<p>Import a deck to start editing. You can restore a saved collection, or get your decks from another computer, here first.</p><button type="button" id="ctDeckBackupEmpty">Back up / restore…</button> <button type="button" id="ctDeckSyncEmpty">Sync across computers…</button>',
         onClose: () => { deckViewer = null; }
       });
       deckViewer.el.querySelector('#ctDeckBackupEmpty').addEventListener('click', () => CTBackup.open());
+      deckViewer.el.querySelector('#ctDeckSyncEmpty').addEventListener('click', () => CTSync.open());
       return;
     }
     activeDeckId = deckId;
@@ -359,10 +360,11 @@
       footer: [
         { key: 'add', label: '+ Add card', primary: true },
         { key: 'export', label: 'Export deck' },
-        { key: 'backup', label: 'Back up / restore…' }
+        { key: 'backup', label: 'Back up / restore…' },
+        { key: 'sync', label: 'Sync across computers…' }
       ],
       onAction: handleAction,
-      onFooter: key => { if (key === 'add') openAddCard(); else if (key === 'export') openExportOptions(); else if (key === 'backup') CTBackup.open(); },
+      onFooter: key => { if (key === 'add') openAddCard(); else if (key === 'export') openExportOptions(); else if (key === 'backup') CTBackup.open(); else if (key === 'sync') CTSync.open(); },
       onHover: def => { if (onHover) onHover(def); },
       onClose: () => {
         deckViewer = null;

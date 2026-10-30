@@ -6,8 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.60.0] - 2026-11-02
+
 ### Added
-- Relay: storage for synced deck copies ("sync boxes", up to 8 MB each, encrypted in the browser, expiring after 180 days unused). Nothing in the game uses it yet; the Sync code feature that does is a separate release.
+- **Sync across computers** in Deck Builder: make a short sync code (like `K7M-4QX-9TD`) on one computer and type it on another to get the same decks, with no account. Your browser remembers the code. Your decks are scrambled in your browser before they are saved on the game's server. Downloading adds decks without deleting anything, uploading warns before it would drop decks, **Make a new code…** moves your decks and stops the old code working, and you can stop syncing or delete the synced copy at any time. Your card back and background choices, and the pictures you uploaded in **Your look**, are included. See the new **Sync your decks between computers** section of the guide.
 
 ## [0.59.0] - 2026-11-02
 
@@ -253,7 +255,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.59.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.60.0...HEAD
+[0.60.0]: https://github.com/ccall1212/commander-table/compare/v0.59.0...v0.60.0
 [0.59.0]: https://github.com/ccall1212/commander-table/compare/v0.58.1...v0.59.0
 [0.58.1]: https://github.com/ccall1212/commander-table/compare/v0.58.0...v0.58.1
 [0.58.0]: https://github.com/ccall1212/commander-table/compare/v0.57.0...v0.58.0
