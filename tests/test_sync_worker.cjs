@@ -60,7 +60,7 @@ const json = async r => r.json();
     assert.equal(res.headers.get('Cache-Control'), 'no-store');
 
     // ---- Replacing, and a big one across several chunks, then a smaller one (no leftovers). ----
-    const big = blob(600000); // about 800 KB of base64 text, many 60 KB chunks
+    const big = blob(1500000); // about 2 MB of base64 text, many 60 KB chunks
     res = await call(mf, ID, 'PUT', big); assert.equal(res.status, 200, 'a large copy is accepted');
     got = await json(await call(mf, ID)); assert.equal(got.ct.length, big.ct.length); assert.equal(got.ct, big.ct, 'a multi-chunk copy comes back exactly');
     const small = blob(500, { c: 'none' });
@@ -68,7 +68,7 @@ const json = async r => r.json();
     got = await json(await call(mf, ID)); assert.equal(got.ct, small.ct, 'replacing with a smaller copy leaves nothing of the old one'); assert.equal(got.c, 'none');
 
     // ---- Size cap and bad input. ----
-    res = await call(mf, ID2, 'PUT', blob(700000)); // about 933 KB of base64 text
+    res = await call(mf, ID2, 'PUT', blob(1900000)); // about 2.53 MB of base64 text, over the cap
     assert.ok([400, 413].includes(res.status), 'a copy over the size cap is refused (' + res.status + ')');
     assert.equal((await call(mf, ID2)).status, 404, 'and nothing was stored');
     for (const [label, bad] of [['not JSON', 'nope{'], ['wrong version', blob(100, { v: 2 })], ['unknown compression', blob(100, { c: 'zip' })],
