@@ -7,7 +7,8 @@ const source = fs.readFileSync(path.join(__dirname, '../relay/worker.js'), 'utf8
   .replace('import { DurableObject } from "cloudflare:workers";', '')
   .replace('export default {', 'const Worker = {')
   .replace('export class Room extends DurableObject', 'class Room extends DurableObject')
-  .replace('export class RoomDirectory extends DurableObject', 'class RoomDirectory extends DurableObject');
+  .replace('export class RoomDirectory extends DurableObject', 'class RoomDirectory extends DurableObject')
+  .replace('export class SyncBox extends DurableObject', 'class SyncBox extends DurableObject');
 class DurableObject { constructor(ctx, env) { this.ctx = ctx; this.env = env; } }
 const { Worker, Room, RoomDirectory } = new Function('DurableObject', 'crypto', 'WebSocketRequestResponsePair', source + '\nreturn { Worker, Room, RoomDirectory };')(DurableObject, webcrypto, class {});
 function context() {

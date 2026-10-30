@@ -101,6 +101,24 @@ the binding in place until expiry so a different host key cannot take over an ex
 After expiry the room can be reused with a new host key. These server-side backups are optional;
 older clients and relays continue to use the existing v2 protocol without vault support.
 
+## Optional sync boxes (`sync-v1`)
+
+Advertised in `GET /health` `features` only when the Worker has the `SYNC` Durable Object binding (class `SyncBox`, migration `v3`). It lets a player move a deck collection between their own computers with a short code. HTTP only; it adds nothing to the WebSocket protocol, so older clients and older Workers are unaffected.
+
+The browser makes a 9-character code, derives a 128-bit **box ID** from it (SHA-256, 32 lowercase hex characters) and, separately, an AES-GCM key (HKDF), and stores the encrypted collection under the box ID. The relay never sees the code or the key and holds only ciphertext.
+
+| Request | Meaning |
+|---|---|
+| `GET /sync/<id>` | `200 {v:1, c, iv, ct, updatedAt}` · `404 {error:"not-found"}` (unknown, deleted or expired) · `410 {error:"replaced"}` |
+| `PUT /sync/<id>` | Body `{v:1, c:"gzip"\|"none", iv:<base64>, ct:<base64>}`. `200 {ok, updatedAt, bytes}` · `400` invalid body · `410 replaced` · `413`/`400` over 900,000 bytes of `ct` |
+| `DELETE /sync/<id>` | Removes the box (`200`). With `?mode=replaced` it leaves only a marker, so a computer still using the old code gets `410 replaced`; the marker lasts 30 days |
+
+- Same origin rules as the other HTTP routes (`403` for a web page from an unlisted site; no `Origin` is allowed). CORS allows `GET, POST, PUT, DELETE`.
+- Without the binding every `/sync/` request is `501`.
+- Writes (`PUT`, `DELETE`) are limited to 60 per hour per network address (`429`). Reads are not limited.
+- A box expires 180 days after it was last read or written. Storage is chunked at 60 KB.
+- Anyone who knows or guesses a code can read and replace that box. Codes are short on purpose (about 45 bits), so treat the synced data as hobby decklists, not secrets.
+
 ## Limits / safety
 - Frames over `maxMsg` → server closes that socket (code 1009).
 - Unparseable frames or unknown ops are ignored.
