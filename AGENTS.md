@@ -198,6 +198,7 @@ A new release does not change an existing commit ZIP. Explain when a feature bra
   `docs/relay-protocol.md` and the tests, and it must stay backward compatible during rollout.
 - **Board geometry:** the logical board is `BW = 1000` wide; positions/layouts are shared between players
   (published `bw`). Changing `BW` needs a migration (see `cleanPub` / `normalizeMe` in `js/app.js`).
+- **Saved data (decks, saved games, backups, preferences):** players keep these in their browser for months, so every release must still open what older releases saved. `tests/test_saved_data_upgrade.cjs` (automatic) and `tests/test_saved_data_upgrade_browser.cjs` check this against real saved data from older releases in `tests/fixtures/saved-data/`. If a change alters what is saved, add a fixture from the release just before it with `tools/make-saved-data-fixture.cjs <tag>` (see the README in that folder), and write a migration if a test fails. Never edit or delete an old fixture to make a test pass.
 - **Table state:** `T.turn` = round number, `T.turnSeq` = per-player turn counter (guards against stale
   passes), `T.rev` = table revision (newer copies win on host reload). Keep these semantics.
 - **Handoff patches:** if you prepare a patch for someone else to apply, make it a script that checks
