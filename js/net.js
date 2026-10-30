@@ -2,7 +2,9 @@
  *
  * Exposes exactly one global: window.Net
  *   Net.start({role, room, pid, onMessage, onStatus, onJoin, onLeave})
- *   Net.send(msg) / Net.sendTo(pid, msg) / Net.peers() / Net.state() / Net.stop() / Net.makeRoomCode()
+ *   Net.send(msg) / Net.sendTo(pid, msg) / Net.drop(pid) / Net.peers() / Net.state() / Net.stop() / Net.makeRoomCode()
+ *   Host only: cfg.canReceive(pid) -> bool limits who Net.send() (a broadcast) reaches; Net.sendTo still reaches anyone
+ *   connected, and Net.drop(pid) closes that player's connection (used to refuse or remove someone).
  *
  * Design: every Net.start() builds an isolated "session" closure holding all state
  * (peer, connections, timers). Net.stop() / a new Net.start() shuts the old session
@@ -719,7 +721,16 @@
       if (dead || msg == null) return;
       msg = stamp(msg);
       if (isHost) {
-        Array.from(conns.values()).forEach(function (rec) { sendOrKill(rec, msg); });
+        Array.from(conns.values()).forEach(function (rec) {
+          // A connection the app has not admitted (a locked room, a join waiting for approval, a
+          // removed player) must not receive the table's broadcasts.
+          if (typeof cfg.canReceive === 'function') {
+            var allowed = false; // if the check itself fails, do not send
+            try { allowed = !!cfg.canReceive(rec.pid); } catch (e) { console.error('[net] canReceive error', e); }
+            if (!allowed) return;
+          }
+          sendOrKill(rec, msg);
+        });
       } else {
         if (cconn && !cconn.lost && sendOrKill(cconn, msg)) return;
         // A response cue is useful only at the moment it is pressed. Never
@@ -737,6 +748,15 @@
 
     function peers() {
       return isHost && !dead ? Array.from(conns.keys()) : [];
+    }
+
+    // Host: close one player's connection (refused, declined or removed). onLeave still fires,
+    // so the app should ignore it for anyone who never had a seat.
+    function drop(pid) {
+      if (dead || !isHost) return;
+      var rec = conns.get(pid);
+      if (rec) hostConnLost(rec);
+      Array.from(pending).forEach(function (p) { if (p.pid === pid) hostConnLost(p); });
     }
 
     function onOnline() {
@@ -797,6 +817,7 @@
       shutdown: shutdown,
       send: send,
       sendTo: sendTo,
+      drop: drop,
       peers: peers,
       getState: function () { return state; },
       roomVault: function (action, payload) {
@@ -853,6 +874,10 @@
 
     sendTo: function (pid, msg) {
       try { if (current) current.sendTo(pid, msg); } catch (e) { log('sendTo threw', e); }
+    },
+
+    drop: function (pid) {
+      try { if (current) current.drop(pid); } catch (e) { log('drop threw', e); }
     },
 
     peers: function () {

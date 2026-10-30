@@ -6,6 +6,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.57.0] - 2026-10-30
+
+### Added
+- **Room access** for the host (☰ → **Room access…**): **Lock room** stops anyone new from joining (seated players can still reconnect), and **Ask me before anyone joins** makes each new player wait until the host chooses **Let in** or **Decline**. Turned-away players see why and are sent nothing from the table.
+- Removing a player with **Kick from game…** now also blocks their display name in that room, so they cannot rejoin from a new browser or private window with the same name. The host can **Unblock** a name from the Room access dialog.
+
+### Changed
+- Kicking a player now closes their connection instead of only asking their page to leave.
+
+### Fixed
+- A browser that had connected to a room but was not seated (including a removed player) used to be sent the table's public information and later updates. The host now sends the table only to seated or admitted players.
+
 ## [0.56.1] - 2026-10-29
 
 ### Fixed
@@ -219,7 +231,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.56.1...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.57.0...HEAD
+[0.57.0]: https://github.com/ccall1212/commander-table/compare/v0.56.1...v0.57.0
 [0.56.1]: https://github.com/ccall1212/commander-table/compare/v0.56.0...v0.56.1
 [0.56.0]: https://github.com/ccall1212/commander-table/compare/v0.55.2...v0.56.0
 [0.55.2]: https://github.com/ccall1212/commander-table/compare/v0.55.1...v0.55.2

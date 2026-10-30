@@ -615,6 +615,14 @@ body.lens-on #pv { display: none; }
 .display-settings { display: grid; gap: 12px; min-width: 0; }
 .display-setting-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .display-settings small { display: block; color: var(--muted); line-height: 1.35; margin-top: 3px; max-width: 46em; }
+/* Host's Room access dialog: lock, ask before joining, blocked names. */
+.room-access { display: grid; gap: 14px; min-width: 0; }
+.room-access-row { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; }
+.room-access-row input { margin-top: 3px; }
+.room-access small { display: block; color: var(--muted); line-height: 1.35; margin-top: 3px; max-width: 46em; }
+.room-access-blocked { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }
+.room-access-blocked li { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.room-access-none { color: var(--muted); }
 .display-scale { width: 100%; accent-color: var(--accent); }
 .display-scale-ends { display: flex; align-items: center; justify-content: space-between; color: var(--muted); font-size: 12px; }
 .display-check { display: flex; align-items: center; gap: 9px; cursor: pointer; }
