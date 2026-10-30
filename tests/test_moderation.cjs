@@ -181,6 +181,7 @@ assert.equal(S.me.zones.hand.map(c => c.iid).join(','), currentHand, 'same-deal 
 // duplicate or reserving a color until the authoritative choice succeeds.
 S.pid = 'host'; S.role = 'host'; S.table = { room: 'ABCDE', seats: ['host'], order: [], active: null, turn: 0, turnSeq: 0, phase: 3, started: false, out: {}, hostPid: 'host', mods: [], kicked: [], handoffs: {}, colorVersion: 1, colors: { host: 'red' } };
 S.players = { host: { name: 'Host' } }; S.pendingSeats = {}; S.online = { host: true, newcomer: true };
+S.admitted = new Set(['newcomer']); // a real player is admitted when they connect, before sending their first public view
 const candidate = clone(transferredPublic); candidate.name = 'New player'; candidate.zones.battlefield = []; candidate.zones.graveyard = []; candidate.zones.exile = [];
 CT.hostRecv({ t: 'pub', p: candidate }, 'newcomer');
 assert.equal(S.table.seats.includes('newcomer'), false, 'a new player chooses before being seated');
@@ -192,6 +193,7 @@ assert.equal(S.table.seats.includes('newcomer'), false, 'taken colors leave the 
 CT.tableOp({ k: 'joincolor', color: 'blue' }, 'newcomer');
 assert.equal(S.table.colors.newcomer, 'blue');
 assert.equal(S.pendingSeats.newcomer, undefined);
+S.admitted.add('duplicate'); // connected, so admitted
 CT.hostRecv({ t: 'pub', p: candidate }, 'duplicate');
 assert.equal(S.pendingSeats.duplicate.claimSource, 'newcomer');
 CT.tableOp({ k: 'joincolor', color: 'green' }, 'duplicate');

@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.56.1';
+const APP_VERSION = '0.57.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -105,6 +105,7 @@ const isAttachable = d => !!d && /\b(Aura|Equipment|Fortification)\b/.test((d.ty
 const S = {
   pid: null,        // this tab's player id
   role: null,       // 'host' | 'client' | 'solo'
+  admitted: new Set(), joinRequests: {}, // host: connections allowed in before they hold a seat, and join requests waiting for an answer
   room: null,
   deckId: null,
   me: null,         // my full private state
@@ -466,12 +467,13 @@ function sendChat(text) {
 // ----- host side -----
 function newTable(room, openingMode = 'london', openingDeal = uid()) {
   S.chat = []; S.chatOpen = false; S.chatUnread = 0; S.seatKeys = {}; S.pendingSeats = {}; S.boardBackups = {}; roomBackupSent.clear();
-  return { room, seats: [S.pid], colorVersion: 1, colors: {}, order: [], active: null, turn: 0, turnSeq: 0, phase: 3, started: false, monarch: null, initiative: null, out: {}, hostPid: S.pid, mods: [], kicked: [], handoffs: {},
+  return { room, seats: [S.pid], colorVersion: 1, colors: {}, order: [], active: null, turn: 0, turnSeq: 0, phase: 3, started: false, monarch: null, initiative: null, out: {}, hostPid: S.pid, mods: [], kicked: [], locked: false, askJoin: false, blockedNames: [], handoffs: {},
     openingMode: CTMulligan.normalizeMode(openingMode), openingDeal, openingAllowances: {} };
 }
 function hostRecv(msg, from) {
   if (!msg || typeof msg.t !== 'string' || !S.table) return;
-  if ((S.table.kicked || []).includes(from)) { directPlayer(from, { t: 'moderation-exit', reason: 'Your seat was removed by a moderator.' }); return; }
+  if ((S.table.kicked || []).includes(from)) { directPlayer(from, { t: 'moderation-exit', reason: 'Your seat was removed by a moderator.' }); setTimeout(() => Net.drop(from), 400); return; }
+  if (from !== S.pid && !isAdmitted(from)) return; // a connection that was not let in sends nothing the table acts on
   if (handleHostBoardTransfer(msg, from)) return;
   switch (msg.t) {
     case 'pub': {
@@ -480,6 +482,7 @@ function hostRecv(msg, from) {
       // cards while everyone is still choosing opening hands.
       if (!S.table.started) p.zones.battlefield = [];
       if (!S.table.seats.includes(from)) {
+        if (isBlockedName(p.name)) { refuseJoin(from, 'blocked'); return; }
         const duplicate = S.table.seats.find(pid => pid !== from && S.players[pid] && samePlayerName(S.players[pid].name, p.name));
         if (duplicate) { S.pendingSeats = S.pendingSeats || {}; S.pendingSeats[from] = { p, claimSource: duplicate }; directPlayer(from, { t: 'seat-conflict', name: p.name, pid: duplicate }); return; }
         if (S.table.colorVersion >= 1 && !S.table.colors?.[from]) { S.pendingSeats = S.pendingSeats || {}; S.pendingSeats[from] = { p, selectingColor: true }; return; }
@@ -570,6 +573,7 @@ function hostRecv(msg, from) {
       }
       t.seats = S.table.seats.slice(); t.out = { ...S.table.out };
       t.hostPid = S.pid; t.mods = S.table.mods || []; t.kicked = S.table.kicked || []; t.handoffs = S.table.handoffs || {};
+      t.locked = !!S.table.locked; t.askJoin = !!S.table.askJoin; t.blockedNames = S.table.blockedNames || [];
       // Recovery can restore host table changes, but only the host may choose the
       // opening policy or advance its deal epoch.
       t.openingMode = S.table.openingMode;
@@ -622,6 +626,7 @@ function cleanTable(t) {
     out: isObj(t.out) ? Object.fromEntries(Object.keys(t.out).slice(0, 8).map(k => [k.slice(0, 40), !!t.out[k]])) : {},
     hostPid: str(t.hostPid), mods: ids(t.mods).filter(p => ids(t.seats).includes(p)),
     kicked: Array.isArray(t.kicked) ? [...new Set(t.kicked.filter(p => typeof p === 'string').map(p => p.slice(0, 40)))].slice(0, 128) : [],
+    locked: !!t.locked, askJoin: !!t.askJoin, blockedNames: cleanBlockedNames(t.blockedNames),
     handoffs: cleanHandoffs(t.handoffs),
     rev: Math.max(0, num(t.rev))
   };
@@ -821,6 +826,22 @@ function tableOp(op, from) {
       sysLog(`${pname(op.pid)} was restored to the game by ${pname(from)}.`);
       break;
     }
+    case 'access': { // host only: lock the room and/or ask before anyone joins
+      if (!isHost) return;
+      const locked = !!op.locked, askJoin = !!op.askJoin;
+      if (locked === !!T.locked && askJoin === !!T.askJoin) return;
+      const lockChanged = locked !== !!T.locked, askChanged = askJoin !== !!T.askJoin;
+      T.locked = locked; T.askJoin = askJoin;
+      if (lockChanged) sysLog(locked ? 'The host locked the room. New players cannot join.' : 'The host unlocked the room.');
+      if (askChanged) sysLog(askJoin ? 'The host will now ask before letting new players in.' : 'The host stopped asking before letting new players in.');
+      settleJoinRequests();
+      break;
+    }
+    case 'unblock': { // host only: let a blocked name join again
+      if (!isHost) return;
+      T.blockedNames = (T.blockedNames || []).filter(n => !samePlayerName(n, op.name));
+      break;
+    }
     case 'handoff': {
       if (!moderator) return;
       beginBoardTransfer(op.pid, op.to, from); return;
@@ -828,7 +849,11 @@ function tableOp(op, from) {
     case 'kick': {
       if (!moderator || op.pid === S.pid || !T.seats.includes(op.pid)) return;
       if (pendingBoardTransfer) abortBoardTransfer('The handoff was cancelled because a seat was removed.');
+      const kickedName = S.players[op.pid] && S.players[op.pid].name;
       T.kicked = [...new Set([...(T.kicked || []), op.pid])].slice(-128);
+      if (kickedName) T.blockedNames = cleanBlockedNames([...(T.blockedNames || []), kickedName]); // a fresh browser ID with the same name is blocked too
+      S.admitted.delete(op.pid);
+      setTimeout(() => Net.drop(op.pid), 400); // close their connection after the removal message has gone
       T.mods = (T.mods || []).filter(p => p !== op.pid);
       delete T.out[op.pid];
       if (T.monarch === op.pid) T.monarch = null;
@@ -1068,6 +1093,7 @@ function clientRecv(msg) {
   if (!msg) return;
   if (handleClientModeration(msg)) return;
   if (msg.t === 'snap') {
+    closeJoinWaiting();
     S.table = msg.table; S.players = msg.players || {}; S.log = msg.log || []; S.online = msg.online || {}; S.boardBackups = msg.boardBackups || {}; S.chat = cleanChatHistory(msg.chat);
     reconcileOpeningDeal(S.table);
     seedTurnNotice(S.table);
@@ -3070,6 +3096,7 @@ function mainMenu(x, y) {
     } },
     { sep: true }
   ];
+  if (S.role === 'host') items.push({ label: 'Room access…' + (S.table && S.table.locked ? ' (locked)' : S.table && S.table.askJoin ? ' (ask first)' : ''), onClick: showRoomAccess });
   if (S.role !== 'client') items.push({ label: 'Start a new game (everyone)', onClick: async () => {
     if (await UI.confirm('Start a new game? Everyone reshuffles and receives a new opening hand.', { okLabel: 'New game' })) toHost({ t: 'op', op: { k: 'newgame' } });
   } });
@@ -5265,11 +5292,16 @@ function netKey() {
 }
 function startNet() {
   if (S.role === 'solo') return;
+  S.admitted = new Set(); S.joinRequests = {};
   if (typeof Peer === 'undefined') { S.net = { state: 'error', text: 'Connection library failed to load (are you online?)' }; render(); return; }
   Net.start({
     role: S.role, room: S.room, pid: S.pid, key: netKey(),
+    canReceive: pid => isAdmitted(pid),
     onMessage: (msg, from) => {
-      if (S.role === 'host') { if (authorizeClientMessage(msg, from)) hostRecv(msg, from); }
+      if (S.role === 'host') {
+        if (from !== S.pid && !isAdmitted(from)) { if (msg && msg.t === 'pub') handleUnadmittedPub(from, msg); return; }
+        if (authorizeClientMessage(msg, from)) hostRecv(msg, from);
+      }
       else clientRecv(msg);
     },
     onStatus: (state, text, code, transport) => {
@@ -5288,6 +5320,7 @@ function startNet() {
     onAdminJoinRequest: async id => {
       if (S.role !== 'host' || !S.table || S.net.state !== 'online') return;
       if (S.table.seats.length >= 6) { Net.adminJoinDecision(id, false); UI.toast('The site admin asked to join, but this table is full.'); return; }
+      if (S.table.locked) { Net.adminJoinDecision(id, false); UI.toast('The site admin asked to join, but the room is locked. Unlock it in ☰ → Room access… if you want them to be able to join.', { ms: 10000 }); return; }
       const allow = await UI.confirm('The site admin asks to join this game as a normal player. Allow them to open your room link?',
         { title: 'Admin join request', okLabel: 'Allow', cancelLabel: 'Decline' });
       Net.adminJoinDecision(id, !!allow);
@@ -5301,6 +5334,12 @@ function startNet() {
       clearTimeout(lostTimers[pid]);
       if (lostTimers[pid] === 'logged') sysLog(`${pname(pid)} reconnected.`);
       delete lostTimers[pid];
+      // Room access: a connection that is not already admitted gets nothing from the table
+      // until the host's settings let it in.
+      const gate = joinGate(pid);
+      if (gate === 'locked' || gate === 'blocked') { refuseJoin(pid, gate); return; }
+      if (gate === 'ask') { Net.sendTo(pid, { t: 'join-wait' }); return; }
+      S.admitted.add(pid);
       S.online[pid] = true;
       queueAdminPresence();
       Net.sendTo(pid, snapFor());
@@ -5308,6 +5347,10 @@ function startNet() {
     },
     onLeave: pid => {
       if (S.pendingSeats && !S.table.seats.includes(pid)) delete S.pendingSeats[pid];
+      if (!S.table.seats.includes(pid)) { // never held a seat: forget them quietly
+        S.admitted.delete(pid); delete S.joinRequests[pid]; delete S.online[pid];
+        return;
+      }
       S.online[pid] = false;
       queueAdminPresence();
       broadcast({ t: 'online', online: S.online });
@@ -5409,6 +5452,131 @@ function authorizeClientMessage(msg, from) {
   S.seatKeys[from] = msg.seatKey; saveNow(); return true;
 }
 function samePlayerName(a, b) { return String(a || '').trim().toLocaleLowerCase() === String(b || '').trim().toLocaleLowerCase(); }
+
+// What a player sees when the host does not let them in.
+const JOIN_REFUSED = {
+  locked: 'This room is locked. Ask the host to unlock it, then try joining again.',
+  blocked: 'You cannot join this room.',
+  declined: 'The host did not let you in.'
+};
+let joinWaitModal = null;
+function showJoinWaiting() {
+  if (joinWaitModal || S.role !== 'client') return;
+  const wrap = document.createElement('div'); wrap.className = 'w-form';
+  const text = document.createElement('p'); text.className = 'w-confirm-text'; text.textContent = 'Waiting for the host to let you in…';
+  const row = document.createElement('div'); row.className = 'w-btnrow';
+  const leave = document.createElement('button'); leave.type = 'button'; leave.className = 'w-btn'; leave.textContent = 'Leave';
+  leave.addEventListener('click', abandonJoin);
+  row.appendChild(leave); wrap.append(text, row);
+  joinWaitModal = UI.modal({ title: 'Joining…', el: wrap, onEscape: () => true, onClose: () => { joinWaitModal = null; } }); // Esc is ignored: Leave is the way out
+}
+function closeJoinWaiting() { if (joinWaitModal) { const m = joinWaitModal; joinWaitModal = null; m.close(); } }
+function abandonJoin() { // stop waiting to join: no seat was ever taken, so there is nothing to concede
+  closeJoinWaiting();
+  try { Net.stop(); } catch (e) { /* ignore */ }
+  LS.del('ct.sess.' + S.pid); LS.del('ct.last');
+  S.me = null; S.table = null; S.players = {}; S.log = []; S.undo = []; S.selected.clear();
+  S.viewers.forEach(v => v.v.close());
+  showLobby();
+}
+function showRoomAccess() {
+  if (S.role !== 'host' || !S.table) return;
+  const m = UI.modal({ title: 'Room access', className: 'w-room-access-dialog', html: `
+    <div class="room-access">
+      <label class="room-access-row"><input type="checkbox" id="ctRoomLock"><span><b>Lock room</b><small>Nobody new can join. Players who already have a seat can still reconnect.</small></span></label>
+      <label class="room-access-row"><input type="checkbox" id="ctRoomAsk"><span><b>Ask me before anyone joins</b><small>Each new player waits until you choose Let in or Decline. This does nothing while the room is locked.</small></span></label>
+      <div><b>Blocked names</b><small>People removed from the game are blocked by name, so they cannot just rejoin. A person could still change their name.</small><ul class="room-access-blocked" id="ctRoomBlocked"></ul></div>
+    </div>` });
+  const lock = m.el.querySelector('#ctRoomLock'), ask = m.el.querySelector('#ctRoomAsk'), list = m.el.querySelector('#ctRoomBlocked');
+  const draw = () => {
+    const T = S.table; lock.checked = !!T.locked; ask.checked = !!T.askJoin;
+    const names = T.blockedNames || [];
+    list.innerHTML = names.length
+      ? names.map(n => `<li><span>${esc(n)}</span><button type="button" data-unblock="${esc(n)}">Unblock</button></li>`).join('')
+      : '<li class="room-access-none">Nobody is blocked.</li>';
+  };
+  const apply = () => { toHost({ t: 'op', op: { k: 'access', locked: lock.checked, askJoin: ask.checked } }); draw(); };
+  lock.addEventListener('change', apply); ask.addEventListener('change', apply);
+  list.addEventListener('click', e => {
+    const b = e.target.closest('[data-unblock]'); if (!b) return;
+    toHost({ t: 'op', op: { k: 'unblock', name: b.dataset.unblock } }); draw();
+  });
+  draw();
+}
+
+// ---- Room access (host): lock the room, ask before anyone joins, and block removed players ----
+// "Admitted" means the host lets this connection receive the table and send to it: seated players
+// always are; a new connection is only admitted while the room is open (or after the host says Let in).
+function cleanBlockedNames(list) {
+  if (!Array.isArray(list)) return [];
+  const out = [];
+  for (const n of list) {
+    const name = typeof n === 'string' ? n.trim().slice(0, 40) : '';
+    if (name && !out.some(o => samePlayerName(o, name))) out.push(name);
+  }
+  return out.slice(-64);
+}
+function isBlockedName(name) { return !!String(name || '').trim() && ((S.table && S.table.blockedNames) || []).some(n => samePlayerName(n, name)); }
+function isAdmitted(pid) { return !!S.table && (pid === S.pid || S.table.seats.includes(pid) || S.admitted.has(pid)); }
+function joinGate(pid) {
+  const T = S.table;
+  if (isAdmitted(pid)) return 'ok';
+  if ((T.kicked || []).includes(pid)) return 'blocked';
+  if (T.locked) return 'locked';
+  if (T.askJoin) return 'ask';
+  return 'ok';
+}
+// Tell the connection why, then close it shortly after so the message has time to arrive.
+function refuseJoin(pid, reason) {
+  S.admitted.delete(pid); delete S.joinRequests[pid];
+  Net.sendTo(pid, { t: 'join-refused', reason });
+  setTimeout(() => Net.drop(pid), 400);
+}
+function admitJoin(pid, msg) {
+  S.admitted.add(pid); S.online[pid] = true;
+  queueAdminPresence();
+  Net.sendTo(pid, snapFor());
+  broadcast({ t: 'online', online: S.online });
+  if (msg && authorizeClientMessage(msg, pid)) hostRecv(msg, pid); // seat them, as if they had just joined an open room
+}
+// The first public view from a connection that is not admitted yet (it carries their name).
+function handleUnadmittedPub(from, msg) {
+  const T = S.table;
+  if (!T || !isObj(msg) || typeof msg.seatKey !== 'string' || !/^[a-f0-9]{32}$/.test(msg.seatKey)) return;
+  const p = cleanPub(msg.p, from); if (!p) return;
+  if ((T.kicked || []).includes(from) || isBlockedName(p.name)) { refuseJoin(from, 'blocked'); return; }
+  if (T.locked) { refuseJoin(from, 'locked'); return; }
+  if (!T.askJoin) { admitJoin(from, msg); return; } // the settings changed while they were connecting
+  if (!S.joinRequests[from] && Object.keys(S.joinRequests).length >= MAX_JOIN_REQUESTS) { refuseJoin(from, 'declined'); return; } // a flood of strangers cannot bury the host in questions
+  S.joinRequests[from] = { name: p.name, msg, asked: !!(S.joinRequests[from] && S.joinRequests[from].asked) };
+  pumpJoinPrompts();
+}
+const MAX_JOIN_REQUESTS = 8;
+let joinPromptBusy = false;
+async function pumpJoinPrompts() {
+  if (joinPromptBusy) return;
+  joinPromptBusy = true;
+  try {
+    for (;;) {
+      const pid = Object.keys(S.joinRequests).find(p => !S.joinRequests[p].asked);
+      if (!pid) break;
+      const req = S.joinRequests[pid]; req.asked = true;
+      const allow = await UI.confirm(`${req.name} wants to join this game. Let them in?`, { title: 'Join request', okLabel: 'Let in', cancelLabel: 'Decline' });
+      if (S.joinRequests[pid] !== req) continue; // they left, or the settings changed, while the question was open
+      delete S.joinRequests[pid];
+      if (allow && !(S.table && S.table.locked)) admitJoin(pid, req.msg); else refuseJoin(pid, allow ? 'locked' : 'declined');
+    }
+  } finally { joinPromptBusy = false; }
+}
+// After the host changes the settings, answer anyone who was waiting.
+function settleJoinRequests() {
+  const T = S.table;
+  Object.keys(S.joinRequests).forEach(pid => {
+    const req = S.joinRequests[pid];
+    if (T.locked) refuseJoin(pid, 'locked');
+    else if (!T.askJoin) { delete S.joinRequests[pid]; admitJoin(pid, req.msg); }
+  });
+}
 function isModerator(pid = S.pid) {
   return !!S.table && (pid === S.table.hostPid || (pid === S.pid && S.role !== 'client') || (S.table.mods || []).includes(pid));
 }
@@ -5577,6 +5745,8 @@ function handleClientModeration(msg) {
   if (!msg || typeof msg.t !== 'string') return false;
   if (msg.t === 'moderation-exit') { exitModerated(String(msg.reason || 'Your seat was removed.')); return true; }
   if (msg.t === 'moderation-notice') { UI.toast(String(msg.text || ''), { kind: 'warn', ms: 12000 }); return true; }
+  if (msg.t === 'join-wait') { if (S.colorFlow) showColorPicker('Waiting for the host to let you in…'); else showJoinWaiting(); return true; } // the color dialog already has a Back to lobby button
+  if (msg.t === 'join-refused') { closeJoinWaiting(); exitModerated(JOIN_REFUSED[msg.reason] || JOIN_REFUSED.declined); return true; }
   if (msg.t === 'seat-conflict') {
     if (!boardTransferLock) { boardTransferLock = true; S.colorFlow = false; S.colorRequestPending = false; closeColorModal(); UI.toast('That player already has a board. Request it below; a moderator must approve.', { ms: 10000 }); showBoardRecovery(msg.pid); } return true;
   }
