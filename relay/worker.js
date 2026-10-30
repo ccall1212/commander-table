@@ -33,6 +33,15 @@ const PRESENCE_MS = 90 * 1000;
 const JOIN_MS = 90 * 1000;
 const SPECTATE_MS = 20 * 1000;
 const SPECTATE_MAX_BYTES = 900000;
+// Sync boxes (sync-v1): the browser encrypts a deck collection with a key made from a short code and stores it
+// here under an ID made from the same code. The relay only ever holds that unreadable text.
+const SYNC_ID_RE = /^[a-f0-9]{32}$/;
+const SYNC_MAX_BYTES = 900000; // size of the stored (encrypted, base64) text
+const SYNC_CHUNK = 60 * 1024;
+const SYNC_TTL_MS = 180 * 24 * 60 * 60 * 1000; // an unused synced copy expires after 180 days
+const SYNC_REPLACED_MS = 30 * 24 * 60 * 60 * 1000; // a replaced code keeps saying "replaced" for 30 days
+const SYNC_WRITES_PER_HOUR = 60; // saves, replacements and deletes allowed per network address per hour
+const SYNC_B64_RE = /^[A-Za-z0-9+/]+={0,2}$/;
 const SPECTATE_CHUNK_BYTES = 60 * 1024;
 
 function json(value, status = 200, headers = {}) {
@@ -58,7 +67,7 @@ function originAllowed(origin) {
 function corsHeaders(origin) {
   return {
     "Access-Control-Allow-Origin": origin,
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "*",
     "Access-Control-Max-Age": "86400",
     Vary: "Origin",
@@ -79,7 +88,7 @@ export default {
     if (url.pathname === "/health") {
       const headers = { "Content-Type": "application/json" };
       if (okOrigin) Object.assign(headers, corsHeaders(origin));
-      return new Response(JSON.stringify({ ok: true, v: VERSION, features: ["room-vault-v1", "admin-directory-v1", "admin-spectate-v1"] }), { status: 200, headers });
+      return new Response(JSON.stringify({ ok: true, v: VERSION, features: ["room-vault-v1", "admin-directory-v1", "admin-spectate-v1", ...(env.SYNC ? ["sync-v1"] : [])] }), { status: 200, headers });
     }
 
     if (url.pathname.startsWith("/admin/")) {
@@ -101,6 +110,9 @@ export default {
       return new Response(response.body, { status: response.status, headers: { "Content-Type": "application/json", "Cache-Control": "no-store", ...headers } });
     }
 
+    const sync = /^\/sync\/([^/]+)$/.exec(url.pathname);
+    if (sync) return handleSync(request, env, sync[1], url, origin, okOrigin);
+
     const m = /^\/room\/([^/]+)$/.exec(url.pathname);
     if (m && request.headers.get("Upgrade")?.toLowerCase() === "websocket") {
       const room = m[1];
@@ -113,6 +125,121 @@ export default {
     return new Response("Not found", { status: 404, headers: { "Content-Type": "text/plain" } });
   },
 };
+
+// ---- Sync boxes (sync-v1) --------------------------------------------------------------------
+async function shortHash(text) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(digest).slice(0, 8), b => b.toString(16).padStart(2, "0")).join("");
+}
+
+// GET /sync/<id> reads, PUT stores, DELETE removes (or, with ?mode=replaced, marks the code as replaced).
+async function handleSync(request, env, id, url, origin, okOrigin) {
+  if (origin && !okOrigin) return json({ error: "Origin not allowed" }, 403);
+  const headers = okOrigin ? corsHeaders(origin) : {};
+  if (!env.SYNC) return json({ error: "Sync is not available on this server" }, 501, headers);
+  if (!SYNC_ID_RE.test(id)) return json({ error: "Not found" }, 404, headers);
+  if (!["GET", "PUT", "DELETE"].includes(request.method)) return json({ error: "Method not allowed" }, 405, headers);
+  let body;
+  if (request.method !== "GET") {
+    // A basic limit on how often one network address can write, so the free relay's storage is not filled.
+    const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+    const limiter = env.SYNC.get(env.SYNC.idFromName("limit:" + await shortHash(ip)));
+    if ((await limiter.fetch("https://internal/limit", { method: "POST" })).status === 429) return json({ error: "Too many saves from this connection. Try again later." }, 429, headers);
+    if (request.method === "PUT") {
+      body = await request.text();
+      if (body.length > SYNC_MAX_BYTES + 1000) return json({ error: "Too large" }, 413, headers);
+    }
+  }
+  const mode = request.method === "DELETE" && url.searchParams.get("mode") === "replaced" ? "?mode=replaced" : "";
+  const response = await env.SYNC.get(env.SYNC.idFromName("box:" + id)).fetch("https://internal/box" + mode, { method: request.method, body });
+  return new Response(response.body, { status: response.status, headers: { "Content-Type": "application/json", "Cache-Control": "no-store", ...headers } });
+}
+
+// One Durable Object per sync box ("box:<id>"), and one per network address for the write limit ("limit:<hash>").
+export class SyncBox extends DurableObject {
+  async fetch(request) {
+    const url = new URL(request.url);
+    if (url.pathname === "/limit" && request.method === "POST") return this.limit();
+    if (url.pathname !== "/box") return json({ error: "Not found" }, 404);
+    if (request.method === "GET") return this.read();
+    if (request.method === "PUT") return this.write(await request.text());
+    if (request.method === "DELETE") return this.remove(url.searchParams.get("mode") === "replaced");
+    return json({ error: "Method not allowed" }, 405);
+  }
+
+  async limit() {
+    const now = Date.now();
+    let win = await this.ctx.storage.get("window");
+    if (!win || now - win.start >= 60 * 60 * 1000) win = { start: now, count: 0 };
+    win.count++;
+    await this.ctx.storage.put({ window: win, exp: win.start + 2 * 60 * 60 * 1000 });
+    await this.ctx.storage.setAlarm(win.start + 2 * 60 * 60 * 1000);
+    return win.count > SYNC_WRITES_PER_HOUR ? json({ error: "limit" }, 429) : json({ ok: true });
+  }
+
+  async touch(ms) {
+    const exp = Date.now() + ms;
+    await this.ctx.storage.put("exp", exp);
+    await this.ctx.storage.setAlarm(exp);
+    return exp;
+  }
+
+  async chunks(meta) {
+    const keys = Array.from({ length: meta.chunks }, (_, i) => "c:" + i);
+    const parts = await this.ctx.storage.get(keys);
+    return keys.map(k => parts.get(k));
+  }
+
+  async read() {
+    const meta = await this.ctx.storage.get("meta");
+    if (!meta) return json({ error: "not-found" }, 404);
+    if (meta.replaced) return json({ error: "replaced" }, 410);
+    const parts = await this.chunks(meta);
+    if (parts.some(p => typeof p !== "string")) return json({ error: "not-found" }, 404);
+    await this.touch(SYNC_TTL_MS); // a copy that is still being used does not expire
+    return json({ v: 1, c: meta.c, iv: meta.iv, ct: parts.join(""), updatedAt: meta.updatedAt });
+  }
+
+  async write(text) {
+    let value;
+    try { value = JSON.parse(text); } catch (_) { return json({ error: "Invalid body" }, 400); }
+    if (!value || typeof value !== "object" || value.v !== 1 || !["gzip", "none"].includes(value.c)
+      || typeof value.iv !== "string" || value.iv.length < 8 || value.iv.length > 40 || !SYNC_B64_RE.test(value.iv)
+      || typeof value.ct !== "string" || !value.ct.length || value.ct.length > SYNC_MAX_BYTES || !SYNC_B64_RE.test(value.ct)) {
+      return json({ error: "Invalid body" }, 400);
+    }
+    const old = await this.ctx.storage.get("meta");
+    if (old && old.replaced) return json({ error: "replaced" }, 410);
+    const entries = {};
+    const chunks = Math.ceil(value.ct.length / SYNC_CHUNK);
+    for (let i = 0; i < chunks; i++) entries["c:" + i] = value.ct.slice(i * SYNC_CHUNK, (i + 1) * SYNC_CHUNK);
+    const updatedAt = Date.now();
+    await this.ctx.storage.put(entries);
+    await this.ctx.storage.put("meta", { c: value.c, iv: value.iv, chunks, bytes: value.ct.length, updatedAt });
+    if (old && old.chunks > chunks) await this.ctx.storage.delete(Array.from({ length: old.chunks - chunks }, (_, i) => "c:" + (chunks + i)));
+    await this.touch(SYNC_TTL_MS);
+    return json({ ok: true, updatedAt, bytes: value.ct.length });
+  }
+
+  async remove(replaced) {
+    if (replaced) {
+      // Keep only a marker, so a computer still using the old code is told it was replaced.
+      await this.ctx.storage.deleteAll();
+      await this.ctx.storage.put("meta", { replaced: true, at: Date.now() });
+      await this.touch(SYNC_REPLACED_MS);
+    } else {
+      await this.ctx.storage.deleteAll();
+      await this.ctx.storage.deleteAlarm();
+    }
+    return json({ ok: true });
+  }
+
+  async alarm() {
+    const exp = await this.ctx.storage.get("exp");
+    if (!exp || exp <= Date.now()) await this.ctx.storage.deleteAll();
+    else await this.ctx.storage.setAlarm(exp);
+  }
+}
 
 // ---- Room (Durable Object) -------------------------------------------------------------------
 export class Room extends DurableObject {
