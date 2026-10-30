@@ -36,7 +36,7 @@ const SPECTATE_MAX_BYTES = 900000;
 // Sync boxes (sync-v1): the browser encrypts a deck collection with a key made from a short code and stores it
 // here under an ID made from the same code. The relay only ever holds that unreadable text.
 const SYNC_ID_RE = /^[a-f0-9]{32}$/;
-const SYNC_MAX_BYTES = 900000; // size of the stored (encrypted, base64) text
+const SYNC_MAX_BYTES = 2500000; // size of the stored (encrypted, base64) text: decks plus two uploaded pictures (each up to about 800 KB)
 const SYNC_CHUNK = 60 * 1024;
 const SYNC_TTL_MS = 180 * 24 * 60 * 60 * 1000; // an unused synced copy expires after 180 days
 const SYNC_REPLACED_MS = 30 * 24 * 60 * 60 * 1000; // a replaced code keeps saying "replaced" for 30 days

@@ -110,7 +110,7 @@ The browser makes a 9-character code, derives a 128-bit **box ID** from it (SHA-
 | Request | Meaning |
 |---|---|
 | `GET /sync/<id>` | `200 {v:1, c, iv, ct, updatedAt}` · `404 {error:"not-found"}` (unknown, deleted or expired) · `410 {error:"replaced"}` |
-| `PUT /sync/<id>` | Body `{v:1, c:"gzip"\|"none", iv:<base64>, ct:<base64>}`. `200 {ok, updatedAt, bytes}` · `400` invalid body · `410 replaced` · `413`/`400` over 900,000 bytes of `ct` |
+| `PUT /sync/<id>` | Body `{v:1, c:"gzip"\|"none", iv:<base64>, ct:<base64>}`. `200 {ok, updatedAt, bytes}` · `400` invalid body · `410 replaced` · `413`/`400` over 2,500,000 bytes of `ct` (decks plus two uploaded pictures) |
 | `DELETE /sync/<id>` | Removes the box (`200`). With `?mode=replaced` it leaves only a marker, so a computer still using the old code gets `410 replaced`; the marker lasts 30 days |
 
 - Same origin rules as the other HTTP routes (`403` for a web page from an unlisted site; no `Origin` is allowed). CORS allows `GET, POST, PUT, DELETE`.
