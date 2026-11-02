@@ -1,22 +1,16 @@
-# Share your hand with one player — v0.58.0 test copy
+# Life total moved off the board — v0.58.1 test copy
 
 To check this copy, extract the ZIP and double-click **index.html**. No terminal or local server is needed.
 
-You need three browser windows as three players: your normal window (host) plus two **private/incognito windows** (or another browser). Give them different names, e.g. Dad, Son, Mom. Everyone picks a deck/color and clicks **Keep 7**.
+You need at least two players (your window plus a private/incognito window). Four is best for Grid view.
 
-1. **Whole hand.** In Son's window open **☰ → Share my hand with one player…**. Choose **Dad**. "What to show" is disabled until someone is chosen. Dad should still see only backs, even after Son ticks an option: nothing is shared until Son clicks **Start sharing**. Pick **My whole hand** and click **Start sharing**. In Dad's window, Son's miniature hand should now show real cards face-up (dashed outline, "shared with you"). In Mom's window it should still be card backs. Son's hand label should say "showing to Dad".
-2. **Follows draws.** Son draws a card (D). Dad's view should gain that card. Mom's should not.
-3. **Big view.** Dad clicks Son's name/board to view it big: the hand strip should read "SHARED WITH YOU" and show the real cards.
-4. **Picked cards only.** Son reopens the dialog and chooses **Only the cards I pick** and clicks **Apply changes**. Dad's view should go back to backs. Son right-clicks two cards → **Show to Dad**. Dad should see exactly those two (Son's cards get an eye mark).
-5. **Played cards drop out.** The host clicks **Start game**. Son plays one of the shared cards: it disappears from what Dad sees.
-6. **Switch.** Son chooses **Mom** in the dialog and clicks **Apply changes**: Mom now sees the shared card, Dad no longer does.
-7. **Stop.** Son chooses **Nobody** and clicks **Stop sharing**: Mom sees backs again and the "showing to" reminder disappears.
-8. **Log.** The game log tells everyone that Son showed a hand/card to someone, but never says which card.
-9. **Regression.** **Reveal my hand to everyone** still shows the hand to everybody.
-
-Please also watch for anything odd (shared cards stuck after a player leaves, a dialog that will not close).
+1. **Look.** In both layouts (▥ Sidebar and ▦ Grid), each small board should show the player's name and their life (− 40 + ▾) in the bar above the board. Nothing should sit on top of the board's top-left corner.
+2. **Cards in the corner.** Have a player put a card on the top-left of their board (for example drag one to the Creatures row's far left). On another player's window, the card should be fully visible.
+3. **Arrows.** Use ☰ → **Targeting arrow…** (or right-click a card → **Send arrow to…**) and point at that top-left card on someone else's small board. It should work.
+4. **Life still works.** On another player's small board click − and +; the change should appear for that player. Click the number to type a life total. Click ▾ to open counters and commander damage. Do the same on your own board in Grid.
+5. **Crowding.** In Grid with four players, and in a narrower window, check the name bar still looks tidy (name, TURN/YOU tags, life).
 
 ## Assistant verification
 
-- **Unit tests (Node):** new `test_share_hand` covers the private message going only to the chosen player, log/public view never containing card names, draws/plays/mulligans following, switching, stopping, leaving and reconnecting, host forwarding rules and the receiver's checks (own cards only, size limits, seated sender).
-- **Real browsers with a local relay (Chromium, three players):** new `test_share_hand_browser` walks through steps 1–7 and 9, and records everything Mom's browser receives to confirm card names never reach her until Son shares with her. These ran on an assistant machine; sound, real touch and your own hands-on check are still needed.
+- **Unit tests (Node):** all 21 automatic test files pass.
+- **Real browsers with a local relay (Chromium, four players):** new `test_life_in_header_browser` checks in Grid and Sidebar at 1366x768 and 1920x1080 that every small board's life total sits in its name bar above the board, fits without overflow, and that −, +, set-life and the counters menu work for an opponent and for me. I also looked at screenshots of both layouts. Real touch and your own hands-on check are still needed.

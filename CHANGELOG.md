@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.58.1] - 2026-11-02
+
+### Fixed
+- On the small boards (the right-hand column in Sidebar, every quadrant in Grid) the life total used to sit on top of the board's top-left corner and hide any card placed there, so you could not point an arrow at it. The life total (− / + , set life, counters and commander damage) now sits in the name bar above each board, so every card is visible and clickable.
+
 ## [0.58.0] - 2026-11-02
 
 ### Added
@@ -239,7 +244,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.58.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.58.1...HEAD
+[0.58.1]: https://github.com/ccall1212/commander-table/compare/v0.58.0...v0.58.1
 [0.58.0]: https://github.com/ccall1212/commander-table/compare/v0.57.0...v0.58.0
 [0.57.0]: https://github.com/ccall1212/commander-table/compare/v0.56.1...v0.57.0
 [0.56.1]: https://github.com/ccall1212/commander-table/compare/v0.56.0...v0.56.1
