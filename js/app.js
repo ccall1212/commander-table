@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.57.0';
+const APP_VERSION = '0.58.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -105,6 +105,7 @@ const isAttachable = d => !!d && /\b(Aura|Equipment|Fortification)\b/.test((d.ty
 const S = {
   pid: null,        // this tab's player id
   role: null,       // 'host' | 'client' | 'solo'
+  peeks: {}, // private reveals other players are showing me: { pid: {all, cards, defs, hand} }
   admitted: new Set(), joinRequests: {}, // host: connections allowed in before they hold a seat, and join requests waiting for an answer
   room: null,
   deckId: null,
@@ -405,7 +406,7 @@ function publicView() {
 }
 let pubTimer = null;
 function publish(now) { clearTimeout(pubTimer); pubTimer = setTimeout(doPublish, now ? 0 : 120); }
-function doPublish() { if (!S.me || boardTransferLock) return; toHost({ t: 'pub', p: publicView() }); }
+function doPublish() { if (!S.me || boardTransferLock) return; toHost({ t: 'pub', p: publicView() }); syncShare(); }
 
 let adminPresenceTimer = null;
 function queueAdminPresence() {
@@ -558,6 +559,7 @@ function hostRecv(msg, from) {
       if (typeof msg.to !== 'string') return;
       const req = msg.req;
       if (!S.table.started && req && (req.k === 'give' || req.k === 'take' || (req.k === 'return' && req.zone === 'battlefield'))) return;
+      if (req && req.k === 'peek' && (!S.table.seats.includes(from) || !S.table.seats.includes(msg.to) || msg.to === from)) return; // private reveals only go between two seated players
       if (msg.to === S.pid) onReq(msg.req, from);
       else if (S.role === 'host') Net.sendTo(msg.to, { t: 'req', from, req: msg.req });
       break;
@@ -1078,7 +1080,7 @@ function onBroadcast(msg) {
       if (S.colorFlow) showColorPicker(reason);
     } break;
     case 'firstroll': showFirstRoll(msg); break;
-    case 'online': S.online = msg.online || {}; break;
+    case 'online': S.online = msg.online || {}; syncShare(); break;
     case 'newgame':
       if (S.table && msg.openingDeal) {
         S.table.openingMode = CTMulligan.normalizeMode(msg.openingMode);
@@ -1162,6 +1164,13 @@ function applyPlayerRequest(req, from) {
       sendReq(from, { k: 'return', card, def: Deck.slimDef(d), zone: 'battlefield' });
       return [`had {0} taken back by its owner, ${pname(from)}`, [d]];
     }, { noUndo: true });
+    return;
+  }
+  if (req.k === 'peek') { // someone is showing me part of their hand: it is only for me, so it is kept out of the shared state
+    if (!S.table || !S.table.seats.includes(from) || from === S.pid) return;
+    if (req.off) delete S.peeks[from];
+    else { const k = cleanPeek(req.p, from); if (!k) return; S.peeks[from] = k; }
+    render();
     return;
   }
   if (req.k === 'life') {
@@ -1405,7 +1414,7 @@ function moveCard(iid, to, opts = {}) {
     return null;
   }
   S.me.zones[from].splice(f.idx, 1);
-  if (from === 'hand' && to !== 'hand') delete card.rvh;
+  if (from === 'hand' && to !== 'hand') { delete card.rvh; delete card.rvp; }
   let orphans = [];
   if (from === 'battlefield' && to !== 'battlefield') {
     card.t = false; card.c = {}; card.fl = false; card.pb = undefined; card.dp = 0; card.dt = 0; // a card that leaves forgets everything
@@ -2361,7 +2370,7 @@ function giveControl(iid, to, at) {
   const d = defOf(f.card);
   act(() => {
     S.me.zones[f.zone].splice(f.idx, 1);
-    if (f.zone === 'hand') delete f.card.rvh;
+    if (f.zone === 'hand') { delete f.card.rvh; delete f.card.rvp; }
     const orphans = f.zone === 'battlefield' ? detachFrom(S.pid, iid) : [];
     if (orphans.length) setTimeout(() => orphanToast(orphans), 0);
     const card = Object.assign({}, f.card); delete card.x; delete card.y; card.att = null;
@@ -2467,7 +2476,7 @@ function mulligan() {
   if (!S.me || S.me.kept || !CTMulligan.canMulligan(S.me.mull, mode, grants)) return;
   act(() => {
     const z = S.me.zones;
-    z.library.push(...z.hand.splice(0).map(c => { delete c.rvh; return c; }));
+    z.library.push(...z.hand.splice(0).map(c => { delete c.rvh; delete c.rvp; return c; }));
     S.me.revealTopOnce = null;
     shuffle(z.library);
     const opening = CTMulligan.deal(z.library, S.me.defs, (S.table && S.table.openingMode) || 'london');
@@ -2713,6 +2722,11 @@ function cardMenu(x, y, iid) {
     items.push({ label: 'Play tapped', hint: CTHotkeys.key('tap'), onClick: () => doMove(iid, 'battlefield', { tapped: true }) });
     items.push({ label: 'Play face down', onClick: () => doMove(iid, 'battlefield', { faceDown: true }) });
     items.push({ label: c.rvh ? 'Hide from everyone' : 'Reveal to everyone', checked: !!c.rvh, disabled: S.me.revealHand, onClick: () => toggleRevealHandCard(iid) });
+    if (S.role !== 'solo' && S.role !== 'spectator' && opps.length) {
+      const to = shareTarget();
+      if (!to) items.push({ label: 'Show to one player…', onClick: showShareDialog });
+      else items.push({ label: `Show to ${pname(to)}`, checked: S.me.shareAll || !!c.rvp, disabled: !!S.me.shareAll, onClick: () => toggleShareCard(iid) });
+    }
   }
   if (z === 'command') {
     const n = S.me.casts[iid] || 0;
@@ -2729,8 +2743,131 @@ function cardMenu(x, y, iid) {
   if (c.tok) items.push({ label: c.cp ? 'Remove copy' : 'Remove token', danger: true, onClick: () => doMove(iid, 'graveyard') });
   UI.menu(x, y, items);
 }
+// ---- Private reveals: show my hand, or chosen cards, to ONE other player -----------------------------------------
+// The cards travel only to that player (a host-forwarded request of kind 'peek'). They are never put in the public view
+// everyone receives, and everyone else only sees in the log that I am showing something, not what.
+function cleanPeek(raw, from) {
+  if (!isObj(raw) || !S.table || !S.table.seats.includes(from) || from === S.pid) return null;
+  // Same checks as any public view: card ids must be the sender's own, positions in range, sizes limited.
+  const c = cleanPub({ name: 'x', bw: BW, hand: raw.hand, defs: raw.defs, revHand: raw.all ? raw.cards : null, revCards: raw.all ? [] : raw.cards, zones: {} }, from);
+  if (!c) return null;
+  const own = list => list.filter(x => typeof x.iid === 'string' && x.iid.startsWith(from + '_')); // only the sender's own cards
+  return { all: !!raw.all, cards: own(raw.all ? (c.revHand || []) : c.revCards), defs: c.defs, hand: c.hand, at: Date.now() };
+}
+// How I see another player's board: what everyone sees, plus what they are privately showing me (only on my screen).
+function viewOf(pid) {
+  const p = S.players[pid], k = S.peeks && S.peeks[pid];
+  if (!p || !k || !S.table || !S.table.seats.includes(pid) || (p.revHand && p.revHand.length)) return p; // already revealed to everyone
+  const out = Object.assign({}, p, { defs: Object.assign({}, p.defs, k.defs), privateReveal: true });
+  if (k.all) { out.revHand = k.cards; out.revCards = []; }
+  else {
+    const slots = new Map((p.revCards || []).map(c => [c.hIndex, c]));
+    k.cards.forEach(c => slots.set(c.hIndex, c));
+    out.revCards = [...slots.values()];
+  }
+  return out;
+}
+const shareTarget = () => (S.me && S.me.shareTo && S.table && S.table.seats.includes(S.me.shareTo) && S.me.shareTo !== S.pid ? S.me.shareTo : '');
+let lastShareTo = '', lastShareKey = '';
+// Send the other player what they should see now; runs after every change to my board (see doPublish).
+function syncShare() {
+  const m = S.me;
+  if (!m || S.role === 'solo' || S.role === 'spectator' || !S.table) { lastShareTo = ''; lastShareKey = ''; return; }
+  let to = m.shareTo || '';
+  if (to && !shareTarget()) { // they left the table
+    const name = S.players[to] ? S.players[to].name : 'That player';
+    m.shareTo = ''; m.shareAll = false; m.zones.hand.forEach(c => { delete c.rvp; }); to = '';
+    UI.toast(`${name} is no longer at the table, so sharing stopped.`, { kind: 'warn' }); saveSoon();
+  }
+  let key = '', payload = null;
+  if (to) {
+    const defs = {}, cards = [];
+    m.zones.hand.forEach((c, i) => {
+      if (!m.shareAll && !c.rvp) return;
+      const p = pubCard(c);
+      if (!m.shareAll) p.hIndex = i;
+      if (p.id && m.defs[p.id]) defs[p.id] = Deck.slimDef(m.defs[p.id]);
+      cards.push(p);
+    });
+    payload = { all: !!m.shareAll, hand: m.zones.hand.length, cards, defs };
+    key = to + '|' + (S.online[to] === false ? 'off' : 'on') + '|' + JSON.stringify(payload); // coming back online changes the key, so they get it again
+  }
+  if (lastShareTo && lastShareTo !== to) sendReq(lastShareTo, { k: 'peek', off: true });
+  if (to && key !== lastShareKey && S.online[to] !== false) sendReq(to, { k: 'peek', p: payload });
+  lastShareTo = to; lastShareKey = key;
+}
+function setShare(to, all) {
+  const m = S.me; if (!m) return;
+  const valid = !!to && !!S.table && S.table.seats.includes(to) && to !== S.pid, prev = m.shareTo || '';
+  if (valid ? (prev === to && !!m.shareAll === !!all) : !prev) return;
+  act(() => {
+    m.shareTo = valid ? to : ''; m.shareAll = valid ? !!all : false;
+    if (!valid) { m.zones.hand.forEach(c => { delete c.rvp; }); return [`stopped showing their hand to ${pname(prev)}`]; }
+    const what = all ? 'their whole hand' : 'chosen cards from their hand';
+    return [prev && prev !== to ? `stopped showing their hand to ${pname(prev)} and started showing ${what} to ${pname(to)}` : `is showing ${what} to ${pname(to)}`];
+  }, { noUndo: true });
+}
+function toggleShareCard(iid) {
+  const f = findCard(iid), to = shareTarget();
+  if (!f || f.zone !== 'hand' || !to || S.me.shareAll) return;
+  const show = !f.card.rvp;
+  act(() => {
+    if (show) f.card.rvp = true; else delete f.card.rvp;
+    return [show ? `showed a card from their hand to ${pname(to)}` : `stopped showing a card to ${pname(to)}`]; // never names the card
+  }, { noUndo: true });
+}
+function showShareDialog() {
+  if (!S.me || S.role === 'solo' || S.role === 'spectator' || !S.table) return;
+  const others = S.table.seats.filter(p => p !== S.pid);
+  if (!others.length) { UI.toast('There is nobody else at the table to share with yet.'); return; }
+  const m = S.me;
+  const dlg = UI.modal({ title: 'Share my hand with one player', className: 'w-share-dialog', html: `
+    <div class="share-dialog">
+      <fieldset class="share-group"><legend>Share with</legend>
+        <label class="share-row"><input type="radio" name="ctShareWho" value=""><span>Nobody</span></label>
+        ${others.map(p => `<label class="share-row"><input type="radio" name="ctShareWho" value="${esc(p)}"><span><span class="dot" style="--pc:${colorOf(p)}"></span> ${esc(pname(p))}</span></label>`).join('')}
+      </fieldset>
+      <fieldset class="share-group"><legend>What they see</legend>
+        <label class="share-row"><input type="radio" name="ctShareWhat" value="all"><span><b>My whole hand</b><small>It updates as I draw and play cards.</small></span></label>
+        <label class="share-row"><input type="radio" name="ctShareWhat" value="some"><span><b>Only the cards I pick</b><small>Right-click a card in my hand and choose "Show to …".</small></span></label>
+      </fieldset>
+      <p class="muted small share-note"></p>
+      <div class="share-actions"><button type="button" class="primary share-go">Start sharing</button></div>
+    </div>` });
+  // The choices below are only a draft. Nothing is shared until "Start sharing" is clicked, so picking a player
+  // never exposes the whole hand while you are still deciding between "whole hand" and "only some cards".
+  const who = () => { const r = dlg.el.querySelector('input[name="ctShareWho"]:checked'); return r ? r.value : ''; };
+  const what = () => { const r = dlg.el.querySelector('input[name="ctShareWhat"]:checked'); return r ? r.value : ''; };
+  const btn = dlg.el.querySelector('.share-go');
+  const refresh = () => {
+    const picked = who(), active = shareTarget() || '';
+    dlg.el.querySelectorAll('input[name="ctShareWhat"]').forEach(r => { r.disabled = !picked; });
+    if (!picked) { btn.textContent = active ? 'Stop sharing' : 'Close'; btn.disabled = false; }
+    else {
+      const same = picked === active && what() === (m.shareAll ? 'all' : 'some');
+      btn.textContent = active ? 'Apply changes' : 'Start sharing';
+      btn.disabled = !what() || same;
+    }
+    dlg.el.querySelector('.share-note').textContent = (m.revealHand ? 'Your whole hand is already revealed to everyone, so this changes nothing right now. ' : '')
+      + 'Only that player sees these cards. Everyone can see in the log that you are showing them something, but not which cards.';
+  };
+  const reset = () => {
+    const to = shareTarget() || '';
+    dlg.el.querySelectorAll('input[name="ctShareWho"]').forEach(r => { r.checked = r.value === to; });
+    dlg.el.querySelectorAll('input[name="ctShareWhat"]').forEach(r => { r.checked = !!to && r.value === (m.shareAll ? 'all' : 'some'); });
+    refresh();
+  };
+  dlg.el.addEventListener('change', refresh);
+  btn.addEventListener('click', () => {
+    if (!who()) { setShare('', false); dlg.close(); return; }
+    setShare(who(), what() === 'all');
+    dlg.close();
+  });
+  reset();
+}
+
 function oppCard(pid, iid) {
-  const p = S.players[pid]; if (!p) return null;
+  const p = viewOf(pid); if (!p) return null;
   for (const z of ['battlefield', 'command', 'graveyard', 'exile']) {
     const c = (p.zones[z] || []).find(x => x.iid === iid);
     if (c) return { c, def: c.id ? p.defs[c.id] : null };
@@ -3089,6 +3226,7 @@ function mainMenu(x, y) {
     { label: 'Auto-untap on my turn', checked: m.autoUntap, onClick: () => act(() => { m.autoUntap = !m.autoUntap; }, { noUndo: true }) },
     { label: 'Auto-draw on my turn', checked: m.autoDraw, onClick: () => act(() => { m.autoDraw = !m.autoDraw; }, { noUndo: true }) },
     { label: 'Reveal my hand to everyone', checked: m.revealHand, onClick: () => act(() => { m.revealHand = !m.revealHand; return [m.revealHand ? 'revealed their hand' : 'stopped revealing their hand']; }) },
+    ...(S.role !== 'solo' && S.role !== 'spectator' ? [{ label: 'Share my hand with one player…' + (shareTarget() ? ` (${pname(shareTarget())})` : ''), onClick: showShareDialog }] : []),
     { label: 'Discard at random', onClick: discardRandom },
     { sep: true },
     { label: 'Concede game…', danger: true, onClick: async () => {
@@ -3274,6 +3412,7 @@ function cardHTML(c, def, o) {
   const cls = ['card'];
   if (typeof drawPendingIids !== 'undefined' && drawPendingIids.has(c.iid)) cls.push('ct-draw-pending');
   if (c.t) cls.push('tapped'); if (o.mine) cls.push('mine'); if (c.att) cls.push('att');
+  if (o.mine && o.zone === 'hand' && c.rvp && S.me && S.me.shareTo && !S.me.shareAll) cls.push('shared-priv'); // chosen to show one player
   if (o.zone === 'battlefield' && ctrl === S.pid && !c.att && S.selected.has(c.iid)) cls.push('selected');
   let inner;
   if (c.fd) {
@@ -3754,7 +3893,7 @@ function revealedHandSlots(cards, handN, shown) {
   return slots;
 }
 function oppHandHTML(pid) {
-  const p = S.players[pid], defs = p.defs || {};
+  const p = viewOf(pid), defs = p.defs || {};
   const revealed = !!(p.revHand && p.revHand.length);
   const revCards = revealed ? [] : (Array.isArray(p.revCards) ? p.revCards : []);
   const handN = Math.min(60, Math.max(0, Math.floor(num(p.hand))));
@@ -3811,7 +3950,7 @@ function renderMyTile(el, idx) {
 }
 function tileOverlayHTML(pid, bh, bw) {
   if (pid === S.pid) return myTileOverlayHTML(bh, bw);
-  const p = S.players[pid], defs = p.defs || {}, pi = pileInfo(pid);
+  const p = viewOf(pid), defs = p.defs || {}, pi = pileInfo(pid);
   const revealed = !!(p.revHand && p.revHand.length);
   const revCards = revealed ? [] : (Array.isArray(p.revCards) ? p.revCards : []);
   const handN = Math.max(0, Math.floor(num(p.hand))), n = revealed ? p.revHand.length : Math.min(handN, 12);
@@ -3834,7 +3973,7 @@ function tileOverlayHTML(pid, bh, bw) {
       <div class="tpiles">${pile('library', 'LIB')}${pile('graveyard', 'GY')}${pile('exile', 'EXILE')}<div class="tpile tcmd"><div class="tpcard">${cmd}</div><div class="tplabel">CMD</div></div></div></div>`;
 }
 function renderOpp(el, pid, idx) {
-  const p = S.players[pid], T = S.table || {}, defs = p.defs || {};
+  const p = viewOf(pid), T = S.table || {}, defs = p.defs || {};
   const o = { mine: false, pid };
   el.classList.toggle('active', T.active === pid);
   const off = S.role !== 'solo' && S.online[pid] === false;
@@ -3870,8 +4009,8 @@ function renderOpp(el, pid, idx) {
           return c ? cardHTML(c, c.id && defs[c.id], Object.assign({}, o, { zone: 'hand', style: fan(i) })) : backAt(i);
         }).join('')
       : Array.from({ length: shown }, (_, i) => backAt(i)).join('');
-  const handTitle = revealed ? ' (revealed — hover to read)' : revCards.length ? ` (${revCards.length} card${revCards.length === 1 ? '' : 's'} revealed — hover to read)` : '';
-  const handHTML = `<span class="ohhand${revealed ? ' revealed' : revCards.length ? ' partial-reveal' : ''}${handN ? '' : ' empty'}" title="${esc(p.name)} has ${plural(handN, 'card')} in hand${handTitle}">${handCards}<b class="ohn">${handN}</b></span>`;
+  const handTitle = p.privateReveal ? ' (shared with you — only you can see this)' : revealed ? ' (revealed — hover to read)' : revCards.length ? ` (${revCards.length} card${revCards.length === 1 ? '' : 's'} revealed — hover to read)` : '';
+  const handHTML = `<span class="ohhand${revealed ? ' revealed' : revCards.length ? ' partial-reveal' : ''}${p.privateReveal ? ' private-reveal' : ''}${handN ? '' : ' empty'}" title="${esc(p.name)} has ${plural(handN, 'card')} in hand${handTitle}">${handCards}<b class="ohn">${handN}</b></span>`;
   setHTML(el.querySelector('.ohead'), `${curView() === 'grid' ? `<button data-a="viewme" title="Back to my board">← My board${S.role !== 'spectator' ? ` · <span class="pname" data-phead="${esc(S.pid)}">${esc(S.me.name)}</span>` : ''}</button>` : ''}<span class="dot" style="--pc:${colorOf(pid)}"></span>
     <span class="pname" data-phead="${esc(pid)}" title="Right-click for options">${esc(p.name)}</span>
     ${off ? '<span class="tag off">RECONNECTING</span>' : ''}${T.out && T.out[pid] ? '<span class="tag off">OUT</span>' : ''}
@@ -3912,8 +4051,9 @@ function renderMine(idx) {
   }).join(''));
   if (S.handHov) { const hc = [...$('#myHand').children].find(c => c.dataset.iid === S.handHov); if (hc) hc.classList.add('hov'); } // keep the lifted card up across re-renders
   const hn = vo ? $('#myHand').children.length : z.hand.length;
-  $('#handLabel').innerHTML = vo ? `${esc(S.players[vo].name)} · HAND <b>${num(S.players[vo].hand)}</b>${S.players[vo].revHand && S.players[vo].revHand.length ? ' · REVEALED' : (S.players[vo].revCards || []).length ? ` · ${S.players[vo].revCards.length} REVEALED` : ''}`
-    : `${S.role === 'spectator' ? esc(m.name) + ' · ' : ''}HAND <b>${z.hand.length}</b>`;
+  const vp = vo ? viewOf(vo) : null;
+  $('#handLabel').innerHTML = vo ? `${esc(vp.name)} · HAND <b>${num(vp.hand)}</b>${vp.privateReveal ? ' · SHARED WITH YOU' : vp.revHand && vp.revHand.length ? ' · REVEALED' : (vp.revCards || []).length ? ` · ${vp.revCards.length} REVEALED` : ''}`
+    : `${S.role === 'spectator' ? esc(m.name) + ' · ' : ''}HAND <b>${z.hand.length}</b>${shareTarget() ? ` · showing to ${esc(pname(shareTarget()))}` : ''}`;
   $('#myHand').style.setProperty('--n', Math.max(1, hn)); // CSS overlaps cards so the hand never scrolls
   setHTML($('#myZones'), vo ? oppZonesHTML(vo) : myZonesHTML());
   const mb = $('#mullBar');
@@ -4922,7 +5062,7 @@ function giveControlGroup(group, to, at, anchorIid) {
       if (!f) continue;
       const def = defOf(f.card);
       S.me.zones[f.zone].splice(f.idx, 1);
-      if (f.zone === 'hand') delete f.card.rvh;
+      if (f.zone === 'hand') { delete f.card.rvh; delete f.card.rvp; }
       if (f.zone === 'battlefield') {
         const detached = detachFrom(S.pid, p.iid);
         if (detached.length) orphaned.push(...detached);
@@ -5824,7 +5964,7 @@ function loadSession(pid) {
 function resume(sess) {
   S.role = sess.role; S.room = sess.room; S.deckId = sess.deckId; S.me = sess.me; S.seatKeys = isObj(sess.seatKeys) ? sess.seatKeys : {};
   normalizeMe(S.me);
-  S.table = cleanTable(sess.table) || null; S.players = sess.players || {}; S.log = sess.log || []; S.chat = cleanChatHistory(sess.chat); S.chatOpen = false; S.chatUnread = 0; S.online = {};
+  S.peeks = {}; S.table = cleanTable(sess.table) || null; S.players = sess.players || {}; S.log = sess.log || []; S.chat = cleanChatHistory(sess.chat); S.chatOpen = false; S.chatUnread = 0; S.online = {};
   if (S.table && S.role === 'host') S.table.hostPid = S.pid;
   if (S.table) {
     S.table.openingMode = CTMulligan.normalizeMode(S.table.openingMode);
@@ -6273,7 +6413,7 @@ async function begin(role) {
     if (u.searchParams.has('join')) { u.searchParams.delete('join'); history.replaceState(null, '', u.href); }
   } catch (e) { /* ignore */ }
   S.role = role; S.room = room; S.deckId = deck.id;
-  S.players = {}; S.log = []; S.online = {}; S.undo = [];
+  S.players = {}; S.log = []; S.online = {}; S.undo = []; S.peeks = {};
   const openingDeal = role === 'client' ? null : uid();
   S.me = newPlayer(deck, name, null, openingMode, openingDeal);
   S.me.autoDraw = autoActions.autoDraw;
