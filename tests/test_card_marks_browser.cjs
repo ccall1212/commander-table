@@ -99,7 +99,7 @@ const mkDeck = who => ({
       await pg.waitForFunction(() => document.querySelectorAll('.card .cstat .cmark').length === 3, null, { timeout: 10000 });
       const g = await geom(pg);
       assert.equal(g.n, 3); assert.ok(g.outside, 'icons are outside the card'); assert.ok(g.topAligned, 'icons start at the top of the card'); assert.ok(g.stacked, 'icons stack downwards');
-      assert.ok(g.w >= 12, 'icons are big enough to read (' + g.w + 'px)');
+      assert.ok(g.w >= 9, 'icons are big enough to read (' + g.w + 'px)');
     }
     assert.deepEqual(await son.evaluate(p => CT.S.players[p].zones.battlefield[0].st, dadPid), ['goaded', 'flying', 'x:Cursed'], 'the other player received them');
     const names = await son.evaluate(() => [...document.querySelectorAll('.card .cstat .cmark')].map(i => i.title));
@@ -107,6 +107,20 @@ const mkDeck = who => ({
     await dad.evaluate(() => { const o = document.querySelector('#firstRollOverlay'); if (o) o.remove(); const f = CT.S.me.zones.battlefield[0]; CT.act(() => { f.x = 300; f.y = 150; }); });
     await dad.waitForTimeout(400);
     if (process.env.CT_SHOTS) await dad.screenshot({ path: process.env.CT_SHOTS + '/marks.png' });
+
+    // Six icons fit in one column down the side of the card (like the reference picture); twelve make a second column.
+    await dad.evaluate(() => { const f = CT.S.me.zones.battlefield[0]; CT.act(() => { f.st = ['deathtouch', 'first strike', 'flying', 'lifelink', 'reach', 'vigilance']; }); });
+    await dad.waitForFunction(() => document.querySelectorAll('#myBf .card .cstat .cmark').length === 6);
+    const six = await dad.evaluate(() => { const c = document.querySelector('#myBf .card[data-zone="battlefield"]'), r = c.getBoundingClientRect(), i = [...c.querySelectorAll('.cmark')].map(x => x.getBoundingClientRect()); return { fits: i.every(x => x.bottom <= r.bottom + 1), lefts: new Set(i.map(x => Math.round(x.left))).size }; });
+    assert.equal(six.lefts, 1, 'six icons make one column'); assert.ok(six.fits, 'all six fit within the card height');
+    if (process.env.CT_SHOTS) await dad.screenshot({ path: process.env.CT_SHOTS + '/marks6.png' });
+    await dad.evaluate(() => { const f = CT.S.me.zones.battlefield[0]; CT.act(() => { f.st = ['goaded', 'deathtouch', 'defender', 'double strike', 'first strike', 'flying', 'haste', 'hexproof', 'indestructible', 'lifelink', 'menace', 'reach']; }); });
+    await dad.waitForFunction(() => document.querySelectorAll('#myBf .card .cstat .cmark').length === 12);
+    if (process.env.CT_SHOTS) await dad.screenshot({ path: process.env.CT_SHOTS + '/marks12.png' });
+    await dad.evaluate(() => { const f = CT.S.me.zones.battlefield[0]; CT.act(() => { f.st = ['goaded', 'prepared', 'suspected', 'monstrous', 'renowned', 'exerted', 'saddled', 'blocked', 'shield', 'x:Cursed']; }); });
+    await dad.waitForFunction(() => document.querySelectorAll('#myBf .card .cstat .cmark').length === 10);
+    if (process.env.CT_SHOTS) await dad.screenshot({ path: process.env.CT_SHOTS + '/marksS.png', clip: { x: 280, y: 120, width: 240, height: 200 } });
+    await dad.evaluate(() => { const f = CT.S.me.zones.battlefield[0]; CT.act(() => { f.st = ['goaded', 'flying', 'x:Cursed']; }); });
 
     // Tapped card: the icons stay readable and next to the card.
     await dad.evaluate(() => { const f = CT.S.me.zones.battlefield[0]; CT.act(() => { f.t = 1; }); });

@@ -9,7 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ## [0.62.0] - 2026-11-03
 
 ### Added
-- **Statuses and abilities on cards.** Right-click a battlefield card you control → **Statuses & abilities…** to switch on markers such as Goaded, Prepared, Suspected, Monstrous, Renowned, Exerted, Saddled and Blocked, keyword icons (deathtouch, defender, double strike, first strike, flying, haste, hexproof, indestructible, lifelink, menace, reach, shield, trample, vigilance), or your own custom status. They show as a column of small icons just outside the card's top-right corner for every player, and are kept apart from counters. They disappear when the card leaves the battlefield. Players on older versions will not see them.
+- **Statuses and abilities on cards.** Right-click a battlefield card you control → **Statuses & abilities…** to switch on markers such as Goaded, Prepared, Suspected, Monstrous, Renowned, Exerted, Saddled and Blocked, keyword icons (deathtouch, defender, double strike, first strike, flying, haste, hexproof, indestructible, lifelink, menace, reach, shield, trample, vigilance), or your own custom status. They show as a column of small icons (about six down the side of a card) just outside the card's top-right corner for every player, and are kept apart from counters. The keyword icons come from the open-licensed Mana font (credited in the guide). They disappear when the card leaves the battlefield. Players on older versions will not see them.
 
 ## [0.61.0] - 2026-11-03
 
