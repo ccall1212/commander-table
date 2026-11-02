@@ -52,13 +52,13 @@ const CARD_COUNTERS = ['+1/+1', '-1/-1', 'Loyalty', 'Charge', 'Shield', 'Stun', 
 // here as simple outline shapes; nothing is fetched. A custom status is saved as "x:Label".
 const CARD_MARKS = [
   { id: 'goaded', kind: 'status', label: 'Goaded', vb: '0 0 26 32', p: 'M13.348 2.133c1.215 5.236 4.853 7.229 10.995 5.606l1.258 4.758c-8.742 2.311-15.183-1.217-17.047-9.252l4.794-1.112zM24.943 18.299c0 0-0.845-0.2-2.281-0.23-6.918-0.148-12.983 3.711-13.698 11.396l4.911 0.326c0.314-4.739 4.712-7.565 10.255-6.637l0.813-4.854zM3.080 6.091l-3.080 3.839c4.149 3.329 4.141 8.574 0.256 12.515l3.505 3.455c5.843-5.928 5.855-14.565-0.681-19.809z' },
-  { id: 'prepared', kind: 'status', label: 'Prepared', d: '<path d="M5 12.5l5 5L19 7"/>' },
-  { id: 'suspected', kind: 'status', label: 'Suspected', d: '<circle cx="10" cy="10" r="6"/><path d="M15 15l6 6"/>' },
-  { id: 'monstrous', kind: 'status', label: 'Monstrous', d: '<path d="M5 20c0-8 4-14 8-16-1 5 1 8 6 8-3 1-5 3-5 8M9 20c0-4 1-6 3-8"/>' },
-  { id: 'renowned', kind: 'status', label: 'Renowned', d: '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>' },
-  { id: 'exerted', kind: 'status', label: 'Exerted', d: '<circle cx="12" cy="12" r="9"/><path d="M12 7v9M8 12l4 4 4-4"/>' },
-  { id: 'saddled', kind: 'status', label: 'Saddled', d: '<path d="M4 15c2-6 6-8 8-8s6 2 8 8H4zM8 15v4M16 15v4"/>' },
-  { id: 'blocked', kind: 'status', label: 'Blocked', d: '<circle cx="12" cy="12" r="9"/><path d="M6 6l12 12"/>' },
+  { id: 'prepared', kind: 'status', label: 'Prepared' },
+  { id: 'suspected', kind: 'status', label: 'Suspected' },
+  { id: 'monstrous', kind: 'status', label: 'Monstrous' },
+  { id: 'renowned', kind: 'status', label: 'Renowned' },
+  { id: 'exerted', kind: 'status', label: 'Exerted' },
+  { id: 'saddled', kind: 'status', label: 'Saddled' },
+  { id: 'blocked', kind: 'status', label: 'Blocked' },
   { id: 'deathtouch', kind: 'ability', label: 'Deathtouch', vb: '0 0 26 32', p: 'M14.628 0c1.741 0.678 3.785 1.508 4.362 3.481 0.536 2.049-2.12 3.076-2.11 5.040 1.199 0.83 2.525 1.452 3.815 2.125 1.604-1.381 0.678-3.517 0.84-5.333 1.503 1.422 3.532 2.454 4.326 4.478 0.597 1.619 0.374 3.395 0.471 5.090 0.167 4.174-0.653 8.546-3.142 11.987-1.786 2.596-4.721 4.048-7.651 4.959-1.386 0.218-2.823 0.238-4.205 0.015-2.267-0.673-4.519-1.614-6.29-3.218-3.668-3.051-5.146-8.066-5.014-12.7 0.051-2.155-0.152-4.367 0.395-6.477 0.754-2.282 3.056-3.4 4.731-4.923-0.445 1.614-1.528 3.102-1.381 4.832 0.025 1.154 1.128 1.771 1.847 2.495 0.521-2.024-0.162-4.493 1.493-6.087 1.72-1.902 4.696-1.098 6.745-2.434 0.88-0.865 0.627-2.221 0.769-3.329zM4.225 15.949c-0.002 0.049-0.050 0.085-0.031 0.131 0.861 2.103 0.58 4.604-0.025 6.892 1.275 1.533 3.299 1.29 5.070 1.128-0.283 1.386-1.569 2.94-0.349 4.215 0.324-0.248 0.972-0.754 1.295-1.007 0.633 0.572 1.275 1.144 1.928 1.705 0.369-0.673 0.734-1.346 1.113-2.009 0.455 0.663 0.891 1.346 1.326 2.029 0.541-0.511 1.083-1.027 1.624-1.538 0.815 0.405 2.087 1.201 2.261 0.16 0.166-0.994-0.166-2.153-0.995-3.248-0.061-0.081-0.060-0.192-0.086-0.287 1.872 0.233 3.901 0.228 5.202-1.361-0.964-1.816-0.675-4.676-0.051-6.503 0.025-0.073-0.038-0.148-0.061-0.22-0.961-2.955-2.686-4.090-5.13-5.244-4.751-2.343-11.289 0.142-13.090 5.156zM6.353 20.983c1.7 1.037 6.114 0.525 5.195-1.773-0.464-1.159-1.717-3.235-2.981-2.73-1.434 0.573-3.251 2.686-2.213 4.503zM11.117 25.403c0.754-0.309 1.497-0.918 2.181-1.374 0.729 0.541 1.41 0.957 2.159 1.473-0.349-1.746-0.629-3.213-1.656-4.703-1.056-1.533-2.379 2.894-2.683 4.604zM20.203 20.983c-1.7 1.037-6.114 0.525-5.195-1.773 0.464-1.159 1.717-3.235 2.981-2.73 1.433 0.573 3.251 2.686 2.213 4.503z' },
   { id: 'defender', kind: 'ability', label: 'Defender', vb: '0 0 21 32', p: 'M20.741 1.653c0.004 1.097 0.005 2.194 0.009 3.292-1.315 0.605-1.732 1.91-1.831 3.251-5.682 0.016-11.359 0.010-17.036-0.005-0.073-1.372-0.496-2.666-1.873-3.204-0-1.111-0.004-2.222-0.009-3.333h2.919c0.134 0.979 0.241 1.961 0.352 2.942 0.788 0 1.576 0.005 2.369 0.005 0.005-0.982 0.009-1.965 0.019-2.947h3.33c0.095 0.974 0.167 1.95 0.24 2.926 0.824 0.005 1.649 0.010 2.473 0.010 0.032-0.979 0.056-1.958 0.096-2.937h3.333c0.035 0.982 0.067 1.965 0.108 2.947 0.845-0.005 1.696-0.021 2.546-0.042 0.022-0.969 0.042-1.937 0.082-2.905h2.872zM2.519 12.494c5.244-0.057 10.498-0.084 15.747 0.010 0.678-0.95 1.263-1.978 1.534-3.125-6.267 0-12.538 0.037-18.805 0.031 0.297 1.122 0.882 2.124 1.524 3.084zM3.62 13.402c-0.292 3.517-0.464 7.049-0.851 10.561-0.563 0.699-1.315 1.205-1.993 1.785 0 1.529 0.005 3.063 0 4.592 6.413 0.010 12.825 0.010 19.238 0.005 0.005-1.56 0.005-3.115-0.010-4.67-0.683-0.47-1.357-0.944-2.030-1.419-0.23-3.621-0.506-7.242-0.84-10.858-4.503-0.010-9.011-0.016-13.514 0.005z' },
   { id: 'double strike', kind: 'ability', label: 'Double strike', vb: '0 0 28 32', p: 'M5.761 1.259c6.96-3.011 15.829-0.336 19.844 6.133 3.431 5.146 3.337 12.377-0.149 17.473-4.109 6.321-12.895 8.88-19.767 5.819 3.458 0.116 7.076-0.165 10.038-2.145 3.795-2.322 6.312-6.421 6.927-10.843 0.077-0.556 0.185-1.198 0.271-1.289 1.208-1.272 2.057-2.103 2.768-3.162 0.182-1.594 0.114-3.143-0.007-4.731-1.881-0.452-3.947-0.514-5.828-0.062-1.826-2.068-4.578-2.967-7.247-3.226-4.793-0.392-9.646 2.658-11.312 7.181-0.745 2.035-0.596 4.225-0.689 6.354-0.778-2.752-0.938-5.714 0.276-8.367 1.737-4.451 6.41-7.551 11.174-7.391 1.263 0.043 2.453 0.2 3.809 0.578 0.029 0.008 0.060 0.008 0.090 0.012-2.956-2.107-6.69-2.35-10.198-2.333zM13.73 18.574c-1.164-1.004-2.45-2.263-4.117-1.595 0.745 0.949 1.518 1.876 2.296 2.798-0.579 0.668-1.159 1.335-1.738 2.003-0.662 0.16-1.319 0.315-1.981 0.469 0.039 1.159 0.061 2.323 0.066 3.482 1.148-0.017 2.296 0.061 3.444-0.028 0.193-0.624 0.359-1.258 0.497-1.893 0.662-0.579 1.324-1.153 1.998-1.722 0.944 0.728 1.882 1.457 2.826 2.191 0.083-0.442 0.243-1.335 0.326-1.777-0.635-0.734-1.275-1.462-1.915-2.18 3.493-1.871 5.828-5.232 8.791-7.781 0.044-0.955 0.072-1.915 0.105-2.864-0.955 0.033-1.909 0.066-2.859 0.099-2.511 2.986-5.916 5.287-7.737 8.797zM6.553 16.95c-1.164-1.004-2.45-2.263-4.117-1.595 0.745 0.949 1.518 1.876 2.296 2.798-0.579 0.668-1.159 1.335-1.738 2.003-0.662 0.16-1.319 0.315-1.981 0.469 0.039 1.159 0.061 2.323 0.066 3.482 1.148-0.017 2.296 0.061 3.444-0.028 0.193-0.624 0.359-1.258 0.497-1.893 0.662-0.579 1.324-1.153 1.998-1.722 0.944 0.728 1.882 1.457 2.826 2.191 0.083-0.442 0.243-1.335 0.326-1.777-0.635-0.734-1.275-1.462-1.915-2.18 3.493-1.871 5.828-5.232 8.791-7.781 0.044-0.955 0.072-1.915 0.105-2.864-0.955 0.033-1.909 0.066-2.859 0.099-2.511 2.986-5.916 5.287-7.737 8.797z' },
@@ -89,15 +89,16 @@ function cleanMarks(raw) {
   return CARD_MARKS.filter(m => known.has(m.id)).map(m => m.id).concat(custom).slice(0, MAX_CARD_MARKS);
 }
 // Keyword icons are the open-licensed Mana font drawings (SIL OFL 1.1, andrewgioia/mana); the rest are simple outlines.
-const markSvg = m => m.p ? `<svg viewBox="${m.vb}" class="glyph" aria-hidden="true"><path d="${m.p}"/></svg>` : `<svg viewBox="0 0 24 24" aria-hidden="true">${m.d}</svg>`;
+// A marker with no drawing of its own (most statuses, and any custom one) is shown as its name in a small tag.
+const markSvg = m => m.p ? `<svg viewBox="${m.vb}" class="glyph" aria-hidden="true"><path d="${m.p}"/></svg>` : `<span class="mark-word">${esc(m.label)}</span>`;
 function marksHTML(c) {
   const list = cleanMarks(c && c.st);
   if (!list.length) return '';
   return '<div class="cstat">' + list.map(id => {
     const m = CARD_MARK_BY_ID[id];
-    if (m) return `<span class="cmark ${m.kind}" title="${esc(m.label)}" role="img" aria-label="${esc(m.label)}">${markSvg(m)}</span>`;
+    if (m) return `<span class="cmark ${m.kind}${m.p ? '' : ' word'}" title="${esc(m.label)}" role="img" aria-label="${esc(m.label)}">${markSvg(m)}</span>`;
     const t = id.slice(2);
-    return `<span class="cmark status custom" title="${esc(t)}" role="img" aria-label="${esc(t)}"><b>${esc(Array.from(t).slice(0, 2).join('').toUpperCase())}</b></span>`;
+    return `<span class="cmark status word custom" title="${esc(t)}" role="img" aria-label="${esc(t)}"><span class="mark-word">${esc(t)}</span></span>`;
   }).join('') + '</div>';
 }
 const PLAYER_COUNTERS = ['Energy', 'Experience', 'Rad', 'Tickets'];
@@ -3037,7 +3038,7 @@ function showMarksDialog(iid) {
   if (!f0 || f0.zone !== 'battlefield') return;
   const d = defOf(f0.card);
   const group = (title, kind) => `<fieldset class="mark-group"><legend>${title}</legend>${CARD_MARKS.filter(m => m.kind === kind).map(m =>
-    `<label class="mark-row"><input type="checkbox" data-mark="${esc(m.id)}"><span class="cmark ${m.kind} static">${markSvg(m)}</span><span>${esc(m.label)}</span></label>`).join('')}</fieldset>`;
+    `<label class="mark-row"><input type="checkbox" data-mark="${esc(m.id)}"><span class="cmark ${m.kind}${m.p ? '' : ' word'} static">${markSvg(m)}</span><span>${esc(m.label)}</span></label>`).join('')}</fieldset>`;
   const dlg = UI.modal({
     title: 'Statuses & abilities' + (d && !f0.card.fd ? ' — ' + dname(d) : ''), className: 'w-marks-dialog',
     html: `<div class="marks-dialog"><p class="muted small">Icons that hang beside the card for everyone to see. They are separate from counters.</p>

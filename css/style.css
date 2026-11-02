@@ -1507,11 +1507,13 @@ body.touch-mode #myBar .ctrpanel {
 .cmark.status { color: #ffd36b; }
 .cmark svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
 .cmark svg.glyph { fill: currentColor; stroke: none; }
-.cmark.custom { border-radius: 50%; background: rgba(10,13,19,.88); border: 1.5px solid #ffd36b; filter: none; box-shadow: 0 1px 3px rgba(0,0,0,.7); }
-.cmark.custom b { font-size: calc(var(--cw, 80px) * .09); line-height: 1; letter-spacing: -.02em; }
+.cmark.word { width: auto; min-width: 0; padding: 0 calc(var(--cw, 80px) * .04); border-radius: 999px; background: rgba(10,13,19,.9); border: 1px solid #ffd36b; filter: none; box-shadow: 0 1px 3px rgba(0,0,0,.7); }
+.cmark .mark-word { font-size: max(8px, calc(var(--cw, 80px) * .1)); font-weight: 700; line-height: 1; white-space: nowrap; letter-spacing: .01em; }
 .card.tapped .cmark { transform: rotate(-90deg); } /* the card is turned sideways; keep the icons upright */
 .ohhand .card .cstat, .focus-hand-cards .card .cstat, .focus-command-cards .card .cstat { display: none; }
 .cmark.static { width: 28px; height: 28px; flex: none; }
+.cmark.word.static { width: auto; height: auto; padding: 3px 9px; }
+.cmark.word.static .mark-word { font-size: 12px; }
 .marks-dialog { display: grid; gap: 10px; min-width: 0; max-width: 34em; }
 .mark-group { border: 1px solid var(--line, #2a3242); border-radius: 8px; padding: 6px 12px 10px; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(11em, 1fr)); gap: 6px 14px; min-width: 0; }
 .mark-group legend { padding: 0 6px; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
