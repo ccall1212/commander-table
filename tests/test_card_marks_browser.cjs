@@ -92,18 +92,30 @@ const mkDeck = who => ({
     const geom = page => page.evaluate(iid => {
       const c = [...document.querySelectorAll('.card[data-zone="battlefield"]')].find(x => x.querySelector('.cstat'));
       if (!c) return null;
-      const r = c.getBoundingClientRect(), icons = [...c.querySelectorAll('.cmark')].map(i => i.getBoundingClientRect());
-      return { n: icons.length, outside: icons.every(i => i.left >= r.right - 1 || i.right <= r.left + 1), topAligned: Math.abs(icons[0].top - r.top) < 3, stacked: icons.every((i, k) => k === 0 || i.top > icons[k - 1].top), w: icons[0].width, cardW: r.width };
+      const r = c.getBoundingClientRect(), icons = [...c.querySelectorAll('.cstat .cmark')].map(i => i.getBoundingClientRect());
+      const w = c.querySelector('.cwords .cmark'), wr = w && w.getBoundingClientRect();
+      return { wordInside: !!wr && wr.left >= r.left - 1 && wr.right <= r.right + 1 && Math.abs((wr.top + wr.bottom) / 2 - (r.top + r.bottom) / 2) < r.height * .2, n: icons.length, outside: icons.every(i => i.left >= r.right - 1 || i.right <= r.left + 1), topAligned: Math.abs(icons[0].top - r.top) < 3, stacked: icons.every((i, k) => k === 0 || i.top > icons[k - 1].top), w: icons[0].width, cardW: r.width };
     });
     for (const pg of [dad, son]) {
-      await pg.waitForFunction(() => document.querySelectorAll('.card .cstat .cmark').length === 3, null, { timeout: 10000 });
+      await pg.waitForFunction(() => document.querySelectorAll('.card .cmark').length === 3, null, { timeout: 10000 });
       const g = await geom(pg);
-      assert.equal(g.n, 3); assert.ok(g.outside, 'icons are outside the card'); assert.ok(g.topAligned, 'icons start at the top of the card'); assert.ok(g.stacked, 'icons stack downwards');
+      assert.equal(g.n, 2, 'two icons beside the card'); assert.ok(g.wordInside, 'the word tag sits in the middle of the card'); assert.ok(g.outside, 'icons are outside the card'); assert.ok(g.topAligned, 'icons start at the top of the card'); assert.ok(g.stacked, 'icons stack downwards');
       assert.ok(g.w >= 9, 'icons are big enough to read (' + g.w + 'px)');
     }
     assert.deepEqual(await son.evaluate(p => CT.S.players[p].zones.battlefield[0].st, dadPid), ['goaded', 'flying', 'x:Cursed'], 'the other player received them');
-    const names = await son.evaluate(() => [...document.querySelectorAll('.card .cstat .cmark')].map(i => i.title));
-    assert.deepEqual(names, ['Goaded', 'Flying', 'Cursed']);
+    const names = await son.evaluate(() => [...document.querySelectorAll('.card .cmark')].map(i => i.title));
+    assert.equal(names.length, 3);
+    assert.ok(names.some(n => /^Goaded — .*attack/.test(n)) && names.some(n => /^Flying — .*flying or reach/.test(n)) && names.some(n => /^Cursed \(/.test(n)), 'hovering shows what each marker means: ' + names.join(' | '));
+    // Hovering the card shows the big preview with the markers enlarged beside it, entirely off the card image.
+    for (const [pg, sel] of [[son, `.opp.tile[data-opp="${dadPid}"] .card[data-zone="battlefield"]`], [dad, '#myBf .card[data-zone="battlefield"]']]) {
+      await pg.locator(sel).first().hover();
+      await pg.waitForFunction(() => document.querySelectorAll('#pv:not(.hidden) .pv-marks .cmark').length === 3);
+      const pvg = await pg.evaluate(() => { const img = document.querySelector('#pv .pv-imgs, #pv .pv-txt').getBoundingClientRect(), m = [...document.querySelectorAll('#pv .pv-marks .cmark')].map(x => x.getBoundingClientRect()), pv = document.querySelector('#pv').getBoundingClientRect();
+        return { off: m.every(r => r.left >= img.right - 1 || r.right <= img.left + 1), onScreen: m.every(r => r.right <= innerWidth && r.left >= 0), big: Math.min(...m.map(r => r.height)), pvw: pv.width }; });
+      assert.ok(pvg.off, 'every marker beside the preview is off the card image'); assert.ok(pvg.onScreen, 'and on screen'); assert.ok(pvg.big >= 30, 'and enlarged (' + pvg.big + 'px)');
+      if (process.env.CT_SHOTS) await pg.screenshot({ path: process.env.CT_SHOTS + '/marks-pv.png' });
+    }
+    await dad.mouse.move(5, 300);
     await dad.evaluate(() => { const o = document.querySelector('#firstRollOverlay'); if (o) o.remove(); const f = CT.S.me.zones.battlefield[0]; CT.act(() => { f.x = 300; f.y = 150; }); });
     await dad.waitForTimeout(400);
     if (process.env.CT_SHOTS) await dad.screenshot({ path: process.env.CT_SHOTS + '/marks.png' });
@@ -118,7 +130,7 @@ const mkDeck = who => ({
     await dad.waitForFunction(() => document.querySelectorAll('#myBf .card .cstat .cmark').length === 12);
     if (process.env.CT_SHOTS) await dad.screenshot({ path: process.env.CT_SHOTS + '/marks12.png' });
     await dad.evaluate(() => { const f = CT.S.me.zones.battlefield[0]; CT.act(() => { f.st = ['goaded', 'prepared', 'suspected', 'monstrous', 'renowned', 'exerted', 'saddled', 'blocked', 'shield', 'x:Cursed']; }); });
-    await dad.waitForFunction(() => document.querySelectorAll('#myBf .card .cstat .cmark').length === 10);
+    await dad.waitForFunction(() => document.querySelectorAll('#myBf .card .cmark').length === 10);
     if (process.env.CT_SHOTS) await dad.screenshot({ path: process.env.CT_SHOTS + '/marksS.png', clip: { x: 280, y: 120, width: 240, height: 200 } });
     await dad.evaluate(() => { const f = CT.S.me.zones.battlefield[0]; CT.act(() => { f.st = ['goaded', 'flying', 'x:Cursed']; }); });
 
@@ -129,7 +141,7 @@ const mkDeck = who => ({
 
     // The card leaves the battlefield: markers are forgotten.
     await dad.evaluate(() => { const f = CT.S.me.zones.battlefield[0]; CT.act(() => { CT.S.me.zones.graveyard.push(CT.S.me.zones.battlefield.splice(0, 1)[0]); }); });
-    await dad.waitForFunction(() => document.querySelectorAll('.cstat').length === 0);
+    await dad.waitForFunction(() => document.querySelectorAll('.card .cmark').length === 0);
     assert.deepEqual(errors, [], 'no page errors in any browser');
     console.log('PASS statuses & abilities (two real browsers): checklist and custom status, icons hang outside the card from its top for both players, bad names cleaned, tapped card, removal');
   } finally {

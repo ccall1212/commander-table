@@ -1509,7 +1509,19 @@ body.touch-mode #myBar .ctrpanel {
 .cmark svg.glyph { fill: currentColor; stroke: none; }
 .cmark.word { width: auto; min-width: 0; padding: 0 calc(var(--cw, 80px) * .04); border-radius: 999px; background: rgba(10,13,19,.9); border: 1px solid #ffd36b; filter: none; box-shadow: 0 1px 3px rgba(0,0,0,.7); }
 .cmark .mark-word { font-size: max(8px, calc(var(--cw, 80px) * .1)); font-weight: 700; line-height: 1; white-space: nowrap; letter-spacing: .01em; }
-.card.tapped .cmark { transform: rotate(-90deg); } /* the card is turned sideways; keep the icons upright */
+.card.tapped .cstat .cmark { transform: rotate(-90deg); } /* the card is turned sideways; keep the icons upright */
+/* Word tags sit across the middle of the card. They only react to hover (their meaning shows as a tooltip); a click goes to the card as usual. */
+.card .cwords { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 30; display: flex; flex-direction: column; align-items: center; gap: calc(var(--cw, 80px) * .025); pointer-events: none; }
+.card.tapped .cwords { transform: translate(-50%, -50%) rotate(-90deg); }
+.card .cwords .cmark { max-width: calc(var(--cw, 80px) * 1.1); overflow: hidden; }
+.card .cwords .mark-word { overflow: hidden; text-overflow: ellipsis; }
+.card .cmark { pointer-events: auto; cursor: default; }
+/* Beside the hover preview: enlarged, and entirely off the card so its text can be read. */
+#pv .pv-marks { --cw: 290px; position: absolute; left: calc(100% + 10px); top: 0; display: flex; gap: 10px; align-items: flex-start; }
+#pv .pv-marks .cstat { position: static; flex-wrap: nowrap; max-height: none; pointer-events: none; }
+#pv .pv-marks .cstat.words { align-items: flex-start; }
+#pv .pv-marks .cmark.word { height: 34px; padding: 0 12px; }
+#pv .pv-marks .mark-word { font-size: 19px; }
 .ohhand .card .cstat, .focus-hand-cards .card .cstat, .focus-command-cards .card .cstat { display: none; }
 .cmark.static { width: 28px; height: 28px; flex: none; }
 .cmark.word.static { width: auto; height: auto; padding: 3px 9px; }

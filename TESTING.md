@@ -7,13 +7,15 @@ You need two browser windows as two players (your window plus a private/incognit
 1. Start a game (everyone **Keep 7**, then **Start game**) and put a few cards on the battlefield.
 2. Right-click one of your battlefield cards → **Statuses & abilities…**. A checklist opens with **Statuses**, **Abilities** and **Your own**.
 3. Tick **Goaded** and **Flying**. A column of small icons should appear just outside the card's top-right corner, not touching the card. Hover an icon: its name shows.
-4. Type a custom status (for example *Cursed*) and click **Add**. It appears as a small tag with the word. Remove it with **Remove**.
+4. Type a custom status (for example *Cursed*) and click **Add**. It appears as a small tag across the middle of the card (not in the outside column). Remove it with **Remove**.
 5. In the other player's window the same icons should appear next to that card, on their small copy of your board.
 6. Tick enough to see how the column behaves (more than fit down the card's side should start a second column). Try a card near the right edge of the board: the icons should hang on its left side instead.
 7. Tap the card (T): the icons should stay readable, in a row under the card.
 8. The **Add Counters** area should be unchanged, and counters still show inside the card's top-right corner.
 9. Move the card to the graveyard: the icons go away. Bring it back: it starts with none.
-10. Please judge the look: icon size (about six fit down the side of a card), whether the icons are recognisable (keywords and Goaded use the open-licensed Mana font drawings; Prepared, Suspected, Monstrous, Renowned, Exerted, Saddled, Blocked and your own custom statuses are word tags), and whether anything covers something important.
+10. **Hover.** Hover an icon or a word tag: a tooltip explains what it means (for example Flying: can be blocked only by creatures with flying or reach). They should not react to clicks.
+11. **Preview.** Hover the card itself: the big card preview should show the markers enlarged beside it, and none of them should cover the card image, so you can read the card. Try it on your own card and on another player's card.
+12. Please judge the look: icon size (about six fit down the side of a card), whether the icons are recognisable (keywords and Goaded use the open-licensed Mana font drawings; Prepared, Suspected, Monstrous, Renowned, Exerted, Saddled, Blocked and your own custom statuses are word tags), and whether anything covers something important.
 
 ## Assistant verification
 
