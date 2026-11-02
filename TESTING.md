@@ -4,13 +4,13 @@ To check this copy, extract the ZIP and double-click **index.html**. No terminal
 
 You need three browser windows as three players: your normal window (host) plus two **private/incognito windows** (or another browser). Give them different names, e.g. Dad, Son, Mom. Everyone picks a deck/color and clicks **Keep 7**.
 
-1. **Whole hand.** In Son's window open **☰ → Share my hand with one player…**. Choose **Dad**. "What to show" should be disabled until someone is chosen; then pick **My whole hand**. In Dad's window, Son's miniature hand should now show real cards face-up (dashed outline, "shared with you"). In Mom's window it should still be card backs. Son's hand label should say "showing to Dad".
+1. **Whole hand.** In Son's window open **☰ → Share my hand with one player…**. Choose **Dad**. "What to show" is disabled until someone is chosen. Dad should still see only backs, even after Son ticks an option: nothing is shared until Son clicks **Start sharing**. Pick **My whole hand** and click **Start sharing**. In Dad's window, Son's miniature hand should now show real cards face-up (dashed outline, "shared with you"). In Mom's window it should still be card backs. Son's hand label should say "showing to Dad".
 2. **Follows draws.** Son draws a card (D). Dad's view should gain that card. Mom's should not.
 3. **Big view.** Dad clicks Son's name/board to view it big: the hand strip should read "SHARED WITH YOU" and show the real cards.
-4. **Picked cards only.** Son reopens the dialog and chooses **Only the cards I pick**. Dad's view should go back to backs. Son right-clicks two cards → **Show to Dad**. Dad should see exactly those two (Son's cards get an eye mark).
+4. **Picked cards only.** Son reopens the dialog and chooses **Only the cards I pick** and clicks **Apply changes**. Dad's view should go back to backs. Son right-clicks two cards → **Show to Dad**. Dad should see exactly those two (Son's cards get an eye mark).
 5. **Played cards drop out.** The host clicks **Start game**. Son plays one of the shared cards: it disappears from what Dad sees.
-6. **Switch.** Son chooses **Mom** in the dialog: Mom now sees the shared card, Dad no longer does.
-7. **Stop.** Son chooses **Nobody**: Mom sees backs again and the "showing to" reminder disappears.
+6. **Switch.** Son chooses **Mom** in the dialog and clicks **Apply changes**: Mom now sees the shared card, Dad no longer does.
+7. **Stop.** Son chooses **Nobody** and clicks **Stop sharing**: Mom sees backs again and the "showing to" reminder disappears.
 8. **Log.** The game log tells everyone that Son showed a hand/card to someone, but never says which card.
 9. **Regression.** **Reveal my hand to everyone** still shows the hand to everybody.
 

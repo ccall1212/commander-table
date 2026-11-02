@@ -9,7 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ## [0.58.0] - 2026-11-02
 
 ### Added
-- **Share your hand with one player.** From **☰ → Share my hand with one player…** (or right-click a card in your hand → **Show to …**) you can let a single other player see your hand, without showing the rest of the table. Choose **My whole hand** or **Only the cards I pick**. It stays live (new draws, played cards and mulligans follow along) until you pick **Nobody**, you change player, or either of you leaves. The other player sees your cards face-up in your miniature hand (dashed outline, "shared with you") and in the big view. Everyone else only sees card backs, and the log says that you are showing a hand or a card without naming it. Only one player can be chosen at a time.
+- **Share your hand with one player.** From **☰ → Share my hand with one player…** (or right-click a card in your hand → **Show to …**) you can let a single other player see your hand, without showing the rest of the table. Choose **My whole hand** or **Only the cards I pick**, then click **Start sharing** (nothing is shared until you do). It stays live (new draws, played cards and mulligans follow along) until you pick **Nobody**, you change player, or either of you leaves. The other player sees your cards face-up in your miniature hand (dashed outline, "shared with you") and in the big view. Everyone else only sees card backs, and the log says that you are showing a hand or a card without naming it. Only one player can be chosen at a time.
 
 ### Changed
 - Everyone's own hand now reminds you who you are showing it to (`· showing to NAME`).

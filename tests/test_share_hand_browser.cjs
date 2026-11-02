@@ -92,6 +92,12 @@ const mkDeck = who => ({
     assert.match(await dlg.innerText(), /Dad/); assert.match(await dlg.innerText(), /Mom/);
     assert.equal(await dlg.locator('input[name="ctShareWhat"]').first().isDisabled(), true, 'nothing to pick until someone is chosen');
     await choose(dlg, 'Dad');
+    assert.equal(await dlg.locator('.share-go').isDisabled(), true, 'cannot start until it is chosen what to show');
+    await son.waitForTimeout(800);
+    assert.deepEqual(await shownOf(dad, sonPid), [], 'picking a player alone shares nothing');
+    await dlg.locator('.share-row', { hasText: 'My whole hand' }).locator('input').check();
+    assert.deepEqual(await shownOf(dad, sonPid), [], 'and neither does choosing what to show, until Start sharing is clicked');
+    await dlg.locator('.share-go').click();
     await dad.waitForFunction(p => document.querySelectorAll(`.opp[data-opp="${p}"] .thand .card:not(.oback)`).length === 7, sonPid);
     assert.deepEqual((await shownOf(dad, sonPid)).sort(), sonHand.map(n => n).sort(), 'Dad sees Son\'s whole hand, face up');
     assert.equal(await dad.locator(`.opp[data-opp="${sonPid}"] .ohhand`).count() >= 0, true);
@@ -99,7 +105,6 @@ const mkDeck = who => ({
     assert.equal(await backsOf(mom, sonPid), 7);
     assert.equal(sonHand.some(n => sawFrame(mom, n)), false, 'no card name was ever sent to Mom\'s browser');
     assert.ok(sawFrame(mom, 'showing their whole hand to Dad'), 'Mom can read in the log that Son is showing Dad his hand');
-    await closeDialog(son);
     assert.match(await son.locator('#handLabel').innerText(), /showing to Dad/i, 'Son is reminded who he is showing');
 
     // Son draws a card: Dad's view follows.
@@ -118,8 +123,8 @@ const mkDeck = who => ({
     // ---- 2. Only the cards he picks. ----
     dlg = await openShare(son);
     await dlg.locator('.share-row', { hasText: 'Only the cards I pick' }).locator('input').check();
+    await dlg.locator('.share-go').click();
     await dad.waitForFunction(p => document.querySelectorAll(`.opp[data-opp="${p}"] .thand .card:not(.oback)`).length === 0, sonPid);
-    await closeDialog(son);
     const pickA = sonHand8[1], pickB = sonHand8[4];
     for (const name of [pickA, pickB]) {
       await son.locator('#myHand .card', { hasText: name }).first().dispatchEvent('contextmenu', { button: 2, clientX: 400, clientY: 600, bubbles: true });
@@ -144,21 +149,25 @@ const mkDeck = who => ({
     // ---- 3. Switch to Mom: Dad stops seeing it, Mom starts. ----
     dlg = await openShare(son);
     await choose(dlg, 'Mom');
+    await dlg.locator('.share-go').click();
     await mom.waitForFunction(p => document.querySelectorAll(`.opp[data-opp="${p}"] .thand .card:not(.oback)`).length === 1, sonPid);
     assert.deepEqual(await shownOf(mom, sonPid), [pickB], 'Mom now sees the picked card');
     await dad.waitForFunction(p => document.querySelectorAll(`.opp[data-opp="${p}"] .thand .card:not(.oback)`).length === 0, sonPid);
     assert.deepEqual(await shownOf(dad, sonPid), [], 'and Dad no longer does');
-    await closeDialog(son);
 
     // ---- 4. Share everything with Mom, then stop. ----
     dlg = await openShare(son);
     await dlg.locator('.share-row', { hasText: 'My whole hand' }).locator('input').check();
+    await dlg.locator('.share-go').click();
     await mom.waitForFunction(p => document.querySelectorAll(`.opp[data-opp="${p}"] .thand .card:not(.oback)`).length === 7, sonPid);
     assert.ok(sonHand8.some(n => sawFrame(mom, n)), 'control: once Son shares with her, Mom\'s browser does receive card names (so the checks above are meaningful)');
+    dlg = await openShare(son);
     await choose(dlg, 'Nobody');
-    await mom.waitForFunction(p => document.querySelectorAll(`.opp[data-opp="${p}"] .thand .card:not(.oback)`).length === 0, sonPid);
+    assert.equal(await dlg.locator('.share-go').innerText(), 'Stop sharing');
     assert.equal(await dlg.locator('input[name="ctShareWhat"]').first().isDisabled(), true, 'with nobody chosen there is nothing to pick');
-    await closeDialog(son);
+    await dlg.locator('.share-go').click();
+    await mom.waitForFunction(p => document.querySelectorAll(`.opp[data-opp="${p}"] .thand .card:not(.oback)`).length === 0, sonPid);
+    await son.locator('.w-share-dialog').waitFor({ state: 'detached' });
     assert.ok(!/showing to/i.test(await son.locator('#handLabel').innerText()), 'the reminder is gone');
     assert.deepEqual(await shownOf(dad, sonPid), []);
 

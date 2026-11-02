@@ -2832,21 +2832,38 @@ function showShareDialog() {
         <label class="share-row"><input type="radio" name="ctShareWhat" value="some"><span><b>Only the cards I pick</b><small>Right-click a card in my hand and choose "Show to …".</small></span></label>
       </fieldset>
       <p class="muted small share-note"></p>
+      <div class="share-actions"><button type="button" class="primary share-go">Start sharing</button></div>
     </div>` });
-  const who = () => dlg.el.querySelector('input[name="ctShareWho"]:checked'), what = () => dlg.el.querySelector('input[name="ctShareWhat"]:checked');
-  const draw = () => {
-    const to = shareTarget();
-    dlg.el.querySelectorAll('input[name="ctShareWho"]').forEach(r => { r.checked = r.value === to; });
-    dlg.el.querySelectorAll('input[name="ctShareWhat"]').forEach(r => { r.checked = !!to && r.value === (m.shareAll ? 'all' : 'some'); r.disabled = !to; });
+  // The choices below are only a draft. Nothing is shared until "Start sharing" is clicked, so picking a player
+  // never exposes the whole hand while you are still deciding between "whole hand" and "only some cards".
+  const who = () => { const r = dlg.el.querySelector('input[name="ctShareWho"]:checked'); return r ? r.value : ''; };
+  const what = () => { const r = dlg.el.querySelector('input[name="ctShareWhat"]:checked'); return r ? r.value : ''; };
+  const btn = dlg.el.querySelector('.share-go');
+  const refresh = () => {
+    const picked = who(), active = shareTarget() || '';
+    dlg.el.querySelectorAll('input[name="ctShareWhat"]').forEach(r => { r.disabled = !picked; });
+    if (!picked) { btn.textContent = active ? 'Stop sharing' : 'Close'; btn.disabled = false; }
+    else {
+      const same = picked === active && what() === (m.shareAll ? 'all' : 'some');
+      btn.textContent = active ? 'Apply changes' : 'Start sharing';
+      btn.disabled = !what() || same;
+    }
     dlg.el.querySelector('.share-note').textContent = (m.revealHand ? 'Your whole hand is already revealed to everyone, so this changes nothing right now. ' : '')
       + 'Only that player sees these cards. Everyone can see in the log that you are showing them something, but not which cards.';
   };
-  dlg.el.addEventListener('change', e => {
-    if (e.target.name === 'ctShareWho') setShare(who() ? who().value : '', what() ? what().value === 'all' : !!(!m.shareTo || m.shareAll));
-    else if (e.target.name === 'ctShareWhat') setShare(m.shareTo, e.target.value === 'all');
-    draw();
+  const reset = () => {
+    const to = shareTarget() || '';
+    dlg.el.querySelectorAll('input[name="ctShareWho"]').forEach(r => { r.checked = r.value === to; });
+    dlg.el.querySelectorAll('input[name="ctShareWhat"]').forEach(r => { r.checked = !!to && r.value === (m.shareAll ? 'all' : 'some'); });
+    refresh();
+  };
+  dlg.el.addEventListener('change', refresh);
+  btn.addEventListener('click', () => {
+    if (!who()) { setShare('', false); dlg.close(); return; }
+    setShare(who(), what() === 'all');
+    dlg.close();
   });
-  draw();
+  reset();
 }
 
 function oppCard(pid, iid) {

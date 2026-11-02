@@ -779,6 +779,7 @@ body.lens-on #pv { display: none; }
 .share-row input { margin-top: 3px; }
 .share-row small { display: block; color: var(--muted); line-height: 1.35; margin-top: 2px; }
 .share-note { margin: 0; }
+.share-actions { display: flex; justify-content: flex-end; }
 .ohhand.revealed .ohn::after { content: ' revealed'; font-size: 10px; font-weight: 600; color: var(--accent); text-transform: uppercase; }
 .ohhand.empty .ohn { margin-left: 2px; color: var(--muted); }
 @media (prefers-reduced-motion: reduce) { .ohhand .card { transition: none; } }

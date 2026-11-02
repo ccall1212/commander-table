@@ -257,7 +257,7 @@ For a hovered card, **+ / =** adds a +1/+1 counter and **− / _** adds a −1/�
 
 Want help from a friend, or a parent showing a kid the ropes, without the whole table seeing your cards? Use **☰ → Share my hand with one player…**.
 
-- Pick **who** (one player at a time, or **Nobody** to stop) and **what**: **My whole hand**, or **Only the cards I pick**. With the second choice, right-click a card in your hand and choose **Show to NAME**; shared cards get a small eye mark.
+- Pick **who** (one player at a time, or **Nobody** to stop) and **what**: **My whole hand**, or **Only the cards I pick**, then click **Start sharing**. Nothing is shared until you click it, so you can choose "only the cards I pick" without ever exposing your whole hand. With that choice, right-click a card in your hand and choose **Show to NAME**; shared cards get a small eye mark. To change it later, reopen the dialog and click **Apply changes** (or **Stop sharing**).
 - It is live: cards you draw, play or mulligan are shown or hidden for them automatically. It stops when you choose **Nobody**, pick someone else, or either of you leaves.
 - The chosen player sees your cards face-up in your miniature hand (dashed outline, marked "shared with you") and in the bottom strip when they view your board. Their view is read-only.
 - Everyone else only sees card backs. The game log says that you are showing your hand (or a card) to that player, but never names the card.
