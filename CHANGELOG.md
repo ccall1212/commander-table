@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.61.0] - 2026-11-03
+
+### Added
+- **Use one set for the whole deck.** In **Deck Builder → Use one set…**, pick a set by name or code and every card in the deck that was printed in it switches to that set's artwork. Cards with several versions in the set (like basic lands) get a random version, picked separately for each copy. Cards that are not in the set are left alone, you confirm first, and an **Undo** notice appears afterwards.
+
 ## [0.60.0] - 2026-11-02
 
 ### Added
@@ -255,7 +260,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.60.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.61.0...HEAD
+[0.61.0]: https://github.com/ccall1212/commander-table/compare/v0.60.0...v0.61.0
 [0.60.0]: https://github.com/ccall1212/commander-table/compare/v0.59.0...v0.60.0
 [0.59.0]: https://github.com/ccall1212/commander-table/compare/v0.58.1...v0.59.0
 [0.58.1]: https://github.com/ccall1212/commander-table/compare/v0.58.0...v0.58.1

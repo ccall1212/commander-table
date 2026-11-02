@@ -802,6 +802,98 @@
     return out;
   }
 
+
+  /* ------------------------------------------------------------------ *
+   * One set for the whole deck
+   * ------------------------------------------------------------------ */
+
+  // Every set Scryfall knows that holds real cards (tokens, memorabilia and minigames are left out), newest first.
+  async function fetchSets() {
+    const r = await request(API + '/sets');
+    if (!r.ok) throw new Error(apiErrorMessage(r));
+    return ((r.json && r.json.data) || [])
+      .filter(function (x) { return x && x.code && x.name && ['token', 'memorabilia', 'minigame'].indexOf(x.set_type) === -1; })
+      .map(function (x) { return { code: String(x.code), name: String(x.name), type: String(x.set_type || ''), released: String(x.released_at || ''), count: Number(x.card_count) || 0 }; })
+      .sort(function (a, b) { return a.released < b.released ? 1 : a.released > b.released ? -1 : a.name.localeCompare(b.name); });
+  }
+
+  // Every printing in one set, grouped by lower-case front-face name: Map(name -> [CardDef, ...]).
+  // A set can print the same card several times (basic lands, showcase or extended-art versions).
+  async function fetchSetPrints(code) {
+    const set = String(code || '').toLowerCase();
+    const out = new Map();
+    if (!/^[a-z0-9]{2,6}$/.test(set)) return out;
+    let url = API + '/cards/search?q=' + encodeURIComponent('e:' + set) +
+      '&unique=prints&order=name&include_extras=true&include_variations=true';
+    const seen = new Set();
+    while (url) {
+      const r = await request(url);
+      if (r.status === 404) return out;
+      if (!r.ok) throw new Error(apiErrorMessage(r));
+      ((r.json && r.json.data) || []).forEach(function (c) {
+        if (['art_series', 'token', 'double_faced_token', 'emblem'].indexOf(c.layout) !== -1) return;
+        const d = toDef(c);
+        if (!d.img || seen.has(d.id)) return;
+        seen.add(d.id);
+        const key = frontFace(d.name).toLowerCase();
+        if (!out.has(key)) out.set(key, []);
+        out.get(key).push(d);
+      });
+      url = r.json && r.json.has_more && r.json.next_page ? r.json.next_page : '';
+    }
+    return out;
+  }
+
+  // Give every card of a deck a printing from one set (setMap comes from fetchSetPrints). A card with several versions in
+  // that set gets a random one, chosen separately for each copy, so ten Forests can be ten different Forests. Cards that
+  // are not in the set, and cards that are already from it, stay exactly as they are. Returns new lists; nothing is changed
+  // in place. rand is only a hook for tests.
+  function applySetToDeck(deck, setMap, setCode, rand) {
+    rand = rand || Math.random;
+    const code = String(setCode || '').toLowerCase();
+    const choose = function (list) { return list[Math.min(list.length - 1, Math.floor(rand() * list.length))]; };
+    const keepTokens = function (oldDef, newDef) {
+      return Object.assign({}, newDef, { tokens: (oldDef && oldDef.tokens && oldDef.tokens.length ? oldDef.tokens : newDef.tokens) || [] });
+    };
+    const optionsFor = function (def) { return def && def.name ? setMap.get(frontFace(def.name).toLowerCase()) : null; };
+    const result = { commanders: [], cards: [], changed: 0, already: 0, missing: [], randomChoices: 0 };
+    const missing = new Set();
+    result.commanders = (deck.commanders || []).map(function (def) {
+      if (def && String(def.set || '').toLowerCase() === code) { result.already++; return def; }
+      const opts = optionsFor(def);
+      if (!opts || !opts.length) { missing.add(def && def.name); return def; }
+      if (opts.length > 1) result.randomChoices++;
+      result.changed++;
+      return keepTokens(def, choose(opts));
+    });
+    const merged = new Map(); // def id -> entry, so copies that land on the same printing share one row
+    (deck.cards || []).forEach(function (entry) {
+      const qty = Math.max(0, Math.floor(Number(entry && entry.qty) || 0));
+      const def = entry && entry.def;
+      const opts = optionsFor(def);
+      if (def && String(def.set || '').toLowerCase() === code) {
+        result.already += qty;
+        const same = def.id && merged.get(def.id);
+        if (same) same.qty += qty; else { const row = Object.assign({}, entry); if (def.id) merged.set(def.id, row); result.cards.push(row); }
+        return;
+      }
+      if (!opts || !opts.length || !qty) { if (qty) missing.add(def && def.name); result.cards.push(entry); return; }
+      if (opts.length > 1) result.randomChoices++;
+      const tally = new Map();
+      for (let i = 0; i < qty; i++) { const pick = choose(opts); tally.set(pick.id, { pick: pick, n: (tally.has(pick.id) ? tally.get(pick.id).n : 0) + 1 }); }
+      tally.forEach(function (t) {
+        const prior = merged.get(t.pick.id);
+        if (prior) { prior.qty += t.n; return; }
+        const row = Object.assign({}, entry, { def: keepTokens(def, t.pick), qty: t.n });
+        merged.set(t.pick.id, row);
+        result.cards.push(row);
+      });
+      result.changed += qty;
+    });
+    result.missing = Array.from(missing).filter(Boolean).sort();
+    return result;
+  }
+
   /* ------------------------------------------------------------------ */
 
   window.Deck = {
@@ -812,6 +904,9 @@
     commanderCandidates: commanderCandidates,
     searchTokens: searchTokens,
     fetchPrints: fetchPrints,
+    fetchSets: fetchSets,
+    fetchSetPrints: fetchSetPrints,
+    applySetToDeck: applySetToDeck,
     tokenKey: tokenKey,
     fetchTokenPrints: fetchTokenPrints,
     searchCards: searchCards,
