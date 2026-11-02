@@ -870,21 +870,6 @@ body.lens-on #pv { display: none; }
 .opp.tile .ohead { justify-content: center; gap: 6px; padding: 3px 8px; font-size: 12px; flex-wrap: nowrap; }
 .opp.tile .obf { padding: 0; }
 .boardwrap.tile { background-size: cover; }
-.tlife { position: absolute; left: 6px; top: 4px; z-index: 60; display: flex; align-items: center; gap: 4px; flex-wrap: wrap;
-  max-width: calc(var(--s, 1) * 1000px - 12px); transform: scale(var(--inv, 1)); transform-origin: 0 0; font-size: 12px; }
-.tlife .lifebox { display: inline-flex; align-items: center; gap: 2px; background: rgba(11,14,19,.8); border: 1px solid var(--border); border-radius: 8px; padding: 1px 3px; }
-.tlife .lifeN { min-width: 24px; text-align: center; font-size: 15px; }
-.tlife button { padding: 0 5px; line-height: 16px; font-size: 12px; }
-.tlife .lifebox button.life-adjust {
-  flex-basis: 30px;
-  width: 30px;
-  min-width: 30px;
-  height: 30px;
-  min-height: 30px;
-  padding: 0;
-  font-size: 18px;
-  line-height: 1;
-}
 .tstrip { position: absolute; left: 0; height: 120px; z-index: 5; display: flex; align-items: flex-start; justify-content: space-between;
   padding: 4px 8px 0; background: none; pointer-events: none; }
 .tstrip .card { pointer-events: auto; }
@@ -903,7 +888,12 @@ body.lens-on #pv { display: none; }
 /* the YOU tile only shows a note while I'm looking at my own board: keep it slim so opponents get the height */
 #table.view-side:not(.has-focus) .opp.youtile .obody { display: none; }
 #table.view-side:not(.has-focus) { grid-template-rows: auto repeat(calc(var(--rows, 1) - 1), minmax(0, 1fr)); }
-.tlife { transform: scale(calc(var(--inv, 1) * .85)); flex-wrap: nowrap; }
+/* Life total sits in the tile's name bar, not on the board, so it never hides a card (and arrows can reach every card). */
+.opp.tile .hlife { flex: none; display: inline-flex; align-items: center; }
+.opp.tile .hlife .lifebox { gap: 2px; background: rgba(11,14,19,.8); border: 1px solid var(--border); border-radius: 8px; padding: 0 3px; }
+.opp.tile .hlife .lifeN { min-width: 24px; text-align: center; font-size: 14px; }
+.opp.tile .hlife button { padding: 0 5px; line-height: 16px; font-size: 12px; }
+.opp.tile .hlife .lifebox button.life-adjust { flex-basis: 22px; width: 22px; min-width: 22px; height: 22px; min-height: 22px; padding: 0; font-size: 16px; line-height: 1; }
 
 /* Hovering a tile greys the whole miniature and shows an eye */
 
