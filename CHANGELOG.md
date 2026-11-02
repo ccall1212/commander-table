@@ -6,6 +6,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.58.0] - 2026-11-02
+
+### Added
+- **Share your hand with one player.** From **☰ → Share my hand with one player…** (or right-click a card in your hand → **Show to …**) you can let a single other player see your hand, without showing the rest of the table. Choose **My whole hand** or **Only the cards I pick**. It stays live (new draws, played cards and mulligans follow along) until you pick **Nobody**, you change player, or either of you leaves. The other player sees your cards face-up in your miniature hand (dashed outline, "shared with you") and in the big view. Everyone else only sees card backs, and the log says that you are showing a hand or a card without naming it. Only one player can be chosen at a time.
+
+### Changed
+- Everyone's own hand now reminds you who you are showing it to (`· showing to NAME`).
+
 ## [0.57.0] - 2026-10-30
 
 ### Added
@@ -231,7 +239,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.57.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.58.0...HEAD
+[0.58.0]: https://github.com/ccall1212/commander-table/compare/v0.57.0...v0.58.0
 [0.57.0]: https://github.com/ccall1212/commander-table/compare/v0.56.1...v0.57.0
 [0.56.1]: https://github.com/ccall1212/commander-table/compare/v0.56.0...v0.56.1
 [0.56.0]: https://github.com/ccall1212/commander-table/compare/v0.55.2...v0.56.0
