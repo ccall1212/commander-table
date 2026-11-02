@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.58.1';
+const APP_VERSION = '0.59.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -504,6 +504,7 @@ function hostRecv(msg, from) {
     }
     case 'log': { const e = cleanLog(msg, from); if (e) broadcast({ t: 'log', e }); break; }
     case 'chat': { const e = cleanChatMessage(msg, from); if (e) broadcast({ t: 'chat', e }); break; }
+    case 'rollfx': { const fx = cleanRollFx(msg, from); if (fx) broadcast(fx); break; }
     case 'response': {
       const T = S.table;
       if (!T.started || !T.seats.includes(from) || T.out[from] || msg.deal !== T.openingDeal) return;
@@ -1044,6 +1045,7 @@ function onBroadcast(msg) {
   if (handleClientModeration(msg)) return;
   switch (msg.t) {
     case 'response': showResponseNotice(msg); return; // transient; no save, log or Undo entry
+    case 'rollfx': showRollPopup(msg); return; // transient; the log line is sent separately
     case 'pub': if (msg.p && msg.p.pid) { S.players[msg.p.pid] = msg.p; if (msg.p.pid !== S.pid) checkOrphans(); } break;
     case 'log': S.log.push(msg.e); if (S.log.length > 300) S.log.splice(0, S.log.length - 300); break;
     case 'chat': {
@@ -1235,6 +1237,81 @@ function showResponseNotice(msg) {
     slot.replaceChildren(); responseTimer = null;
   }, 1800);
 }
+// ---- dice, coin and random-player results pop up on screen for everyone (the log line is still written) ----
+const ROLL_DICE = [4, 6, 8, 10, 12, 20, 100];
+let rollPopupTimers = [], seenRollFx = new Set(), rollFxSerial = 0;
+// Host side: only a seated player may send one, and the result must be a real result (no card or hidden information is involved).
+function cleanRollFx(msg, from) {
+  const T = S.table;
+  if (!T || !T.seats.includes(from) || T.out[from]) return null;
+  const fx = { t: 'rollfx', pid: from, name: pname(from), kind: msg.kind, id: uid() + '_' + (++rollFxSerial) };
+  if (msg.kind === 'coin') { if (msg.value !== 'heads' && msg.value !== 'tails') return null; fx.value = msg.value; }
+  else if (msg.kind === 'die') {
+    const sides = Math.floor(Number(msg.sides)), v = Math.floor(Number(msg.value));
+    if (!ROLL_DICE.includes(sides) || !(v >= 1 && v <= sides)) return null;
+    fx.sides = sides; fx.value = v;
+  } else if (msg.kind === 'player') {
+    if (typeof msg.value !== 'string' || !T.seats.includes(msg.value)) return null;
+    fx.value = msg.value; fx.pickedName = pname(msg.value);
+  } else return null;
+  return fx;
+}
+function closeRollPopup() {
+  rollPopupTimers.forEach(t => { clearTimeout(t); clearInterval(t); });
+  rollPopupTimers = [];
+  const old = $('#rollPopup'); if (old) old.remove();
+}
+function showRollPopup(msg) {
+  if (!S.me || !msg || typeof msg.id !== 'string' || msg.id.length > 60 || seenRollFx.has(msg.id)) return;
+  const kind = msg.kind, who = String(msg.name || pname(msg.pid)).slice(0, 40);
+  let finalText, verb, tag, spinFaces = null;
+  if (kind === 'coin' && (msg.value === 'heads' || msg.value === 'tails')) { verb = 'flipped a coin'; finalText = msg.value.toUpperCase(); tag = 'COIN'; }
+  else if (kind === 'die' && ROLL_DICE.includes(msg.sides) && msg.value >= 1 && msg.value <= msg.sides) { verb = `rolled a d${msg.sides}`; finalText = String(msg.value); tag = 'D' + msg.sides; spinFaces = () => String(rnd(msg.sides) + 1); }
+  else if (kind === 'player' && typeof msg.value === 'string' && (S.table || {}).seats && S.table.seats.includes(msg.value)) {
+    verb = 'picked a random player'; finalText = pname(msg.value); tag = 'RANDOM PLAYER';
+    const seats = S.table.seats; spinFaces = () => pname(seats[rnd(seats.length)]);
+  } else return;
+  seenRollFx.add(msg.id);
+  if (seenRollFx.size > 64) seenRollFx.delete(seenRollFx.values().next().value);
+  closeRollPopup();
+  const reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const box = document.createElement('div');
+  box.id = 'rollPopup'; box.className = 'ct-roll-popup ' + (kind === 'coin' ? 'is-coin' : kind === 'die' ? 'is-die' : 'is-player');
+  box.setAttribute('role', 'status'); box.style.setProperty('--ct-roll-color', colorOf(msg.pid));
+  const head = document.createElement('div'); head.className = 'ct-roll-who';
+  const nm = document.createElement('b'); nm.textContent = who; head.append(nm, ' ' + verb);
+  const stage = document.createElement('div'); stage.className = 'ct-roll-stage';
+  const result = document.createElement('div'); result.className = 'ct-roll-result';
+  const label = document.createElement('div'); label.className = 'ct-roll-tag'; label.textContent = tag;
+  let face;
+  if (kind === 'coin') {
+    stage.innerHTML = '<div class="ct-coin"><div class="ct-coin-face ct-coin-heads">H</div><div class="ct-coin-face ct-coin-tails">T</div></div>';
+    face = stage.firstElementChild;
+    face.classList.add(msg.value === 'heads' ? 'land-heads' : 'land-tails');
+  } else { face = document.createElement('div'); face.className = 'ct-roll-face'; stage.appendChild(face); }
+  box.append(head, stage, result, label);
+  box.title = 'Click to dismiss';
+  box.addEventListener('click', closeRollPopup);
+  document.body.appendChild(box);
+  const spinMs = reduceMotion ? 0 : (kind === 'coin' ? 1500 : 1100);
+  const reveal = () => {
+    box.classList.add('revealed');
+    result.textContent = finalText;
+    if (kind !== 'coin') face.textContent = finalText;
+    rollPopupTimers.push(setTimeout(() => { if (box.isConnected) { box.classList.add('is-leaving'); rollPopupTimers.push(setTimeout(closeRollPopup, 240)); } }, 3200));
+  };
+  if (!spinMs) { box.classList.add('no-motion'); reveal(); return; }
+  if (kind === 'coin') box.classList.add('spinning');
+  else {
+    box.classList.add('spinning'); face.textContent = spinFaces();
+    rollPopupTimers.push(setInterval(() => { face.textContent = spinFaces(); }, 70));
+  }
+  rollPopupTimers.push(setTimeout(() => {
+    rollPopupTimers.forEach(t => clearInterval(t));
+    box.classList.remove('spinning'); reveal();
+  }, spinMs));
+}
+function sendRollFx(fx) { toHost(Object.assign({ t: 'rollfx' }, fx)); }
 function turnKey(t) {
   return t && t.started && t.active ? String(t.room || '') + '|' + Math.max(1, num(t.turnSeq, num(t.turn))) + '|' + String(t.active) : null;
 }
@@ -3154,15 +3231,16 @@ function syncColorFlow() {
   if (S.colorFlow && S.role === 'client' && S.table) showColorPicker();
 }
 function diceMenu(x, y) {
-  const roll = (sides) => { const v = rnd(sides) + 1; say(`rolled a d${sides}: ${v}`); };
+  const roll = (sides) => { const v = rnd(sides) + 1; say(`rolled a d${sides}: ${v}`); sendRollFx({ kind: 'die', sides, value: v }); };
   UI.menu(x, y, [
-    { label: 'Flip a coin', onClick: () => say(`flipped a coin: ${rnd(2) ? 'heads' : 'tails'}`) },
+    { label: 'Flip a coin', onClick: () => { const v = rnd(2) ? 'heads' : 'tails'; say(`flipped a coin: ${v}`); sendRollFx({ kind: 'coin', value: v }); } },
     { label: 'Roll d6', onClick: () => roll(6) }, { label: 'Roll d20', onClick: () => roll(20) },
     { label: 'Other dice', sub: [4, 8, 10, 12, 100].map(s => ({ label: `d${s}`, onClick: () => roll(s) })) },
     { sep: true },
     { label: 'Pick a random player', onClick: () => {
       const seats = ((S.table && S.table.seats) || [S.pid]).filter(p => !(S.table && S.table.out[p]));
-      say(`picked a random player: ${pname(seats[rnd(seats.length)])}`);
+      const pick = seats[rnd(seats.length)];
+      say(`picked a random player: ${pname(pick)}`); sendRollFx({ kind: 'player', value: pick });
     } }
   ]);
 }
@@ -4461,7 +4539,7 @@ function drawTargetArrows(time) {
     if (!item) {
       item = document.createElementNS('http://www.w3.org/2000/svg', 'g');
       item.dataset.arrowId = arrow.id; item.classList.add('ct-arrow-item'); item.setAttribute('role', 'button'); item.setAttribute('tabindex', '0');
-      item.innerHTML = '<title></title><defs><marker viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z"/></marker></defs><rect class="ct-arrow-source-outline" rx="5"/><line class="ct-arrow-shadow"/><line class="ct-arrow-line"/><circle class="ct-arrow-player-target" r="7"/><line class="ct-arrow-hit"/><circle class="ct-arrow-source" r="7"/>';
+      item.innerHTML = '<title></title><defs><marker viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z"/></marker></defs><rect class="ct-arrow-source-outline" rx="5"/><rect class="ct-arrow-target-outline" rx="5"/><line class="ct-arrow-shadow"/><line class="ct-arrow-line"/><circle class="ct-arrow-player-target" r="7"/><line class="ct-arrow-hit"/><circle class="ct-arrow-source" r="7"/>';
       const markerId = 'ct-arrow-tip-' + arrow.id;
       item.querySelector('marker').id = markerId;
       item.querySelector('.ct-arrow-line').setAttribute('marker-end', 'url(#' + markerId + ')');
@@ -4477,12 +4555,16 @@ function drawTargetArrows(time) {
       const dot = item.querySelector('.ct-arrow-player-target');
       dot.style.display = arrow.to.kind === 'player' ? '' : 'none';
       dot.setAttribute('cx', coords.x2); dot.setAttribute('cy', coords.y2);
-      const outline = item.querySelector('.ct-arrow-source-outline');
-      outline.style.display = arrow.from.kind === 'card' ? '' : 'none';
-      if (arrow.from.kind === 'card') {
-        outline.setAttribute('x', (a.left - 2).toFixed(1)); outline.setAttribute('y', (a.top - 2).toFixed(1));
-        outline.setAttribute('width', (a.width + 4).toFixed(1)); outline.setAttribute('height', (a.height + 4).toFixed(1));
-      }
+      // Both ends that are cards get an outline in the arrow owner's color. Arrows are drawn oldest to newest, so
+      // when several arrows touch the same card, the most recent arrow's outline is the one on top.
+      const outlineCard = (el, kind, box) => {
+        el.style.display = kind === 'card' ? '' : 'none';
+        if (kind !== 'card') return;
+        el.setAttribute('x', (box.left - 2).toFixed(1)); el.setAttribute('y', (box.top - 2).toFixed(1));
+        el.setAttribute('width', (box.width + 4).toFixed(1)); el.setAttribute('height', (box.height + 4).toFixed(1));
+      };
+      outlineCard(item.querySelector('.ct-arrow-source-outline'), arrow.from.kind, a);
+      outlineCard(item.querySelector('.ct-arrow-target-outline'), arrow.to.kind, b);
       const source = item.querySelector('.ct-arrow-source');
       source.setAttribute('cx', coords.x1.toFixed(1)); source.setAttribute('cy', coords.y1.toFixed(1));
       item.querySelectorAll('line').forEach(el => Object.entries(coords).forEach(([k, v]) => el.setAttribute(k, v.toFixed(1))));
