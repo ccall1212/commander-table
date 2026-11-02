@@ -6,6 +6,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+- Relay: storage for synced deck copies ("sync boxes", up to 8 MB each, encrypted in the browser, expiring after 180 days unused). Nothing in the game uses it yet; the Sync code feature that does is a separate release.
+
 ## [0.59.0] - 2026-11-02
 
 ### Added

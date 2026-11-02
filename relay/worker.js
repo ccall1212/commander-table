@@ -36,7 +36,8 @@ const SPECTATE_MAX_BYTES = 900000;
 // Sync boxes (sync-v1): the browser encrypts a deck collection with a key made from a short code and stores it
 // here under an ID made from the same code. The relay only ever holds that unreadable text.
 const SYNC_ID_RE = /^[a-f0-9]{32}$/;
-const SYNC_MAX_BYTES = 2500000; // size of the stored (encrypted, base64) text: decks plus two uploaded pictures (each up to about 800 KB)
+const SYNC_MAX_BYTES = 8000000; // size of the stored (encrypted, base64) text: decks plus several uploaded pictures (each up to about 800 KB)
+const SYNC_BATCH = 100; // Durable Object storage accepts at most 128 keys per call, so big copies are read, written and deleted in groups
 const SYNC_CHUNK = 60 * 1024;
 const SYNC_TTL_MS = 180 * 24 * 60 * 60 * 1000; // an unused synced copy expires after 180 days
 const SYNC_REPLACED_MS = 30 * 24 * 60 * 60 * 1000; // a replaced code keeps saying "replaced" for 30 days
@@ -185,9 +186,12 @@ export class SyncBox extends DurableObject {
   }
 
   async chunks(meta) {
-    const keys = Array.from({ length: meta.chunks }, (_, i) => "c:" + i);
-    const parts = await this.ctx.storage.get(keys);
-    return keys.map(k => parts.get(k));
+    const keys = Array.from({ length: meta.chunks }, (_, i) => "c:" + i), out = [];
+    for (let i = 0; i < keys.length; i += SYNC_BATCH) {
+      const parts = await this.ctx.storage.get(keys.slice(i, i + SYNC_BATCH));
+      keys.slice(i, i + SYNC_BATCH).forEach(k => out.push(parts.get(k)));
+    }
+    return out;
   }
 
   async read() {
@@ -210,13 +214,18 @@ export class SyncBox extends DurableObject {
     }
     const old = await this.ctx.storage.get("meta");
     if (old && old.replaced) return json({ error: "replaced" }, 410);
-    const entries = {};
     const chunks = Math.ceil(value.ct.length / SYNC_CHUNK);
-    for (let i = 0; i < chunks; i++) entries["c:" + i] = value.ct.slice(i * SYNC_CHUNK, (i + 1) * SYNC_CHUNK);
     const updatedAt = Date.now();
-    await this.ctx.storage.put(entries);
+    for (let start = 0; start < chunks; start += SYNC_BATCH) {
+      const entries = {};
+      for (let i = start; i < Math.min(chunks, start + SYNC_BATCH); i++) entries["c:" + i] = value.ct.slice(i * SYNC_CHUNK, (i + 1) * SYNC_CHUNK);
+      await this.ctx.storage.put(entries);
+    }
     await this.ctx.storage.put("meta", { c: value.c, iv: value.iv, chunks, bytes: value.ct.length, updatedAt });
-    if (old && old.chunks > chunks) await this.ctx.storage.delete(Array.from({ length: old.chunks - chunks }, (_, i) => "c:" + (chunks + i)));
+    if (old && old.chunks > chunks) {
+      const extra = Array.from({ length: old.chunks - chunks }, (_, i) => "c:" + (chunks + i));
+      for (let i = 0; i < extra.length; i += SYNC_BATCH) await this.ctx.storage.delete(extra.slice(i, i + SYNC_BATCH));
+    }
     await this.touch(SYNC_TTL_MS);
     return json({ ok: true, updatedAt, bytes: value.ct.length });
   }
