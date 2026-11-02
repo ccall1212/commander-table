@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.61.0';
+const APP_VERSION = '0.62.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -47,6 +47,57 @@ const ZL = { library: 'library', hand: 'hand', battlefield: 'battlefield', grave
 const PHASES = ['Untap', 'Upkeep', 'Draw', 'Main 1', 'Combat', 'Main 2', 'End'];
 const COLORS = ['#e0a33a', '#4f8cff', '#3fbf7f', '#e5534b', '#a35cff', '#2ec4c4'];
 const CARD_COUNTERS = ['+1/+1', '-1/-1', 'Loyalty', 'Charge', 'Shield', 'Stun', 'Lore', 'Time', 'Oil'];
+
+// Markers that hang beside a card (kept apart from counters): on/off statuses and keyword abilities. Icons are drawn
+// here as simple outline shapes; nothing is fetched. A custom status is saved as "x:Label".
+const CARD_MARKS = [
+  { id: 'goaded', kind: 'status', label: 'Goaded', d: '<circle cx="12" cy="12" r="6"/><path d="M12 2v5M12 17v5M2 12h5M17 12h5"/>' },
+  { id: 'prepared', kind: 'status', label: 'Prepared', d: '<path d="M5 12.5l5 5L19 7"/>' },
+  { id: 'suspected', kind: 'status', label: 'Suspected', d: '<circle cx="10" cy="10" r="6"/><path d="M15 15l6 6"/>' },
+  { id: 'monstrous', kind: 'status', label: 'Monstrous', d: '<path d="M5 20c0-8 4-14 8-16-1 5 1 8 6 8-3 1-5 3-5 8M9 20c0-4 1-6 3-8"/>' },
+  { id: 'renowned', kind: 'status', label: 'Renowned', d: '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>' },
+  { id: 'exerted', kind: 'status', label: 'Exerted', d: '<circle cx="12" cy="12" r="9"/><path d="M12 7v9M8 12l4 4 4-4"/>' },
+  { id: 'saddled', kind: 'status', label: 'Saddled', d: '<path d="M4 15c2-6 6-8 8-8s6 2 8 8H4zM8 15v4M16 15v4"/>' },
+  { id: 'blocked', kind: 'status', label: 'Blocked', d: '<circle cx="12" cy="12" r="9"/><path d="M6 6l12 12"/>' },
+  { id: 'deathtouch', kind: 'ability', label: 'Deathtouch', d: '<path d="M6 11a6 6 0 1 1 12 0v3h-2v3H8v-3H6z"/><circle cx="9.5" cy="11" r="1.2"/><circle cx="14.5" cy="11" r="1.2"/>' },
+  { id: 'defender', kind: 'ability', label: 'Defender', d: '<path d="M6 20V9h2V6h2v3h4V6h2v3h2v11zM10 20v-5h4v5"/>' },
+  { id: 'double strike', kind: 'ability', label: 'Double strike', d: '<path d="M4 6l10 10M8 4H4v4M20 6L10 16M16 4h4v4M5 19l3-3M19 19l-3-3"/>' },
+  { id: 'first strike', kind: 'ability', label: 'First strike', d: '<path d="M5 19L19 5M15 5h4v4M6 15l3 3M4 20l2-2"/>' },
+  { id: 'flying', kind: 'ability', label: 'Flying', d: '<path d="M3 16c5 0 8-3 9-9 1 5 5 8 9 8-3 1-4 4-5 6-1-3-4-4-13-5z"/>' },
+  { id: 'haste', kind: 'ability', label: 'Haste', d: '<path d="M13 3L6 13h5l-1 8 8-11h-5z"/>' },
+  { id: 'hexproof', kind: 'ability', label: 'Hexproof', d: '<path d="M12 3l7 4v10l-7 4-7-4V7z"/><path d="M8 8l8 8"/>' },
+  { id: 'indestructible', kind: 'ability', label: 'Indestructible', d: '<circle cx="12" cy="12" r="9"/><path d="M12 7l5 5-5 5-5-5z"/>' },
+  { id: 'lifelink', kind: 'ability', label: 'Lifelink', d: '<path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/>' },
+  { id: 'menace', kind: 'ability', label: 'Menace', d: '<path d="M5 18l3-10 4 6 4-6 3 10z"/>' },
+  { id: 'reach', kind: 'ability', label: 'Reach', d: '<path d="M7 4c8 3 8 13 0 16M7 12h12M16 9l3 3-3 3"/>' },
+  { id: 'shield', kind: 'ability', label: 'Shield', d: '<path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6z"/>' },
+  { id: 'trample', kind: 'ability', label: 'Trample', d: '<path d="M6 6l6 5 6-5M6 12l6 5 6-5M6 19h12"/>' },
+  { id: 'vigilance', kind: 'ability', label: 'Vigilance', d: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>' }
+];
+const CARD_MARK_BY_ID = Object.fromEntries(CARD_MARKS.map(m => [m.id, m]));
+const MAX_CARD_MARKS = 12;
+const customMarkText = raw => String(raw == null ? '' : raw).replace(/[\u0000-\u001f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 16);
+// Keep only known marker ids and well-formed custom ones, once each, in a steady order (known ones first, in list order).
+function cleanMarks(raw) {
+  if (!Array.isArray(raw)) return [];
+  const known = new Set(), custom = [];
+  raw.slice(0, 40).forEach(v => {
+    if (typeof v !== 'string') return;
+    if (CARD_MARK_BY_ID[v]) known.add(v);
+    else if (v.startsWith('x:')) { const t = customMarkText(v.slice(2)); if (t && !custom.includes('x:' + t)) custom.push('x:' + t); }
+  });
+  return CARD_MARKS.filter(m => known.has(m.id)).map(m => m.id).concat(custom).slice(0, MAX_CARD_MARKS);
+}
+function marksHTML(c) {
+  const list = cleanMarks(c && c.st);
+  if (!list.length) return '';
+  return '<div class="cstat">' + list.map(id => {
+    const m = CARD_MARK_BY_ID[id];
+    if (m) return `<span class="cmark ${m.kind}" title="${esc(m.label)}" role="img" aria-label="${esc(m.label)}"><svg viewBox="0 0 24 24" aria-hidden="true">${m.d}</svg></span>`;
+    const t = id.slice(2);
+    return `<span class="cmark status custom" title="${esc(t)}" role="img" aria-label="${esc(t)}"><b>${esc(Array.from(t).slice(0, 2).join('').toUpperCase())}</b></span>`;
+  }).join('') + '</div>';
+}
 const PLAYER_COUNTERS = ['Energy', 'Experience', 'Rad', 'Tickets'];
 const IMG_OK = u => typeof u === 'string' && u.startsWith('https://cards.scryfall.io/');
 
@@ -371,8 +422,8 @@ let undoClearedOpeningDeal = null;
 // =====================================================================
 function pubCard(c) {
   const pos = { x: c.x, y: c.y, att: c.att || null };
-  if (c.fd) return Object.assign({ iid: c.iid, fd: 1, t: c.t ? 1 : 0, c: c.c, own: c.own, tok: c.tok ? 1 : 0 }, pos);
-  return Object.assign({ iid: c.iid, id: c.id, t: c.t ? 1 : 0, fl: c.fl ? 1 : 0, c: c.c, own: c.own, tok: c.tok ? 1 : 0, cmd: c.cmd ? 1 : 0, cp: c.cp ? 1 : 0,
+  if (c.fd) return Object.assign({ iid: c.iid, fd: 1, t: c.t ? 1 : 0, c: c.c, st: c.st || [], own: c.own, tok: c.tok ? 1 : 0 }, pos);
+  return Object.assign({ iid: c.iid, id: c.id, t: c.t ? 1 : 0, fl: c.fl ? 1 : 0, c: c.c, st: c.st || [], own: c.own, tok: c.tok ? 1 : 0, cmd: c.cmd ? 1 : 0, cp: c.cp ? 1 : 0,
     pb: c.pb || undefined, dp: c.dp || 0, dt: c.dt || 0 }, pos);
 }
 function topIsRevealed(m) {
@@ -897,7 +948,7 @@ function cleanCards(a, n = 400) {
     y: Number.isFinite(+x.y) && x.y !== null ? clamp(Math.round(+x.y), 0, BH_MAX - CH) : undefined,
     att: isObj(x.att) && typeof x.att.p === 'string' && typeof x.att.i === 'string' ? { p: x.att.p.slice(0, 40), i: x.att.i.slice(0, 40) } : null,
     pb: typeof x.pb === 'string' && /^-?\d{1,3}\/-?\d{1,3}$/.test(x.pb) ? x.pb : undefined,
-    dp: clamp(num(x.dp), -999, 999), dt: clamp(num(x.dt), -999, 999)
+    dp: clamp(num(x.dp), -999, 999), dt: clamp(num(x.dt), -999, 999), st: cleanMarks(x.st)
   })) : [];
 }
 const numMap = o => (isObj(o) ? Object.fromEntries(Object.entries(o).slice(0, 40).map(([k, v]) => [String(k).slice(0, 90), num(v)])) : {});
@@ -1140,7 +1191,7 @@ function applyPlayerRequest(req, from) {
     act(() => {
       if (!S.me.defs[d.id]) S.me.defs[d.id] = d;
       if (findCard(c.iid)) return null; // already have it (duplicate message)
-      const card = { iid: c.iid, id: d.id, own: c.own || from, t: zone === 'battlefield' ? !!c.t : false, fl: false, fd: false, c: zone === 'battlefield' ? c.c : {}, tok: !!c.tok, cmd: !!c.cmd, cp: !!c.cp };
+      const card = { iid: c.iid, id: d.id, own: c.own || from, t: zone === 'battlefield' ? !!c.t : false, fl: false, fd: false, c: zone === 'battlefield' ? c.c : {}, st: zone === 'battlefield' ? c.st : [], tok: !!c.tok, cmd: !!c.cmd, cp: !!c.cp };
       if (req.k === 'return' && card.tok && zone !== 'battlefield') return null;
       insertCard(card, zone, zone === 'battlefield' && Number.isFinite(+req.x) && Number.isFinite(+req.y) ? { x: +req.x, y: +req.y } : { pos: req.pos });
       return req.k === 'give'
@@ -1494,7 +1545,7 @@ function moveCard(iid, to, opts = {}) {
   if (from === 'hand' && to !== 'hand') { delete card.rvh; delete card.rvp; }
   let orphans = [];
   if (from === 'battlefield' && to !== 'battlefield') {
-    card.t = false; card.c = {}; card.fl = false; card.pb = undefined; card.dp = 0; card.dt = 0; // a card that leaves forgets everything
+    card.t = false; card.c = {}; card.st = []; card.fl = false; card.pb = undefined; card.dp = 0; card.dt = 0; // a card that leaves forgets everything
     orphans = detachFrom(S.pid, iid);
   }
   if (from === 'battlefield' || from === 'command') { delete card.x; delete card.y; card.att = null; }
@@ -2451,7 +2502,7 @@ function giveControl(iid, to, at) {
     const orphans = f.zone === 'battlefield' ? detachFrom(S.pid, iid) : [];
     if (orphans.length) setTimeout(() => orphanToast(orphans), 0);
     const card = Object.assign({}, f.card); delete card.x; delete card.y; card.att = null;
-    if (f.zone !== 'battlefield') { card.t = false; card.fd = false; card.fl = false; card.c = {}; }
+    if (f.zone !== 'battlefield') { card.t = false; card.fd = false; card.fl = false; card.c = {}; card.st = []; }
     const req = { k: 'give', card, def: Deck.slimDef(d) };
     if (at) { req.x = at.x; req.y = at.y; }
     sendReq(to, req);
@@ -2784,6 +2835,7 @@ function cardMenu(x, y, iid) {
     const counterTargets = S.selected.has(iid) ? [...S.selected] : [iid];
     items.push({ label: counterTargets.length > 1 ? `Counters · ${counterTargets.length} selected` : 'Counters', sub: counterItems(iid, counterTargets) });
     items.push({ label: 'Power / Toughness', sub: ptItems(iid) });
+    items.push({ label: 'Statuses & abilities…', onClick: () => showMarksDialog(iid) });
     items.push({ sep: true });
     items.push({ label: c.fd ? 'Turn face up' : 'Turn face down', hint: CTHotkeys.key('face'), onClick: () => toggleFaceDown(iid) });
     items.push({ label: 'Copy this card', hint: CTHotkeys.key('copy'), disabled: c.fd, onClick: () => copyCard(d, c.fl) });
@@ -2967,6 +3019,57 @@ function oppCardMenu(x, y, pid, iid) {
     { label: 'Copy this card', disabled: !f.def || !!f.c.fd, hint: f.def && !f.c.fd ? CTHotkeys.key('copy') : 'face down', onClick: () => copyCard(f.def, f.c.fl) }
   );
   UI.menu(x, y, items);
+}
+// ---- Statuses & abilities: icons that hang beside a battlefield card you control ----
+function setCardMark(iid, id, on) {
+  const f = findCard(iid);
+  if (!f || f.zone !== 'battlefield' || boardTransferLock) return;
+  act(() => {
+    const next = cleanMarks((f.card.st || []).filter(x => x !== id).concat(on ? [id] : []));
+    if (on && next.length >= MAX_CARD_MARKS && !next.includes(id)) { UI.toast('A card can show up to ' + MAX_CARD_MARKS + ' markers.', { kind: 'warn' }); return; }
+    f.card.st = next;
+  });
+}
+function showMarksDialog(iid) {
+  const f0 = findCard(iid);
+  if (!f0 || f0.zone !== 'battlefield') return;
+  const d = defOf(f0.card);
+  const group = (title, kind) => `<fieldset class="mark-group"><legend>${title}</legend>${CARD_MARKS.filter(m => m.kind === kind).map(m =>
+    `<label class="mark-row"><input type="checkbox" data-mark="${esc(m.id)}"><span class="cmark ${m.kind} static"><svg viewBox="0 0 24 24" aria-hidden="true">${m.d}</svg></span><span>${esc(m.label)}</span></label>`).join('')}</fieldset>`;
+  const dlg = UI.modal({
+    title: 'Statuses & abilities' + (d && !f0.card.fd ? ' — ' + dname(d) : ''), className: 'w-marks-dialog',
+    html: `<div class="marks-dialog"><p class="muted small">Icons that hang beside the card for everyone to see. They are separate from counters.</p>
+      ${group('Statuses', 'status')}${group('Abilities', 'ability')}
+      <fieldset class="mark-group"><legend>Your own</legend><div class="mark-custom-list"></div>
+        <div class="mark-add"><input type="text" class="mark-custom-input" maxlength="16" placeholder="Custom status, e.g. Cursed" aria-label="Custom status name"><button type="button" class="mark-custom-add">Add</button></div></fieldset></div>`
+  });
+  const sync = () => {
+    const f = findCard(iid);
+    const cur = new Set(f && f.zone === 'battlefield' ? cleanMarks(f.card.st) : []);
+    dlg.el.querySelectorAll('input[data-mark]').forEach(i => { i.checked = cur.has(i.dataset.mark); });
+    const list = dlg.el.querySelector('.mark-custom-list');
+    list.replaceChildren();
+    [...cur].filter(x => x.startsWith('x:')).forEach(x => {
+      const row = document.createElement('div'); row.className = 'mark-row';
+      const name = document.createElement('span'); name.textContent = x.slice(2);
+      const rm = document.createElement('button'); rm.type = 'button'; rm.textContent = 'Remove'; rm.dataset.removeMark = x;
+      row.append(name, rm); list.appendChild(row);
+    });
+  };
+  dlg.el.addEventListener('change', e => { if (e.target.dataset.mark) { setCardMark(iid, e.target.dataset.mark, e.target.checked); sync(); } });
+  dlg.el.addEventListener('click', e => {
+    const rm = e.target.closest('[data-remove-mark]');
+    if (rm) { setCardMark(iid, rm.dataset.removeMark, false); sync(); return; }
+    if (e.target.closest('.mark-custom-add')) addCustom();
+  });
+  const input = dlg.el.querySelector('.mark-custom-input');
+  const addCustom = () => {
+    const t = customMarkText(input.value);
+    if (!t) return;
+    setCardMark(iid, 'x:' + t, true); input.value = ''; sync();
+  };
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addCustom(); } });
+  sync();
 }
 function counterItems(iid, targets = [iid]) {
   const f = findCard(iid); const c = (f && f.card.c) || {};
@@ -3535,7 +3638,9 @@ function cardHTML(c, def, o) {
   }
   const extra = (c.cp ? '<span class="tk cp" title="A copy — it disappears when it leaves the battlefield">TOKEN COPY</span>' : c.tok ? '<span class="tk">TOKEN</span>' : '') +
     (c.own && c.own !== o.pid ? `<span class="own" style="--oc:${colorOf(c.own)}" title="Owned by ${esc(pname(c.own))}">${esc(pname(c.own))}</span>` : '');
-  return `<div class="${cls.join(' ')}" data-iid="${esc(c.iid)}" data-pid="${esc(ctrl)}" data-zone="${o.zone}"${o.style ? ` style="${o.style}"` : ''}>${inner}${extra}${pips}${ctrs ? `<div class="ctrs">${ctrs}</div>` : ''}<div class="badges">${badges}</div></div>`;
+  const marks = o.zone === 'battlefield' ? marksHTML(c) : '';
+  if (marks && Number.isFinite(+c.x) && +c.x > BW - CW - 40) cls.push('marks-left'); // near the right edge: hang them on the left instead
+  return `<div class="${cls.join(' ')}" data-iid="${esc(c.iid)}" data-pid="${esc(ctrl)}" data-zone="${o.zone}"${o.style ? ` style="${o.style}"` : ''}>${inner}${extra}${marks}${pips}${ctrs ? `<div class="ctrs">${ctrs}</div>` : ''}<div class="badges">${badges}</div></div>`;
 }
 
 // Every battlefield card on the table, plus which ones are attached to which host.
@@ -5149,7 +5254,7 @@ function giveControlGroup(group, to, at, anchorIid) {
       }
       const card = Object.assign({}, f.card);
       delete card.x; delete card.y; card.att = null;
-      if (f.zone !== 'battlefield') { card.t = false; card.fd = false; card.fl = false; card.c = {}; }
+      if (f.zone !== 'battlefield') { card.t = false; card.fd = false; card.fl = false; card.c = {}; card.st = []; }
       const req = { k: 'give', card, def: Deck.slimDef(def) };
       req.x = clamp(Math.round(at.x + p.x - lead.x), 0, BW - CW);
       req.y = clamp(Math.round(at.y + p.y - lead.y), 0, myBH() - CH);

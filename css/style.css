@@ -1496,3 +1496,22 @@ body.touch-mode #myBar .ctrpanel {
 .set-list { display: grid; gap: 4px; max-height: 40vh; overflow-y: auto; }
 .set-row { text-align: left; padding: 6px 10px; }
 .set-note { margin: 0; min-height: 1.2em; }
+
+/* ---- Statuses & abilities: icons that hang beside a battlefield card (separate from counters) ---- */
+.card .cstat { position: absolute; left: calc(100% + 4px); top: 0; z-index: 30; display: flex; flex-direction: column; flex-wrap: wrap; gap: 3px;
+  max-height: 100%; pointer-events: none; }
+.card.marks-left .cstat { left: auto; right: calc(100% + 4px); flex-wrap: wrap-reverse; }
+.cmark { display: inline-grid; place-items: center; width: calc(var(--cw, 80px) * .22); height: calc(var(--cw, 80px) * .22); min-width: 16px; min-height: 16px; box-sizing: border-box;
+  border-radius: 50%; color: #fff; background: rgba(10,13,19,.86); border: 2px solid rgba(255,255,255,.85); box-shadow: 0 1px 4px rgba(0,0,0,.7); }
+.cmark.status { border-color: #e0a33a; color: #ffe2a0; }
+.cmark svg { width: 70%; height: 70%; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.cmark.custom b { font-size: calc(var(--cw, 80px) * .12); line-height: 1; letter-spacing: -.02em; }
+.card.tapped .cmark { transform: rotate(-90deg); } /* the card is turned sideways; keep the icons upright */
+.ohhand .card .cstat, .focus-hand-cards .card .cstat, .focus-command-cards .card .cstat { display: none; }
+.cmark.static { width: 26px; height: 26px; flex: none; box-shadow: none; }
+.marks-dialog { display: grid; gap: 10px; min-width: 0; max-width: 34em; }
+.mark-group { border: 1px solid var(--line, #2a3242); border-radius: 8px; padding: 6px 12px 10px; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(11em, 1fr)); gap: 6px 14px; min-width: 0; }
+.mark-group legend { padding: 0 6px; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+.mark-row { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.mark-custom-list, .mark-add { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
+.mark-custom-input { flex: 1 1 12em; padding: 5px 8px; }

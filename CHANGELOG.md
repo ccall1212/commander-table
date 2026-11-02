@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.62.0] - 2026-11-03
+
+### Added
+- **Statuses and abilities on cards.** Right-click a battlefield card you control → **Statuses & abilities…** to switch on markers such as Goaded, Prepared, Suspected, Monstrous, Renowned, Exerted, Saddled and Blocked, keyword icons (deathtouch, defender, double strike, first strike, flying, haste, hexproof, indestructible, lifelink, menace, reach, shield, trample, vigilance), or your own custom status. They show as a column of small icons just outside the card's top-right corner for every player, and are kept apart from counters. They disappear when the card leaves the battlefield. Players on older versions will not see them.
+
 ## [0.61.0] - 2026-11-03
 
 ### Added
@@ -260,7 +265,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.61.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.62.0...HEAD
+[0.62.0]: https://github.com/ccall1212/commander-table/compare/v0.61.0...v0.62.0
 [0.61.0]: https://github.com/ccall1212/commander-table/compare/v0.60.0...v0.61.0
 [0.60.0]: https://github.com/ccall1212/commander-table/compare/v0.59.0...v0.60.0
 [0.59.0]: https://github.com/ccall1212/commander-table/compare/v0.58.1...v0.59.0

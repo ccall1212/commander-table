@@ -1,17 +1,21 @@
-# Use one set for the whole deck — v0.61.0 test copy
+# Statuses and abilities on cards — v0.62.0 test copy
 
-To check this copy, extract the ZIP and double-click **index.html**. No terminal or local server is needed. You need an internet connection (it asks Scryfall).
+To check this copy, extract the ZIP and double-click **index.html**. No terminal or local server is needed.
 
-1. Open **Deck Builder** on a saved deck (ideally one with several basic lands and some other cards). At the bottom, click **Use one set…**.
-2. A list of sets appears. Type **Final Fantasy** (or **FIN**): the list narrows. Click the set.
-3. A box asks to confirm and says how many cards will change, how many already are from the set, and which cards are not in the set (those stay as they are). Click **Switch to …**.
-4. The deck's cards should now show that set's artwork. Basic lands with several versions in the set should be a mix of different versions, not all the same one.
-5. Cards that are not in the set (for example an older card) should keep their old artwork.
-6. Right after switching, a notice at the bottom has **Undo**. Click it: the old artwork comes back everywhere.
-7. Try a set that has none of your cards (for example an old set like *Limited Edition Alpha* if you have no old cards): it should just say none of your cards were printed there, and change nothing.
-8. Optional: start a practice game with the deck and check the cards use the new artwork.
+You need two browser windows as two players (your window plus a private/incognito window).
+
+1. Start a game (everyone **Keep 7**, then **Start game**) and put a few cards on the battlefield.
+2. Right-click one of your battlefield cards → **Statuses & abilities…**. A checklist opens with **Statuses**, **Abilities** and **Your own**.
+3. Tick **Goaded** and **Flying**. A column of small round icons should appear just outside the card's top-right corner, not touching the card. Hover an icon: its name shows.
+4. Type a custom status (for example *Cursed*) and click **Add**. A small badge with its first letters appears. Remove it with **Remove**.
+5. In the other player's window the same icons should appear next to that card, on their small copy of your board.
+6. Tick enough to see how the column behaves (more than fit down the card's side should start a second column). Try a card near the right edge of the board: the icons should hang on its left side instead.
+7. Tap the card (T): the icons should stay readable, in a row under the card.
+8. The **Add Counters** area should be unchanged, and counters still show inside the card's top-right corner.
+9. Move the card to the graveyard: the icons go away. Bring it back: it starts with none.
+10. Please judge the look: icon size, whether the drawn icons are recognisable, and whether anything covers something important.
 
 ## Assistant verification
 
-- **Unit tests (Node):** new `test_set_assign` (runs in the automatic checks) covers the set list, reading every page of a set, grouping versions by card, random choice per copy, rows merging per printing, cards missing from the set and cards already in it left alone, and that the saved deck object is not changed until confirmed.
-- **Real browser (Chromium) with a pretend Scryfall:** new `test_set_assign_browser` opens the Deck Builder, filters sets by name and code, checks the "nothing to change" message, the confirmation text, the saved deck and Undo. It does not talk to the real Scryfall, so the real set data (for example how many versions Forest has in Final Fantasy) still needs your check.
+- **Unit tests (Node):** all 23 automatic test files pass.
+- **Real browsers (Chromium, two players):** new `test_card_marks_browser` ticks statuses and abilities and adds a custom one through the checklist, checks the saved order, that icons are outside the card from its top for both players, the names, that tapping keeps them next to the card, that angle brackets in custom names are removed, and that they clear when the card leaves the battlefield. I looked at screenshots. The icons are simple drawings I made, not the game's official symbols; your eyes are needed on how they look. Real touch is not tested.
