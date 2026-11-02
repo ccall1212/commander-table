@@ -1344,6 +1344,7 @@ body.touch-mode #myBar .ctrpanel {
 #ct-target-arrow .ct-arrow-shadow { stroke:#080b10; stroke-width:7; opacity:.85; }
 #ct-target-arrow .ct-arrow-line { stroke:currentColor; stroke-width:3; opacity:.95; }
 #ct-target-arrow .ct-arrow-source-outline { fill:none; stroke:currentColor; stroke-width:2; opacity:.85; pointer-events:none; }
+#ct-target-arrow .ct-arrow-target-outline { fill:none; stroke:currentColor; stroke-width:3; opacity:.95; pointer-events:none; filter:drop-shadow(0 0 4px currentColor); }
 #ct-target-arrow .ct-arrow-source { fill:currentColor; stroke:#080b10; stroke-width:2; pointer-events:none; }
 #ct-arrow-controls { position:fixed; bottom:16px; left:50%; transform:translateX(-50%); z-index:610; display:flex; align-items:center; gap:10px; max-width:calc(100vw - 24px); padding:5px 8px; border:1px solid #566176; border-radius:8px; background:#141a24ee; color:#eef1f6; font-size:13px; }
 #ct-arrow-controls button { min-height:36px; white-space:nowrap; }
@@ -1436,3 +1437,37 @@ body.touch-mode #myBar .ctrpanel {
 #ct-arrow-draft { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 600; pointer-events: none; overflow: visible; }
 #ct-arrow-draft line { stroke: currentColor; stroke-width: 3; stroke-dasharray: 7 4; }
 .ct-arrow-picking #game .boardwrap, .ct-arrow-picking #game [data-phead], .ct-arrow-picking #game .opp.youtile .pname { touch-action: none; }
+
+/* ---- Dice, coin flip and random-player pop-up (everyone sees it; the log line is still written) ---- */
+.ct-roll-popup { position: fixed; left: 50%; top: 22%; transform: translateX(-50%); z-index: 880; min-width: 240px; max-width: min(92vw, 460px);
+  padding: 16px 28px 14px; border-radius: 16px; text-align: center; cursor: pointer; color: #fff;
+  background: rgba(14,18,26,.94); border: 2px solid var(--ct-roll-color, #e0a33a); box-shadow: 0 10px 40px rgba(0,0,0,.65), 0 0 28px color-mix(in srgb, var(--ct-roll-color, #e0a33a) 45%, transparent);
+  animation: ct-roll-in .22s ease-out both; }
+.ct-roll-popup.is-leaving { opacity: 0; transition: opacity .24s; }
+.ct-roll-who { font-size: 15px; color: var(--muted); }
+.ct-roll-who b { color: var(--ct-roll-color, #e0a33a); }
+.ct-roll-stage { height: 120px; display: flex; align-items: center; justify-content: center; perspective: 600px; }
+.ct-roll-face { min-width: 96px; padding: 0 14px; font-size: 54px; font-weight: 900; line-height: 1; color: var(--ct-roll-color, #e0a33a); overflow-wrap: anywhere; }
+.ct-roll-popup.is-die .ct-roll-face { display: grid; place-items: center; width: 100px; height: 100px; padding: 0; border: 3px solid var(--ct-roll-color, #e0a33a); border-radius: 18px; background: rgba(255,255,255,.05); }
+.ct-roll-popup.is-die.spinning .ct-roll-face { animation: ct-die-tumble .55s linear infinite; }
+.ct-roll-popup.is-player .ct-roll-face { font-size: 34px; }
+.ct-roll-popup.is-die.revealed .ct-roll-face { animation: ct-roll-pop .3s ease-out; }
+.ct-roll-result { min-height: 40px; font-size: 32px; font-weight: 900; letter-spacing: .06em; opacity: 0; color: #fff; overflow-wrap: anywhere; }
+.ct-roll-popup.revealed .ct-roll-result { opacity: 1; animation: ct-roll-pop .3s ease-out; }
+.ct-roll-popup.is-die .ct-roll-result { display: none; }
+.ct-roll-tag { font-size: 11px; letter-spacing: .14em; color: var(--muted); }
+.ct-coin { position: relative; width: 100px; height: 100px; transform-style: preserve-3d; }
+.ct-coin-face { position: absolute; inset: 0; display: grid; place-items: center; border-radius: 50%; backface-visibility: hidden; font-size: 44px; font-weight: 900; color: #3a2a05;
+  background: radial-gradient(circle at 35% 30%, #ffe9a6, #e0a33a 70%, #b9801c); border: 4px solid #f6cf6a; box-shadow: inset 0 0 0 4px rgba(120,80,10,.35); }
+.ct-coin-tails { transform: rotateY(180deg); }
+.ct-roll-popup.spinning .ct-coin { animation: ct-coin-flip 1.5s cubic-bezier(.2,.6,.3,1) both; }
+.ct-roll-popup.spinning .ct-coin.land-tails { animation-name: ct-coin-flip-tails; }
+.ct-coin.land-heads { transform: rotateY(0deg); }
+.ct-coin.land-tails { transform: rotateY(180deg); }
+.ct-roll-popup.revealed .ct-coin { animation: none; }
+@keyframes ct-roll-in { from { opacity: 0; transform: translateX(-50%) translateY(-14px) scale(.92); } to { opacity: 1; transform: translateX(-50%); } }
+@keyframes ct-roll-pop { 0% { transform: scale(.7); } 70% { transform: scale(1.12); } 100% { transform: scale(1); } }
+@keyframes ct-die-tumble { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+@keyframes ct-coin-flip { 0% { transform: translateY(0) rotateY(0deg); } 45% { transform: translateY(-38px) rotateY(900deg); } 100% { transform: translateY(0) rotateY(1800deg); } }
+@keyframes ct-coin-flip-tails { 0% { transform: translateY(0) rotateY(0deg); } 45% { transform: translateY(-38px) rotateY(900deg); } 100% { transform: translateY(0) rotateY(1980deg); } }
+@media (prefers-reduced-motion: reduce) { .ct-roll-popup, .ct-roll-popup * { animation: none !important; } }

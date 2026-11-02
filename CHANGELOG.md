@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.59.0] - 2026-11-02
+
+### Added
+- **Dice, coin flips and random player picks now appear on screen for everyone.** A spinning coin lands on HEADS or TAILS, a die tumbles and settles on its number, and a random pick shows the chosen player's name, all in the roller's color. Click it to dismiss; it also disappears by itself. The log still records every result. Players on older versions only see the log line.
+- **Targeting arrows now outline the target card** as well as the starting card, in the color of whoever drew the arrow. With several arrows on one card, the newest arrow's outline is on top.
+
 ## [0.58.1] - 2026-11-02
 
 ### Fixed
@@ -244,7 +250,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.58.1...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.59.0...HEAD
+[0.59.0]: https://github.com/ccall1212/commander-table/compare/v0.58.1...v0.59.0
 [0.58.1]: https://github.com/ccall1212/commander-table/compare/v0.58.0...v0.58.1
 [0.58.0]: https://github.com/ccall1212/commander-table/compare/v0.57.0...v0.58.0
 [0.57.0]: https://github.com/ccall1212/commander-table/compare/v0.56.1...v0.57.0

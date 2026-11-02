@@ -1,16 +1,22 @@
-# Life total moved off the board — v0.58.1 test copy
+# Dice pop-up and arrow target highlight — v0.59.0 test copy
 
 To check this copy, extract the ZIP and double-click **index.html**. No terminal or local server is needed.
 
-You need at least two players (your window plus a private/incognito window). Four is best for Grid view.
+You need two browser windows as two players (your window plus a private/incognito window); three is nicer.
 
-1. **Look.** In both layouts (▥ Sidebar and ▦ Grid), each small board should show the player's name and their life (− 40 + ▾) in the bar above the board. Nothing should sit on top of the board's top-left corner.
-2. **Cards in the corner.** Have a player put a card on the top-left of their board (for example drag one to the Creatures row's far left). On another player's window, the card should be fully visible.
-3. **Arrows.** Use ☰ → **Targeting arrow…** (or right-click a card → **Send arrow to…**) and point at that top-left card on someone else's small board. It should work.
-4. **Life still works.** On another player's small board click − and +; the change should appear for that player. Click the number to type a life total. Click ▾ to open counters and commander damage. Do the same on your own board in Grid.
-5. **Crowding.** In Grid with four players, and in a narrower window, check the name bar still looks tidy (name, TURN/YOU tags, life).
+## Dice, coin and random player
+1. In one window click **🎲 Dice → Flip a coin**. In **both** windows a box should pop up in the middle of the screen with a spinning coin that lands on HEADS or TAILS, with the roller's name and color. It should match the line in the 📜 Log and go away by itself after a few seconds (or when clicked).
+2. Try **Roll d6**, **Roll d20** and **Other dice → d100**. The die should tumble and settle on a number that matches the log.
+3. Try **Pick a random player**. Names should flicker, then settle on one player.
+4. Roll twice quickly: the newer result should replace the older one.
+5. Check it does not get in the way of playing (it does not block clicks outside the box).
+
+## Arrow target highlight
+6. Start the game (everyone **Keep 7**, then **Start game**) and put a card on the battlefield for each player.
+7. Right-click a card on your battlefield → **Send arrow to…**, then click a card on someone else's board (try the small board in the right column and, in ▦ Grid, an opponent's quadrant). The starting card AND the target card should both be outlined in your color, on every player's screen.
+8. Draw a second arrow from another card to the same target: the newest arrow's color should be the one you see on the target.
+9. Remove an arrow (click its line): its outlines should go away.
 
 ## Assistant verification
-
 - **Unit tests (Node):** all 21 automatic test files pass.
-- **Real browsers with a local relay (Chromium, four players):** new `test_life_in_header_browser` checks in Grid and Sidebar at 1366x768 and 1920x1080 that every small board's life total sits in its name bar above the board, fits without overflow, and that −, +, set-life and the counters menu work for an opponent and for me. I also looked at screenshots of both layouts. Real touch and your own hands-on check are still needed.
+- **Real browsers with a local relay (Chromium, two players):** new `test_roll_arrow_browser` rolls a d20, d100, flips a coin and picks a random player and checks the pop-up on both screens matches the logged result, that the host refuses invalid results, that it dismisses, and that an arrow outlines both source and target cards on both screens. I also looked at screenshots. Animation smoothness, sound and real touch still need your eyes.
