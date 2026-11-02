@@ -1,4 +1,4 @@
-# Sync across computers (sync code) — v0.58.0 test copy
+# Sync across computers (sync code) — v0.60.0 test copy
 
 To check this copy, extract the ZIP and double-click **index.html**. No terminal or local server is needed. This needs the updated game server (relay) to be live; the Sync window tells you "Sync isn't available on the game's server yet" if it is not.
 
@@ -17,6 +17,6 @@ You need two "computers". The easiest way is two different browsers (for example
 
 ## Assistant verification
 
-- **Relay (separate change, published first):** `tests/test_sync_worker.cjs` against a local Miniflare copy covers storing and reading across chunks, size and input checks, origin rules, delete, the "replaced" marker, the 60-writes-per-hour limit, and a relay without the feature. The existing relay protocol test (15/15) and room vault test still pass.
+- **Relay (already published, v0.59.0 era, now up to 8 MB per synced copy):** `tests/test_sync_worker.cjs` against a local Miniflare copy covers storing and reading across chunks, size and input checks, origin rules, delete, the "replaced" marker, the 60-writes-per-hour limit, and a relay without the feature. The existing relay protocol test (15/15) and room vault test still pass.
 - **Browser side:** `tests/test_sync.cjs` (runs in the automatic checks) covers the code format and typing, the scrambling (a fresh random start each save, tamper and wrong-code detection, compression), proves a fake server is never sent the code or any readable deck, and covers create, download, upload, new code replaces the old one, delete and the error cases. `tests/test_sync_browser.cjs` runs two real Chromium browsers against a local relay through all of steps 1–8, plus no connection, a server without sync, and a computer with no decks. The existing Deck Builder, saved-data (14 releases), room access and host prompt browser tests still pass.
-- **Not run:** Firefox and Safari, a real iPad/iPhone, and the live relay (it is not deployed with sync until the relay change is published).
+- **Not run:** Firefox and Safari, a real iPad/iPhone, and the live relay (my sandbox cannot reach it; Cloudflare reported the relay build succeeded, so please check the Sync window says it is available).

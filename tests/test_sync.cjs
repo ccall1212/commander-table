@@ -42,7 +42,7 @@ function makeServer() {
     if (method === 'PUT') {
       const b = JSON.parse(opts.body);
       if (b.v !== 1 || !['gzip', 'none'].includes(b.c) || typeof b.iv !== 'string' || typeof b.ct !== 'string' || !b.ct.length) return reply(400, { error: 'Invalid body' });
-      if (b.ct.length > 2500000) return reply(413, { error: 'Too large' }); // the relay's cap
+      if (b.ct.length > 8000000) return reply(413, { error: 'Too large' }); // the relay's cap
       if (box && box.replaced) return reply(410, { error: 'replaced' });
       const updatedAt = Date.now(); boxes.set(id, { c: b.c, iv: b.iv, ct: b.ct, updatedAt });
       return reply(200, { ok: true, updatedAt, bytes: b.ct.length });
@@ -181,7 +181,7 @@ const reset = () => { server.boxes.clear(); server.seen.length = 0; server.down 
   server.status = 500; await reject(S.fetchCollection('K7M4QX9TD'), 'server'); server.status = null;
   const realCreate = CTBackup.create; // a collection too big to sync even after compression
   const randomB64 = n => { let out = ''; while (out.length < n) out += Buffer.from(webcrypto.getRandomValues(new Uint8Array(30000))).toString('base64'); return out.slice(0, n); };
-  const bigNoise = randomB64(3600000); // does not shrink when compressed, so it really is over the 2.5 MB cap
+  const bigNoise = randomB64(9000000); // does not shrink when compressed, so it really is over the 8 MB cap
   CTBackup.create = () => ({ format: 'commander-table-collection', version: 1, decks: [], preferences: { big: bigNoise } });
   server.seen.length = 0; await reject(S.upload('K7M4QX9TD'), 'too-big'); assert.equal(server.seen.length, 0, 'an over-size copy is refused before anything is sent');
   CTBackup.create = realCreate;
@@ -193,7 +193,7 @@ const reset = () => { server.boxes.clear(); server.seen.length = 0; server.down 
   const withPics = await S.createNew();
   assert.equal(withPics.picturesLeftOut, false, 'two full-size uploaded pictures plus decks fit in the synced copy');
   const boxSize = Array.from(server.boxes.values())[0].ct.length;
-  assert.ok(boxSize > 1000000 && boxSize <= 2500000, 'the synced copy really is large (' + boxSize + ' characters) but within the cap');
+  assert.ok(boxSize > 1000000 && boxSize <= 8000000, 'the synced copy really is large (' + boxSize + ' characters) but within the cap');
   const back = await S.fetchCollection(withPics.code);
   assert.equal(back.preferences['ct.appearance.custom'].cardBack, picA, 'the uploaded card back comes back exactly');
   assert.equal(back.preferences['ct.appearance.custom'].background, picB, 'and so does the uploaded background');
@@ -201,7 +201,7 @@ const reset = () => { server.boxes.clear(); server.seen.length = 0; server.down 
   assert.ok(!JSON.stringify(server.seen).includes('data:image'), 'the server never saw a picture in readable form');
 
   // ---- If everything together is too big, the pictures are left out (and the caller is told), not the decks ----
-  const fitsWithout = () => ({ format: 'commander-table-collection', version: 1, decks: [], preferences: { big: randomB64(1300000), 'ct.appearance.custom': { cardBack: picA, cardBackActive: true, background: picB, backgroundActive: true } } });
+  const fitsWithout = () => ({ format: 'commander-table-collection', version: 1, decks: [], preferences: { big: randomB64(6800000), 'ct.appearance.custom': { cardBack: picA, cardBackActive: true, background: picB, backgroundActive: true } } });
   CTBackup.create = fitsWithout;
   const left = await S.upload('K7M4QX9TD');
   assert.equal(left.picturesLeftOut, true, 'too large with pictures: they are left out and the caller is told');

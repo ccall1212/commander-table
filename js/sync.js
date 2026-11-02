@@ -11,7 +11,7 @@
   const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // the same 32 letters and digits as room codes: no 0, 1, I or O
   const CODE_LENGTH = 9;
   const STATE_KEY = 'ct.sync';
-  const MAX_STORED = 2500000; // the most the relay accepts (encrypted, base64 text): decks plus two uploaded pictures
+  const MAX_STORED = 8000000; // the most the relay accepts (encrypted, base64 text): decks plus the uploaded pictures
   const bytesOf = text => new TextEncoder().encode(text);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const fail = (code, message) => { const e = new Error(message || code); e.code = code; throw e; };
