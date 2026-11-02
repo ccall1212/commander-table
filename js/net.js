@@ -876,6 +876,11 @@
       try { if (current) current.sendTo(pid, msg); } catch (e) { log('sendTo threw', e); }
     },
 
+    // The relay's web address for plain requests (the sync code uses it); '' when only direct connections are configured.
+    relayUrl: function () {
+      try { return netConfig().relayUrl || ''; } catch (e) { return ''; }
+    },
+
     drop: function (pid) {
       try { if (current) current.drop(pid); } catch (e) { log('drop threw', e); }
     },

@@ -1,22 +1,22 @@
-# Dice pop-up and arrow target highlight — v0.59.0 test copy
+# Sync across computers (sync code) — v0.60.0 test copy
 
-To check this copy, extract the ZIP and double-click **index.html**. No terminal or local server is needed.
+To check this copy, extract the ZIP and double-click **index.html**. No terminal or local server is needed. This needs the updated game server (relay) to be live; the Sync window tells you "Sync isn't available on the game's server yet" if it is not.
 
-You need two browser windows as two players (your window plus a private/incognito window); three is nicer.
+You need two "computers". The easiest way is two different browsers (for example Chrome and Edge), or your normal window plus a **private/incognito window**: each keeps its own saved decks, just like a second laptop.
 
-## Dice, coin and random player
-1. In one window click **🎲 Dice → Flip a coin**. In **both** windows a box should pop up in the middle of the screen with a spinning coin that lands on HEADS or TAILS, with the roller's name and color. It should match the line in the 📜 Log and go away by itself after a few seconds (or when clicked).
-2. Try **Roll d6**, **Roll d20** and **Other dice → d100**. The die should tumble and settle on a number that matches the log.
-3. Try **Pick a random player**. Names should flicker, then settle on one player.
-4. Roll twice quickly: the newer result should replace the older one.
-5. Check it does not get in the way of playing (it does not block clicks outside the box).
-
-## Arrow target highlight
-6. Start the game (everyone **Keep 7**, then **Start game**) and put a card on the battlefield for each player.
-7. Right-click a card on your battlefield → **Send arrow to…**, then click a card on someone else's board (try the small board in the right column and, in ▦ Grid, an opponent's quadrant). The starting card AND the target card should both be outlined in your color, on every player's screen.
-8. Draw a second arrow from another card to the same target: the newest arrow's color should be the one you see on the target.
-9. Remove an arrow (click its line): its outlines should go away.
+1. **Make a code (computer 1).** Open the ZIP's `index.html`, make sure you have at least one deck (import one if needed). In **Your look** pick a card back and a background, and use **Upload your own images** to add your own card back and background picture (the game keeps one of each, and the Sync window says so). Pick your deck, open **Deck Builder**, and click **Sync across computers…** (bottom row). Click **Create a sync code**. You should see a code like `K7M-4QX-9TD`. Try **Hide**, **Show** and **Copy**.
+2. **Get the decks on computer 2.** In the other browser or private window, open `index.html`. It has no decks yet. Click **Deck Builder** → **Sync across computers…**, type the code (try lowercase, with or without hyphens), and click **Get my decks**. It should say how many decks will be added. The box about card back, background and display settings should already be ticked here, and should mention your uploaded pictures. Click **Add them and continue**: the page reloads and your decks appear, and **Your look** shows your card back, background and the pictures you uploaded (as **Your upload**). Start a Practice solo game with one of them to make sure it plays normally.
+3. **Remembering.** Close and reopen the Sync window on computer 2: it should already know the code (shown as dots until you click **Show**).
+4. **Upload and download.** On computer 1, change something (for example import another deck), open the Sync window and click **Upload this computer's decks**. On computer 2 click **Download decks from sync**: it should offer the new deck.
+5. **Upload warning.** On computer 2, remove a deck, then click **Upload this computer's decks**. It should warn you that the synced copy has a deck this computer does not have, and let you cancel or replace anyway.
+6. **New code replaces the old.** On computer 2 open **More** → **Make a new code…** and confirm. On computer 1, open the Sync window and click **Download decks from sync**: it should say the code was replaced and ask for the new code. Type the new code to switch.
+7. **Mistakes.** Try a code with a 0, O, 1 or I in it, a too-short code, and a made-up valid-looking code. Each should give a clear message.
+8. **Stop and delete.** Try **Stop syncing on this computer** and **Delete the synced copy…** (under **More**). After deleting, the old code should say no decks were found.
+9. **Pictures on a computer that already has its own look.** On computer 1 choose **Download decks from sync**: the appearance box should NOT be ticked and should say it would replace the current look.
+10. Everything else (Back up / restore, importing decks, Practice solo, hosting and joining) should work as before. Please tell me about anything confusing in the wording, or anything that looks cramped on a phone or tablet.
 
 ## Assistant verification
-- **Unit tests (Node):** all 21 automatic test files pass.
-- **Real browsers with a local relay (Chromium, two players):** new `test_roll_arrow_browser` rolls a d20, d100, flips a coin and picks a random player and checks the pop-up on both screens matches the logged result, that the host refuses invalid results, that it dismisses, and that an arrow outlines both source and target cards on both screens. I also looked at screenshots. Animation smoothness, sound and real touch still need your eyes.
+
+- **Relay (already published, v0.59.0 era, now up to 8 MB per synced copy):** `tests/test_sync_worker.cjs` against a local Miniflare copy covers storing and reading across chunks, size and input checks, origin rules, delete, the "replaced" marker, the 60-writes-per-hour limit, and a relay without the feature. The existing relay protocol test (15/15) and room vault test still pass.
+- **Browser side:** `tests/test_sync.cjs` (runs in the automatic checks) covers the code format and typing, the scrambling (a fresh random start each save, tamper and wrong-code detection, compression), proves a fake server is never sent the code or any readable deck, and covers create, download, upload, new code replaces the old one, delete and the error cases. `tests/test_sync_browser.cjs` runs two real Chromium browsers against a local relay through all of steps 1–8, plus no connection, a server without sync, and a computer with no decks. The existing Deck Builder, saved-data (14 releases), room access and host prompt browser tests still pass.
+- **Not run:** Firefox and Safari, a real iPad/iPhone, and the live relay (my sandbox cannot reach it; Cloudflare reported the relay build succeeded, so please check the Sync window says it is available).

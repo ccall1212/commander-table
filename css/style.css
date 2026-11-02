@@ -615,6 +615,24 @@ body.lens-on #pv { display: none; }
 .display-settings { display: grid; gap: 12px; min-width: 0; }
 .display-setting-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .display-settings small { display: block; color: var(--muted); line-height: 1.35; margin-top: 3px; max-width: 46em; }
+/* Sync across computers dialog. */
+.sync-dialog { display: grid; gap: 14px; min-width: 0; max-width: 34em; }
+.sync-dialog .sync-intro { margin: 0; }
+.sync-block { display: grid; gap: 8px; }
+.sync-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.sync-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.sync-code { font: 600 1.4rem/1.2 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: .12em; padding: 6px 12px; border: 1px solid var(--line, #2a3242); border-radius: 8px; background: rgba(0,0,0,.25); user-select: all; }
+.sync-input { font: 600 1.1rem/1.2 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: .1em; text-transform: uppercase; min-width: 11em; }
+.sync-times, .sync-privacy summary { cursor: default; }
+.sync-privacy { color: var(--muted); }
+.sync-privacy summary { cursor: pointer; }
+.sync-status { min-height: 1.3em; margin: 0; }
+.sync-status[data-kind="error"] { color: var(--danger, #ff7b72); }
+.sync-status[data-kind="ok"] { color: var(--ok, #7ee787); }
+.sync-offer { display: grid; gap: 4px; padding: 10px 12px; border: 1px solid var(--line, #2a3242); border-radius: 8px; background: rgba(255,255,255,.03); }
+.sync-offer p { margin: 4px 0; }
+.sync-more { margin-top: 2px; }
+.sync-more > summary { cursor: pointer; margin-bottom: 8px; }
 /* Host's Room access dialog: lock, ask before joining, blocked names. */
 .room-access { display: grid; gap: 14px; min-width: 0; }
 .room-access-row { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; }
