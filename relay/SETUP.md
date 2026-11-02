@@ -4,7 +4,8 @@ The relay is a tiny Cloudflare Worker (`worker.js`) plus one Durable Object per 
 messages between players and temporarily stores room recovery data and public spectator snapshots.
 You do NOT need Node or npm. Cloudflare
 builds and deploys it from the GitHub repo (Workers Builds), which also applies the Durable Object
-migration in `wrangler.jsonc`.
+migration in `wrangler.jsonc`. The `SYNC` Durable Object (migration `v3`) stores the encrypted deck collections
+behind the game's optional "sync code"; `GET /health` lists `sync-v1` once it is live.
 
 ## Steps
 
