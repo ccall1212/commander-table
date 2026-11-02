@@ -1489,3 +1489,10 @@ body.touch-mode #myBar .ctrpanel {
 @keyframes ct-coin-flip { 0% { transform: translateY(0) rotateY(0deg); } 45% { transform: translateY(-38px) rotateY(900deg); } 100% { transform: translateY(0) rotateY(1800deg); } }
 @keyframes ct-coin-flip-tails { 0% { transform: translateY(0) rotateY(0deg); } 45% { transform: translateY(-38px) rotateY(900deg); } 100% { transform: translateY(0) rotateY(1980deg); } }
 @media (prefers-reduced-motion: reduce) { .ct-roll-popup, .ct-roll-popup * { animation: none !important; } }
+
+/* ---- Deck Builder: use one set for the whole deck ---- */
+.set-assign { display: grid; gap: 10px; min-width: 0; max-width: 34em; }
+.set-filter { width: 100%; box-sizing: border-box; padding: 8px 10px; }
+.set-list { display: grid; gap: 4px; max-height: 40vh; overflow-y: auto; }
+.set-row { text-align: left; padding: 6px 10px; }
+.set-note { margin: 0; min-height: 1.2em; }

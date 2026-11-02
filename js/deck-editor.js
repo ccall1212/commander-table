@@ -278,6 +278,87 @@
       onPick: (newDef, scope) => savePrinting(iid, newDef, scope)
     });
   }
+  // ---- Use one set for the whole deck ----
+  async function openSetAssign() {
+    const deck = currentDeck();
+    if (!deck) return;
+    const loading = UI.toast('Loading the list of sets…', { ms: 4000 });
+    let sets;
+    try { sets = await Deck.fetchSets(); }
+    catch (err) { UI.toast(err && err.message ? err.message : 'Could not load the sets.', { kind: 'error' }); return; }
+    finally { if (loading && typeof loading.close === 'function') loading.close(); }
+    const dlg = UI.modal({
+      title: 'Use one set for the whole deck', className: 'w-set-dialog',
+      html: '<div class="set-assign">' +
+        '<p class="muted small">Pick a set and every card that was printed in it switches to that set\'s artwork. A card with several versions in the set (like basic lands) gets a random one, a different pick for each copy. Cards that are not in the set are left alone.</p>' +
+        '<input type="search" class="set-filter" placeholder="Type a set name or code, for example Final Fantasy or FIN" aria-label="Find a set" autocomplete="off">' +
+        '<div class="set-list" role="listbox" aria-label="Sets"></div><p class="muted small set-note" role="status"></p></div>'
+    });
+    const filter = dlg.el.querySelector('.set-filter'), list = dlg.el.querySelector('.set-list'), note = dlg.el.querySelector('.set-note');
+    let busy = false;
+    const draw = () => {
+      const q = filter.value.trim().toLowerCase();
+      const hits = sets.filter(x => !q || x.name.toLowerCase().includes(q) || x.code.toLowerCase() === q || x.code.toLowerCase().startsWith(q)).slice(0, 60);
+      list.replaceChildren();
+      hits.forEach(x => {
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'set-row'; b.dataset.code = x.code; b.setAttribute('role', 'option');
+        b.textContent = x.name + ' (' + x.code.toUpperCase() + ')' + (x.released ? ' · ' + x.released.slice(0, 4) : '');
+        list.appendChild(b);
+      });
+      note.textContent = hits.length ? (hits.length === 60 ? 'Showing the first 60. Type more to narrow it down.' : '') : 'No set matches that.';
+    };
+    filter.addEventListener('input', draw);
+    list.addEventListener('click', async e => {
+      const row = e.target.closest('.set-row');
+      if (!row || busy) return;
+      const set = sets.find(x => x.code === row.dataset.code);
+      if (!set) return;
+      busy = true; note.textContent = 'Looking up the cards in ' + set.name + '…';
+      try { await assignSet(set, dlg); }
+      catch (err) { note.textContent = err && err.message ? err.message : 'Something went wrong.'; }
+      busy = false;
+    });
+    draw(); filter.focus();
+  }
+  async function assignSet(set, dlg) {
+    const deck = currentDeck();
+    if (!deck) return;
+    const setMap = await Deck.fetchSetPrints(set.code);
+    const plan = Deck.applySetToDeck(deck, setMap, set.code);
+    if (!plan.changed) {
+      dlg.el.querySelector('.set-note').textContent = plan.already
+        ? 'Everything that is in ' + set.name + ' is already from it.'
+        : 'None of the cards in this deck were printed in ' + set.name + '.';
+      return;
+    }
+    const names = plan.missing.slice(0, 8).join(', ') + (plan.missing.length > 8 ? ', and ' + (plan.missing.length - 8) + ' more' : '');
+    const ok = await UI.confirm('Switch ' + plan.changed + ' card' + (plan.changed === 1 ? '' : 's') + ' to ' + set.name + '?'
+      + (plan.already ? ' ' + plan.already + ' already are from it.' : '')
+      + (plan.missing.length ? ' ' + plan.missing.length + ' card' + (plan.missing.length === 1 ? ' is' : 's are') + ' not in this set and stay as they are (' + names + ').' : '')
+      + ' You can undo it right afterwards.', { okLabel: 'Switch to ' + set.name });
+    if (!ok) return;
+    const fresh = currentDeck();
+    if (!fresh) return;
+    const before = { commanders: JSON.parse(JSON.stringify(fresh.commanders || [])), cards: JSON.parse(JSON.stringify(fresh.cards || [])) };
+    const final = Deck.applySetToDeck(fresh, setMap, set.code); // pick the random versions now
+    fresh.commanders = final.commanders; fresh.cards = final.cards;
+    dlg.close();
+    try {
+      Deck.save(fresh); refresh();
+      UI.toast(final.changed + ' card' + (final.changed === 1 ? '' : 's') + ' now use ' + set.name + '.', {
+        ms: 15000,
+        action: { label: 'Undo', onClick: () => {
+          const d = currentDeck();
+          if (!d) return;
+          d.commanders = before.commanders; d.cards = before.cards;
+          saveDeck(d, 'Put the previous printings back.');
+        } }
+      });
+    } catch (err) {
+      UI.toast(err && err.message ? err.message : 'Could not save this deck.', { kind: 'error' });
+    }
+  }
   function addCard(def) {
     const deck = currentDeck();
     if (!deck || !def || !def.id || !def.name) return;
@@ -359,12 +440,13 @@
       ],
       footer: [
         { key: 'add', label: '+ Add card', primary: true },
+        { key: 'set', label: 'Use one set…' },
         { key: 'export', label: 'Export deck' },
         { key: 'backup', label: 'Back up / restore…' },
         { key: 'sync', label: 'Sync across computers…' }
       ],
       onAction: handleAction,
-      onFooter: key => { if (key === 'add') openAddCard(); else if (key === 'export') openExportOptions(); else if (key === 'backup') CTBackup.open(); else if (key === 'sync') CTSync.open(); },
+      onFooter: key => { if (key === 'add') openAddCard(); else if (key === 'set') openSetAssign(); else if (key === 'export') openExportOptions(); else if (key === 'backup') CTBackup.open(); else if (key === 'sync') CTSync.open(); },
       onHover: def => { if (onHover) onHover(def); },
       onClose: () => {
         deckViewer = null;
