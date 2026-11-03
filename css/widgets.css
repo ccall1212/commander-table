@@ -654,10 +654,11 @@ a.w-ci-price:focus-visible { outline: 2px solid var(--accent, #7c9cff); outline-
 }
 .lens-tile .rot, .lens-tile img.rot { transform: rotate(180deg); }
 
-/* Selected card-back art overlays the built-in design; keep the base and emblem visible as fallback. */
-.w-cardback-art { position: absolute; inset: 0; z-index: 0; display: block; border-radius: inherit;
+/* Selected card-back art sits ON TOP of the built-in design. The built-in gold oval emblem stays underneath as the fallback
+   when an image fails to load, so it never tints or draws over the chosen back. */
+.w-cardback-art { position: absolute; inset: 0; z-index: 1; display: block; border-radius: inherit;
   background-color: transparent; background-repeat: no-repeat; background-position: center; background-size: 100% 100%; }
-.w-cardback::before, .w-cardback::after { z-index: 1; }
+.w-cardback::before, .w-cardback::after { z-index: 0; }
 
 
 /* ---------- Deck builder export options ---------- */

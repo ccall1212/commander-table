@@ -1,23 +1,13 @@
-# Statuses and abilities on cards — v0.62.0 test copy
+# Gold circle over the card backs — v0.62.1 test copy
 
 To check this copy, extract the ZIP and double-click **index.html**. No terminal or local server is needed.
 
-You need two browser windows as two players (your window plus a private/incognito window).
-
-1. Start a game (everyone **Keep 7**, then **Start game**) and put a few cards on the battlefield.
-2. Right-click one of your battlefield cards → **Statuses & abilities…**. A checklist opens with **Statuses**, **Abilities** and **Your own**.
-3. Tick **Goaded** and **Flying**. A column of small icons should appear just outside the card's top-right corner, not touching the card. Hover an icon: its name shows.
-4. Type a custom status (for example *Cursed*) and click **Add**. It appears as a small tag across the middle of the card (not in the outside column). Remove it with **Remove**.
-5. In the other player's window the same icons should appear next to that card, on their small copy of your board.
-6. Tick enough to see how the column behaves (more than fit down the card's side should start a second column). Try a card near the right edge of the board: the icons should hang on its left side instead.
-7. Tap the card (T): the icons should stay readable, in a row under the card.
-8. The **Add Counters** area should be unchanged, and counters still show inside the card's top-right corner.
-9. Move the card to the graveyard: the icons go away. Bring it back: it starts with none.
-10. **Hover.** Hover an icon or a word tag: a tooltip explains what it means (for example Flying: can be blocked only by creatures with flying or reach). They should not react to clicks.
-11. **Preview.** Hover the card itself: the big card preview should show the markers enlarged beside it, and none of them should cover the card image, so you can read the card. Try it on your own card and on another player's card.
-12. Please judge the look: icon size (about six fit down the side of a card), whether the icons are recognisable (keywords and Goaded use the open-licensed Mana font drawings; Prepared, Suspected, Monstrous, Renowned, Exerted, Saddled, Blocked and your own custom statuses are word tags), and whether anything covers something important.
+1. Open **Your look** on the opening screen and pick a card back (try one of the dark or colourful ones, and also your uploaded one if you have it).
+2. Host or join a game and look at your **Library** pile, and the face-down hands and libraries of other players in both ▥ Sidebar and ▦ Grid. The back should look exactly like the artwork, with **no gold oval over the middle**.
+3. Put a card face down on the battlefield (Z): same check.
+4. Please compare with the live game if you remember how it looked, and tell me if anything else on a card back still looks off.
 
 ## Assistant verification
 
-- **Unit tests (Node):** all 23 automatic test files pass.
-- **Real browsers (Chromium, two players):** new `test_card_marks_browser` ticks statuses and abilities and adds a custom one through the checklist, checks the saved order, that icons are outside the card from its top for both players, the names, that tapping keeps them next to the card, that angle brackets in custom names are removed, and that they clear when the card leaves the battlefield. I looked at screenshots. Keyword icons are from the Mana font (SIL OFL); the other statuses are word tags. Your eyes are needed on how they look. Real touch is not tested.
+- **Cause:** the built-in card back draws a gold oval emblem with CSS on top of the picture you choose. It is now stacked underneath the picture (it is only the fallback if a picture fails to load).
+- **Real browsers (Chromium, two players):** new `test_cardback_art_browser` checks the stacking on both screens; I confirmed it fails with the old styles and passes with the fix. I looked at a screenshot of the Library: no oval.

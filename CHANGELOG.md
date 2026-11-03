@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.62.1] - 2026-11-03
+
+### Fixed
+- A gold oval from the built-in card back was drawn on top of the card back you chose, tinting the artwork of your Library and face-down cards in the middle. Your chosen back now covers it completely; the built-in design only shows if the picture cannot load.
+
 ## [0.62.0] - 2026-11-03
 
 ### Added
@@ -265,7 +270,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.62.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.62.1...HEAD
+[0.62.1]: https://github.com/ccall1212/commander-table/compare/v0.62.0...v0.62.1
 [0.62.0]: https://github.com/ccall1212/commander-table/compare/v0.61.0...v0.62.0
 [0.61.0]: https://github.com/ccall1212/commander-table/compare/v0.60.0...v0.61.0
 [0.60.0]: https://github.com/ccall1212/commander-table/compare/v0.59.0...v0.60.0
