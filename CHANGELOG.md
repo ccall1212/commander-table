@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.65.0] - 2026-11-04
+
+### Added
+- **Victory screen.** When every player but one has conceded, everyone at the table sees a celebration with a trophy, confetti and the winner's name in their colour. Close it with the button or Esc (it is per player); the host also gets **Start a new game**. Only concessions count, restoring a conceded player takes the screen away, and the log records the win.
+
 ## [0.64.0] - 2026-11-04
 
 ### Added
@@ -289,7 +294,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.64.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.65.0...HEAD
+[0.65.0]: https://github.com/ccall1212/commander-table/compare/v0.64.0...v0.65.0
 [0.64.0]: https://github.com/ccall1212/commander-table/compare/v0.63.0...v0.64.0
 [0.63.0]: https://github.com/ccall1212/commander-table/compare/v0.62.2...v0.63.0
 [0.62.2]: https://github.com/ccall1212/commander-table/compare/v0.62.1...v0.62.2

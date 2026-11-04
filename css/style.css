@@ -1539,3 +1539,21 @@ body.touch-mode #myBar .ctrpanel {
 .cmark.word.temp { border-color: #7fd3ff; border-style: dashed; }
 .card .cstat .cmark, #pv .cstat .cmark { position: relative; }
 .card .badges .pt.temp { box-shadow: 0 0 0 1.5px #7fd3ff; }
+
+/* ---- Victory screen ---- */
+.victory-overlay { position: fixed; inset: 0; z-index: 900; display: grid; place-items: center; padding: 20px; background: radial-gradient(ellipse at center, color-mix(in srgb, var(--vc, #e0a33a) 22%, rgba(5,7,12,.86)), rgba(5,7,12,.9) 70%); animation: victory-in .5s ease-out both; overflow: hidden; }
+.victory-panel { position: relative; z-index: 2; text-align: center; padding: clamp(22px, 4vw, 44px) clamp(26px, 6vw, 70px); border-radius: 20px; background: linear-gradient(160deg, rgba(30,36,48,.96), rgba(14,18,26,.96)); border: 2px solid var(--vc, #e0a33a);
+  box-shadow: 0 0 60px color-mix(in srgb, var(--vc, #e0a33a) 55%, transparent), 0 22px 70px rgba(0,0,0,.6); max-width: min(92vw, 620px); animation: victory-pop .7s cubic-bezier(.2,1.4,.4,1) both; }
+.victory-trophy { font-size: clamp(60px, 11vw, 110px); line-height: 1; animation: victory-bounce 1.4s ease-in-out infinite; filter: drop-shadow(0 6px 14px rgba(0,0,0,.6)); }
+.victory-title { margin: 6px 0 2px; font-size: clamp(38px, 8vw, 78px); font-weight: 900; letter-spacing: .14em; background: linear-gradient(180deg, #fff6d0, var(--vc, #e0a33a) 70%); -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: none; }
+.victory-name { font-size: clamp(20px, 3.4vw, 32px); font-weight: 800; color: #fff; overflow-wrap: anywhere; }
+.victory-sub { margin-top: 8px; color: var(--muted); font-size: 14px; overflow-wrap: anywhere; }
+.victory-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 22px; }
+.victory-actions button { min-height: 40px; padding: 0 18px; }
+.victory-confetti { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+.victory-confetti i { position: absolute; top: -24px; display: block; border-radius: 2px; opacity: .95; animation-name: victory-fall; animation-timing-function: linear; animation-iteration-count: infinite; }
+@keyframes victory-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes victory-pop { 0% { transform: scale(.6); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes victory-bounce { 0%, 100% { transform: translateY(0) rotate(-4deg); } 50% { transform: translateY(-12px) rotate(4deg); } }
+@keyframes victory-fall { 0% { transform: translate(0, -30px) rotate(0deg); } 100% { transform: translate(var(--sway, 0px), 110vh) rotate(var(--spin, 540deg)); } }
+@media (prefers-reduced-motion: reduce) { .victory-overlay, .victory-panel, .victory-trophy { animation: none; } }

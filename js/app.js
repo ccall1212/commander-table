@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.64.0';
+const APP_VERSION = '0.65.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -871,6 +871,7 @@ function tableOp(op, from) {
       const wasActive = T.started && T.active === from;
       T.out[from] = true;
       sysLog(`${pname(from)} conceded the game.`);
+      { const w = victoryWinner(T); if (w) sysLog(`🏆 ${pname(w)} wins the game!`); }
       if (wasActive) {
         const live = T.order.filter(p => !T.out[p]);
         if (!live.length) {
@@ -1150,7 +1151,7 @@ function onBroadcast(msg) {
     case 'placefx':
       if (typeof msg.pid === 'string' && typeof msg.iid === 'string' && msg.pid !== S.pid) playCardPlaceSound();
       break;
-    case 'table': S.table = cleanTable(msg.table); clearTempOnTurnChange(S.table); applyCommittedHandoff(); if (handleRemovedSeat()) return; syncColorFlow(); reconcileOpeningDeal(S.table); handleTurnNoticeUpdate(S.table); afterTable(); break;
+    case 'table': S.table = cleanTable(msg.table); clearTempOnTurnChange(S.table); handleVictoryUpdate(S.table); applyCommittedHandoff(); if (handleRemovedSeat()) return; syncColorFlow(); reconcileOpeningDeal(S.table); handleTurnNoticeUpdate(S.table); afterTable(); break;
     case 'colorerror': if (msg.pid === S.pid) {
       S.colorRequestPending = false;
       const reason = msg.reason === 'full' ? 'This room has no open color slots.' : 'That color was just taken. Choose another available color.';
@@ -1388,6 +1389,64 @@ function showRollPopup(msg) {
   }, spinMs));
 }
 function sendRollFx(fx) { toHost(Object.assign({ t: 'rollfx' }, fx)); }
+// ---- Victory screen: shown to everyone when only one player is left after the others conceded ----
+let victoryRoom = null, lastVictoryWinner = null;
+function victoryWinner(T) {
+  if (!T || !T.started || !Array.isArray(T.seats) || T.seats.length < 2) return null;
+  const live = T.seats.filter(p => !T.out[p]);
+  return live.length === 1 && T.seats.some(p => T.out[p]) ? live[0] : null; // only concessions count
+}
+function handleVictoryUpdate(T) {
+  const w = victoryWinner(T);
+  if (!T || victoryRoom !== T.room) { victoryRoom = T ? T.room : null; lastVictoryWinner = w; return; } // first look at a room: no celebration for an old result
+  if (w === lastVictoryWinner) return;
+  lastVictoryWinner = w;
+  if (w) showVictory(w); else closeVictory();
+}
+function closeVictory() {
+  const o = $('#victoryOverlay');
+  if (o) { o.remove(); document.removeEventListener('keydown', victoryKey, true); }
+}
+function victoryKey(e) { if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); closeVictory(); } }
+function showVictory(pid) {
+  if (!S.me || S.role === 'spectator') return;
+  closeVictory();
+  const me = pid === S.pid, color = colorOf(pid), reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const o = document.createElement('div');
+  o.id = 'victoryOverlay'; o.className = 'victory-overlay'; o.setAttribute('role', 'dialog'); o.setAttribute('aria-modal', 'true'); o.setAttribute('aria-label', 'Victory');
+  o.style.setProperty('--vc', color);
+  const panel = document.createElement('div'); panel.className = 'victory-panel';
+  const trophy = document.createElement('div'); trophy.className = 'victory-trophy'; trophy.textContent = '🏆'; trophy.setAttribute('aria-hidden', 'true');
+  const title = document.createElement('h2'); title.className = 'victory-title'; title.textContent = 'VICTORY';
+  const who = document.createElement('div'); who.className = 'victory-name'; who.textContent = me ? 'You are the last one standing!' : pname(pid) + ' wins!';
+  const sub = document.createElement('div'); sub.className = 'victory-sub';
+  const others = S.table.seats.filter(p => p !== pid).map(pname);
+  sub.textContent = others.length ? 'Everyone else conceded: ' + others.join(', ') : '';
+  const row = document.createElement('div'); row.className = 'victory-actions';
+  const close = document.createElement('button'); close.type = 'button'; close.className = 'primary'; close.textContent = 'Close';
+  close.addEventListener('click', closeVictory);
+  row.appendChild(close);
+  if (S.role === 'host' || S.role === 'solo') {
+    const again = document.createElement('button'); again.type = 'button'; again.textContent = 'Start a new game';
+    again.addEventListener('click', async () => { if (await UI.confirm('Start a new game? Everyone reshuffles and receives a new opening hand.', { okLabel: 'New game' })) { closeVictory(); toHost({ t: 'op', op: { k: 'newgame' } }); } });
+    row.appendChild(again);
+  }
+  panel.append(trophy, title, who, sub, row);
+  o.appendChild(panel);
+  if (!reduce) {
+    const palette = [color, '#ffd36b', '#ffffff', '#7fd3ff', '#ff8fb1', '#9be28f'];
+    const box = document.createElement('div'); box.className = 'victory-confetti'; box.setAttribute('aria-hidden', 'true');
+    for (let i = 0; i < 90; i++) {
+      const c = document.createElement('i');
+      c.style.cssText = `left:${(Math.random() * 100).toFixed(1)}%;background:${palette[i % palette.length]};animation-delay:${(Math.random() * 2.6).toFixed(2)}s;animation-duration:${(3 + Math.random() * 3).toFixed(2)}s;--sway:${Math.round(Math.random() * 120 - 60)}px;--spin:${Math.round(360 + Math.random() * 720)}deg;width:${6 + Math.round(Math.random() * 6)}px;height:${8 + Math.round(Math.random() * 10)}px`;
+      box.appendChild(c);
+    }
+    o.appendChild(box);
+  }
+  document.body.appendChild(o);
+  document.addEventListener('keydown', victoryKey, true);
+  close.focus();
+}
 function turnKey(t) {
   return t && t.started && t.active ? String(t.room || '') + '|' + Math.max(1, num(t.turnSeq, num(t.turn))) + '|' + String(t.active) : null;
 }
