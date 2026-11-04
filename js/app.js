@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.65.0';
+const APP_VERSION = '0.65.1';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -3580,7 +3580,7 @@ function mainMenu(x, y) {
     { label: 'Discard at random', onClick: discardRandom },
     { sep: true },
     { label: 'Concede game…', danger: true, onClick: async () => {
-      if (await UI.confirm('Concede this game? You will be marked as out and skipped in turn order.', { title: 'Concede game', danger: true, okLabel: 'Concede' })) concedeGame();
+      if (await UI.confirm('Concede this game? You will be marked as out and skipped in turn order, and everything in your hand and on your battlefield goes to your graveyard.', { title: 'Concede game', danger: true, okLabel: 'Concede' })) concedeGame();
     } },
     { sep: true }
   ];
@@ -5659,6 +5659,12 @@ function askConcede(message, title) {
 function concedeGame() {
   const T = S.table;
   if (!T || !T.started || !T.seats.includes(S.pid) || (T.out && T.out[S.pid])) return;
+  // Conceding sends everything in your hand and on your battlefield to your graveyard (tokens and copies simply disappear).
+  // Your library, exile and command zone stay as they are.
+  if (S.me && !boardTransferLock) {
+    const ids = S.me.zones.battlefield.concat(S.me.zones.hand).map(c => c.iid);
+    if (ids.length) act(() => { ids.forEach(i => { if (findCard(i)) moveCard(i, 'graveyard'); }); return ['conceded: their hand and battlefield went to the graveyard']; }, { label: 'Conceded' });
+  }
   toHost({ t: 'op', op: { k: 'concede' } });
 }
 async function passTurn() {

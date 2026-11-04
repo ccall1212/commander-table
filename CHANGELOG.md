@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.65.1] - 2026-11-05
+
+### Changed
+- **Conceding now sends your hand and battlefield to your graveyard.** Tokens and copies disappear; your library, exile and command zone stay as they are. The concede box says so.
+
 ## [0.65.0] - 2026-11-04
 
 ### Added
@@ -295,7 +300,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.65.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.65.1...HEAD
+[0.65.1]: https://github.com/ccall1212/commander-table/compare/v0.65.0...v0.65.1
 [0.65.0]: https://github.com/ccall1212/commander-table/compare/v0.64.0...v0.65.0
 [0.64.0]: https://github.com/ccall1212/commander-table/compare/v0.63.0...v0.64.0
 [0.63.0]: https://github.com/ccall1212/commander-table/compare/v0.62.2...v0.63.0

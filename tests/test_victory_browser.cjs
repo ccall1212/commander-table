@@ -63,7 +63,7 @@ const mkDeck = who => ({
     const son = await joinGame('Son', room, 'red');
     const mom = await joinGame('Mom', room, 'blue');
     await dad.waitForFunction(() => CT.S.table.seats.length === 3);
-    const dadPid = await pidOf(dad), momPid = await pidOf(mom);
+    const dadPid = await pidOf(dad), momPid = await pidOf(mom), sonPidEarly = await pidOf(son);
     for (const pg of [dad, son, mom]) await pg.locator('button[data-a="keep"]').click().catch(() => {});
     await dad.locator('button[data-a="start"]:not([disabled])').click();
     await son.waitForFunction(() => CT.S.table && CT.S.table.started, null, { timeout: 60000 });
@@ -75,7 +75,17 @@ const mkDeck = who => ({
     };
     const overlay = pg => pg.locator('#victoryOverlay');
 
+    // Son puts two cards on the battlefield first; conceding must send his whole hand and battlefield to the graveyard.
+    for (let i = 0; i < 2; i++) { const c = son.locator('#myHand .card').first(); await c.hover(); await son.keyboard.press('b'); await son.waitForFunction(n => CT.S.me.zones.battlefield.length === n, i + 1); }
+    await son.mouse.move(5, 5);
+    const zonesBefore = await son.evaluate(() => ({ lib: CT.S.me.zones.library.length, ex: CT.S.me.zones.exile.length, cmd: CT.S.me.zones.command.length, hand: CT.S.me.zones.hand.length, bf: CT.S.me.zones.battlefield.length }));
+    assert.equal(zonesBefore.bf, 2);
     await concede(son);
+    await son.waitForFunction(() => CT.S.me.zones.hand.length === 0 && CT.S.me.zones.battlefield.length === 0);
+    const zonesAfter = await son.evaluate(() => ({ lib: CT.S.me.zones.library.length, ex: CT.S.me.zones.exile.length, cmd: CT.S.me.zones.command.length, gy: CT.S.me.zones.graveyard.length }));
+    assert.equal(zonesAfter.gy, zonesBefore.hand + zonesBefore.bf, 'every card from the hand and battlefield is now in the graveyard');
+    assert.deepEqual([zonesAfter.lib, zonesAfter.ex, zonesAfter.cmd], [zonesBefore.lib, zonesBefore.ex, zonesBefore.cmd], 'library, exile and command zone are untouched');
+    await dad.waitForFunction(p => { const z = CT.S.players[p].zones; return (z.graveyard || []).length === 7 && (z.battlefield || []).length === 0; }, sonPidEarly);
     await dad.waitForFunction(() => CT.S.table.out && Object.keys(CT.S.table.out).length === 1);
     await dad.waitForTimeout(800);
     for (const pg of [dad, son, mom]) assert.equal(await overlay(pg).count(), 0, 'no victory while two players are still in');

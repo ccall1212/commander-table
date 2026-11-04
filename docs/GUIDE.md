@@ -68,7 +68,7 @@ To keep the same decks on more than one computer without exporting and importing
 - Supports 2 to 4 players comfortably, and the table seats up to 6. It's designed for 1v1 up to 4-player Commander.
 - When a Commander is played from the command zone, a punchy boom-crack Commander slam-and-glow effect highlights the play in its color identity, while ordinary card placements and battlefield repositioning use a softer tap sound. Two-color Commanders split the ring into top/bottom halves; three- to five-color identities use distinct radial segments. Players with reduced-motion preferences see a brief static color flash instead of movement.
 - Want to practice alone? Click **Practice solo**.
-- To concede, ☰ → **Concede game…** marks you out and skips you in turn order. If it was your turn, play passes to the next player.
+- To concede, ☰ → **Concede game…** marks you out and skips you in turn order, and **everything in your hand and on your battlefield goes to your graveyard** (tokens and copies disappear; your library, exile and command zone stay as they are). If it was your turn, play passes to the next player.
 
 ## iPad and touch controls
 
