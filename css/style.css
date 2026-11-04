@@ -1558,12 +1558,10 @@ body.touch-mode #myBar .ctrpanel {
 @keyframes victory-fall { 0% { transform: translate(0, -30px) rotate(0deg); } 100% { transform: translate(var(--sway, 0px), 110vh) rotate(var(--spin, 540deg)); } }
 @media (prefers-reduced-motion: reduce) { .victory-overlay, .victory-panel, .victory-trophy { animation: none; } }
 
-/* ---- Death screens: a player who conceded sees their own board go dark under a skull and crossbones, and so does everyone else's view of that player's board ---- */
+/* ---- Death screens: a player who conceded has their own board darkened under a skull and crossbones, and so does everyone else's view of that player's board. The rest of the table stays normal so the player can keep watching. ---- */
 .opp.out { opacity: 1; }
 .opp.out .boardwrap, .opp.out .tstrip { filter: grayscale(.9) brightness(.45); }
 .opp.out .obf { position: relative; }
 .opp.out .obf::after, #myBf.defeated::after, .opp.mytile.out .obf::after { content: ''; position: absolute; inset: 0; z-index: 70; pointer-events: none;
   background: radial-gradient(ellipse at center, rgba(0,0,0,.2), rgba(0,0,0,.55)) , url("../assets/death-skull.png") center / min(48%, 240px) no-repeat; opacity: .92; }
-body.me-out #table { filter: grayscale(.55) brightness(.7); transition: filter .8s ease; }
 body.me-out #myBf .board { filter: grayscale(.9) brightness(.45); }
-body.me-out #myBf.defeated::after, body.me-out .opp.mytile.out .obf::after { filter: brightness(1.45); } /* the page is dimmed around it; keep the skull bright */

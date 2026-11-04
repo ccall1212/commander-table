@@ -85,6 +85,11 @@ const mkDeck = who => ({
     const skull = (pg, sel) => pg.evaluate(q => { const el = document.querySelector(q); return !!el && getComputedStyle(el, '::after').backgroundImage.includes('death-skull.png'); }, sel);
     assert.equal(await skull(son, '#myBf.defeated'), true, 'Son sees a skull and crossbones over his own board');
     assert.equal(await dad.evaluate(() => document.body.classList.contains('me-out')), false, 'players still in the game are not darkened');
+    // The player who conceded can keep watching: only their own board is dark, the other players' boards are shown normally.
+    assert.equal(await son.evaluate(() => getComputedStyle(document.querySelector('#table')).filter), 'none', 'the rest of the screen is not darkened');
+    const dim = await son.evaluate(p => [...document.querySelectorAll('.opp.tile')].filter(t => t.dataset.opp !== p).map(t => getComputedStyle(t.querySelector('.boardwrap')).filter), sonPid);
+    assert.ok(dim.length >= 1 && dim.every(f => f === 'none'), 'other players\' boards are not dimmed for the player who conceded: ' + dim);
+    assert.notEqual(await son.evaluate(() => getComputedStyle(document.querySelector('#myBf .board')).filter), 'none', 'but their own board is dark');
     for (const pg of [dad, mom]) {
       await pg.waitForFunction(p => document.querySelector(`.opp.tile[data-opp="${p}"].out`), sonPid);
       assert.equal(await skull(pg, `.opp.tile[data-opp="${sonPid}"].out .obf`), true, 'the others see a skull over the board of the player who conceded');
