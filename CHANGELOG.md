@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.63.0] - 2026-11-04
+
+### Added
+- **Hotkeys act on every selected card.** Select several battlefield cards, hover one of them and press a hotkey: **T** taps or untaps all of them, **Z** face down/up, **F** transform, **G**, **E** and **H** move them, and the counter and power/toughness keys change all of them. **W** then a click sends one arrow from every selected card to the target, so seven attackers can point at one player. Right-click **Tap** and **Send arrows from N cards to…** do the same. Each group action is one Undo step, and a card outside the selection still acts alone.
+
 ## [0.62.2] - 2026-11-04
 
 ### Fixed
@@ -278,7 +283,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.62.2...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.63.0...HEAD
+[0.63.0]: https://github.com/ccall1212/commander-table/compare/v0.62.2...v0.63.0
 [0.62.2]: https://github.com/ccall1212/commander-table/compare/v0.62.1...v0.62.2
 [0.62.1]: https://github.com/ccall1212/commander-table/compare/v0.62.0...v0.62.1
 [0.62.0]: https://github.com/ccall1212/commander-table/compare/v0.61.0...v0.62.0
