@@ -8,6 +8,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [0.62.2] - 2026-11-04
 
+### Fixed
+- **Targeting arrows could not be aimed at opponents' small boards.** Pressing the mouse button redrew the table, which replaced the miniature boards under the pointer, so the browser never delivered the click (your own cards were not affected). The target is now picked when you release the button, and pressing no longer redraws the table. A slightly moving mouse, or an update arriving mid-click, no longer breaks it.
+
 ### Changed
 - **Only the host can pass someone else's turn.** Players can still pass their own turn, but **Pass turn** is greyed out on another player's turn (and Space explains why). The host can still pass for anyone, after a confirmation. The host now also ignores a pass that comes from anyone else.
 

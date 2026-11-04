@@ -4717,7 +4717,8 @@ function bindGame() {
     if (!S.arrowPick || e.target.closest('#ct-arrow-controls')) return;
     e.stopImmediatePropagation();
     if (e.button !== 0) return;
-    doPublish();
+    // No doPublish() here: it redraws the table, which replaces the miniature boards under the pointer, and the browser
+    // then never delivers the click (so arrows could not be aimed at opponents' boards). pickArrowEndpoint() publishes.
     const from = S.arrowPick.from || CTTargeting.endpoint(arrowEndpointAt(e.target), S.players, arrowSeats());
     if (from) arrowDrag = { pointerId: e.pointerId, x: e.clientX, y: e.clientY, from, moved: false };
   }, true);
@@ -4738,7 +4739,18 @@ function bindGame() {
     if (!arrowDrag || e.pointerId !== arrowDrag.pointerId) return;
     const moved = arrowDrag.moved, from = arrowDrag.from;
     clearArrowDrag();
-    if (!moved || !S.arrowPick) return; // a simple click still uses the existing endpoint picker
+    if (!S.arrowPick) return;
+    if (!moved) {
+      // A plain press-and-release picks the target right here instead of waiting for the browser's click event. A click is
+      // never sent when the table redraws between press and release (which swaps the miniature boards under the pointer),
+      // and that made opponents' boards impossible to click. The click that may follow is ignored.
+      if (e.button !== 0) return;
+      const spot = document.elementFromPoint(e.clientX, e.clientY);
+      if (!spot || spot.closest('#ct-arrow-controls, #chatPanel, #chatBtn')) return;
+      suppressArrowClickUntil = Date.now() + 400;
+      pickArrowEndpoint(spot);
+      return;
+    }
     e.preventDefault(); e.stopImmediatePropagation();
     const target = document.elementFromPoint(e.clientX, e.clientY);
     const to = target && CTTargeting.endpoint(arrowEndpointAt(target), S.players, arrowSeats());
