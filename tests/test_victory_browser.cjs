@@ -82,7 +82,7 @@ const mkDeck = who => ({
     // Death screen: the player who conceded sees their own board go dark with a skull, and the others see it on their tile.
     const sonPid = await pidOf(son);
     await son.waitForFunction(() => document.body.classList.contains('me-out') && document.querySelector('#myBf.defeated'));
-    const skull = (pg, sel) => pg.evaluate(q => { const el = document.querySelector(q); return !!el && getComputedStyle(el, '::after').backgroundImage.includes('data:image/svg+xml'); }, sel);
+    const skull = (pg, sel) => pg.evaluate(q => { const el = document.querySelector(q); return !!el && getComputedStyle(el, '::after').backgroundImage.includes('death-skull.png'); }, sel);
     assert.equal(await skull(son, '#myBf.defeated'), true, 'Son sees a skull and crossbones over his own board');
     assert.equal(await dad.evaluate(() => document.body.classList.contains('me-out')), false, 'players still in the game are not darkened');
     for (const pg of [dad, mom]) {
