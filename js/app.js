@@ -3580,7 +3580,8 @@ function mainMenu(x, y) {
     { label: 'Discard at random', onClick: discardRandom },
     { sep: true },
     { label: 'Concede game…', danger: true, onClick: async () => {
-      if (await UI.confirm('Concede this game? You will be marked as out and skipped in turn order, and everything in your hand and on your battlefield goes to your graveyard.', { title: 'Concede game', danger: true, okLabel: 'Concede' })) concedeGame();
+      const r = await showConcedeDialog('Concede this game? You will be marked as out and skipped in turn order.', 'Concede game');
+      if (r.ok) concedeGame(r.clear);
     } },
     { sep: true }
   ];
@@ -4090,7 +4091,7 @@ function cardFace(c, defs, pid = S.pid) {
 
 function renderTop() {
   const T = S.table;
-  { const gone = !!(T && T.started && T.out && T.out[S.pid] && S.role !== 'spectator'); document.body.classList.toggle('me-out', gone); const bf = $('#myBf'); if (bf) bf.classList.toggle('defeated', gone); }
+  { const out = !!(T && T.started && T.out && T.out[S.pid] && S.role !== 'spectator'); if (!out && S.me && S.me.keepBoard) S.me.keepBoard = false; const gone = out && !(S.me && S.me.keepBoard); document.body.classList.toggle('me-out', gone); const bf = $('#myBf'); if (bf) bf.classList.toggle('defeated', gone); }
   const responseBtn = $('#responseBtn');
   if (responseBtn) responseBtn.disabled = !T || !T.started || !T.seats.includes(S.pid) || !!T.out[S.pid]
     || boardTransferLock || (S.role !== 'solo' && S.net.state !== 'online');
@@ -4296,7 +4297,7 @@ function myTileOverlayHTML(bh, bw) {
 function renderMyTile(el, idx) {
   const T = S.table || {}, m = S.me;
   el.classList.toggle('active', T.active === S.pid);
-  el.classList.toggle('out', !!(T.started && T.out && T.out[S.pid]));
+  el.classList.toggle('out', !!(T.started && T.out && T.out[S.pid] && !m.keepBoard));
   setHTML(el.querySelector('.ohead'), `<span class="dot" style="--pc:${colorOf(S.pid)}"></span><span class="pname" data-phead="${esc(S.pid)}" title="Right-click for options">${esc(m.name)}</span>${S.role === 'spectator' ? '' : '<span class="tag you">YOU</span>'}
     ${T.active === S.pid ? '<span class="tag">TURN</span>' : ''}${T.monarch === S.pid ? '<span title="Monarch">👑</span>' : ''}${T.initiative === S.pid ? '<span title="Initiative">🏰</span>' : ''}<span class="hlife">${lifeBoxHTML(S.pid, true)}</span>`);
   el.querySelector('.obf').removeAttribute('style');
@@ -5647,24 +5648,55 @@ function askConcede(message, title) {
   concedePromptOpen = true;
   let result;
   try {
-    result = UI.confirm(message, { title, danger: true, okLabel: 'Concede game' });
+    result = showConcedeDialog(message, title);
   } catch (e) {
     concedePromptOpen = false;
     throw e;
   }
-  Promise.resolve(result).then(ok => {
-    if (ok) concedeGame();
+  Promise.resolve(result).then(r => {
+    if (r && r.ok) concedeGame(r.clear);
   }, () => {}).finally(() => { concedePromptOpen = false; });
 }
-function concedeGame() {
+// Conceding asks one question: "clear my cards too?" (ticked by default). Returns {ok, clear}.
+function showConcedeDialog(message, title) {
+  return new Promise(resolve => {
+    let done = false;
+    const finish = v => { if (done) return; done = true; resolve(v); };
+    const dlg = UI.modal({
+      title: title || 'Concede game', className: 'w-concede-dialog', onClose: () => finish({ ok: false, clear: true }),
+      html: `<div class="concede-box"><p class="w-confirm-text"></p>
+        <label class="concede-clear"><input type="checkbox" checked><span>Also put my cards back: hand, battlefield, graveyard and exile go to my library, my commander to the command zone</span></label>
+        <div class="w-btnrow"><button type="button" class="w-btn" data-concede="no">Cancel</button><button type="button" class="w-btn w-btn-danger" data-concede="yes">Concede game</button></div></div>`
+    });
+    dlg.el.querySelector('.w-confirm-text').textContent = message;
+    dlg.el.addEventListener('click', e => {
+      const b = e.target.closest('[data-concede]'); if (!b) return;
+      const clear = dlg.el.querySelector('input[type="checkbox"]').checked;
+      finish({ ok: b.dataset.concede === 'yes', clear }); dlg.close();
+    });
+    const yes = dlg.el.querySelector('[data-concede="yes"]'); if (yes) yes.focus();
+  });
+}
+// "Clear my cards": everything goes back to the library (which is then shuffled) and commanders to the command zone.
+// Tokens and copies disappear; cards I only control for another player go back to their owner.
+function clearMyCards() {
+  const m = S.me;
+  if (!m || boardTransferLock) return;
+  const foreign = m.zones.battlefield.filter(c => c.own && c.own !== S.pid).map(c => c.iid);
+  if (canEnterBattlefield()) foreign.forEach(iid => { if (findCard(iid)) returnControl(iid); });
+  const ids = ['battlefield', 'hand', 'graveyard', 'exile'].flatMap(z => S.me.zones[z].map(c => c.iid));
+  if (!ids.length) return;
+  act(() => {
+    ids.forEach(iid => { const f = findCard(iid); if (f) moveCard(iid, f.card.cmd ? 'command' : 'library'); });
+    S.me.revealTopOnce = null; shuffle(S.me.zones.library);
+    return ['conceded: all their cards went back to their library and their commander to the command zone'];
+  }, { label: 'Conceded' });
+}
+function concedeGame(clear = true) {
   const T = S.table;
   if (!T || !T.started || !T.seats.includes(S.pid) || (T.out && T.out[S.pid])) return;
-  // Conceding sends everything in your hand and on your battlefield to your graveyard (tokens and copies simply disappear).
-  // Your library, exile and command zone stay as they are.
-  if (S.me && !boardTransferLock) {
-    const ids = S.me.zones.battlefield.concat(S.me.zones.hand).map(c => c.iid);
-    if (ids.length) act(() => { ids.forEach(i => { if (findCard(i)) moveCard(i, 'graveyard'); }); return ['conceded: their hand and battlefield went to the graveyard']; }, { label: 'Conceded' });
-  }
+  if (S.me) S.me.keepBoard = !clear; // a player who keeps their board still sees it normally (it is not darkened for them)
+  if (clear) clearMyCards();
   toHost({ t: 'op', op: { k: 'concede' } });
 }
 async function passTurn() {

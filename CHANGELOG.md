@@ -9,7 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ## [0.65.1] - 2026-11-05
 
 ### Changed
-- **Conceding now sends your hand and battlefield to your graveyard.** Tokens and copies disappear; your library, exile and command zone stay as they are. The concede box says so.
+- **Conceding now puts your cards back.** The concede box has a tick box, **Also put my cards back**, ticked by default: your hand, battlefield, graveyard and exile go back into your (shuffled) library and your commander returns to the command zone. Tokens and copies disappear, and cards you only control go back to their owners. Untick it to keep your cards so you can look through them; the death screen is then not drawn over your own board, while everyone else still sees you marked as out.
 
 ## [0.65.0] - 2026-11-04
 
