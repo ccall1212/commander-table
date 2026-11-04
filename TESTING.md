@@ -1,21 +1,18 @@
-# Temporary effects until end of turn — v0.64.0 test copy
+# Victory screen and death screens — v0.65.0 test copy
 
 To check this copy, extract the ZIP and double-click **index.html**. No terminal or local server is needed.
 
-Best with two players (your window plus a private window). Start a game and put at least four creatures on your battlefield.
+You need at least three players for a proper test (your window as the host plus two private/incognito windows). Two players also works. Everyone **Keep 7**, then the host clicks **Start game**.
 
-1. **+1/+1 on a group.** Drag a box around three cards to select them. Right-click one of them → **Temporary (until end of turn)** → **+1/+1 until end of turn · 3 selected**. All three should show +1/+1 in a **light-blue outlined** badge. A fourth, unselected card should not change.
-2. **Not permanent.** The Power / Toughness menu and counters should not have changed (this is a separate temporary layer).
-3. **A temporary ability.** With the three still selected, right-click one → Temporary → **Statuses & abilities until end of turn…**, tick **Vigilance** (or any ability or status). All three cards should show the icon with a **dashed light-blue outline and a small clock**. The window says these wear off when the turn passes.
-4. **The other player.** In the other window, your cards should show the same temporary +1/+1 and markers.
-5. **Hover.** Hover one of the cards: the big preview should show the markers beside it, with the temporary ones marked.
-6. **End of turn.** Pass the turn (**Pass turn**, or the host passes for someone). All the temporary +1/+1 and temporary markers should vanish on both screens. Anything you added as permanent (for example a normal Flying marker or a permanent power change) should stay.
-7. **Undo.** Ctrl+Z after a group Temporary action should undo it for the whole group in one step.
-8. **Clear early.** Right-click → Temporary → **Clear temporary effects** removes them right away. Moving a card to the graveyard also clears its temporary effects.
-9. The normal **Statuses & abilities…** window should now also work on a whole selection (it says how many cards).
+1. **Death screen.** With three players, one guest opens ☰ → **Concede game…** and confirms. That guest's **own board** should turn dark and grey with a bold black-and-white **skull and crossbones** (a free Pixabay image) over it (try both ▥ Sidebar and ▦ Grid). The rest of their screen, including the other players' boards, should stay normal so they can keep watching. In the other windows, that player's small board should be greyed out with a skull on it and their name marked OUT. No Victory screen yet (two players are still in).
+2. **The win.** The second guest concedes too. **Every** window should show the **Victory** screen: a trophy, confetti, **VICTORY**, the winner's name colour, and who conceded. The winner's window says "You are the last one standing!"; the others say "<name> wins!". The game log says "… wins the game!".
+3. **Closing it.** Click **Close** in one window and press **Esc** in another: each closes only for that player.
+4. **New game.** Only the host's screen has **Start a new game**. (Don't need to click it unless you want a fresh game.)
+5. **Taking it back.** As the host, restore a conceded player (click a player's name → **Restore to game (undo concede)**): the Victory screens and that player's death screen should disappear. Conceding again should show it again.
+6. **Practice game.** Concede-ing in a solo practice game should not show a Victory screen (nobody else is in it).
+7. Please say how the celebration feels: too much, too little, too long?
 
 ## Assistant verification
 
 - **Unit tests (Node):** all 23 automatic test files pass.
-- **Real browsers (Chromium, two players):** new `test_temporary_effects_browser` covers +1/+1 and Vigilance on a selected group through the menus, that a permanent marker is untouched, what the other player sees, one Undo, and that everything temporary disappears when the turn is passed while the permanent marker stays. I looked at a screenshot.
-- **Not tested:** hand-held end-of-turn behaviour with three or more players, and real touch.
+- **Real browsers (Chromium, three players):** new `test_victory_browser` checks that nothing shows while two players remain, that all three see the right text when the second one concedes, host-only new game, Close and Escape, that undoing a concession removes it and a new concession brings it back, and the log line. The test also checks the death screen on the player's own board (Sidebar and Grid) and on everyone else's view of it. I looked at screenshots (the confetti falls after the first moment, so it is not in the still). No sound was added.
