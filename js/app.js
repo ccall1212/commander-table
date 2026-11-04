@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.63.0';
+const APP_VERSION = '0.64.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -92,24 +92,30 @@ function cleanMarks(raw) {
 // A marker with no drawing of its own (most statuses, and any custom one) is shown as its name in a small tag.
 const markSvg = m => m.p ? `<svg viewBox="${m.vb}" class="glyph" aria-hidden="true"><path d="${m.p}"/></svg>` : `<span class="mark-word">${esc(m.label)}</span>`;
 // One marker as HTML. Icons and word tags share the .cmark look; the tip is the hover text (they are hover-only, never clickable).
-function markHTML(id) {
+function markHTML(entry) {
+  const id = typeof entry === 'string' ? entry : entry.id, temp = typeof entry === 'string' ? false : !!entry.temp;
   const m = CARD_MARK_BY_ID[id];
-  const label = m ? m.label : id.slice(2), tip = m ? `${m.label} — ${m.tip}` : `${id.slice(2)} (a marker added by the card's controller)`;
+  const label = m ? m.label : id.slice(2), tip = (m ? `${m.label} — ${m.tip}` : `${id.slice(2)} (a marker added by the card's controller)`) + (temp ? ' · Temporary: ends when the turn passes' : '');
   const word = !m || !m.p;
-  return `<span class="cmark ${m ? m.kind : 'status'}${word ? ' word' : ''}${m ? '' : ' custom'}" title="${esc(tip)}" role="img" aria-label="${esc(label)}">${m ? markSvg(m) : `<span class="mark-word">${esc(label)}</span>`}</span>`;
+  return `<span class="cmark ${m ? m.kind : 'status'}${word ? ' word' : ''}${m ? '' : ' custom'}${temp ? ' temp' : ''}" title="${esc(tip)}" role="img" aria-label="${esc(label + (temp ? ' (temporary)' : ''))}">${m ? markSvg(m) : `<span class="mark-word">${esc(label)}</span>`}</span>`;
 }
-const isWordMark = id => !CARD_MARK_BY_ID[id] || !CARD_MARK_BY_ID[id].p;
+// Everything a card shows: permanent markers first, then temporary ones (those wear off when the turn passes).
+function markEntries(c) {
+  const perm = cleanMarks(c && c.st), temp = cleanMarks(c && c.ts).filter(id => !perm.includes(id));
+  return perm.map(id => ({ id, temp: false })).concat(temp.map(id => ({ id, temp: true }))).slice(0, MAX_CARD_MARKS * 2);
+}
+const isWordMark = e => { const id = typeof e === 'string' ? e : e.id; return !CARD_MARK_BY_ID[id] || !CARD_MARK_BY_ID[id].p; };
 // Icons hang in a column just outside the card; word tags sit across the middle of the card.
 function marksHTML(c) {
-  const list = cleanMarks(c && c.st);
+  const list = markEntries(c);
   if (!list.length) return '';
   const icons = list.filter(id => !isWordMark(id)), words = list.filter(isWordMark);
   return (icons.length ? '<div class="cstat">' + icons.map(markHTML).join('') + '</div>' : '') +
     (words.length ? '<div class="cwords">' + words.map(markHTML).join('') + '</div>' : '');
 }
 // The enlarged copy beside the hover preview: everything sits off the card so the card text stays readable.
-function previewMarksHTML(st) {
-  const list = cleanMarks(st);
+function previewMarksHTML(card) {
+  const list = markEntries(card);
   if (!list.length) return '';
   const icons = list.filter(id => !isWordMark(id)), words = list.filter(isWordMark);
   return '<div class="pv-marks">' + (icons.length ? '<div class="cstat">' + icons.map(markHTML).join('') + '</div>' : '') +
@@ -439,8 +445,8 @@ let undoClearedOpeningDeal = null;
 // =====================================================================
 function pubCard(c) {
   const pos = { x: c.x, y: c.y, att: c.att || null };
-  if (c.fd) return Object.assign({ iid: c.iid, fd: 1, t: c.t ? 1 : 0, c: c.c, st: c.st || [], own: c.own, tok: c.tok ? 1 : 0 }, pos);
-  return Object.assign({ iid: c.iid, id: c.id, t: c.t ? 1 : 0, fl: c.fl ? 1 : 0, c: c.c, st: c.st || [], own: c.own, tok: c.tok ? 1 : 0, cmd: c.cmd ? 1 : 0, cp: c.cp ? 1 : 0,
+  if (c.fd) return Object.assign({ iid: c.iid, fd: 1, t: c.t ? 1 : 0, c: c.c, st: c.st || [], ts: c.ts || [], tp: c.tp || 0, tt: c.tt || 0, own: c.own, tok: c.tok ? 1 : 0 }, pos);
+  return Object.assign({ iid: c.iid, id: c.id, t: c.t ? 1 : 0, fl: c.fl ? 1 : 0, c: c.c, st: c.st || [], ts: c.ts || [], tp: c.tp || 0, tt: c.tt || 0, own: c.own, tok: c.tok ? 1 : 0, cmd: c.cmd ? 1 : 0, cp: c.cp ? 1 : 0,
     pb: c.pb || undefined, dp: c.dp || 0, dt: c.dt || 0 }, pos);
 }
 function topIsRevealed(m) {
@@ -967,7 +973,7 @@ function cleanCards(a, n = 400) {
     y: Number.isFinite(+x.y) && x.y !== null ? clamp(Math.round(+x.y), 0, BH_MAX - CH) : undefined,
     att: isObj(x.att) && typeof x.att.p === 'string' && typeof x.att.i === 'string' ? { p: x.att.p.slice(0, 40), i: x.att.i.slice(0, 40) } : null,
     pb: typeof x.pb === 'string' && /^-?\d{1,3}\/-?\d{1,3}$/.test(x.pb) ? x.pb : undefined,
-    dp: clamp(num(x.dp), -999, 999), dt: clamp(num(x.dt), -999, 999), st: cleanMarks(x.st)
+    dp: clamp(num(x.dp), -999, 999), dt: clamp(num(x.dt), -999, 999), st: cleanMarks(x.st), ts: cleanMarks(x.ts), tp: clamp(num(x.tp), -999, 999), tt: clamp(num(x.tt), -999, 999)
   })) : [];
 }
 const numMap = o => (isObj(o) ? Object.fromEntries(Object.entries(o).slice(0, 40).map(([k, v]) => [String(k).slice(0, 90), num(v)])) : {});
@@ -1144,7 +1150,7 @@ function onBroadcast(msg) {
     case 'placefx':
       if (typeof msg.pid === 'string' && typeof msg.iid === 'string' && msg.pid !== S.pid) playCardPlaceSound();
       break;
-    case 'table': S.table = cleanTable(msg.table); applyCommittedHandoff(); if (handleRemovedSeat()) return; syncColorFlow(); reconcileOpeningDeal(S.table); handleTurnNoticeUpdate(S.table); afterTable(); break;
+    case 'table': S.table = cleanTable(msg.table); clearTempOnTurnChange(S.table); applyCommittedHandoff(); if (handleRemovedSeat()) return; syncColorFlow(); reconcileOpeningDeal(S.table); handleTurnNoticeUpdate(S.table); afterTable(); break;
     case 'colorerror': if (msg.pid === S.pid) {
       S.colorRequestPending = false;
       const reason = msg.reason === 'full' ? 'This room has no open color slots.' : 'That color was just taken. Choose another available color.';
@@ -1210,7 +1216,7 @@ function applyPlayerRequest(req, from) {
     act(() => {
       if (!S.me.defs[d.id]) S.me.defs[d.id] = d;
       if (findCard(c.iid)) return null; // already have it (duplicate message)
-      const card = { iid: c.iid, id: d.id, own: c.own || from, t: zone === 'battlefield' ? !!c.t : false, fl: false, fd: false, c: zone === 'battlefield' ? c.c : {}, st: zone === 'battlefield' ? c.st : [], tok: !!c.tok, cmd: !!c.cmd, cp: !!c.cp };
+      const card = { iid: c.iid, id: d.id, own: c.own || from, t: zone === 'battlefield' ? !!c.t : false, fl: false, fd: false, c: zone === 'battlefield' ? c.c : {}, st: zone === 'battlefield' ? c.st : [], ts: zone === 'battlefield' ? c.ts : [], tp: zone === 'battlefield' ? c.tp : 0, tt: zone === 'battlefield' ? c.tt : 0, tok: !!c.tok, cmd: !!c.cmd, cp: !!c.cp };
       if (req.k === 'return' && card.tok && zone !== 'battlefield') return null;
       insertCard(card, zone, zone === 'battlefield' && Number.isFinite(+req.x) && Number.isFinite(+req.y) ? { x: +req.x, y: +req.y } : { pos: req.pos });
       return req.k === 'give'
@@ -1564,7 +1570,7 @@ function moveCard(iid, to, opts = {}) {
   if (from === 'hand' && to !== 'hand') { delete card.rvh; delete card.rvp; }
   let orphans = [];
   if (from === 'battlefield' && to !== 'battlefield') {
-    card.t = false; card.c = {}; card.st = []; card.fl = false; card.pb = undefined; card.dp = 0; card.dt = 0; // a card that leaves forgets everything
+    card.t = false; card.c = {}; card.st = []; card.ts = []; card.tp = 0; card.tt = 0; card.fl = false; card.pb = undefined; card.dp = 0; card.dt = 0; // a card that leaves forgets everything
     orphans = detachFrom(S.pid, iid);
   }
   if (from === 'battlefield' || from === 'command') { delete card.x; delete card.y; card.att = null; }
@@ -2413,12 +2419,13 @@ function effPT(c, def) {
   const stats = parts.length === 2 && parts.every(Boolean)
     ? parts.map(v => /^-?\d+$/.test(v) ? +v : 0) : null;
   const cnt = ((c.c && c.c['+1/+1']) || 0) - ((c.c && c.c['-1/-1']) || 0);
-  const dp = (c.dp || 0) + cnt, dt = (c.dt || 0) + cnt;
+  const tp = c.tp || 0, tt = c.tt || 0, temp = !!(tp || tt); // temporary changes that end when the turn passes
+  const dp = (c.dp || 0) + cnt + tp, dt = (c.dt || 0) + cnt + tt;
   const modified = !!(c.pb || dp || dt);
-  if (stats) return { text: `${stats[0] + dp}/${stats[1] + dt}`, modified };
-  if (!modified) return { text: base, modified };
+  if (stats) return { text: `${stats[0] + dp}/${stats[1] + dt}`, modified, temp };
+  if (!modified) return { text: base, modified, temp };
   const sg = v => (v >= 0 ? '+' + v : String(v));
-  return { text: base ? `${base} (${sg(dp)}/${sg(dt)})` : `${sg(dp)}/${sg(dt)}`, modified };
+  return { text: base ? `${base} (${sg(dp)}/${sg(dt)})` : `${sg(dp)}/${sg(dt)}`, modified, temp };
 }
 function changePT(iid, dp, dt) {
   const f = findCard(iid); if (!f || f.zone !== 'battlefield') return;
@@ -2562,7 +2569,7 @@ function giveControl(iid, to, at) {
     const orphans = f.zone === 'battlefield' ? detachFrom(S.pid, iid) : [];
     if (orphans.length) setTimeout(() => orphanToast(orphans), 0);
     const card = Object.assign({}, f.card); delete card.x; delete card.y; card.att = null;
-    if (f.zone !== 'battlefield') { card.t = false; card.fd = false; card.fl = false; card.c = {}; card.st = []; }
+    if (f.zone !== 'battlefield') { card.t = false; card.fd = false; card.fl = false; card.c = {}; card.st = []; card.ts = []; card.tp = 0; card.tt = 0; }
     const req = { k: 'give', card, def: Deck.slimDef(d) };
     if (at) { req.x = at.x; req.y = at.y; }
     sendReq(to, req);
@@ -2896,7 +2903,8 @@ function cardMenu(x, y, iid) {
     const counterTargets = S.selected.has(iid) ? [...S.selected] : [iid];
     items.push({ label: counterTargets.length > 1 ? `Counters · ${counterTargets.length} selected` : 'Counters', sub: counterItems(iid, counterTargets) });
     items.push({ label: 'Power / Toughness', sub: ptItems(iid) });
-    items.push({ label: 'Statuses & abilities…', onClick: () => showMarksDialog(iid) });
+    items.push({ label: sel.length > 1 ? `Statuses & abilities… · ${sel.length} selected` : 'Statuses & abilities…', onClick: () => showMarksDialog(iid, sel, false) });
+    items.push({ label: 'Temporary (until end of turn)', sub: tempItems(iid, sel) });
     items.push({ sep: true });
     items.push({ label: c.fd ? 'Turn face up' : 'Turn face down', hint: CTHotkeys.key('face'), onClick: () => toggleFaceDown(iid) });
     items.push({ label: 'Copy this card', hint: CTHotkeys.key('copy'), disabled: c.fd, onClick: () => copyCard(d, c.fl) });
@@ -3082,31 +3090,72 @@ function oppCardMenu(x, y, pid, iid) {
   UI.menu(x, y, items);
 }
 // ---- Statuses & abilities: icons that hang beside a battlefield card you control ----
-function setCardMark(iid, id, on) {
-  const f = findCard(iid);
-  if (!f || f.zone !== 'battlefield' || boardTransferLock) return;
+// ---- Temporary effects: +1/+1 and markers that wear off when the turn passes to the next player ----
+function tempPT(iids, dp, dt) {
+  const cards = iids.map(findCard).filter(f => f && f.zone === 'battlefield');
+  if (!cards.length) return;
+  act(() => { cards.forEach(f => { f.card.tp = clamp((f.card.tp || 0) + dp, -999, 999); f.card.tt = clamp((f.card.tt || 0) + dt, -999, 999); }); },
+    { label: cards.length > 1 ? `Temporary ${dp >= 0 ? '+' : ''}${dp}/${dt >= 0 ? '+' : ''}${dt} on ${cards.length} cards` : undefined });
+}
+function clearTemp(iids) {
+  const cards = iids.map(findCard).filter(f => f && f.zone === 'battlefield' && (f.card.tp || f.card.tt || (f.card.ts && f.card.ts.length)));
+  if (!cards.length) { UI.toast('Nothing temporary on that card.'); return; }
+  act(() => { cards.forEach(f => { f.card.tp = 0; f.card.tt = 0; f.card.ts = []; }); }, { label: 'Cleared temporary effects' });
+}
+function tempItems(iid, targets) {
+  const n = targets.length > 1 ? ` · ${targets.length} selected` : '';
+  return [
+    { label: '+1/+1 until end of turn' + n, onClick: () => tempPT(targets, 1, 1) },
+    { label: '−1/−1 until end of turn' + n, onClick: () => tempPT(targets, -1, -1) },
+    { label: 'Power +1 / −1', sub: [{ label: 'Power +1', onClick: () => tempPT(targets, 1, 0) }, { label: 'Power −1', onClick: () => tempPT(targets, -1, 0) }] },
+    { label: 'Toughness +1 / −1', sub: [{ label: 'Toughness +1', onClick: () => tempPT(targets, 0, 1) }, { label: 'Toughness −1', onClick: () => tempPT(targets, 0, -1) }] },
+    { sep: true },
+    { label: 'Statuses & abilities until end of turn…' + n, onClick: () => showMarksDialog(iid, targets, true) },
+    { sep: true },
+    { label: 'Clear temporary effects' + n, danger: true, onClick: () => clearTemp(targets) }
+  ];
+}
+// Every browser clears its own cards' temporary effects when the table moves to another turn.
+let lastTempTurnKey = null;
+function clearTempOnTurnChange(t) {
+  const key = turnKey(t), had = lastTempTurnKey !== null;
+  if (key === lastTempTurnKey) return;
+  lastTempTurnKey = key;
+  if (!had || !key || !S.me) return;
+  let changed = false;
+  S.me.zones.battlefield.forEach(c => { if (c.tp || c.tt || (c.ts && c.ts.length)) { c.tp = 0; c.tt = 0; c.ts = []; changed = true; } });
+  if (changed) commit();
+}
+function setCardMarks(iids, id, on, temp) {
+  const cards = [...new Set(iids)].map(findCard).filter(f => f && f.zone === 'battlefield');
+  if (!cards.length || boardTransferLock) return;
+  const key = temp ? 'ts' : 'st';
   act(() => {
-    const next = cleanMarks((f.card.st || []).filter(x => x !== id).concat(on ? [id] : []));
-    if (on && next.length >= MAX_CARD_MARKS && !next.includes(id)) { UI.toast('A card can show up to ' + MAX_CARD_MARKS + ' markers.', { kind: 'warn' }); return; }
-    f.card.st = next;
+    cards.forEach(f => {
+      const next = cleanMarks((f.card[key] || []).filter(x => x !== id).concat(on ? [id] : []));
+      if (on && next.length >= MAX_CARD_MARKS && !next.includes(id)) { UI.toast('A card can show up to ' + MAX_CARD_MARKS + ' markers.', { kind: 'warn' }); return; }
+      f.card[key] = next;
+    });
   });
 }
-function showMarksDialog(iid) {
+const setCardMark = (iid, id, on) => setCardMarks([iid], id, on, false);
+function showMarksDialog(iid, targets, temp) {
+  const ids = targets && targets.length ? targets : [iid], key = temp ? 'ts' : 'st';
   const f0 = findCard(iid);
   if (!f0 || f0.zone !== 'battlefield') return;
   const d = defOf(f0.card);
   const group = (title, kind) => `<fieldset class="mark-group"><legend>${title}</legend>${CARD_MARKS.filter(m => m.kind === kind).map(m =>
     `<label class="mark-row"><input type="checkbox" data-mark="${esc(m.id)}"><span class="cmark ${m.kind}${m.p ? '' : ' word'} static">${markSvg(m)}</span><span>${esc(m.label)}</span></label>`).join('')}</fieldset>`;
   const dlg = UI.modal({
-    title: 'Statuses & abilities' + (d && !f0.card.fd ? ' — ' + dname(d) : ''), className: 'w-marks-dialog',
-    html: `<div class="marks-dialog"><p class="muted small">Icons that hang beside the card for everyone to see. They are separate from counters.</p>
+    title: (temp ? 'Temporary statuses & abilities' : 'Statuses & abilities') + (ids.length > 1 ? ` — ${ids.length} selected cards` : (d && !f0.card.fd ? ' — ' + dname(d) : '')), className: 'w-marks-dialog',
+    html: `<div class="marks-dialog"><p class="muted small">${temp ? 'These wear off when the turn passes to the next player.' : 'Icons that hang beside the card for everyone to see.'} They are separate from counters.${ids.length > 1 ? ' Ticking or unticking applies to every selected card.' : ''}</p>
       ${group('Statuses', 'status')}${group('Abilities', 'ability')}
       <fieldset class="mark-group"><legend>Your own</legend><div class="mark-custom-list"></div>
         <div class="mark-add"><input type="text" class="mark-custom-input" maxlength="16" placeholder="Custom status, e.g. Cursed" aria-label="Custom status name"><button type="button" class="mark-custom-add">Add</button></div></fieldset></div>`
   });
   const sync = () => {
     const f = findCard(iid);
-    const cur = new Set(f && f.zone === 'battlefield' ? cleanMarks(f.card.st) : []);
+    const cur = new Set(f && f.zone === 'battlefield' ? cleanMarks(f.card[key]) : []);
     dlg.el.querySelectorAll('input[data-mark]').forEach(i => { i.checked = cur.has(i.dataset.mark); });
     const list = dlg.el.querySelector('.mark-custom-list');
     list.replaceChildren();
@@ -3117,17 +3166,17 @@ function showMarksDialog(iid) {
       row.append(name, rm); list.appendChild(row);
     });
   };
-  dlg.el.addEventListener('change', e => { if (e.target.dataset.mark) { setCardMark(iid, e.target.dataset.mark, e.target.checked); sync(); } });
+  dlg.el.addEventListener('change', e => { if (e.target.dataset.mark) { setCardMarks(ids, e.target.dataset.mark, e.target.checked, temp); sync(); } });
   dlg.el.addEventListener('click', e => {
     const rm = e.target.closest('[data-remove-mark]');
-    if (rm) { setCardMark(iid, rm.dataset.removeMark, false); sync(); return; }
+    if (rm) { setCardMarks(ids, rm.dataset.removeMark, false, temp); sync(); return; }
     if (e.target.closest('.mark-custom-add')) addCustom();
   });
   const input = dlg.el.querySelector('.mark-custom-input');
   const addCustom = () => {
     const t = customMarkText(input.value);
     if (!t) return;
-    setCardMark(iid, 'x:' + t, true); input.value = ''; sync();
+    setCardMarks(ids, 'x:' + t, true, temp); input.value = ''; sync();
   };
   input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addCustom(); } });
   sync();
@@ -3682,9 +3731,9 @@ function cardHTML(c, def, o) {
       const power = parts[0] || '?', toughness = parts[1] || '?';
       const statTitle = 'Click power for +1 or right-click for −1; click toughness for +1 or right-click for −1';
       if (/^-?\d+$/.test(power) && /^-?\d+$/.test(toughness)) {
-        badges += `<span class="pt${pt.modified ? ' mod' : ''}" title="${statTitle}${def && def.pt ? ' (printed ' + esc(def.pt) + ')' : ''}"><button type="button" class="pt-stat pt-stat-power" data-pt-stat="power" aria-label="Increase power" title="Power: click +1, right-click −1">${esc(power)}</button><button type="button" class="pt-stat pt-stat-toughness" data-pt-stat="toughness" aria-label="Increase toughness" title="Toughness: click +1, right-click −1">${esc(toughness)}</button></span>`;
+        badges += `<span class="pt${pt.modified ? ' mod' : ''}${pt.temp ? ' temp' : ''}" title="${pt.temp ? 'Includes a temporary change that ends when the turn passes. ' : ''}${statTitle}${def && def.pt ? ' (printed ' + esc(def.pt) + ')' : ''}"><button type="button" class="pt-stat pt-stat-power" data-pt-stat="power" aria-label="Increase power" title="Power: click +1, right-click −1">${esc(power)}</button><button type="button" class="pt-stat pt-stat-toughness" data-pt-stat="toughness" aria-label="Increase toughness" title="Toughness: click +1, right-click −1">${esc(toughness)}</button></span>`;
       } else {
-        badges += `<span class="pt${pt.modified ? ' mod' : ''}" title="Power / toughness${def && def.pt ? ' (printed ' + esc(def.pt) + ')' : ''}">${esc(pt.text)}</span>`;
+        badges += `<span class="pt${pt.modified ? ' mod' : ''}${pt.temp ? ' temp' : ''}" title="${pt.temp ? 'Includes a temporary change that ends when the turn passes. ' : ''}Power / toughness${def && def.pt ? ' (printed ' + esc(def.pt) + ')' : ''}">${esc(pt.text)}</span>`;
       }
     }
   }
@@ -4535,12 +4584,12 @@ function previewFromEl(cardEl) {
     if (f) {
       let tag = tagOf(f.card);
       if (f.card.att) { const h = hostInfo(f.card.att.p, f.card.att.i); if (h) tag = (tag ? tag + ' · ' : '') + 'attached to ' + dname(h.def); }
-      preview(defOf(f.card), false, tag, f.zone === 'battlefield' ? f.card.st : null);
+      preview(defOf(f.card), false, tag, f.zone === 'battlefield' ? f.card : null);
     }
     return;
   }
   const f = oppCard(pid, iid);
-  if (f) preview(f.def || { name: 'Face-down card' }, !f.def, tagOf(f.c), cardEl.dataset.zone === 'battlefield' ? f.c.st : null);
+  if (f) preview(f.def || { name: 'Face-down card' }, !f.def, tagOf(f.c), cardEl.dataset.zone === 'battlefield' ? f.c : null);
 }
 
 // =====================================================================
@@ -5331,7 +5380,7 @@ function giveControlGroup(group, to, at, anchorIid) {
       }
       const card = Object.assign({}, f.card);
       delete card.x; delete card.y; card.att = null;
-      if (f.zone !== 'battlefield') { card.t = false; card.fd = false; card.fl = false; card.c = {}; card.st = []; }
+      if (f.zone !== 'battlefield') { card.t = false; card.fd = false; card.fl = false; card.c = {}; card.st = []; card.ts = []; card.tp = 0; card.tt = 0; }
       const req = { k: 'give', card, def: Deck.slimDef(def) };
       req.x = clamp(Math.round(at.x + p.x - lead.x), 0, BW - CW);
       req.y = clamp(Math.round(at.y + p.y - lead.y), 0, myBH() - CH);

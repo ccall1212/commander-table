@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.64.0] - 2026-11-04
+
+### Added
+- **Temporary effects.** Right-click a battlefield card (or a selection of cards) → **Temporary (until end of turn)** to give +1/+1, −1/−1, or power or toughness changes, or to switch on statuses and keyword abilities such as Vigilance, until the turn passes. Temporary effects show with a light-blue outline (and a clock on markers), are kept separate from permanent changes and counters, are visible to every player, and clear automatically when the turn passes to the next player. **Clear temporary effects** removes them early.
+- The **Statuses & abilities…** window now works on every selected card at once.
+
 ## [0.63.0] - 2026-11-04
 
 ### Added
@@ -283,7 +289,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.63.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.64.0...HEAD
+[0.64.0]: https://github.com/ccall1212/commander-table/compare/v0.63.0...v0.64.0
 [0.63.0]: https://github.com/ccall1212/commander-table/compare/v0.62.2...v0.63.0
 [0.62.2]: https://github.com/ccall1212/commander-table/compare/v0.62.1...v0.62.2
 [0.62.1]: https://github.com/ccall1212/commander-table/compare/v0.62.0...v0.62.1
