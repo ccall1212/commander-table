@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.62.2';
+const APP_VERSION = '0.63.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -2303,6 +2303,47 @@ function millTopCard() {
   animateOwnPile('library', 'milling', 620);
   animateOwnPile('graveyard', 'mill-receive', 620);
 }
+// ---- Hotkeys and menu actions on a whole selection ----
+// When several battlefield cards are box-selected and the card you act on is one of them, the action applies to all of them.
+// Acting on a card outside the selection affects only that card.
+function groupTargets(iid) {
+  pruneSelection();
+  const f = findCard(iid);
+  if (f && f.zone === 'battlefield' && S.selected.size > 1 && S.selected.has(iid)) {
+    return [...S.selected].filter(i => { const x = findCard(i); return x && x.zone === 'battlefield'; });
+  }
+  return [iid];
+}
+// Run several single-card actions as ONE Undo step (every action that changes something adds its own entry; keep the first).
+function oneUndo(label, fn) {
+  const lastId = S.undo.length ? S.undo[S.undo.length - 1].id : 0;
+  fn();
+  const fresh = S.undo.filter(e => e.id > lastId);
+  if (fresh.length > 1) {
+    S.undo = S.undo.filter(e => e.id <= lastId || e === fresh[0]);
+    fresh[0].label = label;
+  }
+}
+function tapMany(iids, to) {
+  const cards = iids.map(findCard).filter(f => f && f.zone === 'battlefield');
+  if (!cards.length) return;
+  act(() => { cards.forEach(f => { f.card.t = to; }); }, cards.length > 1 ? { label: `${to ? 'Tapped' : 'Untapped'} ${cards.length} cards` } : undefined);
+}
+function flipMany(iids) {
+  const cards = iids.map(findCard).filter(f => { const d = f && defOf(f.card); return f && d && (d.imgBack || d.backName); });
+  if (!cards.length) return;
+  act(() => { cards.forEach(f => { f.card.fl = !f.card.fl; }); return cards.length === 1 ? ['transformed {0}', [defOf(cards[0].card)]] : [`transformed ${cards.length} cards`]; });
+}
+function faceDownMany(iids, down) {
+  const cards = iids.map(findCard).filter(Boolean);
+  if (!cards.length) return;
+  act(() => { cards.forEach(f => { f.card.fd = down; }); return cards.length === 1 ? (down ? ['turned a card face down'] : ['turned {0} face up', [defOf(cards[0].card)]]) : [`turned ${cards.length} cards face ${down ? 'down' : 'up'}`]; });
+}
+function changePTMany(iids, dp, dt) {
+  const cards = iids.map(findCard).filter(f => f && f.zone === 'battlefield');
+  if (!cards.length) return;
+  act(() => { cards.forEach(f => { f.card.dp = (f.card.dp || 0) + dp; f.card.dt = (f.card.dt || 0) + dt; }); });
+}
 function toggleTap(iid) { const f = findCard(iid); if (f && f.zone === 'battlefield') act(() => { f.card.t = !f.card.t; }); }
 function flip(iid) {
   const f = findCard(iid); const d = f && defOf(f.card);
@@ -2844,8 +2885,9 @@ function cardMenu(x, y, iid) {
   const opps = ((S.table && S.table.seats) || []).filter(p => p !== S.pid && S.players[p]);
   const attachable = isAttachable(d);
   if (z === 'battlefield') {
-    items.push({ label: 'Send arrow to…', onClick: () => startTargeting({ kind: 'card', pid: S.pid, iid }) });
-    items.push({ label: c.t ? 'Untap' : 'Tap', hint: CTHotkeys.key('tap'), onClick: () => toggleTap(iid) });
+    const sel = groupTargets(iid);
+    items.push({ label: sel.length > 1 ? `Send arrows from ${sel.length} cards to…` : 'Send arrow to…', onClick: () => startTargeting({ kind: 'card', pid: S.pid, iid }, sel.filter(i => i !== iid).map(i => ({ kind: 'card', pid: S.pid, iid: i }))) });
+    items.push({ label: sel.length > 1 ? `${c.t ? 'Untap' : 'Tap'} ${sel.length} selected cards` : (c.t ? 'Untap' : 'Tap'), hint: CTHotkeys.key('tap'), onClick: () => sel.length > 1 ? tapMany(sel, !c.t) : toggleTap(iid) });
     if (c.att) items.push({ label: 'Unattach', onClick: () => unattach(iid) });
     items.push({ label: attachable ? (/Equipment/.test(d.type || '') ? 'Equip to…' : 'Enchant / attach to…') : 'Attach to…', hint: CTHotkeys.key('attach'), onClick: () => startAttach(iid) });
     if (d.imgBack || d.backName) items.push({ label: 'Transform / flip', hint: CTHotkeys.key('flip'), onClick: () => flip(iid) });
@@ -4507,7 +4549,7 @@ function previewFromEl(cardEl) {
 let arrowFrame = 0, lastArrowPickAt = 0, arrowSerial = 0, lastArrowPaint = 0;
 let arrowDrag = null, suppressArrowClickUntil = 0;
 function arrowSeats() { return (S.table && S.table.seats) || []; }
-function startTargeting(from) {
+function startTargeting(from, more) {
   if (!S.me || !S.table) return;
   if (S.role !== 'solo' && S.net.state !== 'online') { UI.toast('Reconnect before drawing an arrow.', { kind: 'warn' }); return; }
   if (S.arrange) { UI.toast('Finish arranging zones before drawing an arrow.'); return; }
@@ -4518,7 +4560,8 @@ function startTargeting(from) {
   endAttach(); hidePreview(); UI.closeMenu();
   if (S.targetArrows.length >= CTTargeting.MAX_ARROWS) { UI.toast('Clear some arrows before adding more.'); return; }
   S.arrowControlsDismissed = false;
-  S.arrowPick = { from: source };
+  // With several cards selected, one arrow goes from every one of them to the target that is picked.
+  S.arrowPick = { from: source, more: (more || []).map(m => CTTargeting.endpoint(m, S.players, arrowSeats())).filter(Boolean) };
   refreshTargeting();
   if (source) paintArrowDrag(pvMouse.x, pvMouse.y);
 }
@@ -4590,10 +4633,12 @@ function pickArrowEndpoint(target) {
   if (CTTargeting.same(S.arrowPick.from, ep)) { UI.toast('Choose a different target.'); return; }
   const from = CTTargeting.endpoint(S.arrowPick.from, S.players, arrowSeats());
   if (!from) { endTargeting(); UI.toast('The starting card or player is no longer available.'); return; }
+  const sources = [from].concat((S.arrowPick.more || []).map(m => CTTargeting.endpoint(m, S.players, arrowSeats()))
+    .filter(m => m && !CTTargeting.same(m, ep) && !CTTargeting.same(m, from)));
   lastArrowPickAt = Date.now();
   endTargeting();
   if (S.role !== 'solo' && S.net.state !== 'online') { UI.toast('Connection lost. Draw the arrow again after reconnecting.', { kind: 'warn' }); return; }
-  toHost({ t: 'arrows', k: 'add', arrow: { from, to: ep } });
+  sources.slice(0, Math.max(1, CTTargeting.MAX_ARROWS - S.targetArrows.length)).forEach(src => toHost({ t: 'arrows', k: 'add', arrow: { from: src, to: ep } }));
 }
 function arrowAnchor(ep) {
   // Player arrows always land at a visible name, including the read-only YOU miniature.
@@ -4627,7 +4672,7 @@ function refreshTargeting() {
       $('#game').appendChild(controls);
     }
     controls.querySelector('span').textContent = picking
-      ? (S.arrowPick.from ? 'Move the pointer, then click a target card, board, or name.' : 'Choose a starting card or player.')
+      ? (S.arrowPick.from ? (S.arrowPick.more && S.arrowPick.more.length ? `Arrows from ${S.arrowPick.more.length + 1} cards: move the pointer, then click a target card, board, or name.` : 'Move the pointer, then click a target card, board, or name.') : 'Choose a starting card or player.')
       : `${S.targetArrows.length} targeting arrow${S.targetArrows.length === 1 ? '' : 's'} · click a line to remove it`;
     controls.querySelector('[data-arrow-clear]').textContent = picking ? 'Cancel' : 'Clear all';
   } else if (controls) controls.remove();
@@ -5613,7 +5658,8 @@ function onKey(e) {
   }
   const general = {
     response: sendResponse, draw: () => draw(1), untapAll, library: () => viewZone(S.pid, 'library'),
-    arrow: () => startTargeting(h && CTTargeting.endpoint({ kind: 'card', pid: h.pid, iid: h.iid }, S.players, arrowSeats()) || undefined),
+    arrow: () => startTargeting(h && CTTargeting.endpoint({ kind: 'card', pid: h.pid, iid: h.iid }, S.players, arrowSeats()) || undefined,
+      h && h.pid === S.pid ? groupTargets(h.iid).filter(i => i !== h.iid).map(i => ({ kind: 'card', pid: S.pid, iid: i })) : []),
     chat: () => setChatPanelOpen(!S.chatOpen), log: () => $('#sideBtn').click()
   };
   if (general[action]) { e.preventDefault(); general[action](); return; }
@@ -5623,16 +5669,22 @@ function onKey(e) {
     return;
   }
   if (!mine) return;
+  const group = mine.zone === 'battlefield' ? groupTargets(h.iid) : [h.iid];
+  const many = group.length > 1;
+  const moveAll = (to, opts) => many ? oneUndo(`Moved ${group.length} cards to the ${to}`, () => group.forEach(i => doMove(i, to, opts))) : doMove(h.iid, to, opts);
   const cardActions = {
-    tap: () => mine.zone === 'hand' ? doMove(h.iid, 'battlefield', { tapped: true }) : toggleTap(h.iid),
-    flip: () => flip(h.iid), face: () => toggleFaceDown(h.iid),
-    graveyard: () => doMove(h.iid, 'graveyard'), exile: () => doMove(h.iid, 'exile'),
-    hand: () => doMove(h.iid, 'hand'), battlefield: () => doMove(h.iid, 'battlefield'),
-    attach: () => startAttach(h.iid), counter: () => customCounter(h.iid),
-    plus: () => addCounter(h.iid, '+1/+1', 1), minus: () => addCounter(h.iid, '-1/-1', 1),
-    incCounters: () => allCounters(h.iid, 'inc'), doubleCounters: () => allCounters(h.iid, 'double'), decCounters: () => allCounters(h.iid, 'dec'),
-    powerUp: () => changePT(h.iid, 1, 0), toughUp: () => changePT(h.iid, 0, 1),
-    powerDown: () => changePT(h.iid, -1, 0), toughDown: () => changePT(h.iid, 0, -1)
+    tap: () => mine.zone === 'hand' ? doMove(h.iid, 'battlefield', { tapped: true }) : (many ? tapMany(group, !mine.card.t) : toggleTap(h.iid)),
+    flip: () => many ? flipMany(group) : flip(h.iid), face: () => many ? faceDownMany(group, !mine.card.fd) : toggleFaceDown(h.iid),
+    graveyard: () => moveAll('graveyard'), exile: () => moveAll('exile'),
+    hand: () => moveAll('hand'), battlefield: () => doMove(h.iid, 'battlefield'),
+    attach: () => startAttach(h.iid), counter: () => customCounter(h.iid, many ? group : undefined),
+    plus: () => many ? addCounters(group, '+1/+1', 1, S.me, true) : addCounter(h.iid, '+1/+1', 1),
+    minus: () => many ? addCounters(group, '-1/-1', 1, S.me, true) : addCounter(h.iid, '-1/-1', 1),
+    incCounters: () => many ? oneUndo(`Added a counter of each kind on ${group.length} cards`, () => group.forEach(i => allCounters(i, 'inc'))) : allCounters(h.iid, 'inc'),
+    doubleCounters: () => many ? oneUndo(`Doubled the counters on ${group.length} cards`, () => group.forEach(i => allCounters(i, 'double'))) : allCounters(h.iid, 'double'),
+    decCounters: () => many ? oneUndo(`Removed a counter of each kind from ${group.length} cards`, () => group.forEach(i => allCounters(i, 'dec'))) : allCounters(h.iid, 'dec'),
+    powerUp: () => changePTMany(group, 1, 0), toughUp: () => changePTMany(group, 0, 1),
+    powerDown: () => changePTMany(group, -1, 0), toughDown: () => changePTMany(group, 0, -1)
   };
   if (cardActions[action]) { e.preventDefault(); cardActions[action](); }
 }
