@@ -228,7 +228,7 @@ body.side-open #side { display: grid; }
 #table.has-focus #mine.active::after, #table.grid-mine #mine.active::after,
 #table.view-side:not(.has-focus) .opp.youtile.active::after { display: none; }
 .opp.offline { opacity: .6; }
-.opp.out { opacity: .35; }
+
 .ohead, #myBar { position: relative; display: flex; align-items: center; gap: 8px; padding: 4px 8px; flex-wrap: wrap; font-size: 13px; }
 .ohead { border-bottom: 1px solid var(--border); background: var(--panel2); }
 .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--pc, #888); flex: none; }
@@ -1557,3 +1557,12 @@ body.touch-mode #myBar .ctrpanel {
 @keyframes victory-bounce { 0%, 100% { transform: translateY(0) rotate(-4deg); } 50% { transform: translateY(-12px) rotate(4deg); } }
 @keyframes victory-fall { 0% { transform: translate(0, -30px) rotate(0deg); } 100% { transform: translate(var(--sway, 0px), 110vh) rotate(var(--spin, 540deg)); } }
 @media (prefers-reduced-motion: reduce) { .victory-overlay, .victory-panel, .victory-trophy { animation: none; } }
+
+/* ---- Death screens: a player who conceded sees their own board go dark under a skull and crossbones, and so does everyone else's view of that player's board ---- */
+.opp.out { opacity: 1; }
+.opp.out .boardwrap, .opp.out .tstrip { filter: grayscale(.9) brightness(.45); }
+.opp.out .obf { position: relative; }
+.opp.out .obf::after, #myBf.defeated::after, .opp.mytile.out .obf::after { content: ''; position: absolute; inset: 0; z-index: 70; pointer-events: none;
+  background: radial-gradient(ellipse at center, rgba(0,0,0,.2), rgba(0,0,0,.55)) , url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 200 200%22%3E%3Cg stroke=%22%23161210%22 stroke-width=%223.5%22 stroke-linejoin=%22round%22 fill=%22%23eae3d0%22%3E%0A%3Cg%3E%3Crect x=%2220%22 y=%2292%22 width=%22160%22 height=%2216%22 rx=%228%22 transform=%22rotate(35 100 100)%22/%3E%3Ccircle cx=%2226%22 cy=%2290%22 r=%2212%22 transform=%22rotate(35 100 100)%22/%3E%3Ccircle cx=%2226%22 cy=%22110%22 r=%2212%22 transform=%22rotate(35 100 100)%22/%3E%3Ccircle cx=%22174%22 cy=%2290%22 r=%2212%22 transform=%22rotate(35 100 100)%22/%3E%3Ccircle cx=%22174%22 cy=%22110%22 r=%2212%22 transform=%22rotate(35 100 100)%22/%3E%3C/g%3E%0A%3Cg%3E%3Crect x=%2220%22 y=%2292%22 width=%22160%22 height=%2216%22 rx=%228%22 transform=%22rotate(-35 100 100)%22/%3E%3Ccircle cx=%2226%22 cy=%2290%22 r=%2212%22 transform=%22rotate(-35 100 100)%22/%3E%3Ccircle cx=%2226%22 cy=%22110%22 r=%2212%22 transform=%22rotate(-35 100 100)%22/%3E%3Ccircle cx=%22174%22 cy=%2290%22 r=%2212%22 transform=%22rotate(-35 100 100)%22/%3E%3Ccircle cx=%22174%22 cy=%22110%22 r=%2212%22 transform=%22rotate(-35 100 100)%22/%3E%3C/g%3E%0A%3Ccircle cx=%22100%22 cy=%2284%22 r=%2246%22/%3E%3Crect x=%2276%22 y=%22116%22 width=%2248%22 height=%2232%22 rx=%229%22/%3E%0A%3Cg stroke-width=%223%22%3E%3Cpath d=%22M92 124v20M100 124v20M108 124v20%22 fill=%22none%22/%3E%3C/g%3E%0A%3Cellipse cx=%2282%22 cy=%2286%22 rx=%2212%22 ry=%2214%22 fill=%22%23161210%22/%3E%3Cellipse cx=%22118%22 cy=%2286%22 rx=%2212%22 ry=%2214%22 fill=%22%23161210%22/%3E%0A%3Cpath d=%22M100 98l-7 14h14z%22 fill=%22%23161210%22/%3E%3C/g%3E%3C/svg%3E") center / min(55%, 260px) no-repeat; opacity: .92; }
+body.me-out #table { filter: grayscale(.55) brightness(.7); transition: filter .8s ease; }
+body.me-out #myBf .board { filter: grayscale(.9) brightness(.45); }

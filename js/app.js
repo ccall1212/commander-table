@@ -4090,6 +4090,7 @@ function cardFace(c, defs, pid = S.pid) {
 
 function renderTop() {
   const T = S.table;
+  { const gone = !!(T && T.started && T.out && T.out[S.pid] && S.role !== 'spectator'); document.body.classList.toggle('me-out', gone); const bf = $('#myBf'); if (bf) bf.classList.toggle('defeated', gone); }
   const responseBtn = $('#responseBtn');
   if (responseBtn) responseBtn.disabled = !T || !T.started || !T.seats.includes(S.pid) || !!T.out[S.pid]
     || boardTransferLock || (S.role !== 'solo' && S.net.state !== 'online');
@@ -4295,6 +4296,7 @@ function myTileOverlayHTML(bh, bw) {
 function renderMyTile(el, idx) {
   const T = S.table || {}, m = S.me;
   el.classList.toggle('active', T.active === S.pid);
+  el.classList.toggle('out', !!(T.started && T.out && T.out[S.pid]));
   setHTML(el.querySelector('.ohead'), `<span class="dot" style="--pc:${colorOf(S.pid)}"></span><span class="pname" data-phead="${esc(S.pid)}" title="Right-click for options">${esc(m.name)}</span>${S.role === 'spectator' ? '' : '<span class="tag you">YOU</span>'}
     ${T.active === S.pid ? '<span class="tag">TURN</span>' : ''}${T.monarch === S.pid ? '<span title="Monarch">👑</span>' : ''}${T.initiative === S.pid ? '<span title="Initiative">🏰</span>' : ''}<span class="hlife">${lifeBoxHTML(S.pid, true)}</span>`);
   el.querySelector('.obf').removeAttribute('style');
@@ -6384,6 +6386,7 @@ function leaveGame() {
 // =====================================================================
 let selDeck = null;
 function showLobby() {
+  document.body.classList.remove('me-out');
   if (openingRoster) openingRoster.close();
   clearResponseNotice();
   S.targetArrows = []; S.arrowControlsDismissed = false; endTargeting();

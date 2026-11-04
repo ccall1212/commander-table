@@ -9,6 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ## [0.65.0] - 2026-11-04
 
 ### Added
+- **Death screens.** A player who concedes sees their screen turn dark and grey with a skull and crossbones over their board, and everyone else sees the skull over that player's board. Restoring the player removes it.
 - **Victory screen.** When every player but one has conceded, everyone at the table sees a celebration with a trophy, confetti and the winner's name in their colour. Close it with the button or Esc (it is per player); the host also gets **Start a new game**. Only concessions count, restoring a conceded player takes the screen away, and the log records the win.
 
 ## [0.64.0] - 2026-11-04

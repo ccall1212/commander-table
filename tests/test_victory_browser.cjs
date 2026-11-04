@@ -79,6 +79,23 @@ const mkDeck = who => ({
     await dad.waitForFunction(() => CT.S.table.out && Object.keys(CT.S.table.out).length === 1);
     await dad.waitForTimeout(800);
     for (const pg of [dad, son, mom]) assert.equal(await overlay(pg).count(), 0, 'no victory while two players are still in');
+    // Death screen: the player who conceded sees their own board go dark with a skull, and the others see it on their tile.
+    const sonPid = await pidOf(son);
+    await son.waitForFunction(() => document.body.classList.contains('me-out') && document.querySelector('#myBf.defeated'));
+    const skull = (pg, sel) => pg.evaluate(q => { const el = document.querySelector(q); return !!el && getComputedStyle(el, '::after').backgroundImage.includes('data:image/svg+xml'); }, sel);
+    assert.equal(await skull(son, '#myBf.defeated'), true, 'Son sees a skull and crossbones over his own board');
+    assert.equal(await dad.evaluate(() => document.body.classList.contains('me-out')), false, 'players still in the game are not darkened');
+    for (const pg of [dad, mom]) {
+      await pg.waitForFunction(p => document.querySelector(`.opp.tile[data-opp="${p}"].out`), sonPid);
+      assert.equal(await skull(pg, `.opp.tile[data-opp="${sonPid}"].out .obf`), true, 'the others see a skull over the board of the player who conceded');
+    }
+    assert.equal(await dad.evaluate(p => getComputedStyle(document.querySelector(`.opp.tile[data-opp="${p}"].out .boardwrap`)).filter !== 'none', sonPid), true, 'and that board is greyed out');
+    // Grid layout: the player's own quadrant gets the skull too.
+    await son.evaluate(() => { CT.S.view = 'grid'; CT.render(); });
+    await son.waitForFunction(() => document.querySelector('.opp.mytile.out'));
+    assert.equal(await skull(son, '.opp.mytile.out .obf'), true, 'in Grid the skull covers the player\'s own quadrant');
+    await son.evaluate(() => { CT.S.view = 'side'; CT.render(); });
+    if (process.env.CT_SHOTS) { await son.screenshot({ path: process.env.CT_SHOTS + '/death-self.png' }); await dad.screenshot({ path: process.env.CT_SHOTS + '/death-others.png' }); }
 
     await concede(mom);
     for (const pg of [dad, son, mom]) await overlay(pg).waitFor();
@@ -100,6 +117,7 @@ const mkDeck = who => ({
     // Undoing a concession takes the victory back, and conceding again shows it again.
     await dad.evaluate(pid => CT.hostRecv({ t: 'op', op: { k: 'reinstate', pid } }, CT.S.pid), momPid);
     await mom.waitForFunction(() => !document.querySelector('#victoryOverlay'));
+    await mom.waitForFunction(() => !document.body.classList.contains('me-out') && !document.querySelector('#myBf.defeated'));
     await dad.evaluate(pid => CT.hostRecv({ t: 'op', op: { k: 'concede' } }, pid), momPid);
     await mom.locator('#victoryOverlay').waitFor();
     assert.deepEqual(errors, [], 'no page errors in any browser');
