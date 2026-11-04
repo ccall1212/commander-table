@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.62.2] - 2026-11-04
+
+### Changed
+- **Only the host can pass someone else's turn.** Players can still pass their own turn, but **Pass turn** is greyed out on another player's turn (and Space explains why). The host can still pass for anyone, after a confirmation. The host now also ignores a pass that comes from anyone else.
+
 ## [0.62.1] - 2026-11-03
 
 ### Fixed
@@ -270,7 +275,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.62.1...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.62.2...HEAD
+[0.62.2]: https://github.com/ccall1212/commander-table/compare/v0.62.1...v0.62.2
 [0.62.1]: https://github.com/ccall1212/commander-table/compare/v0.62.0...v0.62.1
 [0.62.0]: https://github.com/ccall1212/commander-table/compare/v0.61.0...v0.62.0
 [0.61.0]: https://github.com/ccall1212/commander-table/compare/v0.60.0...v0.61.0

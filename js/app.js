@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.62.1';
+const APP_VERSION = '0.62.2';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -836,6 +836,8 @@ function tableOp(op, from) {
     }
     case 'pass': {
       if (!T.started || !T.active) return;
+      // Only the player whose turn it is, or the host, may pass the turn. Nobody else can pass it for another player.
+      if (from !== T.active && from !== S.pid) return;
       // turnSeq guards duplicate/late pass messages; turn counts full rounds only.
       const expectedSeq = Math.max(1, num(T.turnSeq, num(T.turn)));
       const suppliedSeq = op.turnSeq != null ? num(op.turnSeq) : (op.turn != null ? num(op.turn) : expectedSeq);
@@ -3452,7 +3454,8 @@ function toggleArrange() {
 // Shared Pass Turn button (highlighted on your turn; disabled until the game starts).
 function passBtn() {
   const T = S.table, started = !!(T && T.started && T.active), mine = started && T.active === S.pid;
-  return `<div class="ztool"><button data-a="pass" class="${mine ? 'primary' : ''}"${started ? '' : ' disabled'} title="Pass the turn to the next player">Pass turn ▶</button></div>`;
+  const blocked = started && !mine && S.role !== 'host' && S.role !== 'solo'; // only the host may pass another player's turn
+  return `<div class="ztool"><button data-a="pass" class="${mine ? 'primary' : ''}"${started && !blocked ? '' : ' disabled'} title="${blocked ? "Only the host can pass another player's turn" : 'Pass the turn to the next player'}">Pass turn ▶</button></div>`;
 }
 function toggleFocus(pid) { S.focus = S.focus === pid ? null : pid; render(); }
 function showHotkeyList() {
@@ -5493,7 +5496,13 @@ function concedeGame() {
 }
 async function passTurn() {
   const T = S.table; if (!T || !T.started || !T.active) return;
-  if (T.active !== S.pid && !(await UI.confirm(`It's ${pname(T.active)}'s turn. Pass it for them?`, { okLabel: 'Pass their turn' }))) return;
+  if (T.active !== S.pid) {
+    if (S.role !== 'host' && S.role !== 'solo') { // only the host may pass someone else's turn
+      UI.toast(`It's ${pname(T.active)}'s turn. Only the host can pass it for them.`, { kind: 'warn' });
+      return;
+    }
+    if (!(await UI.confirm(`It's ${pname(T.active)}'s turn. Pass it for them?`, { okLabel: 'Pass their turn' }))) return;
+  }
   const seq = Math.max(1, num(T.turnSeq, num(T.turn)));
   toHost({ t: 'op', op: { k: 'pass', turn: seq, turnSeq: seq } });
 }
