@@ -1532,3 +1532,10 @@ body.touch-mode #myBar .ctrpanel {
 .mark-row { display: flex; align-items: center; gap: 8px; cursor: pointer; }
 .mark-custom-list, .mark-add { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
 .mark-custom-input { flex: 1 1 12em; padding: 5px 8px; }
+
+/* ---- Temporary effects: a dashed outline so they read differently from permanent ones ---- */
+.cmark.temp { outline: 1.5px dashed #7fd3ff; outline-offset: 1px; border-radius: 4px; }
+.cmark.temp:not(.word)::after { content: '⏱'; position: absolute; right: -4px; bottom: -4px; font-size: calc(var(--cw, 80px) * .1); line-height: 1; filter: none; }
+.cmark.word.temp { border-color: #7fd3ff; border-style: dashed; }
+.card .cstat .cmark, #pv .cstat .cmark { position: relative; }
+.card .badges .pt.temp { box-shadow: 0 0 0 1.5px #7fd3ff; }
