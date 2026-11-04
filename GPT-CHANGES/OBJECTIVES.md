@@ -4,9 +4,21 @@ Open work and future ideas. Original objective numbers are kept so earlier discu
 
 ## Active and queued
 
-### 71. Only the host can pass someone else's turn — In progress
+### 72. Hotkeys act on every selected card — Next up
 
-Chris (2026-11-04): nobody should be able to press **Pass turn** for another player; only the host may. Today any player can pass another player's turn after a confirmation, and the host does not check who sent the pass. The host should accept a pass only from the active player or from the host, and other players should see a short explanation instead.
+Chris (2026-11-04): when several battlefield cards are selected (box-select), a hotkey pressed while hovering one of the selected cards should act on **all** of them. Examples: select four lands and press **T** to tap all four; select seven creatures, press **W** and send one arrow to the defending player for all of them (attacking). Rule to build: if the hovered card is part of the selection the key applies to the whole selection; hovering a card outside the selection acts on that card only. Cover at least tap/untap (T), face-down, flip, move to zone, counters and W arrows; each group action is one Undo step. Not yet built.
+
+### 73. Temporary effects until end of turn — Queued (after #72)
+
+Chris (2026-11-04): a **Temporary** option for +1/+1 (power/toughness) and for statuses and keyword abilities (for example Vigilance), also on a selected group (select several cards, right-click, choose Temporary). Decision: temporary effects wear off when the turn passes to the next player (any pass by the active player or the host), for everyone's cards. Needs: a temporary layer on cards that is shown differently from permanent changes, cleared on every turn change, synced to all players and forgotten when the card leaves the battlefield. Depends on #72's group handling. Not yet built.
+
+### 74. Victory screen — Queued (after #73)
+
+Chris (2026-11-04): when every player but one has conceded, show a Victory screen with a celebration for everyone at the table. Decision: only concessions count (players who merely disconnect do not). Not yet built.
+
+### 75. Trigger reminders list ("Sideboard") — Queued (after #74)
+
+Idea from a friend of Chris (2026-11-04): a small panel listing the triggers a player must remember each turn, for example "Landfall: draw 2 cards and gain 1 life" or "Whenever an opponent plays a non-creature card, draw 1". Decisions: private to the player and saved with each deck, in a panel that can be opened or hidden. Placement depends on available space on the board; a collapsible side or corner panel is the likely shape. Not yet built.
 
 ### 18. Phone and tablet support — In progress
 
