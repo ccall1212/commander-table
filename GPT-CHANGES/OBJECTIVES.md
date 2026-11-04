@@ -4,6 +4,10 @@ Open work and future ideas. Original objective numbers are kept so earlier discu
 
 ## Active and queued
 
+### 71. Only the host can pass someone else's turn — In progress
+
+Chris (2026-11-04): nobody should be able to press **Pass turn** for another player; only the host may. Today any player can pass another player's turn after a confirmation, and the host does not check who sent the pass. The host should accept a pass only from the active player or from the host, and other players should see a short explanation instead.
+
 ### 18. Phone and tablet support — In progress
 
 Touch support is labelled **Beta** in `README.md` and `docs/GUIDE.md` until it passes a real-device retest; remove those labels (and this note) when it does. Retest and improve Touch mode on real iPhone/iPad Safari: table height, bottom-edge hand dragging, card inspection/actions, group selection and menu scrolling. Check portrait/landscape and both layouts while preserving desktop controls.
@@ -14,9 +18,9 @@ Touch support is labelled **Beta** in `README.md` and `docs/GUIDE.md` until it p
 
 Improve the Commander impact sound. Keep ordinary card placements softer and avoid replaying the effect when cards are repositioned.
 
-### 45. Brief hotkey reminder — Queued
+### 45. Brief hotkey reminder — On the back burner
 
-Show a small, dismissible reminder after game entry, with a saved **Don’t show again** checkbox. Respect custom shortcuts and wait until required entry dialogs finish.
+Show a small, dismissible reminder with a saved **Don’t show again** checkbox. Chris (2026-11-04) is putting this on the back burner: joining a game already shows many pop-ups and he does not want to add another. If it comes back, consider placing the reminder on the title screen instead of after entering a game. Respect custom shortcuts.
 
 Include only: **T** tap/untap or Tokens over empty battlefield; **Space** pass; **R** In response; **D** draw; **G** graveyard; **E** exile; **C** copy; **Ctrl+Z / ⌘Z** Undo.
 
@@ -24,45 +28,24 @@ Include only: **T** tap/untap or Tokens over empty battlefield; **Space** pass; 
 
 Develop a small set of original background concepts and review the art direction with Chris before adding them. Keep cards readable and check both layouts.
 
-### 56. Card statuses, keyword counters and icons — Queued
-
-Add readable markers such as **Goaded** and **Prepared**, plus icons for abilities. Keep on/off statuses separate from real counters that can be counted or proliferated.
-
-Reference abilities: deathtouch, double strike, first strike, flying, haste, hexproof, indestructible, lifelink, menace, reach, shield, trample and vigilance. Decide icon placement, counter quantities and removal behavior. Counter copying/dragging is outside scope.
-
 ## Road to 1.0
 
 ### 67. 1.0 readiness — In progress
 
 Goal: version 1.0 means the game is safe to share beyond friends, and what players have saved keeps working. The game stays a rules-free sandbox, so rules automation is not a 1.0 requirement. Touch support stays labelled **Beta** at 1.0 (Chris's decision, 2026-10-29); #18 continues afterward.
 
-**Done:** automatic checks on every pull request (v0.56.0); PeerJS bundled instead of loaded from a CDN (v0.56.0); Report a bug and Privacy links and a Privacy section in the guide (v0.56.0); license changed to PolyForm Noncommercial (docs); accessibility pass on dialogs, labels and landmarks, supported-browsers list and an Accessibility section in the guide (v0.56.1); room lock, ask-before-joining and blocking removed players by browser and name, with a real connection-drop ability so refused and removed people receive nothing (v0.57.0, once published).
+**Done:** automatic checks on every pull request (v0.56.0); PeerJS bundled instead of loaded from a CDN (v0.56.0); Report a bug and Privacy links and a Privacy section in the guide (v0.56.0); license changed to PolyForm Noncommercial (docs); accessibility pass on dialogs, labels and landmarks, supported-browsers list and an Accessibility section in the guide (v0.56.1); room lock, ask-before-joining and blocking removed players by browser and name, with a real connection-drop ability so refused and removed people receive nothing (v0.57.0); the saved-data upgrade tests (14 releases, v0.3.0 to v0.57.0); and the sync code for moving decks between computers (relay in v0.59.0's release train via PR #97, browser side v0.60.0).
 
 **Still to do (Chris asked to finish all of these except full touch support):**
-1. **Release-candidate multiplayer test.** A full 4-player game in real Chrome, Edge, Firefox and Safari, including the host dropping out, a laptop sleeping and rejoining. Record who tested what. Needs real people; an assistant can prepare the checklist.
+1. ~~Release-candidate multiplayer test.~~ Not needed (Chris, 2026-11-04): the game is working fine in Chrome, Edge and Safari. Firefox was not mentioned.
 2. **Artwork and Scryfall audit.** Check all card backs and backgrounds for look-alikes of Wizards branding (two card backs were removed for this), and check use of Scryfall against its API guidelines. Consider a quick professional opinion on the license change and the Fan Content Policy. Not legal advice.
-3. **Saved-data upgrade test — built, awaiting publication.** 14 real releases (v0.3.0 to v0.57.0) are loaded into the current game by two tests (`tests/test_saved_data_upgrade.cjs`, automatic; and a real-browser one). Both pass: no upgrade problem was found. Still to decide with Chris: the compatibility promise for 1.0. Proposed: decks, backups and saved games made by any 1.x version keep opening in later 1.x versions; a change that would break that ships with a migration; the fixture tests enforce it. Not covered by the fixtures yet: uploaded custom images, hotkey and chat-panel preferences, and multiplayer (host or guest) saved games.
+3. **Saved-data compatibility promise — decision pending.** The upgrade tests are published: 14 real releases (v0.3.0 to v0.57.0) are loaded into the current game by two tests (`tests/test_saved_data_upgrade.cjs`, automatic; and a real-browser one) and no upgrade problem was found. Still to decide with Chris: the compatibility promise for 1.0. Proposed: decks, backups and saved games made by any 1.x version keep opening in later 1.x versions; a change that would break that ships with a migration; the fixture tests enforce it. Not covered by the fixtures yet: uploaded custom images, hotkey and chat-panel preferences, and multiplayer (host or guest) saved games.
 4. **Relay abuse protection.** Room codes are 5 characters from a 32-character set (about 33 million codes) with no rate limiting on the relay, and admin passphrase guesses are not throttled (the passphrase itself must be at least 20 characters and is compared safely). Relay changes deploy through Cloudflare and must stay backward compatible.
 5. **Accessibility leftovers.** Cards on the table cannot be used from the keyboard alone, and the Deck Builder's card list has small buttons nested inside list items. Text over background images was not checked by the automatic scanner, so contrast there needs a manual look.
 
-**Should have:** a short "relay is down" note for the owner, a known-limitations list in the guide, and the sync code (#68) if it is ready in time (1.0 can ship without it).
+**Should have:** a short "relay is down" note for the owner and a known-limitations list in the guide.
 
-**After 1.0:** the automation ideas (#55, #58, #62–65), #48, #4, #45 and #66.
-
-### 68. Sync code to move decks between computers — Built (v0.58.0); relay part first, then the browser part, each awaiting Chris's publish
-
-A friend wants his saved decks on more than one laptop. Today the only way is Deck Builder → Back up / restore: download a file, send it to yourself somehow, and restore it, which Chris finds clunky. Chris chose a **sync code** over full logins (accounts would break the "no accounts" promise and add password, email, privacy-law and support work). The browser-only game stays exactly as it is for anyone who does not use it.
-
-**How it should work**
-- Deck Builder gets **Sync across computers…**. **Create sync code** makes a short random code and uploads the collection. On another computer, **Use a sync code** takes the code and downloads the collection.
-- **Short and easy to keep (Chris's decision, 2026-10-30):** 9 characters in three groups, such as `K7M-4QX-9TD`, from the same 32 letters and digits as room codes (no look-alikes such as 0/O or 1/I), and not case-sensitive. The browser saves the code on that computer, so it only has to be typed when setting up a new computer. **Show my code** in the sync dialog displays it any time, and **Make a new code** replaces it if it leaks: it moves the synced copy to the new code and the **old code stops working** (Chris's decision, 2026-10-30), so a computer still using the old code gets a clear message to enter the new one. Normally every computer just uses the same code: a second computer that enters it is linked to the same synced copy, and a third computer can use it too, with no new code needed. Each computer keeps its own decks in its browser either way; the code only decides which synced copy the upload and download buttons use. The code is not put in file backups.
-- Start with explicit **Upload this computer's decks** and **Download decks from sync** buttons, not automatic syncing. Downloading reuses the existing restore rules (nothing is deleted; exact matches are skipped; changed decks with the same ID arrive as **(restored)** copies), so two laptops can never overwrite each other silently.
-- **Keep it simple (Chris's decision, 2026-10-30):** Chris does not mind that someone could guess a short code and will tighten it later if the game grows, so do not build slow key derivation, per-address guess limits or other anti-guessing machinery. Still encrypt the stored decks in the browser with a key made from the code (a few lines of the browser's built-in crypto, no effect on how it feels to use) so the relay does not hold readable decklists, and say plainly in the Privacy section that anyone who has or guesses the code can read and replace the synced decks. Keep only the protections that guard the free relay's storage rather than guessing: a size cap, a basic limit on how often one address can write, and expiry of unused copies. If sync later becomes popular, strengthen the code or add an optional password.
-- Decks, tokens, printings and preferences, **including the uploaded card back and background pictures** (Chris's decision, 2026-10-30). Leave out chat, saved games and room identities, as the file backup does. Cap the stored size (2.5 MB: two uploaded pictures are up to about 800 KB each; if everything together is too big the pictures are left out and the user is told) and expire a synced copy after a long period of no use, with a **Delete synced copy** button.
-- On the relay: new sync endpoints with the same origin checks as the rest, size and rate limits, and a stored-data check that matches the restore validator. Advertise a `sync-v1` feature so the browser only offers sync when the relay supports it, and keep older relays and older browsers working. Relay changes deploy through Cloudflare, so keep them backward compatible.
-- Keep Back up / restore as it is, as the offline fallback.
-
-**Done when:** a second browser can pull decks made in the first with only the code, the server holds only unreadable data, a wrong or expired code gives a clear message, and tests cover the encryption, the stored format, the size limit and the merge rules. Needs a real two-computer test by Chris.
+**After 1.0:** the automation ideas (#55, #58, #62–65), #48, #4 and #45.
 
 ## Paused and on hold
 
@@ -86,9 +69,9 @@ Let a defender connect a blocking card to an incoming attacker, redirecting the 
 
 Explore roughly 15–20% larger battlefield cards on 2K displays without changing 1080p and smaller screens or crowding the board.
 
-### 69. Several uploaded card backs and backgrounds — Idea only
+### 69. Several uploaded card backs and backgrounds — Not planned
 
-The game keeps one uploaded card back and one uploaded background ("Your upload"), so sync carries at most those two pictures. Chris may want more than one of each. If so: let players keep several uploads, choose between them, and raise the sync size limit in `relay/worker.js` (`SYNC_MAX_BYTES`, currently 2.5 MB for two pictures of up to about 800 KB each) and in `js/sync.js` (`MAX_STORED`) to match. No implementation yet.
+Chris (2026-11-04): swapping in another image by uploading it again is easy enough, so keeping several uploads is not needed now. The game still keeps one uploaded card back and one uploaded background ("Your upload"). The sync size limit was already raised to 8 MB, so it would not block this if it ever comes back.
 
 ## Automation
 
@@ -132,6 +115,8 @@ Keep manual fallbacks and explicit payment confirmation. Full rules enforcement 
 
 ## Layout ideas
 
-### 66. Life points at the top middle of the board — Idea only
+### 70. Commander damage outside the ▾ menu — Idea only
 
-Consider moving life points to the top middle of each player’s board. Placement and its relationship to the player’s name are undecided.
+Chris (2026-11-04): eventually bring commander damage back out of the life box's ▾ dropdown so it is visible on the board. Placement undecided; the life total now has its own space in each name bar (v0.58.1), which may leave room.
+
+(The earlier idea #66, life points at the top middle of the board, was dropped: the name-bar life total from v0.58.1 solved the problem it was meant to fix.)
