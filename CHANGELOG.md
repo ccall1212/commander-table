@@ -6,6 +6,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.65.2] - 2026-11-05
+
+### Fixed
+- **Copies and cards returned from the graveyard could appear where you could not click them** (in the bottom-left corner under your hand). A copy now appears right beside the card it copies, and a card brought back from your graveyard or exile appears in the middle of your board. Cards that would land under the hand and piles strip are moved to a reachable spot.
+
+## [0.65.1] - 2026-11-05
+
+### Changed
+- **Conceding now puts your cards back.** The concede box has a tick box, **Also put my cards back**, ticked by default: your hand, battlefield, graveyard and exile go back into your (shuffled) library and your commander returns to the command zone. Tokens and copies disappear, and cards you only control go back to their owners. Untick it to keep your cards so you can look through them; the death screen is then not drawn over your own board, while everyone else still sees you marked as out.
+
 ## [0.65.0] - 2026-11-04
 
 ### Added
@@ -295,7 +305,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.65.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.65.2...HEAD
+[0.65.2]: https://github.com/ccall1212/commander-table/compare/v0.65.1...v0.65.2
+[0.65.1]: https://github.com/ccall1212/commander-table/compare/v0.65.0...v0.65.1
 [0.65.0]: https://github.com/ccall1212/commander-table/compare/v0.64.0...v0.65.0
 [0.64.0]: https://github.com/ccall1212/commander-table/compare/v0.63.0...v0.64.0
 [0.63.0]: https://github.com/ccall1212/commander-table/compare/v0.62.2...v0.63.0

@@ -1,18 +1,29 @@
-# Victory screen and death screens — v0.65.0 test copy
+# Copy and graveyard placement fix + concede box — v0.65.2 test copy
 
 To check this copy, extract the ZIP and double-click **index.html**. No terminal or local server is needed.
 
-You need at least three players for a proper test (your window as the host plus two private/incognito windows). Two players also works. Everyone **Keep 7**, then the host clicks **Start game**.
+## Part 1: where new cards appear (the bug you found)
 
-1. **Death screen.** With three players, one guest opens ☰ → **Concede game…** and confirms. That guest's **own board** should turn dark and grey with a bold black-and-white **skull and crossbones** (a free Pixabay image) over it (try both ▥ Sidebar and ▦ Grid). The rest of their screen, including the other players' boards, should stay normal so they can keep watching. In the other windows, that player's small board should be greyed out with a skull on it and their name marked OUT. No Victory screen yet (two players are still in).
-2. **The win.** The second guest concedes too. **Every** window should show the **Victory** screen: a trophy, confetti, **VICTORY**, the winner's name colour, and who conceded. The winner's window says "You are the last one standing!"; the others say "<name> wins!". The game log says "… wins the game!".
-3. **Closing it.** Click **Close** in one window and press **Esc** in another: each closes only for that player.
-4. **New game.** Only the host's screen has **Start a new game**. (Don't need to click it unless you want a fresh game.)
-5. **Taking it back.** As the host, restore a conceded player (click a player's name → **Restore to game (undo concede)**): the Victory screens and that player's death screen should disappear. Conceding again should show it again.
-6. **Practice game.** Concede-ing in a solo practice game should not show a Victory screen (nobody else is in it).
-7. Please say how the celebration feels: too much, too little, too long?
+Start a game and put a few cards on your battlefield.
+1. **Copy.** Hover a battlefield card and press **C** (or right-click → **Copy this card**). The copy should appear **right beside** the original (to its right; if that spot is taken, the next free side), not in a corner. Try it on a card near the right edge and on a crowded board.
+2. **From the graveyard.** Put a card into your graveyard (**G**), open the graveyard, and bring it back (including a **land**). It should appear **in the middle of your board**, easy to see and click, never under the hand and piles strip at the bottom.
+3. Same for a card from **exile**. Cards you play from your hand should still go where they normally do.
+4. Copies made from a graveyard card, or from another player's card, also appear in the middle of the board (there is no card of yours to sit beside).
+
+## Part 2: the concede box (v0.65.1)
+
+Use three players if you can (two works). Everyone **Keep 7**, the host **Start game**. Have each guest put a few cards on the battlefield (hover a hand card, press **B**) and, if you like, send a card to the graveyard (**G**) and exile (**E**).
+
+1. **The box.** A guest opens ☰ → **Concede game…**. The box is small and has one tick box: **Also put my cards back…**, ticked.
+2. **Cards put back.** Leave it ticked and press **Concede game**. That guest's hand, battlefield, graveyard and exile should all be empty, their library should hold the whole deck again, and a commander (if they have one) should be back in the command zone. Tokens and copies should simply be gone.
+3. **Others' view.** In the other windows that player's board should show no cards and the skull; the player's name is marked OUT.
+4. **Keep my cards.** With another guest, untick **Also put my cards back…** and concede. Their hand and battlefield should stay exactly as they were, and **their own screen is NOT darkened**, so they can still look through their cards. Everyone else still sees them marked OUT with the skull.
+5. **Victory.** When only one player is left, everyone sees the Victory screen as before.
+6. The same box appears if you reach 0 life and choose to concede, or draw from an empty library.
+7. Tell me if the tick box wording is too long or the box feels too big.
 
 ## Assistant verification
 
 - **Unit tests (Node):** all 23 automatic test files pass.
-- **Real browsers (Chromium, three players):** new `test_victory_browser` checks that nothing shows while two players remain, that all three see the right text when the second one concedes, host-only new game, Close and Escape, that undoing a concession removes it and a new concession brings it back, and the log line. The test also checks the death screen on the player's own board (Sidebar and Grid) and on everyone else's view of it. I looked at screenshots (the confetti falls after the first moment, so it is not in the still). No sound was added.
+- **Placement:** new `test_card_placement_browser` checks a copy lands right beside its original (and the next free side when taken), and that cards returning from the graveyard and exile appear mid-board where they can be clicked; it fails on the old code.
+- **Real browsers (Chromium):** `test_victory_browser` (three players) concedes once with the box ticked and once unticked and checks the cards, the dark screen and what others see; the new `test_concede_clear_browser` checks a commander, graveyard and exile all go back as described.

@@ -1565,3 +1565,7 @@ body.touch-mode #myBar .ctrpanel {
 .opp.out .obf::after, #myBf.defeated::after, .opp.mytile.out .obf::after { content: ''; position: absolute; inset: 0; z-index: 70; pointer-events: none;
   background: radial-gradient(ellipse at center, rgba(0,0,0,.2), rgba(0,0,0,.55)) , url("../assets/death-skull.png") center / min(48%, 240px) no-repeat; opacity: .92; }
 body.me-out #myBf .board { filter: grayscale(.9) brightness(.45); }
+
+.concede-box { display: grid; gap: 12px; max-width: 30em; }
+.concede-clear { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; color: var(--muted); cursor: pointer; }
+.concede-clear input { margin-top: 3px; }

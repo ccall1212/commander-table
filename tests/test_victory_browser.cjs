@@ -63,19 +63,32 @@ const mkDeck = who => ({
     const son = await joinGame('Son', room, 'red');
     const mom = await joinGame('Mom', room, 'blue');
     await dad.waitForFunction(() => CT.S.table.seats.length === 3);
-    const dadPid = await pidOf(dad), momPid = await pidOf(mom);
+    const dadPid = await pidOf(dad), momPid = await pidOf(mom), sonPidEarly = await pidOf(son);
     for (const pg of [dad, son, mom]) await pg.locator('button[data-a="keep"]').click().catch(() => {});
     await dad.locator('button[data-a="start"]:not([disabled])').click();
     await son.waitForFunction(() => CT.S.table && CT.S.table.started, null, { timeout: 60000 });
     for (const pg of [dad, son, mom]) await pg.evaluate(() => { const o = document.querySelector('#firstRollOverlay'); if (o) o.remove(); });
-    const concede = async pg => {
+    const concede = async (pg, keepBoard) => {
       await menu(pg).click();
       await pg.locator('.w-menu-item', { hasText: 'Concede game' }).first().click();
-      await pg.getByRole('button', { name: 'Concede', exact: true }).click();
+      const box = pg.locator('.w-concede-dialog'); await box.waitFor();
+      assert.equal(await box.locator('input[type="checkbox"]').isChecked(), true, 'the box to put my cards back is ticked by default');
+      if (keepBoard) await box.locator('input[type="checkbox"]').uncheck();
+      await box.locator('[data-concede="yes"]').click();
     };
     const overlay = pg => pg.locator('#victoryOverlay');
 
+    // Son puts two cards on the battlefield first; conceding must send his whole hand and battlefield to the graveyard.
+    for (let i = 0; i < 2; i++) { const c = son.locator('#myHand .card').first(); await c.hover(); await son.keyboard.press('b'); await son.waitForFunction(n => CT.S.me.zones.battlefield.length === n, i + 1); }
+    await son.mouse.move(5, 5);
+    const zonesBefore = await son.evaluate(() => ({ lib: CT.S.me.zones.library.length, ex: CT.S.me.zones.exile.length, cmd: CT.S.me.zones.command.length, hand: CT.S.me.zones.hand.length, bf: CT.S.me.zones.battlefield.length }));
+    assert.equal(zonesBefore.bf, 2);
     await concede(son);
+    await son.waitForFunction(() => CT.S.me.zones.hand.length === 0 && CT.S.me.zones.battlefield.length === 0);
+    const zonesAfter = await son.evaluate(() => ({ lib: CT.S.me.zones.library.length, ex: CT.S.me.zones.exile.length, cmd: CT.S.me.zones.command.length, gy: CT.S.me.zones.graveyard.length, hand: CT.S.me.zones.hand.length, bf: CT.S.me.zones.battlefield.length }));
+    assert.deepEqual([zonesAfter.hand, zonesAfter.bf, zonesAfter.gy, zonesAfter.ex], [0, 0, 0, 0], 'hand, battlefield, graveyard and exile are all empty');
+    assert.equal(zonesAfter.lib, zonesBefore.lib + zonesBefore.hand + zonesBefore.bf, 'every card went back into the library');
+    await dad.waitForFunction(p => { const pl = CT.S.players[p]; return pl.lib === 40 && (pl.zones.battlefield || []).length === 0; }, sonPidEarly);
     await dad.waitForFunction(() => CT.S.table.out && Object.keys(CT.S.table.out).length === 1);
     await dad.waitForTimeout(800);
     for (const pg of [dad, son, mom]) assert.equal(await overlay(pg).count(), 0, 'no victory while two players are still in');
@@ -102,8 +115,12 @@ const mkDeck = who => ({
     await son.evaluate(() => { CT.S.view = 'side'; CT.render(); });
     if (process.env.CT_SHOTS) { await son.screenshot({ path: process.env.CT_SHOTS + '/death-self.png' }); await dad.screenshot({ path: process.env.CT_SHOTS + '/death-others.png' }); }
 
-    await concede(mom);
+    const momHand = await mom.evaluate(() => CT.S.me.zones.hand.length);
+    await concede(mom, true);
     for (const pg of [dad, son, mom]) await overlay(pg).waitFor();
+    assert.equal(await mom.evaluate(() => CT.S.me.zones.hand.length), momHand, 'keeping the board: Mom\'s hand was not touched');
+    assert.equal(await mom.evaluate(() => document.body.classList.contains('me-out') || !!document.querySelector('#myBf.defeated')), false, 'and her own screen is not darkened');
+    assert.equal(await skull(dad, `.opp.tile[data-opp="${momPid}"].out .obf`), true, 'but everyone else still sees her board marked with the skull');
     assert.match(await overlay(dad).innerText(), /VICTORY[\s\S]*You are the last one standing/, 'the winner is told they won');
     assert.match(await overlay(son).innerText(), /Dad wins!/, 'a player who conceded sees who won');
     assert.match(await overlay(mom).innerText(), /Dad wins!/);
