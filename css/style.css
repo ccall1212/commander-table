@@ -1224,10 +1224,11 @@ body.touch-mode #myBar .ctrpanel {
   appearance: none;
   -webkit-appearance: none;
   display: inline-flex;
-  flex: 1 1 0;
+  flex: 1 1 auto; /* each half is as wide as its number, so big values such as 10000 are not cut off */
   align-items: center;
   justify-content: center;
-  min-width: 0;
+  min-width: 1.5em;
+  white-space: nowrap;
   margin: 0;
   padding: 0 4px;
   border: 0;

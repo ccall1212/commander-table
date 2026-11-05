@@ -6,6 +6,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.66.0] - 2026-11-05
+
+### Added
+- **Temporary Set power/toughness.** Right-click a card or a selection → **Temporary (until end of turn)** → **Set power/toughness until end of turn…** and type the new values (for "change their power and toughness until end of turn" cards). It ends when the turn passes, like the other temporary effects, and counters and other changes still apply on top.
+
+### Fixed
+- **Power and toughness could not be set above 999.** You can now type values up to 999999 (for example 10000/7) when setting power/toughness, and the P/T badge widens so big numbers are no longer cut off.
+
 ## [0.65.2] - 2026-11-05
 
 ### Fixed
@@ -305,7 +313,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.65.2...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.66.0...HEAD
+[0.66.0]: https://github.com/ccall1212/commander-table/compare/v0.65.2...v0.66.0
 [0.65.2]: https://github.com/ccall1212/commander-table/compare/v0.65.1...v0.65.2
 [0.65.1]: https://github.com/ccall1212/commander-table/compare/v0.65.0...v0.65.1
 [0.65.0]: https://github.com/ccall1212/commander-table/compare/v0.64.0...v0.65.0

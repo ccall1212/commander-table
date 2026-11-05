@@ -115,6 +115,16 @@ const mkDeck = who => ({
     await dad.waitForFunction(l => CT.S.me.zones.battlefield.filter(c => l.includes(c.iid)).every(c => (c.ts || []).includes('vigilance')), sel);
     await dad.keyboard.press('Escape');
 
+    // Set power and toughness (typed) until end of turn on the whole group.
+    await select(sel); await ctx(sel[2]);
+    await (await menuItem('Temporary (until end of turn)')).hover();
+    await (await menuItem('Set power/toughness until end of turn… · 3 selected')).click();
+    const pti = dad.locator('.w-dialog input').first(); await pti.fill('10000/7'); await dad.keyboard.press('Enter');
+    await dad.waitForFunction(l => CT.S.me.zones.battlefield.filter(c => l.includes(c.iid)).every(c => c.tb === '10000/7'), sel);
+    assert.deepEqual((await dad.evaluate(() => CT.S.me.zones.battlefield.map(c => c.tb || null))), ['10000/7', '10000/7', '10000/7', null], 'typed power/toughness applied to the three selected cards only');
+    await dad.waitForFunction(() => [...document.querySelectorAll('#myBf .card .badges .pt.temp')].filter(b => /10001\s*8/.test(b.innerText)).length === 3);
+    await son.waitForFunction(p => (CT.S.players[p].zones.battlefield || []).filter(c => c.tb === '10000/7').length === 3, dadPid);
+
     // The turn passes: every temporary effect disappears, permanent ones stay, for both players.
     const active = () => dad.evaluate(() => CT.S.table.active);
     const waitActive = pid => Promise.all([dad, son].map(pg => pg.waitForFunction(p => CT.S.table.active === p, pid)));
@@ -123,7 +133,7 @@ const mkDeck = who => ({
     if ((await active()) === dadPid) await dad.locator('button[data-a="pass"]').first().click();
     else { await dad.locator('button[data-a="pass"]').first().click(); await dad.locator('button', { hasText: 'Pass their turn' }).click(); }
     await dad.waitForFunction(b => CT.S.table.turnSeq > b, before);
-    await dad.waitForFunction(() => CT.S.me.zones.battlefield.every(c => !c.tp && !c.tt && !(c.ts || []).length), null, { timeout: 8000 });
+    await dad.waitForFunction(() => CT.S.me.zones.battlefield.every(c => !c.tp && !c.tt && !c.tb && !(c.ts || []).length), null, { timeout: 8000 });
     st = await cards();
     assert.deepEqual(st[0].st, ['flying'], 'the permanent marker survived the turn change');
     await son.waitForFunction(p => (CT.S.players[p].zones.battlefield || []).every(c => !c.tp && !(c.ts || []).length), dadPid);

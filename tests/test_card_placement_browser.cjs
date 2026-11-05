@@ -70,6 +70,7 @@ const mkDeck = who => ({
     const [a, b, c] = (await bf()).map(x => x.iid);
     await dad.evaluate(([a, b, c]) => { const z = CT.S.me.zones.battlefield; CT.act(() => { const f = i => z.find(x => x.iid === i); f(a).x = 300; f(a).y = 160; f(b).x = 700; f(b).y = 160; f(c).x = 60; f(c).y = 300; }); }, [a, b, c]);
     const visible = async iid => dad.evaluate(i => {
+      document.querySelectorAll('.w-toast, .ct-turn-notice, #rollPopup').forEach(n => n.remove()); // transient banners can sit over a card for a moment
       const el = document.querySelector(`#myBf .card[data-iid="${i}"]`); if (!el) return { found: false };
       const r = el.getBoundingClientRect(), row = document.querySelector('#myRow').getBoundingClientRect();
       const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);

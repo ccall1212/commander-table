@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.65.2';
+const APP_VERSION = '0.66.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -445,8 +445,8 @@ let undoClearedOpeningDeal = null;
 // =====================================================================
 function pubCard(c) {
   const pos = { x: c.x, y: c.y, att: c.att || null };
-  if (c.fd) return Object.assign({ iid: c.iid, fd: 1, t: c.t ? 1 : 0, c: c.c, st: c.st || [], ts: c.ts || [], tp: c.tp || 0, tt: c.tt || 0, own: c.own, tok: c.tok ? 1 : 0 }, pos);
-  return Object.assign({ iid: c.iid, id: c.id, t: c.t ? 1 : 0, fl: c.fl ? 1 : 0, c: c.c, st: c.st || [], ts: c.ts || [], tp: c.tp || 0, tt: c.tt || 0, own: c.own, tok: c.tok ? 1 : 0, cmd: c.cmd ? 1 : 0, cp: c.cp ? 1 : 0,
+  if (c.fd) return Object.assign({ iid: c.iid, fd: 1, t: c.t ? 1 : 0, c: c.c, st: c.st || [], ts: c.ts || [], tp: c.tp || 0, tt: c.tt || 0, tb: c.tb || undefined, own: c.own, tok: c.tok ? 1 : 0 }, pos);
+  return Object.assign({ iid: c.iid, id: c.id, t: c.t ? 1 : 0, fl: c.fl ? 1 : 0, c: c.c, st: c.st || [], ts: c.ts || [], tp: c.tp || 0, tt: c.tt || 0, tb: c.tb || undefined, own: c.own, tok: c.tok ? 1 : 0, cmd: c.cmd ? 1 : 0, cp: c.cp ? 1 : 0,
     pb: c.pb || undefined, dp: c.dp || 0, dt: c.dt || 0 }, pos);
 }
 function topIsRevealed(m) {
@@ -973,8 +973,8 @@ function cleanCards(a, n = 400) {
     x: Number.isFinite(+x.x) && x.x !== null ? clamp(Math.round(+x.x), 0, BW - CW) : undefined,
     y: Number.isFinite(+x.y) && x.y !== null ? clamp(Math.round(+x.y), 0, BH_MAX - CH) : undefined,
     att: isObj(x.att) && typeof x.att.p === 'string' && typeof x.att.i === 'string' ? { p: x.att.p.slice(0, 40), i: x.att.i.slice(0, 40) } : null,
-    pb: typeof x.pb === 'string' && /^-?\d{1,3}\/-?\d{1,3}$/.test(x.pb) ? x.pb : undefined,
-    dp: clamp(num(x.dp), -999, 999), dt: clamp(num(x.dt), -999, 999), st: cleanMarks(x.st), ts: cleanMarks(x.ts), tp: clamp(num(x.tp), -999, 999), tt: clamp(num(x.tt), -999, 999)
+    pb: typeof x.pb === 'string' && /^-?\d{1,6}\/-?\d{1,6}$/.test(x.pb) ? x.pb : undefined,
+    dp: clamp(num(x.dp), -999999, 999999), dt: clamp(num(x.dt), -999999, 999999), st: cleanMarks(x.st), ts: cleanMarks(x.ts), tp: clamp(num(x.tp), -999999, 999999), tt: clamp(num(x.tt), -999999, 999999), tb: typeof x.tb === 'string' && /^-?\d{1,6}\/-?\d{1,6}$/.test(x.tb) ? x.tb : undefined
   })) : [];
 }
 const numMap = o => (isObj(o) ? Object.fromEntries(Object.entries(o).slice(0, 40).map(([k, v]) => [String(k).slice(0, 90), num(v)])) : {});
@@ -1217,7 +1217,7 @@ function applyPlayerRequest(req, from) {
     act(() => {
       if (!S.me.defs[d.id]) S.me.defs[d.id] = d;
       if (findCard(c.iid)) return null; // already have it (duplicate message)
-      const card = { iid: c.iid, id: d.id, own: c.own || from, t: zone === 'battlefield' ? !!c.t : false, fl: false, fd: false, c: zone === 'battlefield' ? c.c : {}, st: zone === 'battlefield' ? c.st : [], ts: zone === 'battlefield' ? c.ts : [], tp: zone === 'battlefield' ? c.tp : 0, tt: zone === 'battlefield' ? c.tt : 0, tok: !!c.tok, cmd: !!c.cmd, cp: !!c.cp };
+      const card = { iid: c.iid, id: d.id, own: c.own || from, t: zone === 'battlefield' ? !!c.t : false, fl: false, fd: false, c: zone === 'battlefield' ? c.c : {}, st: zone === 'battlefield' ? c.st : [], ts: zone === 'battlefield' ? c.ts : [], tp: zone === 'battlefield' ? c.tp : 0, tt: zone === 'battlefield' ? c.tt : 0, tb: zone === 'battlefield' ? c.tb : undefined, tok: !!c.tok, cmd: !!c.cmd, cp: !!c.cp };
       if (req.k === 'return' && card.tok && zone !== 'battlefield') return null;
       insertCard(card, zone, zone === 'battlefield' && Number.isFinite(+req.x) && Number.isFinite(+req.y) ? { x: +req.x, y: +req.y } : { pos: req.pos });
       return req.k === 'give'
@@ -1629,7 +1629,7 @@ function moveCard(iid, to, opts = {}) {
   if (from === 'hand' && to !== 'hand') { delete card.rvh; delete card.rvp; }
   let orphans = [];
   if (from === 'battlefield' && to !== 'battlefield') {
-    card.t = false; card.c = {}; card.st = []; card.ts = []; card.tp = 0; card.tt = 0; card.fl = false; card.pb = undefined; card.dp = 0; card.dt = 0; // a card that leaves forgets everything
+    card.t = false; card.c = {}; card.st = []; card.ts = []; card.tp = 0; card.tt = 0; card.tb = undefined; card.fl = false; card.pb = undefined; card.dp = 0; card.dt = 0; // a card that leaves forgets everything
     orphans = detachFrom(S.pid, iid);
   }
   if (from === 'battlefield' || from === 'command') { delete card.x; delete card.y; card.att = null; }
@@ -2473,15 +2473,15 @@ async function customCounter(iid, targets) {
 // --- power / toughness: optional base override (pb "3/3") + modifiers (dp, dt), plus +1/+1 / -1/-1 counters
 function effPT(c, def) {
   if (c.fd) return { text: '2/2', modified: false };
-  const base = c.pb || (def && def.pt) || '';
+  const base = c.tb || c.pb || (def && def.pt) || ''; // tb: base power/toughness set until end of turn
   const parts = String(base).split('/').map(v => v.trim());
   // Symbolic printed stats use a manual baseline of zero; numeric sides keep their value.
   const stats = parts.length === 2 && parts.every(Boolean)
     ? parts.map(v => /^-?\d+$/.test(v) ? +v : 0) : null;
   const cnt = ((c.c && c.c['+1/+1']) || 0) - ((c.c && c.c['-1/-1']) || 0);
-  const tp = c.tp || 0, tt = c.tt || 0, temp = !!(tp || tt); // temporary changes that end when the turn passes
+  const tp = c.tp || 0, tt = c.tt || 0, temp = !!(tp || tt || c.tb); // temporary changes that end when the turn passes
   const dp = (c.dp || 0) + cnt + tp, dt = (c.dt || 0) + cnt + tt;
-  const modified = !!(c.pb || dp || dt);
+  const modified = !!(c.tb || c.pb || dp || dt);
   if (stats) return { text: `${stats[0] + dp}/${stats[1] + dt}`, modified, temp };
   if (!modified) return { text: base, modified, temp };
   const sg = v => (v >= 0 ? '+' + v : String(v));
@@ -2496,8 +2496,8 @@ async function setPT(iid) {
   const cur = effPT(f.card, defOf(f.card)).text;
   const v = await UI.prompt({ title: 'Set power / toughness', label: 'New base power/toughness, e.g. 4/4 (modifiers and counters still apply on top)', value: /^-?\d+\/-?\d+$/.test(cur) ? cur : '1/1' });
   if (v == null) return;
-  const m = /^\s*(-?\d{1,3})\s*\/\s*(-?\d{1,3})\s*$/.exec(String(v));
-  if (!m) { UI.toast('Use the form 3/3', { kind: 'warn' }); return; }
+  const m = /^\s*(-?\d{1,6})\s*\/\s*(-?\d{1,6})\s*$/.exec(String(v));
+  if (!m) { UI.toast('Use the form 3/3 (whole numbers up to 999999)', { kind: 'warn' }); return; }
   act(() => { f.card.pb = `${+m[1]}/${+m[2]}`; f.card.dp = 0; f.card.dt = 0; return [`set {0} to base ${+m[1]}/${+m[2]}`, [defOf(f.card)]]; });
 }
 function resetPT(iid) {
@@ -2669,7 +2669,7 @@ function giveControl(iid, to, at) {
     const orphans = f.zone === 'battlefield' ? detachFrom(S.pid, iid) : [];
     if (orphans.length) setTimeout(() => orphanToast(orphans), 0);
     const card = Object.assign({}, f.card); delete card.x; delete card.y; card.att = null;
-    if (f.zone !== 'battlefield') { card.t = false; card.fd = false; card.fl = false; card.c = {}; card.st = []; card.ts = []; card.tp = 0; card.tt = 0; }
+    if (f.zone !== 'battlefield') { card.t = false; card.fd = false; card.fl = false; card.c = {}; card.st = []; card.ts = []; card.tp = 0; card.tt = 0; card.tb = undefined; }
     const req = { k: 'give', card, def: Deck.slimDef(d) };
     if (at) { req.x = at.x; req.y = at.y; }
     sendReq(to, req);
@@ -3194,13 +3194,24 @@ function oppCardMenu(x, y, pid, iid) {
 function tempPT(iids, dp, dt) {
   const cards = iids.map(findCard).filter(f => f && f.zone === 'battlefield');
   if (!cards.length) return;
-  act(() => { cards.forEach(f => { f.card.tp = clamp((f.card.tp || 0) + dp, -999, 999); f.card.tt = clamp((f.card.tt || 0) + dt, -999, 999); }); },
+  act(() => { cards.forEach(f => { f.card.tp = clamp((f.card.tp || 0) + dp, -999999, 999999); f.card.tt = clamp((f.card.tt || 0) + dt, -999999, 999999); }); },
     { label: cards.length > 1 ? `Temporary ${dp >= 0 ? '+' : ''}${dp}/${dt >= 0 ? '+' : ''}${dt} on ${cards.length} cards` : undefined });
 }
+async function setTempPT(iids) {
+  const cards = iids.map(findCard).filter(f => f && f.zone === 'battlefield');
+  if (!cards.length) return;
+  const cur = effPT(cards[0].card, defOf(cards[0].card)).text;
+  const v = await UI.prompt({ title: cards.length > 1 ? `Set power / toughness of ${cards.length} cards until end of turn` : 'Set power / toughness until end of turn', label: 'New power/toughness until the turn passes, e.g. 0/1 or 10000/7 (counters and other changes still apply on top)', value: /^-?\d+\/-?\d+$/.test(cur) ? cur : '1/1' });
+  if (v == null) return;
+  const m = /^\s*(-?\d{1,6})\s*\/\s*(-?\d{1,6})\s*$/.exec(String(v));
+  if (!m) { UI.toast('Use the form 3/3 (whole numbers up to 999999)', { kind: 'warn' }); return; }
+  const value = `${+m[1]}/${+m[2]}`, live = iids.map(findCard).filter(f => f && f.zone === 'battlefield');
+  act(() => { live.forEach(f => { f.card.tb = value; }); }, { label: live.length > 1 ? `Set ${live.length} cards to ${value} until end of turn` : `Set to ${value} until end of turn` });
+}
 function clearTemp(iids) {
-  const cards = iids.map(findCard).filter(f => f && f.zone === 'battlefield' && (f.card.tp || f.card.tt || (f.card.ts && f.card.ts.length)));
+  const cards = iids.map(findCard).filter(f => f && f.zone === 'battlefield' && (f.card.tp || f.card.tt || f.card.tb || (f.card.ts && f.card.ts.length)));
   if (!cards.length) { UI.toast('Nothing temporary on that card.'); return; }
-  act(() => { cards.forEach(f => { f.card.tp = 0; f.card.tt = 0; f.card.ts = []; }); }, { label: 'Cleared temporary effects' });
+  act(() => { cards.forEach(f => { f.card.tp = 0; f.card.tt = 0; f.card.tb = undefined; f.card.ts = []; }); }, { label: 'Cleared temporary effects' });
 }
 function tempItems(iid, targets) {
   const n = targets.length > 1 ? ` · ${targets.length} selected` : '';
@@ -3209,6 +3220,7 @@ function tempItems(iid, targets) {
     { label: '−1/−1 until end of turn' + n, onClick: () => tempPT(targets, -1, -1) },
     { label: 'Power +1 / −1', sub: [{ label: 'Power +1', onClick: () => tempPT(targets, 1, 0) }, { label: 'Power −1', onClick: () => tempPT(targets, -1, 0) }] },
     { label: 'Toughness +1 / −1', sub: [{ label: 'Toughness +1', onClick: () => tempPT(targets, 0, 1) }, { label: 'Toughness −1', onClick: () => tempPT(targets, 0, -1) }] },
+    { label: 'Set power/toughness until end of turn…' + n, onClick: () => setTempPT(targets) },
     { sep: true },
     { label: 'Statuses & abilities until end of turn…' + n, onClick: () => showMarksDialog(iid, targets, true) },
     { sep: true },
@@ -3223,7 +3235,7 @@ function clearTempOnTurnChange(t) {
   lastTempTurnKey = key;
   if (!had || !key || !S.me) return;
   let changed = false;
-  S.me.zones.battlefield.forEach(c => { if (c.tp || c.tt || (c.ts && c.ts.length)) { c.tp = 0; c.tt = 0; c.ts = []; changed = true; } });
+  S.me.zones.battlefield.forEach(c => { if (c.tp || c.tt || c.tb || (c.ts && c.ts.length)) { c.tp = 0; c.tt = 0; c.tb = undefined; c.ts = []; changed = true; } });
   if (changed) commit();
 }
 function setCardMarks(iids, id, on, temp) {
@@ -5483,7 +5495,7 @@ function giveControlGroup(group, to, at, anchorIid) {
       }
       const card = Object.assign({}, f.card);
       delete card.x; delete card.y; card.att = null;
-      if (f.zone !== 'battlefield') { card.t = false; card.fd = false; card.fl = false; card.c = {}; card.st = []; card.ts = []; card.tp = 0; card.tt = 0; }
+      if (f.zone !== 'battlefield') { card.t = false; card.fd = false; card.fl = false; card.c = {}; card.st = []; card.ts = []; card.tp = 0; card.tt = 0; card.tb = undefined; }
       const req = { k: 'give', card, def: Deck.slimDef(def) };
       req.x = clamp(Math.round(at.x + p.x - lead.x), 0, BW - CW);
       req.y = clamp(Math.round(at.y + p.y - lead.y), 0, myBH() - CH);
