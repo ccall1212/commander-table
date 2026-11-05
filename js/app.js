@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.65.1';
+const APP_VERSION = '0.65.2';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -1568,7 +1568,7 @@ function insertCard(card, to, opts = {}) {
   if (to === 'library') { S.me.revealTopOnce = null; if (opts.pos === 'bottom') z.push(card); else z.unshift(card); } else z.push(card);
   if (to === 'battlefield') {
     if (opts.x != null) { card.x = clamp(Math.round(opts.x), 0, BW - CW); card.y = clamp(Math.round(opts.y), 0, myBH() - CH); }
-    else if (card.x == null) autoPlace(card, to);
+    else if (card.x == null) { autoPlace(card, to); if (card.y != null && card.y + CH > boardVisibleBottom()) centerSpot(card); } // never leave it under the hand strip
   }
   if (to === 'battlefield') {
     const d = defOf(card);
@@ -1643,6 +1643,7 @@ function moveCard(iid, to, opts = {}) {
     return { def, from, gone: 'owner', card, orphans };
   }
   insertCard(card, to, opts);
+  if (to === 'battlefield' && (from === 'graveyard' || from === 'exile') && opts.x == null) centerSpot(card); // coming back from a pile: show it in the middle of the board
   return { def, from, card, orphans };
 }
 function moveText(r, to, opts) {
@@ -2521,12 +2522,52 @@ function createToken(def, n = 1) {
   return true;
 }
 // A copy behaves like a token (it ceases to exist off the battlefield) but is labelled TOKEN COPY.
-function copyCard(def, flipped, tapped) {
+// Where the bottom of my visible battlefield is, in board units (the hand and piles strip covers the rest of the screen).
+function boardVisibleBottom() {
+  const full = myBH();
+  const wrap = document.querySelector('#myBf .boardwrap'), board = wrap && wrap.firstElementChild, row = document.querySelector('#myRow');
+  if (!board || !row || !row.offsetParent || !(+board.dataset.s > 0)) return full;
+  const top = row.getBoundingClientRect().top - board.getBoundingClientRect().top;
+  return Math.min(full, Math.max(CH, top / +board.dataset.s));
+}
+// A free spot in the middle of the visible board, so a card that arrives from somewhere else (graveyard, exile, a copy) is
+// always easy to find and reach instead of landing under the hand strip.
+function centerSpot(card) {
+  const limit = boardVisibleBottom();
+  const cx = Math.round(BW / 2 - CW / 2), cy = Math.round(Math.max(0, limit / 2 - CH / 2));
+  const taken = (x, y) => S.me.zones.battlefield.some(o => o !== card && o.x != null && !o.att && Math.abs(o.x - x) < CW * 0.75 && Math.abs(o.y - y) < CH * 0.6);
+  for (const dy of [0, -1, 1, -2, 2]) for (const dx of [0, 1, -1, 2, -2, 3, -3]) {
+    const x = cx + dx * (CW + 8), y = cy + dy * (CH + 8);
+    if (x >= 0 && x <= BW - CW && y >= 0 && y + CH <= limit && !taken(x, y)) { card.x = x; card.y = y; return; }
+  }
+  const n = S.me.zones.battlefield.length;
+  card.x = clamp(cx + (n * 22) % 120, 0, BW - CW); card.y = clamp(cy + (n * 14) % 80, 0, Math.max(0, limit - CH));
+}
+// Put a new copy right beside the card it copies (right, then left, below, above), or in a free spot you can reach.
+function placeCopy(card, src) {
+  const limit = boardVisibleBottom();
+  const others = () => S.me.zones.battlefield.filter(o => o !== card && o.x != null && !o.att);
+  const overlaps = (x, y) => others().some(o => Math.abs(o.x - x) < CW * 0.75 && Math.abs(o.y - y) < CH * 0.6);
+  const fits = (x, y) => x >= 0 && x <= BW - CW && y >= 0 && y + CH <= limit;
+  if (src && src.x != null) {
+    for (const [dx, dy] of [[CW + 6, 0], [-(CW + 6), 0], [0, CH + 6], [0, -(CH + 6)]]) {
+      const x = src.x + dx, y = src.y + dy;
+      if (fits(x, y) && !overlaps(x, y)) { card.x = x; card.y = y; return; }
+    }
+    card.x = clamp(src.x + 22, 0, BW - CW); card.y = clamp(src.y + 22, 0, Math.max(0, limit - CH)); // no room: overlap it a little, still beside it
+    return;
+  }
+  centerSpot(card); // nothing to sit beside: the middle of the board
+}
+function copyCard(def, flipped, tapped, srcIid) {
   if (!def || !def.id) return;
   if (!canEnterBattlefield()) { UI.toast('The battlefield opens when the host starts the game.', { kind: 'warn' }); return; }
+  const srcFound = srcIid && findCard(srcIid), src = srcFound && srcFound.zone === 'battlefield' ? srcFound.card : null;
   act(() => {
     S.me.defs[def.id] = S.me.defs[def.id] || def;
-    insertCard(mkCard(def, { tok: true, cp: true, t: !!tapped, fl: !!(flipped && (def.imgBack || def.backName)) }), 'battlefield');
+    const card = mkCard(def, { tok: true, cp: true, t: !!tapped, fl: !!(flipped && (def.imgBack || def.backName)) });
+    insertCard(card, 'battlefield');
+    placeCopy(card, src);
     return [`created a ${tapped ? 'tapped ' : ''}copy of {0}`, [def]];
   });
 }
@@ -2966,7 +3007,7 @@ function cardMenu(x, y, iid) {
     items.push({ label: 'Temporary (until end of turn)', sub: tempItems(iid, sel) });
     items.push({ sep: true });
     items.push({ label: c.fd ? 'Turn face up' : 'Turn face down', hint: CTHotkeys.key('face'), onClick: () => toggleFaceDown(iid) });
-    items.push({ label: 'Copy this card', hint: CTHotkeys.key('copy'), disabled: c.fd, onClick: () => copyCard(d, c.fl) });
+    items.push({ label: 'Copy this card', hint: CTHotkeys.key('copy'), disabled: c.fd, onClick: () => copyCard(d, c.fl, false, iid) });
     if (d.tokens && d.tokens.length) {
       items.push({ label: 'Create related token…', onClick: () => relatedTokenGallery(d.tokens, `Tokens for ${dname(d)}`) });
     }
@@ -5797,7 +5838,7 @@ function onKey(e) {
   if (['response', 'copy', 'shuffle', 'mill', 'tokens', 'arrow', 'chat', 'log'].includes(action) && e.repeat) return;
   const anyCard = h && (mine ? { c: mine.card, def: defOf(mine.card) } : oppCard(h.pid, h.iid));
   if (action === 'copy') {
-    if (anyCard && (!mine || mine.zone === 'battlefield') && !anyCard.c.fd && anyCard.def && anyCard.def.id) { e.preventDefault(); copyCard(anyCard.def, anyCard.c.fl); }
+    if (anyCard && (!mine || mine.zone === 'battlefield') && !anyCard.c.fd && anyCard.def && anyCard.def.id) { e.preventDefault(); copyCard(anyCard.def, anyCard.c.fl, false, mine && mine.zone === 'battlefield' ? h.iid : null); }
     return;
   }
   if (action === 'info') {
@@ -6956,7 +6997,7 @@ function boot() {
   if (sess) resume(sess); else showLobby();
 }
 // Expose a little for debugging from the console.
-window.CT = { S, act, render, dragState: () => drag, hostRecv, cleanTable };
+window.CT = { S, act, render, dragState: () => drag, hostRecv, cleanTable, doMove };
 // ---- stay on one version -----------------------------------------------------------------------
 // GitHub Pages lets browsers reuse cached files for 10 minutes. index.html links every file with ?v=<version>
 // (tools/bump-version.py), so a new page never pulls old files. If this script and the page that loaded it
