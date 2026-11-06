@@ -2,7 +2,7 @@
 
 To check this copy, extract the ZIP and double-click **index.html**. A practice game is enough.
 
-1. Right-click a creature -> **Statuses & abilities…**: the **Shroud** icon is now a **hooded figure with its face covered**. Tick it and check it on the card.
+1. Right-click a creature -> **Statuses & abilities…**: the **Shroud** icon is now a **hooded figure with its face in shadow and two eyes showing**. Tick it and check it on the card.
 2. Play **Shroud of Protection** ("Other enchantments you control have shroud") and a couple of other enchantments, plus a creature, a land and an artifact. Only your **other enchantments** should show Shroud (dotted green ring; hover shows who owns the card). Not Shroud of Protection itself, not the creature/land/artifact, and not another player's enchantments.
 3. Try other cards of yours that say "Artifacts you control have…" or "Other permanents you control have…". Tell me which cards did not work, with their names.
 

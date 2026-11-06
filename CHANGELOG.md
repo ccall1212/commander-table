@@ -12,7 +12,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - **Granted abilities for other kinds of permanents.** Cards like **Shroud of Protection** ("Other enchantments you control have shroud") now work: the reader understands enchantments, artifacts, lands, planeswalkers, "permanents" and "nonland permanents" as well as creatures (for example "Artifacts you control have hexproof", "Other permanents you control have indestructible"). "Other" never includes the card itself, and an Enchantment Creature counts as an enchantment.
 
 ### Changed
-- **New Shroud icon:** a hooded figure with its face covered, instead of the eye with a slash.
+- **New Shroud icon:** a hooded figure whose face is hidden in shadow with just two eyes showing, instead of the eye with a slash.
 
 ### Fixed
 - "Artifacts you control have hexproof" (and Lands, Enchantments…) was read as if Artifacts were a creature type. Card types are now recognised as card types.
