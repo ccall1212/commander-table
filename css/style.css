@@ -1590,11 +1590,17 @@ body.me-out #myBf .board { filter: grayscale(.9) brightness(.45); }
 .rem-panel .rem-mini { background: transparent; border: 0; color: #8f9ab3; cursor: pointer; padding: 0 4px; min-height: 0; font-size: 12px; line-height: 1.2; }
 .rem-panel .rem-mini:hover { color: #fff; }
 .rem-who b { color: #ffd36b; } .rem-who small { color: #8f9ab3; }
-.rem-line { color: #d7deec; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
-.rem-foot { border-top: 1px solid #2c3446; padding: 7px 8px 8px; display: grid; gap: 6px; }
-.rem-add { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; }
-.rem-panel .rem-text { grid-column: 1 / -1; width: 100%; min-width: 0; height: 28px; padding: 2px 8px; font-size: 13px; }
+.rem-line { color: #d7deec; overflow-wrap: anywhere; margin-top: 3px; }
+.rem-kw { color: #7fd3ff; font-weight: 700; }
+.rem-cond { color: #ffe9b0; font-weight: 700; }
+.rem-foot { border-top: 1px solid #2c3446; padding: 6px 8px; display: grid; gap: 6px; }
+.rem-foot [hidden] { display: none; }
+.rem-bar { display: flex; justify-content: space-between; gap: 6px; }
+.rem-bar button { min-height: 0; height: 26px; padding: 0 10px; font-size: 12px; }
+.rem-form { display: grid; gap: 6px; }
+.rem-form-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 6px; }
+.rem-panel .rem-text { width: 100%; min-width: 0; height: 28px; padding: 2px 8px; font-size: 13px; }
 .rem-panel .rem-when { width: 100%; min-width: 0; height: 28px; padding: 2px 8px; font-size: 13px; }
-.rem-add button { height: 28px; min-height: 0; padding: 0 14px; font-size: 13px; }
+.rem-form-row button { height: 28px; min-height: 0; padding: 0 12px; font-size: 13px; }
 .rem-opts { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px; font-size: 12px; color: #aab4c8; }
 .rem-opts button { min-height: 0; height: 24px; padding: 0 10px; font-size: 12px; }

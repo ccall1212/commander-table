@@ -22,6 +22,13 @@ assert.deepEqual(plain(R.triggerLines(rhystic, false)), [rhystic], 'an opponent 
 assert.deepEqual(plain(R.triggerLines(myOnly, false)), [], 'an opponent trigger that only concerns them is not');
 assert.deepEqual(plain(R.triggerLines(upkeep, false)), [], 'their own upkeep trigger is not shown');
 assert.deepEqual(plain(R.triggerLines(both, false)), [both], 'an each-player trigger can affect me, so it is shown');
+const mikey = 'Ward {2}\nYou may look at the top card of your library any time.\nYou may play lands and cast Mutant, Ninja, or Turtle spells from the top of your library. If you cast a creature spell this way, that creature enters with a +1/+1 counter on it.';
+const mk = plain(R.triggerLines(mikey, true));
+assert.equal(mk.length, 1, 'a play-from-the-library permission is a reminder; plain keywords like Ward are not');
+assert.ok(mk.some(l => /enters with a \+1\/\+1 counter on it/.test(l)), 'the whole permission line, including the enters-with part, is kept');
+assert.deepEqual(plain(R.triggerLines('Flying\nHaste\nWard {2}', true)), [], 'plain keywords are not reminders');
+assert.deepEqual(plain(R.triggerLines(mikey, false)), [], 'an opponent\'s own permission does not concern me');
+assert.deepEqual(plain(R.triggerLines('Each creature you control enters with an additional +1/+1 counter on it.', true)).length, 1, 'an enters-with effect');
 assert.deepEqual(plain(R.triggerLines(null, true)), [], 'no rules text');
 assert.deepEqual(plain(R.triggerLines('Flying\nWhenever this creature attacks, draw a card.\n—\nWhenever another creature dies, scry 1.', true)).length, 2, 'two-faced text with a separator');
 assert.ok(R.triggerLines('Whenever ' + 'x'.repeat(900), true)[0].length <= 400, 'long lines are shortened');

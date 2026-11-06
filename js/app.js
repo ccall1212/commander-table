@@ -1498,8 +1498,10 @@ function ensureRemPanel() {
   const panel = document.createElement('div'); panel.id = 'remPanel'; panel.className = 'rem-panel'; panel.setAttribute('role', 'region'); panel.setAttribute('aria-label', 'Trigger reminders');
   panel.innerHTML = `<div class="rem-head"><b>Reminders</b><small class="rem-deck"></small><button type="button" class="rem-x" data-rem="close" aria-label="Collapse reminders" title="Collapse">▾</button></div>
     <div class="rem-scroll"></div>
-    <div class="rem-foot"><div class="rem-add"><input type="text" class="rem-text" maxlength="240" placeholder="Remember… e.g. Landfall: draw 2 cards" aria-label="New reminder"><input type="text" class="rem-when" maxlength="24" placeholder="when" aria-label="When it applies (optional)"><button type="button" data-rem="add">Add</button></div>
-      <div class="rem-opts"><span>Opponents' triggers</span><button type="button" data-rem="opp" aria-pressed="true">On</button></div></div>`;
+    <div class="rem-foot">
+      <div class="rem-bar"><button type="button" data-rem="show-add">+ Add reminder</button><button type="button" data-rem="show-opts" aria-label="Options" title="Options">⚙</button></div>
+      <div class="rem-form" hidden><input type="text" class="rem-text" maxlength="240" placeholder="Remember… e.g. Landfall: draw 2 cards" aria-label="New reminder"><div class="rem-form-row"><input type="text" class="rem-when" maxlength="24" placeholder="when (optional)" aria-label="When it applies (optional)"><button type="button" data-rem="add">Add</button><button type="button" data-rem="cancel">Cancel</button></div></div>
+      <div class="rem-opts" hidden><span>Opponents' triggers</span><button type="button" data-rem="opp" aria-pressed="true">On</button></div></div>`;
   game.append(tab, panel);
   const place = () => {
     const pos = LS.get('ct.remPos', null) || { x: 18, y: 96 };
@@ -1507,7 +1509,7 @@ function ensureRemPanel() {
     [tab, panel].forEach(el => { el.style.left = x + 'px'; el.style.top = y + 'px'; });
   };
   place(); window.addEventListener('resize', place);
-  const setOpen = on => { LS.set('ct.remOpen', !!on); remUI.sig = ''; renderReminders(); if (on) panel.querySelector('.rem-text').focus(); };
+  const setOpen = on => { LS.set('ct.remOpen', !!on); remUI.sig = ''; renderReminders(); };
   tab.addEventListener('click', () => setOpen(true));
   const addReminder = () => {
     const text = CTReminders.clip(panel.querySelector('.rem-text').value, CTReminders.MAX_TEXT), when = CTReminders.clip(panel.querySelector('.rem-when').value, CTReminders.MAX_WHEN);
@@ -1515,7 +1517,7 @@ function ensureRemPanel() {
     const list = remList();
     if (list.length >= CTReminders.MAX_ITEMS) { UI.toast('That is the most reminders a deck can keep.', { kind: 'warn' }); return; }
     if (saveRemList(CTReminders.cleanList(list.concat([{ id: 'r' + Date.now().toString(36), text, when }])))) {
-      panel.querySelector('.rem-text').value = ''; panel.querySelector('.rem-when').value = ''; remUI.sig = ''; renderReminders();
+      panel.querySelector('.rem-text').value = ''; panel.querySelector('.rem-when').value = ''; panel.querySelector('.rem-form').hidden = true; remUI.sig = ''; renderReminders();
     }
   };
   panel.addEventListener('click', async e => {
@@ -1523,6 +1525,9 @@ function ensureRemPanel() {
     const kind = b.dataset.rem, id = b.dataset.id;
     if (kind === 'close') setOpen(false);
     else if (kind === 'add') addReminder();
+    else if (kind === 'show-add') { const f = panel.querySelector('.rem-form'); f.hidden = !f.hidden; if (!f.hidden) panel.querySelector('.rem-text').focus(); }
+    else if (kind === 'cancel') { panel.querySelector('.rem-form').hidden = true; panel.querySelector('.rem-text').value = ''; panel.querySelector('.rem-when').value = ''; }
+    else if (kind === 'show-opts') { const o = panel.querySelector('.rem-opts'); o.hidden = !o.hidden; }
     else if (kind === 'opp') { LS.set('ct.remOpp', !remShowOpp()); remUI.sig = ''; renderReminders(); }
     else if (kind === 'del') { if (saveRemList(remList().filter(r => r.id !== id))) { remUI.sig = ''; renderReminders(); } }
     else if (kind === 'edit') {
@@ -1531,9 +1536,9 @@ function ensureRemPanel() {
       if (v == null) return;
       if (saveRemList(remList().map(x => x.id === id ? { ...x, text: CTReminders.clip(v, CTReminders.MAX_TEXT) || x.text } : x))) { remUI.sig = ''; renderReminders(); }
     }
-    else if (kind === 'hide') { const h = remHidden(); h.add(b.dataset.key); LS.set('ct.remHide', [...h].slice(-300)); remUI.sig = ''; renderReminders(); }
+    else if (kind === 'hide') { const h = remHidden(); String(b.dataset.key || '').split('\n').forEach(k => k && h.add(k)); LS.set('ct.remHide', [...h].slice(-300)); remUI.sig = ''; renderReminders(); }
   });
-  panel.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches('.rem-text, .rem-when')) { e.preventDefault(); addReminder(); } e.stopPropagation(); });
+  panel.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches('.rem-text, .rem-when')) { e.preventDefault(); addReminder(); } if (e.key === 'Escape' && e.target.matches('.rem-text, .rem-when')) { panel.querySelector('.rem-form').hidden = true; } e.stopPropagation(); });
   // Drag the panel (or the tab) by its title to put it where it is out of the way.
   const drag = (handle, moveEls) => handle.addEventListener('pointerdown', e => {
     if (e.button !== 0 || e.target.closest('button, input, label')) return;
@@ -1575,17 +1580,34 @@ function renderReminders() {
     body.appendChild(row);
   });
   heading('From the table');
-  if (!trig.length) note('No repeating triggers in play' + (remShowOpp() ? '' : ' (opponents\' triggers are off)') + '.');
-  trig.forEach(t => {
-    const row = document.createElement('div'); row.className = 'rem-row rem-tbl'; row.title = t.name + ' — ' + t.line;
+  if (!trig.length) note('No triggers in play' + (remShowOpp() ? '' : ' (opponents\' triggers are off)') + '.');
+  // One box per card, with all of its lines together.
+  const groups = new Map();
+  trig.forEach(t => { const k = t.owner + '|' + t.name; const g = groups.get(k) || { name: t.name, owner: t.owner, count: 0, lines: [] }; g.count = Math.max(g.count, t.count); g.lines.push(t); groups.set(k, g); });
+  groups.forEach(g => {
+    const row = document.createElement('div'); row.className = 'rem-row rem-tbl';
+    const text = document.createElement('div'); text.className = 'rem-body';
     const who = document.createElement('div'); who.className = 'rem-who';
-    const n = document.createElement('b'); n.textContent = t.name + (t.count > 1 ? ' ×' + t.count : ''); who.appendChild(n);
-    if (t.owner) { const o = document.createElement('small'); o.textContent = ' (' + t.owner + ')'; who.appendChild(o); }
-    const line = document.createElement('div'); line.className = 'rem-line'; line.textContent = t.line;
-    const text = document.createElement('div'); text.className = 'rem-body'; text.append(who, line);
-    row.append(text, btn('hide', '✕', 'Hide this trigger', { key: t.hideKey }));
+    const n = document.createElement('b'); n.textContent = g.name + (g.count > 1 ? ' ×' + g.count : ''); who.appendChild(n);
+    if (g.owner) { const o = document.createElement('small'); o.textContent = ' (' + g.owner + ')'; who.appendChild(o); }
+    text.appendChild(who);
+    g.lines.forEach(t => text.appendChild(remLineEl(t.line)));
+    row.title = g.name;
+    row.append(text, btn('hide', '✕', 'Hide the triggers of ' + g.name, { key: g.lines.map(t => t.hideKey).join('\n') }));
     body.appendChild(row);
   });
+}
+// A trigger line with its key words highlighted: an ability word ("Landfall —") and the condition up to the first comma
+// ("At the beginning of combat on your turn", "Whenever a land you control enters").
+function remLineEl(line) {
+  const el = document.createElement('div'); el.className = 'rem-line';
+  let rest = String(line);
+  const aw = /^([A-Z][\w'’ ]{1,24}) — /.exec(rest);
+  if (aw) { const k = document.createElement('span'); k.className = 'rem-kw'; k.textContent = aw[1]; el.append(k, ' — '); rest = rest.slice(aw[0].length); }
+  const cond = /^((?:Whenever|At the beginning of)\b[^,]*?)(, )/.exec(rest);
+  if (cond) { const c = document.createElement('span'); c.className = 'rem-cond'; c.textContent = cond[1]; el.append(c, ', '); rest = rest.slice(cond[0].length); }
+  el.append(rest);
+  return el;
 }
 function turnKey(t) {
   return t && t.started && t.active ? String(t.room || '') + '|' + Math.max(1, num(t.turnSeq, num(t.turn))) + '|' + String(t.active) : null;
