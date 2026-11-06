@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.76.0] - 2026-11-07
+
+### Added
+- **Shroud** is now an ability in **Statuses & abilities**, with its own icon (an eye with a slash through it; the open icon set the other abilities come from has no Shroud, so this one is drawn for this game). It also works everywhere the other abilities do: it is turned on automatically when printed at the start of a card, and granted Shroud appears on creatures, so **Lightning Greaves** ("Equipped creature has haste and shroud") now shows Haste and Shroud on the creature it is attached to. Before, the whole Lightning Greaves line was ignored because Shroud was not on the list.
+
 ## [0.75.0] - 2026-11-06
 
 ### Changed
@@ -393,7 +398,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.75.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.76.0...HEAD
+[0.76.0]: https://github.com/ccall1212/commander-table/compare/v0.75.0...v0.76.0
 [0.75.0]: https://github.com/ccall1212/commander-table/compare/v0.74.1...v0.75.0
 [0.74.1]: https://github.com/ccall1212/commander-table/compare/v0.74.0...v0.74.1
 [0.74.0]: https://github.com/ccall1212/commander-table/compare/v0.73.0...v0.74.0

@@ -54,6 +54,7 @@ const sc = o => G.parse(o).map(g => g.scope + ':' + g.abilities.join('+') + (g.a
 assert.equal(sc('Equipped creature gets +2/+2 and has trample.'), 'attached:trample@equipped', 'a Sword-style line');
 assert.equal(sc('Enchanted creature has flying and lifelink.'), 'attached:flying+lifelink@enchanted', 'an Aura');
 assert.equal(sc('Equipped creature gets +1/+1 and has vigilance.\nEquip {2}'), 'attached:vigilance@equipped');
+assert.equal(sc('Equipped creature has haste and shroud.\nEquip {0}'), 'attached:haste+shroud@equipped', 'Lightning Greaves');
 assert.equal(sc('Enchanted creature gets +1/+1.'), '', 'a bare power/toughness bonus is not a grant');
 assert.equal(sc('Equipped creature has ward {1}.'), '', 'an ability without an icon is left alone');
 assert.equal(sc('Equipped creature has "Whenever this creature attacks, draw a card."'), '', 'a quoted ability is left alone');
