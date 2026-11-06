@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.67.0] - 2026-11-06
+
+### Added
+- **Trigger reminders panel.** A small 📝 **Reminders** tab on your board opens a panel (drag it, collapse it back to the tab). **My reminders** are your own typed notes (with an optional "when" tag and a tick box), saved with each deck, included in backups and the sync code, and ticks start fresh each turn of yours. **From the table** quotes, word for word, the repeating triggers (Whenever…, At the beginning of…) of the cards in play: all of yours, and an opponent's only when the trigger mentions opponents or players (such as Rhystic Study). Opponent triggers can be switched off and any line can be hidden.
+
 ## [0.66.0] - 2026-11-05
 
 ### Added
@@ -313,7 +318,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.66.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.67.0...HEAD
+[0.67.0]: https://github.com/ccall1212/commander-table/compare/v0.66.0...v0.67.0
 [0.66.0]: https://github.com/ccall1212/commander-table/compare/v0.65.2...v0.66.0
 [0.65.2]: https://github.com/ccall1212/commander-table/compare/v0.65.1...v0.65.2
 [0.65.1]: https://github.com/ccall1212/commander-table/compare/v0.65.0...v0.65.1

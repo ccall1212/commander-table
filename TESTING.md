@@ -1,15 +1,17 @@
-# Big power/toughness and temporary Set power/toughness — v0.66.0 test copy
+# Trigger reminders panel — v0.67.0 test copy
 
-To check this copy, extract the ZIP and double-click **index.html**. No terminal or local server is needed. Two players are best.
+To check this copy, extract the ZIP and double-click **index.html**. No terminal or local server is needed. Two players are best (your window plus a private window); play with real decks.
 
-1. **Big numbers.** Put a creature on the battlefield, right-click it → **Power / Toughness** → **Set power/toughness…**, type **10000/7** and press Enter. The badge should show **10000** and **7**, fully readable and not cut off. The other player should see it too.
-2. Try a negative and a very large value (**-5/999999**). A value with seven digits (**1000000/1**) should be refused with a message.
-3. **Temporary set.** Select two or three creatures (drag a box), right-click one → **Temporary (until end of turn)** → **Set power/toughness until end of turn…**, type **0/1** (or any value). All selected cards should show it with the light-blue temporary outline. Counters, +1/+1 temporary effects and manual changes still apply on top.
-4. **End of turn.** Pass the turn: the set values go away and the cards return to their normal power and toughness. A **permanent** Set power/toughness (step 1) should stay.
-5. **Clear.** **Clear temporary effects** in the same menu removes it early. Undo reverses a group set in one step.
-6. Please tell me if you want the typed value to also replace the card's printed numbers in the hover preview text, or if the badge is enough.
+1. **The tab.** In a game, look at the top-left of your board for **📝 Reminders** (with a number). Click it to open the panel. Drag it by the title to move it; the **▾** collapses it back to the tab (the position is remembered).
+2. **My reminders.** Type *Landfall: draw 2 cards and gain 1 life* with the tag *each land* and press **Add**. Click its text to edit it; **✕** removes it. Tick it: it greys out and is struck through. Pass the turn around to your next turn: the tick should be gone. **Reset ticks** also clears them.
+3. **Saved with the deck.** Leave the game and start another game with the same deck: the reminder should still be there. A different deck has its own list. (Also try ☰ → backup: reminders are included.)
+4. **From the table.** Play cards with triggers (for example a landfall card, an "at the beginning of your upkeep" card). Under **From the table** you should see the card name and the trigger line quoted from the card. One-time "When it enters" lines should not appear.
+5. **Opponents.** Have the other player put a card like **Rhystic Study** (*Whenever an opponent casts a spell…*) on the battlefield. It should appear with their name in brackets. A card whose trigger only concerns them (like their own upkeep) should not. Untick **Opponents' triggers** to hide their lines.
+6. **Hide.** **✕** on a table line hides that trigger from now on.
+7. Please tell me how it feels: is the panel in the way, are there too many lines on a busy board, is anything missing?
 
 ## Assistant verification
 
-- **Unit tests (Node):** all 24 automatic test files pass.
-- **Real browsers (Chromium, two players):** new `test_big_power_browser` sets 10000/7 through the menu, checks the badge, what the other player sees, and the 6-digit limit; `test_temporary_effects_browser` now also types a temporary 10000/7 on a three-card selection, checks 10001/8 with a temporary +1/+1, and that everything is gone when the turn passes. I looked at a screenshot of the wider badge.
+- **Unit tests (Node):** new `test_reminders` (finding trigger lines, filtering for opponents, cleaning the saved list); all 25 automatic test files pass.
+- **Real browsers (Chromium, two players):** new `test_reminders_browser` checks the lines quoted for my cards and Rhystic Study, that one-time and opponent-only triggers are left out, the opponents switch, hiding, saving with the deck and in a backup, editing, ticks resetting on my turn, and collapsing to the tab. I looked at a screenshot.
+- **Not tested:** real decks from Scryfall (my tests use made-up cards with real-style rules text), real touch.

@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.66.0';
+const APP_VERSION = '0.67.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -458,7 +458,11 @@ function publicView() {
   // (bw tells other players which board width our positions/layout use)
   const take = list => list.map(c => {
     const p = pubCard(c);
-    if (p.id && m.defs[p.id]) defs[p.id] = Deck.slimDef(m.defs[p.id]);
+    if (p.id && m.defs[p.id]) {
+      defs[p.id] = Deck.slimDef(m.defs[p.id]);
+      const trg = typeof CTReminders === 'undefined' ? [] : CTReminders.triggerLines(m.defs[p.id].oracle, false).slice(0, 4); // only the triggers that can affect other players (for their reminders list)
+      if (trg.length) defs[p.id].trg = trg;
+    }
     return p;
   });
   return {
@@ -1446,6 +1450,147 @@ function showVictory(pid) {
   document.body.appendChild(o);
   document.addEventListener('keydown', victoryKey, true);
   close.focus();
+}
+// =====================================================================
+//  Trigger reminders panel: your own list (saved with the deck) and, from the table, the repeating triggers of the cards in play
+// =====================================================================
+const remUI = { built: false, sig: '' };
+function remDeck() { return S.deckId ? Deck.get(S.deckId) : null; }
+function remList() { const d = remDeck(); return CTReminders.cleanList(d && d.reminders); }
+function saveRemList(list) {
+  const d = remDeck();
+  if (!d) { UI.toast('This game has no saved deck to keep reminders with.', { kind: 'warn' }); return false; }
+  d.reminders = list;
+  try { Deck.save(d); return true; } catch (e) { UI.toast(e && e.message ? e.message : 'Could not save the reminders.', { kind: 'error' }); return false; }
+}
+const remHidden = () => new Set(LS.get('ct.remHide', []));
+const remShowOpp = () => LS.get('ct.remOpp', true) !== false;
+// Repeating triggers of the permanents in play, quoted from their rules text. Mine always; an opponent's only if it can affect me.
+function tableTriggers() {
+  const out = new Map(), hide = remHidden();
+  const add = (pid, c, def) => {
+    if (!def || c.fd) return;
+    const mine = pid === S.pid, name = def.face || def.name || '';
+    // Mine: every repeating trigger from the full rules text. Theirs: the lines they published as able to affect other players.
+    const lines = mine ? CTReminders.triggerLines(def.oracle, true)
+      : Array.isArray(def.trg) ? def.trg.filter(x => typeof x === 'string').slice(0, 4).map(x => CTReminders.clip(x, 400)).filter(Boolean)
+      : CTReminders.triggerLines(def.oracle, false);
+    lines.forEach(line => {
+      const key = (mine ? 'me' : pid) + '|' + name + '|' + line;
+      if (hide.has(name + '|' + line)) return;
+      const e = out.get(key) || { key, hideKey: name + '|' + line, owner: mine ? '' : pname(pid), name, line, count: 0 };
+      e.count++; out.set(key, e);
+    });
+  };
+  S.me.zones.battlefield.forEach(c => add(S.pid, c, defOf(c)));
+  if (remShowOpp()) for (const pid of ((S.table && S.table.seats) || [])) {
+    if (pid === S.pid || !S.players[pid]) continue;
+    const p = S.players[pid];
+    (p.zones.battlefield || []).forEach(c => add(pid, c, c.id ? (p.defs || {})[c.id] : null));
+  }
+  return [...out.values()].slice(0, 60);
+}
+function ensureRemPanel() {
+  if (remUI.built) return;
+  const game = $('#game'); if (!game) return;
+  remUI.built = true;
+  const tab = document.createElement('button'); tab.type = 'button'; tab.id = 'remTab'; tab.className = 'rem-tab'; tab.title = 'Show your trigger reminders';
+  const panel = document.createElement('div'); panel.id = 'remPanel'; panel.className = 'rem-panel'; panel.setAttribute('role', 'region'); panel.setAttribute('aria-label', 'Trigger reminders');
+  panel.innerHTML = `<div class="rem-head"><b>Reminders</b><small class="rem-deck"></small><button type="button" class="rem-x" data-rem="close" aria-label="Collapse reminders" title="Collapse">▾</button></div>
+    <div class="rem-scroll"></div>
+    <div class="rem-foot"><div class="rem-add"><input type="text" class="rem-text" maxlength="240" placeholder="Remember… e.g. Landfall: draw 2 cards" aria-label="New reminder"><input type="text" class="rem-when" maxlength="24" placeholder="when" aria-label="When it applies (optional)"><button type="button" data-rem="add">Add</button></div>
+      <div class="rem-opts"><button type="button" data-rem="reset">Reset ticks</button><label><input type="checkbox" data-rem="opp"> Opponents' triggers</label></div></div>`;
+  game.append(tab, panel);
+  const place = () => {
+    const pos = LS.get('ct.remPos', null) || { x: 18, y: 96 };
+    const x = clamp(+pos.x || 18, 0, Math.max(0, innerWidth - 60)), y = clamp(+pos.y || 96, 40, Math.max(40, innerHeight - 60));
+    [tab, panel].forEach(el => { el.style.left = x + 'px'; el.style.top = y + 'px'; });
+  };
+  place(); window.addEventListener('resize', place);
+  const setOpen = on => { LS.set('ct.remOpen', !!on); remUI.sig = ''; renderReminders(); if (on) panel.querySelector('.rem-text').focus(); };
+  tab.addEventListener('click', () => setOpen(true));
+  const addReminder = () => {
+    const text = CTReminders.clip(panel.querySelector('.rem-text').value, CTReminders.MAX_TEXT), when = CTReminders.clip(panel.querySelector('.rem-when').value, CTReminders.MAX_WHEN);
+    if (!text) return;
+    const list = remList();
+    if (list.length >= CTReminders.MAX_ITEMS) { UI.toast('That is the most reminders a deck can keep.', { kind: 'warn' }); return; }
+    if (saveRemList(CTReminders.cleanList(list.concat([{ id: 'r' + Date.now().toString(36), text, when }])))) {
+      panel.querySelector('.rem-text').value = ''; panel.querySelector('.rem-when').value = ''; remUI.sig = ''; renderReminders();
+    }
+  };
+  panel.addEventListener('click', async e => {
+    const b = e.target.closest('[data-rem]'); if (!b) return;
+    const kind = b.dataset.rem, id = b.dataset.id;
+    if (kind === 'close') setOpen(false);
+    else if (kind === 'add') addReminder();
+    else if (kind === 'reset') { S.me.remTicks = {}; saveSoon(); remUI.sig = ''; renderReminders(); }
+    else if (kind === 'del') { if (saveRemList(remList().filter(r => r.id !== id))) { remUI.sig = ''; renderReminders(); } }
+    else if (kind === 'edit') {
+      const r = remList().find(x => x.id === id); if (!r) return;
+      const v = await UI.prompt({ title: 'Edit reminder', label: 'Reminder', value: r.text });
+      if (v == null) return;
+      if (saveRemList(remList().map(x => x.id === id ? { ...x, text: CTReminders.clip(v, CTReminders.MAX_TEXT) || x.text } : x))) { remUI.sig = ''; renderReminders(); }
+    }
+    else if (kind === 'hide') { const h = remHidden(); h.add(b.dataset.key); LS.set('ct.remHide', [...h].slice(-300)); remUI.sig = ''; renderReminders(); }
+  });
+  panel.addEventListener('change', e => {
+    const b = e.target.closest('[data-rem]'); if (!b) return;
+    if (b.dataset.rem === 'tick') { S.me.remTicks = S.me.remTicks || {}; if (b.checked) S.me.remTicks[b.dataset.id] = true; else delete S.me.remTicks[b.dataset.id]; saveSoon(); remUI.sig = ''; renderReminders(); }
+    else if (b.dataset.rem === 'opp') { LS.set('ct.remOpp', b.checked); remUI.sig = ''; renderReminders(); }
+  });
+  panel.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches('.rem-text, .rem-when')) { e.preventDefault(); addReminder(); } e.stopPropagation(); });
+  // Drag the panel (or the tab) by its title to put it where it is out of the way.
+  const drag = (handle, moveEls) => handle.addEventListener('pointerdown', e => {
+    if (e.button !== 0 || e.target.closest('button, input, label')) return;
+    const r = panel.getBoundingClientRect(), dx = e.clientX - r.left, dy = e.clientY - r.top; let moved = false;
+    const mv = ev => { moved = true; const x = clamp(ev.clientX - dx, 0, innerWidth - 60), y = clamp(ev.clientY - dy, 40, innerHeight - 60); moveEls.forEach(el => { el.style.left = x + 'px'; el.style.top = y + 'px'; }); };
+    const up = () => { window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); if (moved) LS.set('ct.remPos', { x: parseInt(panel.style.left, 10), y: parseInt(panel.style.top, 10) }); };
+    window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up);
+  });
+  drag(panel.querySelector('.rem-head'), [tab, panel]);
+}
+function renderReminders() {
+  const game = $('#game');
+  const show = !!(S.me && game && !game.classList.contains('hidden') && S.role !== 'spectator');
+  if (!show) { if (remUI.built) { $('#remTab').hidden = true; $('#remPanel').hidden = true; } return; }
+  ensureRemPanel();
+  const tab = $('#remTab'), panel = $('#remPanel'); if (!tab || !panel) return;
+  const open = !!LS.get('ct.remOpen', false), list = remList(), ticks = S.me.remTicks || {}, trig = tableTriggers(), deck = remDeck();
+  const left = list.filter(r => !ticks[r.id]).length + trig.length;
+  const sig = JSON.stringify([open, list, ticks, trig.map(t => t.key + t.count), remShowOpp(), deck && deck.name]);
+  tab.hidden = open; panel.hidden = !open;
+  tab.textContent = '📝 Reminders' + (left ? ' · ' + left : '');
+  if (sig === remUI.sig) return;
+  remUI.sig = sig;
+  panel.querySelector('.rem-deck').textContent = deck ? deck.name : '';
+  panel.querySelector('[data-rem="opp"]').checked = remShowOpp();
+  const body = panel.querySelector('.rem-scroll'); body.replaceChildren();
+  const heading = (t) => { const h = document.createElement('div'); h.className = 'rem-sec'; h.textContent = t; body.appendChild(h); };
+  const note = t => { const p = document.createElement('p'); p.className = 'rem-note'; p.textContent = t; body.appendChild(p); };
+  const btn = (kind, label, aria, extra) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'rem-mini'; b.dataset.rem = kind; b.textContent = label; b.setAttribute('aria-label', aria); Object.assign(b.dataset, extra || {}); return b; };
+  heading('My reminders');
+  if (!list.length) note('Add things your deck wants you to remember, for example "Landfall: draw 2 cards and gain 1 life".');
+  list.forEach(r => {
+    const row = document.createElement('div'); row.className = 'rem-row' + (ticks[r.id] ? ' done' : '');
+    const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = !!ticks[r.id]; cb.dataset.rem = 'tick'; cb.dataset.id = r.id; cb.setAttribute('aria-label', 'Done this turn: ' + r.text);
+    const txt = document.createElement('button'); txt.type = 'button'; txt.className = 'rem-txt'; txt.dataset.rem = 'edit'; txt.dataset.id = r.id; txt.textContent = r.text; txt.title = 'Click to edit';
+    row.append(cb, txt);
+    if (r.when) { const w = document.createElement('span'); w.className = 'rem-pill'; w.textContent = r.when; row.appendChild(w); }
+    row.appendChild(btn('del', '✕', 'Remove reminder: ' + r.text, { id: r.id }));
+    body.appendChild(row);
+  });
+  heading('From the table');
+  if (!trig.length) note('No repeating triggers in play' + (remShowOpp() ? '' : ' (opponents\' triggers are off)') + '.');
+  trig.forEach(t => {
+    const row = document.createElement('div'); row.className = 'rem-row rem-tbl'; row.title = t.name + ' — ' + t.line;
+    const who = document.createElement('div'); who.className = 'rem-who';
+    const n = document.createElement('b'); n.textContent = t.name + (t.count > 1 ? ' ×' + t.count : ''); who.appendChild(n);
+    if (t.owner) { const o = document.createElement('small'); o.textContent = ' (' + t.owner + ')'; who.appendChild(o); }
+    const line = document.createElement('div'); line.className = 'rem-line'; line.textContent = t.line;
+    const text = document.createElement('div'); text.append(who, line);
+    row.append(text, btn('hide', '✕', 'Hide this trigger', { key: t.hideKey }));
+    body.appendChild(row);
+  });
 }
 function turnKey(t) {
   return t && t.started && t.active ? String(t.room || '') + '|' + Math.max(1, num(t.turnSeq, num(t.turn))) + '|' + String(t.active) : null;
@@ -3234,6 +3379,7 @@ function clearTempOnTurnChange(t) {
   if (key === lastTempTurnKey) return;
   lastTempTurnKey = key;
   if (!had || !key || !S.me) return;
+  if (t.active === S.pid && S.me.remTicks && Object.keys(S.me.remTicks).length) { S.me.remTicks = {}; remUI.sig = ''; } // a new turn of mine: reminders start unticked
   let changed = false;
   S.me.zones.battlefield.forEach(c => { if (c.tp || c.tt || c.tb || (c.ts && c.ts.length)) { c.tp = 0; c.tt = 0; c.tb = undefined; c.ts = []; changed = true; } });
   if (changed) commit();
@@ -3798,6 +3944,7 @@ function renderBody() {
   fitBoards();
   renderOppPanel();
   refreshTargeting();
+  renderReminders();
   S.viewers.forEach(v => { try { v.refresh(); } catch (e) { console.error(e); } });
 }
 
