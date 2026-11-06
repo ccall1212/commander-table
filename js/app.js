@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.74.1';
+const APP_VERSION = '0.75.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -1514,7 +1514,7 @@ function tableTriggers() {
     lines.forEach(line => {
       const key = (mine ? 'me' : pid) + '|' + name + '|' + line;
       if (hide.has(name + '|' + line)) return;
-      const e = out.get(key) || { key, hideKey: name + '|' + line, owner: mine ? '' : pname(pid), ownerColor: mine ? '' : colorOf(pid), name, line, count: 0 };
+      const e = out.get(key) || { key, hideKey: name + '|' + line, owner: mine ? '' : pname(pid), ownerColor: mine ? '' : colorOf(pid), name, line, count: 0, phase: CTReminders.phaseOf(line) };
       e.count++; out.set(key, e);
     });
   };
@@ -1527,7 +1527,7 @@ function tableTriggers() {
     CTTracks.chapterLines(def.oracle, lore).forEach(line => {
       const key = 'me|' + name + '|chapter ' + lore + '|' + line;
       if (hide.has(name + '|' + line)) return;
-      const e = out.get(key) || { key, hideKey: name + '|' + line, owner: '', name, line, count: 0 };
+      const e = out.get(key) || { key, hideKey: name + '|' + line, owner: '', name, line, count: 0, phase: 'main' }; // Saga chapters come up in the precombat main phase
       e.count++; out.set(key, e);
     });
   });
@@ -1540,7 +1540,7 @@ function tableTriggers() {
     lines.forEach(line => {
       const key = 'me|' + zone + '|' + name + '|' + line;
       if (hide.has(label + '|' + line)) return;
-      const e = out.get(key) || { key, hideKey: label + '|' + line, owner: '', name: label, line, count: 0, iid: c.iid };
+      const e = out.get(key) || { key, hideKey: label + '|' + line, owner: '', name: label, line, count: 0, iid: c.iid, phase: 'play' };
       e.count++; out.set(key, e);
     });
   }));
@@ -1621,7 +1621,7 @@ function renderReminders() {
   const tab = $('#remTab'), panel = $('#remPanel'); if (!tab || !panel) return;
   const open = !!LS.get('ct.remOpen', false), list = remList(), trig = tableTriggers(), deck = remDeck();
   const left = list.length + trig.length;
-  const sig = JSON.stringify([open, list, trig.map(t => t.key + t.count + (t.iid || '') + (t.ownerColor || '')), remShowOpp(), deck && deck.name]);
+  const sig = JSON.stringify([open, list, trig.map(t => t.key + t.count + (t.iid || '') + (t.ownerColor || '') + (t.phase || '')), remShowOpp(), deck && deck.name]);
   tab.hidden = open; panel.hidden = !open;
   tab.textContent = '📝 Reminders' + (left ? ' · ' + left : '');
   if (sig === remUI.sig) return;
@@ -1632,8 +1632,7 @@ function renderReminders() {
   const heading = (t) => { const h = document.createElement('div'); h.className = 'rem-sec'; h.textContent = t; body.appendChild(h); };
   const note = t => { const p = document.createElement('p'); p.className = 'rem-note'; p.textContent = t; body.appendChild(p); };
   const btn = (kind, label, aria, extra) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'rem-mini'; b.dataset.rem = kind; b.textContent = label; b.setAttribute('aria-label', aria); Object.assign(b.dataset, extra || {}); return b; };
-  heading('My reminders');
-  if (!list.length) note('Add things your deck wants you to remember, for example "Landfall: draw 2 cards and gain 1 life".');
+  if (list.length) heading('My reminders'); // nothing is shown for it until you add a reminder (use + Add reminder below)
   list.forEach(r => {
     const row = document.createElement('div'); row.className = 'rem-row';
     const txt = document.createElement('button'); txt.type = 'button'; txt.className = 'rem-txt'; txt.dataset.rem = 'edit'; txt.dataset.id = r.id; txt.textContent = r.text; txt.title = 'Click to edit';
@@ -1645,24 +1644,33 @@ function renderReminders() {
   });
   heading('From the table');
   if (!trig.length) note('No triggers in play' + (remShowOpp() ? '' : ' (opponents\' triggers are off)') + '.');
-  // One box per card, with all of its lines together.
-  const groups = new Map();
-  trig.forEach(t => { const k = t.owner + '|' + t.name; const g = groups.get(k) || { name: t.name, owner: t.owner, ownerColor: t.ownerColor, count: 0, lines: [], iid: t.iid }; g.count = Math.max(g.count, t.count); g.lines.push(t); groups.set(k, g); });
-  groups.forEach(g => {
-    const row = document.createElement('div'); row.className = 'rem-row rem-tbl';
-    const text = document.createElement('div'); text.className = 'rem-body';
-    const who = document.createElement('div'); who.className = 'rem-who';
-    const n = document.createElement('b'); n.textContent = g.name + (g.count > 1 ? ' ×' + g.count : ''); who.appendChild(n);
-    if (g.owner) { const o = document.createElement('small'); const nm = document.createElement('span'); nm.className = 'rem-owner'; nm.textContent = g.owner; if (g.ownerColor) nm.style.color = g.ownerColor; o.append(' (', nm, ')'); who.appendChild(o); }
-    text.appendChild(who);
-    g.lines.forEach(t => text.appendChild(remLineEl(t.line)));
-    row.title = g.name;
-    if (g.iid) { // a card I can play from the graveyard or exile: hover to see it, double-click (or Play) to put it onto the battlefield
-      row.classList.add('rem-play'); row.dataset.iid = g.iid; row.title = 'Double-click to play ' + g.name;
-      const play = btn('play', 'Play', 'Play ' + g.name + ' onto the battlefield', { iid: g.iid }); play.classList.add('rem-playbtn'); text.appendChild(play);
-    }
-    row.append(text, btn('hide', '✕', 'Hide the triggers of ' + g.name, { key: g.lines.map(t => t.hideKey).join('\n') }));
-    body.appendChild(row);
+  // Sorted by when they matter (upkeep, draw, main, beginning of combat, combat, end step, spells cast, other triggers, always on), with
+  // lines that read alike next to each other. Inside a section a card's lines stay together in one box.
+  CTReminders.PHASES.forEach(ph => {
+    const groups = new Map();
+    trig.filter(t => t.phase === ph.key).forEach(t => {
+      const k = t.owner + '|' + t.name;
+      const g = groups.get(k) || { name: t.name, owner: t.owner, ownerColor: t.ownerColor, count: 0, lines: [], iid: t.iid };
+      g.count = Math.max(g.count, t.count); g.lines.push(t); groups.set(k, g);
+    });
+    if (!groups.size) return;
+    const sub = document.createElement('div'); sub.className = 'rem-sub'; sub.textContent = ph.label; body.appendChild(sub);
+    [...groups.values()].sort((x, y) => CTReminders.sortKey(x.lines[0].line).localeCompare(CTReminders.sortKey(y.lines[0].line)) || x.name.localeCompare(y.name)).forEach(g => {
+      const row = document.createElement('div'); row.className = 'rem-row rem-tbl';
+      const text = document.createElement('div'); text.className = 'rem-body';
+      const who = document.createElement('div'); who.className = 'rem-who';
+      const n = document.createElement('b'); n.textContent = g.name + (g.count > 1 ? ' ×' + g.count : ''); who.appendChild(n);
+      if (g.owner) { const o = document.createElement('small'); const nm = document.createElement('span'); nm.className = 'rem-owner'; nm.textContent = g.owner; if (g.ownerColor) nm.style.color = g.ownerColor; o.append(' (', nm, ')'); who.appendChild(o); }
+      text.appendChild(who);
+      g.lines.slice().sort((x, y) => CTReminders.sortKey(x.line).localeCompare(CTReminders.sortKey(y.line))).forEach(t => text.appendChild(remLineEl(t.line)));
+      row.title = g.name;
+      if (g.iid) { // a card I can play from the graveyard or exile: hover to see it, double-click (or Play) to put it onto the battlefield
+        row.classList.add('rem-play'); row.dataset.iid = g.iid; row.title = 'Double-click to play ' + g.name;
+        const play = btn('play', 'Play', 'Play ' + g.name + ' onto the battlefield', { iid: g.iid }); play.classList.add('rem-playbtn'); text.appendChild(play);
+      }
+      row.append(text, btn('hide', '✕', 'Hide the triggers of ' + g.name, { key: g.lines.map(t => t.hideKey).join('\n') }));
+      body.appendChild(row);
+    });
   });
 }
 // A trigger line with its key words highlighted: an ability word ("Landfall —") and the condition up to the first comma
