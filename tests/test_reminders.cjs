@@ -29,6 +29,15 @@ assert.ok(mk.some(l => /enters with a \+1\/\+1 counter on it/.test(l)), 'the who
 assert.deepEqual(plain(R.triggerLines('Flying\nHaste\nWard {2}', true)), [], 'plain keywords are not reminders');
 assert.deepEqual(plain(R.triggerLines(mikey, false)), [], 'an opponent\'s own permission does not concern me');
 assert.deepEqual(plain(R.triggerLines('Each creature you control enters with an additional +1/+1 counter on it.', true)).length, 1, 'an enters-with effect');
+const quilled = 'Trample\nWhenever a creature you control deals combat damage during your turn, put that many +1/+1 counters on it. (It must survive to get the counters.)\nYou may cast this card from your graveyard by removing six counters from among creatures you control in addition to paying its other costs.';
+assert.deepEqual(plain(R.triggerLines(quilled, true)).length, 1, 'in play: only its trigger, not the graveyard permission');
+assert.deepEqual(plain(R.zoneLines(quilled, 'graveyard')), ['You may cast this card from your graveyard by removing six counters from among creatures you control in addition to paying its other costs.'], 'in my graveyard: the line about casting it from there');
+assert.deepEqual(plain(R.zoneLines('If this card is in your graveyard at the beginning of your upkeep, you may return it to your hand.', 'graveyard')).length, 1, 'an if-this-card-is-in-your-graveyard line');
+assert.deepEqual(plain(R.zoneLines('Flashback {2}{R}\nDeal 3 damage.', 'graveyard')), ['Flashback {2}{R}'], 'Flashback is a reminder in the graveyard');
+assert.deepEqual(plain(R.zoneLines('Flying\nTrample', 'graveyard')), [], 'nothing for a card with no graveyard abilities');
+assert.deepEqual(plain(R.zoneLines('Foretell {1}{U}\nDraw a card.', 'exile')), ['Foretell {1}{U}'], 'Foretell in exile');
+assert.deepEqual(plain(R.zoneLines('You may cast this card from exile.', 'exile')).length, 1);
+assert.deepEqual(plain(R.zoneLines(quilled, 'library')), []);
 assert.deepEqual(plain(R.triggerLines(null, true)), [], 'no rules text');
 assert.deepEqual(plain(R.triggerLines('Flying\nWhenever this creature attacks, draw a card.\n—\nWhenever another creature dies, scry 1.', true)).length, 2, 'two-faced text with a separator');
 assert.ok(R.triggerLines('Whenever ' + 'x'.repeat(900), true)[0].length <= 400, 'long lines are shortened');

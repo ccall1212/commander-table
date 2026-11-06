@@ -1483,6 +1483,17 @@ function tableTriggers() {
     });
   };
   S.me.zones.battlefield.forEach(c => add(S.pid, c, defOf(c)));
+  // My own cards in the graveyard or exile whose text says what to do from there ("You may cast this card from your graveyard…", Flashback…).
+  ['graveyard', 'exile'].forEach(zone => (S.me.zones[zone] || []).forEach(c => {
+    const def = defOf(c); if (!def || c.fd) return;
+    const name = def.face || def.name || '', label = name + ' (in ' + zone + ')';
+    CTReminders.zoneLines(def.oracle, zone).forEach(line => {
+      const key = 'me|' + zone + '|' + name + '|' + line;
+      if (hide.has(label + '|' + line)) return;
+      const e = out.get(key) || { key, hideKey: label + '|' + line, owner: '', name: label, line, count: 0 };
+      e.count++; out.set(key, e);
+    });
+  }));
   if (remShowOpp()) for (const pid of ((S.table && S.table.seats) || [])) {
     if (pid === S.pid || !S.players[pid]) continue;
     const p = S.players[pid];

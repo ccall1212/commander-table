@@ -97,6 +97,13 @@ const mkDeck = who => ({
     await panel.locator('[data-rem="opp"]').click();
     assert.equal(await panel.locator('[data-rem="opp"]').innerText(), 'On');
     await dad.waitForFunction(() => document.querySelectorAll('#remPanel .rem-tbl').length === 4);
+    // A card of mine in the graveyard whose text works from there is listed; it is not listed while it sits in play.
+    await dad.evaluate(() => { const m = CT.S.me, d = { id: 'qg', name: 'Quilled Greatwurm', face: 'Quilled Greatwurm', type: 'Creature', oracle: 'Trample\nWhenever a creature you control deals combat damage during your turn, put that many +1/+1 counters on it.\nYou may cast this card from your graveyard by removing six counters from among creatures you control in addition to paying its other costs.', img: '', tokens: [], ci: [] }; CT.act(() => { m.defs.qg = d; m.zones.graveyard.push({ iid: CT.S.pid + '_qg', id: 'qg', own: CT.S.pid, t: 0, fl: 0, fd: 0, c: {} }); }); });
+    await dad.waitForFunction(() => document.querySelectorAll('#remPanel .rem-tbl').length === 5);
+    const gy = (await tbl()).find(l => /Quilled Greatwurm/.test(l));
+    assert.ok(/in graveyard.*You may cast this card from your graveyard/.test(gy) && !/Whenever a creature you control deals/.test(gy), 'the graveyard line only: ' + gy);
+    await dad.evaluate(() => { const m = CT.S.me; CT.act(() => { m.zones.graveyard.length = 0; }); });
+    await dad.waitForFunction(() => document.querySelectorAll('#remPanel .rem-tbl').length === 4);
     // Layout: a long reminder with a tag, in a narrow window, never overflows or overlaps inside the panel.
     await panel.locator('[data-rem="show-add"]').click();
     await panel.locator('.rem-text').fill('Can play lands, mutants, ninjas, or turtles from the top of the library'); await panel.locator('.rem-when').fill('Upkeep'); await panel.locator('[data-rem="add"]').click();
