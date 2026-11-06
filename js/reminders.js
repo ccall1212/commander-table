@@ -10,6 +10,11 @@
   // Also worth remembering: permission to play or cast from another zone ("You may play lands … from the top of your library")
   // and replacement effects about how things enter ("… enters with a +1/+1 counter on it").
   const PERMISSION_RE = /^You may (?:play|cast|look at)\b.*\b(?:from|top of|among)\b/;
+  // Replacement and doubling effects ("If one or more +1/+1 counters would be put on a creature you control, that many plus one are put
+  // on it instead", "…triggers an additional time", "…twice that many") and cost changes ("Spells you cast cost {1} less"): static
+  // effects you have to remember to apply, and so easy to forget.
+  const REPLACEMENT_RE = /^If\b.*\b(?:would|instead|additional time|twice that many|that many plus)\b/;
+  const COST_RE = /\bcosts? (?:\{[^}]+\})+ (?:less|more)\b/;
   const ENTERS_WITH_RE = /\benters (?:the battlefield )?with\b/;
   // Lines that only matter while the card sits in a pile: "You may cast this card from your graveyard…", "If this card is in your
   // graveyard…", Flashback, Escape, "from exile"…  Cards in play do not list these.
@@ -75,7 +80,7 @@
   function triggerLines(oracle, own) {
     return String(oracle == null ? '' : oracle).split(/\n+/).map(l => l.trim()).flatMap(l => {
       if (!l) return [];
-      if (TRIGGER_RE.test(l) || (PERMISSION_RE.test(l) && !IN_PILE.test(l)) || ENTERS_WITH_RE.test(l)) return (own || AFFECTS_YOU_RE.test(l)) ? [clip(l, 400)] : [];
+      if (TRIGGER_RE.test(l) || (PERMISSION_RE.test(l) && !IN_PILE.test(l)) || ENTERS_WITH_RE.test(l) || REPLACEMENT_RE.test(l) || COST_RE.test(l)) return (own || AFFECTS_YOU_RE.test(l)) ? [clip(l, 400)] : [];
       return own ? keywordLines(l) : []; // keyword abilities only matter for the card's own controller
     });
   }

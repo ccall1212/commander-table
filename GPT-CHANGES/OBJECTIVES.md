@@ -12,7 +12,11 @@ Chris (2026-11-06): effects that exile an opponent's cards and let you play them
 
 Chris (2026-11-06): abilities printed at the very start of a card (Vigilance on Kimarhri, Valiant Guardian) should be turned on automatically; Saga creatures like Summon: Ixion list theirs at the bottom. Built with a menu switch to turn it off.
 
-### 78. Reminders: missing keyword triggers — Built, awaiting Chris's test (v0.70.0)
+### 79. Reminders: replacement effects and cost changes — Built, awaiting Chris's test (v0.71.0)
+
+Chris (2026-11-06): Hardened Scales did not show up in Reminders ("kinda a big one"). Fixed by also listing "If … would … instead" effects, extra-trigger effects and cost changes. Chris will keep reporting cards that are still missing.
+
+### 78. Reminders: missing keyword triggers — Shipped (v0.70.0)
 
 Chris (2026-11-06): Gyre Sage's Evolve was not in Reminders. Fixed with a list of trigger-type keywords (Evolve, Exalted, Prowess, Battle cry, Annihilator, Extort, Persist, Undying, Afterlife, Cascade, Echo and more). Chris will report any cards still missing.
 

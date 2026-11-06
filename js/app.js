@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.70.2';
+const APP_VERSION = '0.71.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
