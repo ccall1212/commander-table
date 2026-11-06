@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.67.0] - 2026-11-06
+
+### Added
+- **Trigger reminders panel.** A small 📝 **Reminders** tab on your board opens a panel (drag it, collapse it back to the tab). **My reminders** are your own typed notes (with an optional "when" tag), saved with each deck and included in backups and the sync code. **From the table** quotes, word for word, the lines worth remembering of the cards in play (repeating triggers, permissions to play from another zone, "enters with" effects), one box per card with the key words highlighted (ability words like Landfall, and conditions like "At the beginning of combat"): all of yours, and an opponent's only when the line mentions opponents or players (such as Rhystic Study). The add form and options stay hidden until you open them; opponent triggers can be switched off and any card's lines can be hidden. Your own cards in the **graveyard or exile** are listed too when their text works from there (for example "You may cast this card from your graveyard…", Flashback, Foretell), marked "(in graveyard)" or "(in exile)".
+
 ## [0.66.0] - 2026-11-05
 
 ### Added
@@ -313,7 +318,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.66.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.67.0...HEAD
+[0.67.0]: https://github.com/ccall1212/commander-table/compare/v0.66.0...v0.67.0
 [0.66.0]: https://github.com/ccall1212/commander-table/compare/v0.65.2...v0.66.0
 [0.65.2]: https://github.com/ccall1212/commander-table/compare/v0.65.1...v0.65.2
 [0.65.1]: https://github.com/ccall1212/commander-table/compare/v0.65.0...v0.65.1

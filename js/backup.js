@@ -49,6 +49,13 @@
     }
     return out;
   }
+  // Trigger reminders saved with a deck (only included when the deck has some, so decks without them compare equal as before).
+  function reminders(v) {
+    if (!Array.isArray(v) || !v.length) return {};
+    const clip = (x, n) => String(x == null ? '' : x).replace(/[\u0000-\u001f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, n);
+    const list = v.slice(0, 60).filter(obj).map((r, i) => ({ id: clip(r.id, 40).replace(/[^\w-]/g, '') || 'r' + i, text: clip(r.text, 240), when: clip(r.when, 24) })).filter(r => r.text);
+    return list.length ? { reminders: list } : {};
+  }
   function deck(v) {
     if (!obj(v) || !Array.isArray(v.cards) || !Array.isArray(v.commanders) || !Array.isArray(v.tokens || [])) fail('Invalid deck in backup.');
     if (v.cards.length > 2000 || v.commanders.length > 10 || (v.tokens || []).length > 2000) fail('Deck is too large to restore.');
@@ -60,7 +67,8 @@
         if (!obj(row) || !integer(row.qty, 1, 1000)) fail('Invalid card quantity in backup.');
         return { def: def(row.def), qty: row.qty };
       }),
-      tokens: (v.tokens || []).map(def), source: v.source == null ? '' : string(v.source, 1000000, 'deck source', true)
+      tokens: (v.tokens || []).map(def), source: v.source == null ? '' : string(v.source, 1000000, 'deck source', true),
+      ...reminders(v.reminders)
     };
   }
   function pref(key, value) {
