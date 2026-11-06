@@ -88,4 +88,24 @@ assert.deepEqual(Array.from(mm.keys()), ['B|b2'], 'opponents\' creatures only, n
 const pubSword = { id: 'ps', face: 'Pub Sword', type: 'Artifact', gr: G.parse(sword.oracle) };
 mm = G.forBoards([board('A', [e('s', pubSword, { att: { p: 'A', i: 'b1' } }), e('b1', bear)])]); assert.equal(mm.get('A|b1')[0].id, 'trample');
 assert.equal(G.clean([{ scope: 'galaxy', filters: { creature: true }, abilities: ['flying'] }])[0].scope, 'you', 'an unknown scope falls back to the safest one');
+// ---- Other kinds of permanents (Shroud of Protection: "Other enchantments you control have shroud.") ----
+assert.equal(sc('Other enchantments you control have shroud.'), 'you:shroud', 'Shroud of Protection');
+assert.equal(G.parse('Other enchantments you control have shroud.')[0].filters.type, 'Enchantment');
+assert.equal(G.parse('Other enchantments you control have shroud.')[0].other, true);
+assert.equal(G.parse('Artifacts you control have hexproof.')[0].filters.tribe, undefined, 'a card type is not a creature type');
+assert.equal(G.parse('Artifacts you control have hexproof.')[0].filters.type, 'Artifact');
+assert.equal(sc('Lands you control have vigilance.'), 'you:vigilance');
+assert.equal(sc('Other permanents you control have indestructible.'), 'you:indestructible');
+assert.equal(sc('Nonland permanents you control have shroud.'), 'you:shroud');
+const prot = { id: 'sp', face: 'Shroud of Protection', type: 'Enchantment', oracle: 'Other enchantments you control have shroud.' };
+const ench = { id: 'en', face: 'Some Aura', type: 'Enchantment — Aura', oracle: '' };
+const land = { id: 'ln', face: 'Forest', type: 'Basic Land — Forest', oracle: '' };
+const arti = { id: 'ar', face: 'Rock', type: 'Artifact', oracle: '' };
+mm = G.forBoards([board('A', [e('p', prot), e('x', ench), e('l', land), e('r', arti), e('b', bear)]), board('B', [e('y', ench)])]);
+assert.deepEqual(Array.from(mm.keys()).sort(), ['A|x'], 'only my OTHER enchantments: not the card itself, nor lands, artifacts, creatures, or an opponent\'s enchantment');
+assert.equal(mm.get('A|x')[0].id, 'shroud'); assert.equal(mm.get('A|x')[0].from, 'Shroud of Protection');
+const both = { id: 'ec', face: 'Enchantment Creature', type: 'Enchantment Creature — Spirit', oracle: '' };
+mm = G.forBoards([board('A', [e('p', prot), e('c', both)])]); assert.equal(mm.size, 1, 'an Enchantment Creature is also an enchantment');
+mm = G.forBoards([board('A', [e('n', { id: 'np', face: 'Nonland Thing', type: 'Enchantment', oracle: 'Nonland permanents you control have shroud.' }), e('r', arti), e('l', land)])]);
+assert.deepEqual(Array.from(mm.keys()).sort(), ['A|n', 'A|r'], 'nonland permanents, including the card itself');
 console.log('PASS grants: simple "you control … have …" lines are read; they apply by type, tribe, condition, other; anything else is left alone');

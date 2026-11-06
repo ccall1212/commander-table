@@ -6,6 +6,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.77.0] - 2026-11-07
+
+### Added
+- **Granted abilities for other kinds of permanents.** Cards like **Shroud of Protection** ("Other enchantments you control have shroud") now work: the reader understands enchantments, artifacts, lands, planeswalkers, "permanents" and "nonland permanents" as well as creatures (for example "Artifacts you control have hexproof", "Other permanents you control have indestructible"). "Other" never includes the card itself, and an Enchantment Creature counts as an enchantment.
+
+### Changed
+- **New Shroud icon:** a hooded figure whose face is hidden in shadow with just two eyes showing, instead of the eye with a slash.
+
+### Fixed
+- "Artifacts you control have hexproof" (and Lands, Enchantments…) was read as if Artifacts were a creature type. Card types are now recognised as card types.
+
 ## [0.76.0] - 2026-11-07
 
 ### Added
@@ -398,7 +409,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.76.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.77.0...HEAD
+[0.77.0]: https://github.com/ccall1212/commander-table/compare/v0.76.0...v0.77.0
 [0.76.0]: https://github.com/ccall1212/commander-table/compare/v0.75.0...v0.76.0
 [0.75.0]: https://github.com/ccall1212/commander-table/compare/v0.74.1...v0.75.0
 [0.74.1]: https://github.com/ccall1212/commander-table/compare/v0.74.0...v0.74.1
