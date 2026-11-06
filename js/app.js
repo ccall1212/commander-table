@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.74.0';
+const APP_VERSION = '0.74.1';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -1001,7 +1001,7 @@ function cleanCards(a, n = 400) {
     x: Number.isFinite(+x.x) && x.x !== null ? clamp(Math.round(+x.x), 0, BW - CW) : undefined,
     y: Number.isFinite(+x.y) && x.y !== null ? clamp(Math.round(+x.y), 0, BH_MAX - CH) : undefined,
     att: isObj(x.att) && typeof x.att.p === 'string' && typeof x.att.i === 'string' ? { p: x.att.p.slice(0, 40), i: x.att.i.slice(0, 40) } : null,
-    pb: typeof x.pb === 'string' && /^-?\d{1,6}\/-?\d{1,6}$/.test(x.pb) ? x.pb : undefined, xp: x.xp ? 1 : undefined, tk: clamp(num(x.tk), 0, 99) || undefined, sx: (a => (a.length ? a : undefined))(cleanMarks(x.sx).filter(id => CARD_MARK_BY_ID[id] && CARD_MARK_BY_ID[id].kind === 'ability')),
+    pb: typeof x.pb === 'string' && /^-?\d{1,6}\/-?\d{1,6}$/.test(x.pb) ? x.pb : undefined, xp: x.xp ? 1 : undefined, tk: clamp(num(x.tk), 0, 99) || undefined, tn: typeof x.tn === 'string' ? x.tn.slice(0, 90) : undefined, sx: (a => (a.length ? a : undefined))(cleanMarks(x.sx).filter(id => CARD_MARK_BY_ID[id] && CARD_MARK_BY_ID[id].kind === 'ability')),
     dp: clamp(num(x.dp), -999999, 999999), dt: clamp(num(x.dt), -999999, 999999), st: cleanMarks(x.st), ts: cleanMarks(x.ts), tp: clamp(num(x.tp), -999999, 999999), tt: clamp(num(x.tt), -999999, 999999), tb: typeof x.tb === 'string' && /^-?\d{1,6}\/-?\d{1,6}$/.test(x.tb) ? x.tb : undefined
   })) : [];
 }
@@ -1735,6 +1735,7 @@ function turnNoticeHTML(pid) {
 // After the shared table changes: run my turn-start automation once per turn.
 let openingAutoDrawTimer = null;
 function afterTable() {
+  clearTempOnTurnChange(S.table);
   if (openingAutoDrawTimer) clearTimeout(openingAutoDrawTimer);
   openingAutoDrawTimer = null;
   const T = S.table, m = S.me;
@@ -1888,7 +1889,7 @@ function moveCard(iid, to, opts = {}) {
   if (from === 'hand' && to !== 'hand') { delete card.rvh; delete card.rvp; }
   let orphans = [];
   if (from === 'battlefield' && to !== 'battlefield') {
-    card.t = false; card.c = {}; card.st = []; card.ts = []; card.tp = 0; card.tt = 0; card.tb = undefined; card.fl = false; card.pb = undefined; card.dp = 0; card.dt = 0; delete card.tk; delete card.sx; // a card that leaves forgets everything
+    card.t = false; card.c = {}; card.st = []; card.ts = []; card.tp = 0; card.tt = 0; card.tb = undefined; card.fl = false; card.pb = undefined; card.dp = 0; card.dt = 0; delete card.tk; delete card.sx; delete card.tn; // a card that leaves forgets everything
     orphans = detachFrom(S.pid, iid);
   }
   if (from === 'battlefield' || from === 'command') { delete card.x; delete card.y; card.att = null; }
@@ -3493,7 +3494,7 @@ function oppCardMenu(x, y, pid, iid) {
 function tempPT(iids, dp, dt) {
   const cards = iids.map(findCard).filter(f => f && f.zone === 'battlefield');
   if (!cards.length) return;
-  act(() => { cards.forEach(f => { f.card.tp = clamp((f.card.tp || 0) + dp, -999999, 999999); f.card.tt = clamp((f.card.tt || 0) + dt, -999999, 999999); }); },
+  act(() => { cards.forEach(f => { f.card.tp = clamp((f.card.tp || 0) + dp, -999999, 999999); f.card.tt = clamp((f.card.tt || 0) + dt, -999999, 999999); stampTempTurn(f.card); }); },
     { label: cards.length > 1 ? `Temporary ${dp >= 0 ? '+' : ''}${dp}/${dt >= 0 ? '+' : ''}${dt} on ${cards.length} cards` : undefined });
 }
 async function setTempPT(iids) {
@@ -3505,7 +3506,7 @@ async function setTempPT(iids) {
   const m = /^\s*(-?\d{1,6})\s*\/\s*(-?\d{1,6})\s*$/.exec(String(v));
   if (!m) { UI.toast('Use the form 3/3 (whole numbers up to 999999)', { kind: 'warn' }); return; }
   const value = `${+m[1]}/${+m[2]}`, live = iids.map(findCard).filter(f => f && f.zone === 'battlefield');
-  act(() => { live.forEach(f => { f.card.tb = value; }); }, { label: live.length > 1 ? `Set ${live.length} cards to ${value} until end of turn` : `Set to ${value} until end of turn` });
+  act(() => { live.forEach(f => { f.card.tb = value; stampTempTurn(f.card); }); }, { label: live.length > 1 ? `Set ${live.length} cards to ${value} until end of turn` : `Set to ${value} until end of turn` });
 }
 function clearTemp(iids) {
   const cards = iids.map(findCard).filter(f => f && f.zone === 'battlefield' && (f.card.tp || f.card.tt || f.card.tb || (f.card.ts && f.card.ts.length)));
@@ -3526,15 +3527,20 @@ function tempItems(iid, targets) {
     { label: 'Clear temporary effects' + n, danger: true, onClick: () => clearTemp(targets) }
   ];
 }
-// Every browser clears its own cards' temporary effects when the table moves to another turn.
-let lastTempTurnKey = null;
+// A temporary effect lasts until the end of the turn it was placed in. Each card remembers that turn (`tn`), and every browser clears
+// its own cards' temporary effects as soon as the table is on any other turn: when the turn passes, and also after a reload,
+// a reconnect or a turn that passed while the page was closed.
+const hasTemp = c => !!(c.tp || c.tt || c.tb || (c.ts && c.ts.length));
+function stampTempTurn(card) { card.tn = turnKey(S.table) || ''; }
 function clearTempOnTurnChange(t) {
-  const key = turnKey(t), had = lastTempTurnKey !== null;
-  if (key === lastTempTurnKey) return;
-  lastTempTurnKey = key;
-  if (!had || !key || !S.me) return;
+  if (!S.me || !S.me.zones || !Array.isArray(S.me.zones.battlefield)) return;
+  const key = turnKey(t) || '';
   let changed = false;
-  S.me.zones.battlefield.forEach(c => { if (c.tp || c.tt || c.tb || (c.ts && c.ts.length)) { c.tp = 0; c.tt = 0; c.tb = undefined; c.ts = []; changed = true; } });
+  S.me.zones.battlefield.forEach(c => {
+    if (!hasTemp(c)) { if (c.tn !== undefined) delete c.tn; return; }
+    if (c.tn === undefined) { c.tn = key; return; } // placed by an older version: it ends with the turn that is on now
+    if (c.tn !== key) { c.tp = 0; c.tt = 0; c.tb = undefined; c.ts = []; delete c.tn; changed = true; }
+  });
   if (changed) commit();
 }
 function setCardMarks(iids, id, on, temp) {
@@ -3553,6 +3559,7 @@ function setCardMarks(iids, id, on, temp) {
       const next = cleanMarks((f.card[key] || []).filter(x => x !== id).concat(on && !granted ? [id] : []));
       if (on && next.length >= MAX_CARD_MARKS && !next.includes(id)) { UI.toast('A card can show up to ' + MAX_CARD_MARKS + ' markers.', { kind: 'warn' }); return; }
       f.card[key] = next;
+      if (temp) stampTempTurn(f.card);
     });
   });
 }
@@ -7413,7 +7420,7 @@ function boot() {
   if (sess) resume(sess); else showLobby();
 }
 // Expose a little for debugging from the console.
-window.CT = { S, act, render, dragState: () => drag, hostRecv, cleanTable, doMove, giveToExile, giveTopToExile, cardMenu, colorOf };
+window.CT = { S, act, render, dragState: () => drag, hostRecv, cleanTable, doMove, giveToExile, giveTopToExile, cardMenu, colorOf, clearTempOnTurnChange };
 // ---- stay on one version -----------------------------------------------------------------------
 // GitHub Pages lets browsers reuse cached files for 10 minutes. index.html links every file with ?v=<version>
 // (tools/bump-version.py), so a new page never pulls old files. If this script and the page that loaded it

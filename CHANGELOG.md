@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.74.1] - 2026-11-06
+
+### Fixed
+- **Temporary effects now always end with the turn they were placed in.** Each card remembers which turn a temporary effect (+1/+1, power/toughness, temporary statuses and abilities) was placed in, and it is cleared as soon as the table is on a different turn. Before, the first turn change after you reloaded the page, rejoined or reconnected was missed, so the effect lasted until the turn came back around. An effect placed during another player's turn ends when that turn ends. A new three-player browser test covers it.
+
 ## [0.74.0] - 2026-11-06
 
 ### Added
@@ -382,7 +387,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.74.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.74.1...HEAD
+[0.74.1]: https://github.com/ccall1212/commander-table/compare/v0.74.0...v0.74.1
 [0.74.0]: https://github.com/ccall1212/commander-table/compare/v0.73.0...v0.74.0
 [0.73.0]: https://github.com/ccall1212/commander-table/compare/v0.72.0...v0.73.0
 [0.72.0]: https://github.com/ccall1212/commander-table/compare/v0.71.1...v0.72.0
