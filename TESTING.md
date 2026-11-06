@@ -1,12 +1,14 @@
-# Temporary effects end with their turn — v0.74.1 test copy
+# Reminders sorted by the turn — v0.75.0 test copy
 
-To check this copy, extract the ZIP and double-click **index.html**. Two players (a private window) are best.
+To check this copy, extract the ZIP and double-click **index.html**. A practice game is enough.
 
-1. On your turn, give a creature a temporary effect (right-click -> **Temporary (until end of turn)** -> +1/+1, or a temporary status like Vigilance). **Pass the turn**: it should disappear right away, on your screen and the other player's.
-2. **The case you found:** give a creature a temporary effect, then **reload the page (or leave and rejoin the game)**, then pass the turn. It should now disappear at once; before it stayed until your next turn.
-3. Place a temporary effect on your creature during **another player's turn**: it should disappear when that player passes.
-4. Permanent statuses, counters and abilities are never touched.
+1. Put several cards with triggers on the battlefield (for example two or three with "At the beginning of combat…", one with "At the beginning of your upkeep…", one with "…end step…", a landfall card, a "Whenever you cast…" card, and Hardened Scales).
+2. Open the **Reminders** panel. Under **From the table** you should see small headings in turn order: **Upkeep, Draw step, Main phase 1, Beginning of combat, Declare attackers and blockers, Combat damage, Main phase 2, End step**, then **When spells are cast, Other triggers, Playable from graveyard / exile, Always on**. Only headings that have something are shown.
+3. **All the beginning-of-combat cards are under one heading**, with alike wording next to each other.
+4. A card that has triggers at different times appears under each heading with just those lines (✕ hides only that box).
+5. Tell me if the order or the headings should change (for example where "When spells are cast" should sit).
 
 ## Assistant verification
-- New three-player Chromium test `test_temp_turn_browser`: every player's effect is gone as soon as the turn passes, a repeated check does not clear an effect placed this turn, an effect left over from an earlier turn (what a reload leaves behind) is cleared at once, and an effect placed during another player's turn ends with that turn. The two-player temporary-effects test and all 28 automatic unit tests pass.
-- Not tested: an actual page reload (I simulated the leftover state); real mouse use.
+- All 28 automatic unit tests pass, with new checks for which time of the turn each kind of line belongs to (upkeep, draw, main, beginning of combat, attackers, combat damage, main 2, end step, cast, other, always on).
+- New two-player Chromium test `test_reminders_order_browser` checks the headings and box order for a set of cards; the existing reminders browser test was updated for the new sections. I also looked at a screenshot.
+- Not tested: real Scryfall wording of every trigger.

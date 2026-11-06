@@ -1634,3 +1634,5 @@ body.me-out #myBf .board { filter: grayscale(.9) brightness(.45); }
 .mark-tip[hidden] { display: none; }
 .mark-tip b { font-weight: 700; }
 .rem-owner { font-weight: 700; }
+
+.rem-sub { margin: 10px 2px 4px; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #9fb0cc; }

@@ -78,8 +78,9 @@ const mkDeck = who => ({
     const panel = dad.locator('#remPanel'); await panel.waitFor();
     const tbl = async () => (await panel.locator('.rem-tbl').allInnerTexts()).map(t => t.replace(/\s+/g, ' '));
     let lines = await tbl();
-    assert.equal(lines.length, 4, 'one box per card: ' + JSON.stringify(lines));
-    assert.equal(await panel.locator('.rem-tbl', { hasText: 'Dad Only Trigger' }).locator('.rem-line').count(), 2, 'a card\'s triggers sit together in one box');
+    assert.equal(lines.length, 5, 'one box per card per time of turn (Dad Only Trigger has two): ' + JSON.stringify(lines));
+    assert.equal(await panel.locator('.rem-tbl', { hasText: 'Dad Only Trigger' }).count(), 2, 'a card with triggers at different times of the turn appears once under each');
+    assert.equal(await panel.locator('.rem-tbl', { hasText: 'Dad Only Trigger' }).locator('.rem-line').count(), 2, 'with each line shown once');
     assert.ok(lines.some(l => /Mikey & Don.*You may play lands and cast Mutant, Ninja, or Turtle spells from the top of your library\. If you cast a creature spell this way, that creature enters with a \+1\/\+1 counter on it/.test(l)), 'the play-from-the-library permission with its enters-with part is listed');
     assert.equal((await panel.locator('.rem-kw').allInnerTexts()).join('|'), 'Landfall', 'the ability word is highlighted');
     assert.ok((await panel.locator('.rem-cond').allInnerTexts()).some(t => t === 'At the beginning of combat on your turn') && (await panel.locator('.rem-cond').allInnerTexts()).some(t => t === 'Whenever a land you control enters'), 'the trigger conditions are highlighted');
@@ -95,25 +96,25 @@ const mkDeck = who => ({
     await panel.locator('[data-rem="show-opts"]').click();
     await panel.locator('[data-rem="opp"]').click();
     assert.equal(await panel.locator('[data-rem="opp"]').innerText(), 'Off');
-    await dad.waitForFunction(() => document.querySelectorAll('#remPanel .rem-tbl').length === 3);
+    await dad.waitForFunction(() => document.querySelectorAll('#remPanel .rem-tbl').length === 4);
     await panel.locator('[data-rem="opp"]').click();
     assert.equal(await panel.locator('[data-rem="opp"]').innerText(), 'On');
-    await dad.waitForFunction(() => document.querySelectorAll('#remPanel .rem-tbl').length === 4);
+    await dad.waitForFunction(() => document.querySelectorAll('#remPanel .rem-tbl').length === 5);
     // A card of mine in the graveyard whose text works from there is listed; it is not listed while it sits in play.
     await dad.evaluate(() => { const m = CT.S.me, d = { id: 'qg', name: 'Quilled Greatwurm', face: 'Quilled Greatwurm', type: 'Creature', oracle: 'Trample\nWhenever a creature you control deals combat damage during your turn, put that many +1/+1 counters on it.\nYou may cast this card from your graveyard by removing six counters from among creatures you control in addition to paying its other costs.', img: '', tokens: [], ci: [] }; CT.act(() => { m.defs.qg = d; m.zones.graveyard.push({ iid: CT.S.pid + '_qg', id: 'qg', own: CT.S.pid, t: 0, fl: 0, fd: 0, c: {} }); }); });
-    await dad.waitForFunction(() => document.querySelectorAll('#remPanel .rem-tbl').length === 5);
+    await dad.waitForFunction(() => document.querySelectorAll('#remPanel .rem-tbl').length === 6);
     const gy = (await tbl()).find(l => /Quilled Greatwurm/.test(l));
     assert.ok(/in graveyard.*You may cast this card from your graveyard/.test(gy) && !/Whenever a creature you control deals/.test(gy), 'the graveyard line only: ' + gy);
     await dad.evaluate(() => { const m = CT.S.me; CT.act(() => { m.zones.graveyard.length = 0; }); });
-    await dad.waitForFunction(() => document.querySelectorAll('#remPanel .rem-tbl').length === 4);
+    await dad.waitForFunction(() => document.querySelectorAll('#remPanel .rem-tbl').length === 5);
     // A keyword ability that is really a trigger (Gyre Sage's Evolve) is listed, with the keyword highlighted.
     await dad.evaluate(() => { const m = CT.S.me, d = { id: 'gyre', name: 'Gyre Sage', face: 'Gyre Sage', type: 'Creature', oracle: 'Evolve (Whenever a creature enters the battlefield under your control, if that creature has greater power or toughness than this creature, put a +1/+1 counter on this creature.)\n{T}: Add {G} for each +1/+1 counter on this creature.', img: '', tokens: [], ci: [] }; CT.act(() => { m.defs.gyre = d; m.zones.battlefield.push({ iid: CT.S.pid + '_gy', id: 'gyre', own: CT.S.pid, t: 0, fl: 0, fd: 0, c: {}, x: 500, y: 300 }); }); });
-    await dad.waitForFunction(() => document.querySelectorAll('#remPanel .rem-tbl').length === 5);
+    await dad.waitForFunction(() => document.querySelectorAll('#remPanel .rem-tbl').length === 6);
     const gs = await panel.locator('.rem-tbl', { hasText: 'Gyre Sage' }).innerText();
     assert.ok(/Evolve \(Whenever a creature enters the battlefield under your control/.test(gs.replace(/\s+/g, ' ')), 'Evolve is listed: ' + gs);
     assert.ok((await panel.locator('.rem-tbl', { hasText: 'Gyre Sage' }).locator('.rem-kw').allInnerTexts()).includes('Evolve'), 'and highlighted');
     await dad.evaluate(() => { const m = CT.S.me; CT.act(() => { m.zones.battlefield = m.zones.battlefield.filter(c => c.id !== 'gyre'); }); });
-    await dad.waitForFunction(() => document.querySelectorAll('#remPanel .rem-tbl').length === 4);
+    await dad.waitForFunction(() => document.querySelectorAll('#remPanel .rem-tbl').length === 5);
     // Layout: a long reminder with a tag, in a narrow window, never overflows or overlaps inside the panel.
     await panel.locator('[data-rem="show-add"]').click();
     await panel.locator('.rem-text').fill('Can play lands, mutants, ninjas, or turtles from the top of the library'); await panel.locator('.rem-when').fill('Upkeep'); await panel.locator('[data-rem="add"]').click();
@@ -130,8 +131,8 @@ const mkDeck = who => ({
     await panel.locator('[data-rem="del"]').first().click();
     await dad.waitForFunction(() => !document.querySelector('#remPanel .rem-row:not(.rem-tbl)'));
     // Hide one line.
-    await panel.locator('.rem-tbl', { hasText: 'Dad Only Trigger' }).locator('[data-rem="hide"]').click();
-    await dad.waitForFunction(() => document.querySelectorAll('#remPanel .rem-tbl').length === 3);
+    await panel.locator('.rem-tbl', { hasText: 'Dad Only Trigger' }).first().locator('[data-rem="hide"]').click();
+    await dad.waitForFunction(() => document.querySelectorAll('#remPanel .rem-tbl').length === 4);
 
     // My own reminders are saved with the deck.
     await panel.locator('[data-rem="show-add"]').click();

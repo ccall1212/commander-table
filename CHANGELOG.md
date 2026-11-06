@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.75.0] - 2026-11-06
+
+### Changed
+- **The "From the table" part of Reminders is sorted by the turn.** Under small headings, in the order of a turn: **Upkeep, Draw step, Main phase 1, Beginning of combat, Declare attackers and blockers, Combat damage, Main phase 2, End step**, then **When spells are cast**, **Other triggers**, **Playable from graveyard / exile** and **Always on** (replacement effects, cost changes and permissions). All "At the beginning of combat…" lines sit together, and lines that read alike (for example "…combat on your turn" and "…each combat") are next to each other. A card with triggers at different times appears once under each heading, with only the lines for that time. A Saga's current chapter is listed under Main phase 1.
+
 ## [0.74.1] - 2026-11-06
 
 ### Fixed
@@ -387,7 +392,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.74.1...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.75.0...HEAD
+[0.75.0]: https://github.com/ccall1212/commander-table/compare/v0.74.1...v0.75.0
 [0.74.1]: https://github.com/ccall1212/commander-table/compare/v0.74.0...v0.74.1
 [0.74.0]: https://github.com/ccall1212/commander-table/compare/v0.73.0...v0.74.0
 [0.73.0]: https://github.com/ccall1212/commander-table/compare/v0.72.0...v0.73.0

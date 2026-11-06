@@ -74,4 +74,26 @@ assert.deepEqual(plain(R.cleanList('nope')), []);
   assert.equal(R.triggerLines('If you control a Forest, draw a card.', true).length, 0, 'an ordinary "If" line is not a replacement effect');
   assert.equal(R.triggerLines('If an opponent would draw a card, they draw two instead.', false).length, 1, 'a replacement effect that mentions opponents counts for them too');
 }
+// When a line matters (the order of the turn), so the panel can sort them.
+{
+  const ph = l => R.phaseOf(l);
+  assert.equal(ph('At the beginning of your upkeep, scry 1.'), 'upkeep');
+  assert.equal(ph('At the beginning of your draw step, draw a card.'), 'draw');
+  assert.equal(ph('At the beginning of your precombat main phase, add a lore counter.'), 'main');
+  assert.equal(ph('At the beginning of combat on your turn, put a counter.'), 'begincombat');
+  assert.equal(ph('At the beginning of each combat, create a token.'), 'begincombat');
+  assert.equal(ph('Whenever this creature attacks, draw a card.'), 'combat');
+  assert.equal(ph('Whenever a creature you control deals combat damage to a player, scry 1.'), 'damage');
+  assert.equal(ph('At the beginning of your postcombat main phase, do a thing.'), 'main2');
+  assert.equal(ph('At the beginning of your end step, sacrifice it.'), 'end');
+  assert.equal(ph('Whenever you cast a creature spell, scry 1.'), 'cast');
+  assert.equal(ph('Landfall — Whenever a land you control enters, gain 4 life.'), 'event');
+  assert.equal(ph('Exalted (Whenever a creature you control attacks alone, it gets +1/+1.)'), 'combat', 'a keyword line is placed by its reminder text');
+  assert.equal(ph('Echo (At the beginning of your upkeep, sacrifice it unless you pay its echo cost.)'), 'upkeep');
+  assert.equal(ph('Creature spells you cast cost {1} less to cast.'), 'static', 'a cost change has no time');
+  assert.equal(ph('If one or more +1/+1 counters would be put on a creature you control, that many plus one are put on it instead.'), 'static');
+  assert.equal(ph('You may play lands from the top of your library.'), 'static');
+  assert.equal(R.PHASES.map(p => p.key).join(), 'upkeep,draw,main,begincombat,combat,damage,main2,end,cast,event,play,static', 'sections follow the turn');
+  assert.equal(R.sortKey('At the beginning of combat on your turn, put a counter.'), 'at the beginning of combat on your turn', 'lines are sorted by their condition, so alike wording ends up side by side');
+}
 console.log('PASS reminders: trigger lines are found and filtered for opponents, saved reminders are cleaned and limited');

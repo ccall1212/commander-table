@@ -90,6 +90,45 @@
     if (!re) return [];
     return String(oracle == null ? '' : oracle).split(/\n+/).map(l => l.trim()).filter(l => l && (re.test(l) || kw.test(l))).map(l => clip(l, 400));
   }
+  // When a reminder line matters, so the panel can keep related ones together in turn order. The condition is the text before the first
+  // comma ("At the beginning of combat on your turn"); a keyword line such as "Evolve (Whenever …)" is read whole.
+  const PHASES = [
+    { key: 'upkeep', label: 'Upkeep' },
+    { key: 'draw', label: 'Draw step' },
+    { key: 'main', label: 'Main phase 1' },
+    { key: 'begincombat', label: 'Beginning of combat' },
+    { key: 'combat', label: 'Declare attackers and blockers' },
+    { key: 'damage', label: 'Combat damage' },
+    { key: 'main2', label: 'Main phase 2' },
+    { key: 'end', label: 'End step' },
+    { key: 'cast', label: 'When spells are cast' },
+    { key: 'event', label: 'Other triggers' },
+    { key: 'play', label: 'Playable from graveyard / exile' },
+    { key: 'static', label: 'Always on' }
+  ];
+  const conditionOf = line => {
+    let t = String(line || '').replace(/^[A-Z][\w'’ ]{1,24} — /, '').trim();
+    if (/^(?:Whenever|When|At the beginning of|At end of|At the end of|If)\b/i.test(t)) t = t.split(',')[0];
+    return t;
+  };
+  function phaseOf(line) {
+    const c = conditionOf(line).toLowerCase();
+    // Only trigger lines (and keyword lines whose reminder text is a trigger) have a time; costs, permissions and replacement effects are always on.
+    if (!/^(?:whenever|when|at the beginning|at the end|at end)\b/.test(c) && !/\((?:whenever|when|at the beginning|at the end|at end)\b/.test(c)) return 'static';
+    if (/\bupkeep\b/.test(c)) return 'upkeep';
+    if (/\bdraw step\b/.test(c)) return 'draw';
+    if (/(?:beginning of|at the start of) (?:each |the |your |every )?(?:combat|(?:your )?combat on)/.test(c) || /beginning of combat/.test(c)) return 'begincombat';
+    if (/\b(?:postcombat|second) main\b/.test(c)) return 'main2';
+    if (/\b(?:precombat|first) main\b|\bmain phase\b/.test(c)) return 'main';
+    if (/\bend step\b|end of (?:the |your |each )?(?:turn|combat)\b|end of turn/.test(c)) return 'end';
+    if (/\bdeals? (?:combat )?damage\b|\bdealt (?:combat )?damage\b|\bcombat damage\b/.test(c)) return 'damage';
+    if (/\b(?:attacks?|attacking|blocks?|blocked|becomes blocked|declare attackers)\b/.test(c)) return 'combat';
+    if (/\bcasts?\b/.test(c)) return 'cast';
+    if (/^(?:whenever|when)\b|\bwhenever\b/.test(c)) return 'event';
+    return 'static';
+  }
+  // How alike two lines read, for sorting: the condition without ability words or the player ("on your turn" and the like stay).
+  const sortKey = line => conditionOf(line).toLowerCase().replace(/\s+/g, ' ');
   // The saved list: [{ id, text, when }], cleaned.
   function cleanList(raw) {
     const out = [], seen = new Set();
@@ -104,5 +143,5 @@
     });
     return out;
   }
-  window.CTReminders = { leadingKeyword, keywordLines, triggerLines, zoneLines, cleanList, clip, MAX_ITEMS, MAX_TEXT, MAX_WHEN };
+  window.CTReminders = { PHASES, phaseOf, sortKey, leadingKeyword, keywordLines, triggerLines, zoneLines, cleanList, clip, MAX_ITEMS, MAX_TEXT, MAX_WHEN };
 }());

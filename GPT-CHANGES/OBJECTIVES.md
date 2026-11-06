@@ -32,8 +32,13 @@ Chris (2026-11-06): Sphere Grid gives creatures with +1/+1 counters reach and tr
 
 Chris (2026-11-06): extend #81 to Equipment/Auras and "all creatures"/opponents effects. Built. Still not done (only if wanted): power/toughness bonuses (anthems and the +N/+N on Equipment/Auras), extra conditions (power N or greater, has flying, attacking).
 
+### 83. Reminders sorted by the turn — Built, awaiting Chris's test (v0.75.0)
+
+Chris (2026-11-06): sort Reminders so all "At the beginning of combat" lines are together, following the phases of a turn (upkeep at the top, main, combat, damage, main 2, end step). Built as headed sections in turn order, alike wording side by side.
+
 ### Shipped recently (details in CHANGELOG.md)
 
+- #82 Granted abilities: Equipment/Auras, everyone, opponents; owner names in colour — v0.74.0; temporary effects end with their turn — v0.74.1.
 - #81 Granted abilities, phase 1 (Sphere Grid etc.) — v0.73.0.
 - #80 Step trackers for Sagas, Classes, Rooms, Battles; grouped menu — v0.72.0.
 - #79 Reminders: replacement effects and cost changes — v0.71.0; word-tag clipping fix — v0.71.1.
