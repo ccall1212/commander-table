@@ -1,12 +1,12 @@
-# Reminders: replacement effects and cost changes — v0.71.0 test copy
+# Word tags no longer cut off — v0.71.1 test copy
 
 To check this copy, extract the ZIP and double-click **index.html**. A practice game is enough.
 
-1. Play **Hardened Scales**: its box in Reminders (**From the table**) should show "If one or more +1/+1 counters would be put on a creature you control, that many plus one +1/+1 counters are put on it instead."
-2. Try **Doubling Season**, **Winding Constrictor**, **Panharmonicon**, **Rest in Peace**, and a cost reducer such as **Goblin Electromancer** or a cost increaser such as **Thalia, Guardian of Thraben**: each should list its line.
-3. Cards with an ordinary "If you control a Forest, …" line should NOT be listed just for that.
-4. Tell me which cards still show nothing that you expected, with their names.
+1. Play a creature and give it **Unblockable**, **Monstrous**, **Renowned** and **Exerted** (right-click -> Statuses & abilities…).
+2. Each tag should show its **whole word** across the middle of the card, not cut off at the sides ("nblockab" before).
+3. Check a small card (many players, Grid layout) and a tapped card; also hover the card: the big preview still shows the tags.
+4. A very long custom status you type yourself may end in "…" on the card; hovering still shows the full name.
 
 ## Assistant verification
-- Unit tests (`test_reminders`) cover Hardened Scales, Doubling Season (two lines), Panharmonicon, cost reduction/increase, an ordinary "If" line being left out, and opponents; all 26 automatic test files pass.
-- Not tested: real Scryfall text for each card.
+- All automatic unit tests pass. The statuses browser test now checks that word tags are whole and inside the card for both players, and it **fails on the old layout** (all three tags reported cut off) and passes on the new one.
+- Not tested: looks on a real high-resolution screen or a phone.

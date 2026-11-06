@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.71.1] - 2026-11-06
+
+### Fixed
+- **Word tags on cards are no longer cut off.** Long status tags such as **Unblockable** and **Monstrous** were clipped at the sides of the card ("nblockab"). They now show in full, and only an extremely long custom status is shortened with "…". A new browser test fails on the old layout.
+
 ## [0.71.0] - 2026-11-06
 
 ### Fixed
@@ -350,7 +355,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.71.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.71.1...HEAD
+[0.71.1]: https://github.com/ccall1212/commander-table/compare/v0.71.0...v0.71.1
 [0.71.0]: https://github.com/ccall1212/commander-table/compare/v0.70.2...v0.71.0
 [0.70.2]: https://github.com/ccall1212/commander-table/compare/v0.70.1...v0.70.2
 [0.70.1]: https://github.com/ccall1212/commander-table/compare/v0.70.0...v0.70.1

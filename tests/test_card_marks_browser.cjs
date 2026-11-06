@@ -106,6 +106,16 @@ const mkDeck = who => ({
     const names = await son.evaluate(() => [...document.querySelectorAll('.card .cmark')].map(i => i.title));
     assert.equal(names.length, 3);
     assert.ok(names.some(n => /^Goaded — .*attack/.test(n)) && names.some(n => /^Flying — .*flying or reach/.test(n)) && names.some(n => /^Cursed \(/.test(n)), 'hovering shows what each marker means: ' + names.join(' | '));
+    // Long word tags (Unblockable, Monstrous) are shown in full inside the card, for both players, not cut off at the sides.
+    const setSt = st => dad.evaluate(v => { const f = CT.S.me.zones.battlefield[0]; CT.act(() => { f.st = v; }); }, st);
+    await setSt(['unblockable', 'monstrous', 'renowned']);
+    for (const pg of [dad, son]) {
+      await pg.waitForFunction(() => document.querySelectorAll('.card .cwords .mark-word').length === 3, null, { timeout: 10000 });
+      const clip = await pg.evaluate(() => [...document.querySelectorAll('.card .cwords .mark-word')].map(w => { const m = w.closest('.cmark'), c = w.closest('.card'), r = m.getBoundingClientRect(), cr = c.getBoundingClientRect(); return { text: w.textContent, cut: m.scrollWidth > m.clientWidth + 1 || w.scrollWidth > w.clientWidth + 1, inside: r.left >= cr.left - 1 && r.right <= cr.right + 1 }; }));
+      assert.ok(clip.every(x => !x.cut && x.inside), 'word tags are whole and inside the card: ' + JSON.stringify(clip));
+    }
+    await setSt(['goaded', 'flying', 'x:Cursed']);
+    for (const pg of [dad, son]) await pg.waitForFunction(() => document.querySelectorAll('.card .cmark').length === 3, null, { timeout: 10000 });
     // Hovering the card shows the big preview with the markers enlarged beside it, entirely off the card image.
     for (const [pg, sel] of [[son, `.opp.tile[data-opp="${dadPid}"] .card[data-zone="battlefield"]`], [dad, '#myBf .card[data-zone="battlefield"]']]) {
       await pg.locator(sel).first().hover();
