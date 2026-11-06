@@ -1504,7 +1504,7 @@ function tableTriggers() {
     lines.forEach(line => {
       const key = 'me|' + zone + '|' + name + '|' + line;
       if (hide.has(label + '|' + line)) return;
-      const e = out.get(key) || { key, hideKey: label + '|' + line, owner: '', name: label, line, count: 0 };
+      const e = out.get(key) || { key, hideKey: label + '|' + line, owner: '', name: label, line, count: 0, iid: c.iid };
       e.count++; out.set(key, e);
     });
   }));
@@ -1554,6 +1554,7 @@ function ensureRemPanel() {
     else if (kind === 'cancel') { panel.querySelector('.rem-form').hidden = true; panel.querySelector('.rem-text').value = ''; panel.querySelector('.rem-when').value = ''; }
     else if (kind === 'show-opts') { const o = panel.querySelector('.rem-opts'); o.hidden = !o.hidden; }
     else if (kind === 'opp') { LS.set('ct.remOpp', !remShowOpp()); remUI.sig = ''; renderReminders(); }
+    else if (kind === 'play') { const f = findCard(b.dataset.iid); if (f) doMove(b.dataset.iid, 'battlefield'); }
     else if (kind === 'del') { if (saveRemList(remList().filter(r => r.id !== id))) { remUI.sig = ''; renderReminders(); } }
     else if (kind === 'edit') {
       const r = remList().find(x => x.id === id); if (!r) return;
@@ -1563,6 +1564,8 @@ function ensureRemPanel() {
     }
     else if (kind === 'hide') { const h = remHidden(); String(b.dataset.key || '').split('\n').forEach(k => k && h.add(k)); LS.set('ct.remHide', [...h].slice(-300)); remUI.sig = ''; renderReminders(); }
   });
+  panel.addEventListener('dblclick', e => { const row = e.target.closest('.rem-play'); if (row && !e.target.closest('button') && findCard(row.dataset.iid)) doMove(row.dataset.iid, 'battlefield'); });
+  panel.addEventListener('mouseover', e => { const row = e.target.closest('.rem-play'); const f = row && findCard(row.dataset.iid); const d = f && defOf(f.card); if (d) preview(d); });
   panel.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches('.rem-text, .rem-when')) { e.preventDefault(); addReminder(); } if (e.key === 'Escape' && e.target.matches('.rem-text, .rem-when')) { panel.querySelector('.rem-form').hidden = true; } e.stopPropagation(); });
   // Drag the panel (or the tab) by its title to put it where it is out of the way.
   const drag = (handle, moveEls) => handle.addEventListener('pointerdown', e => {
@@ -1582,7 +1585,7 @@ function renderReminders() {
   const tab = $('#remTab'), panel = $('#remPanel'); if (!tab || !panel) return;
   const open = !!LS.get('ct.remOpen', false), list = remList(), trig = tableTriggers(), deck = remDeck();
   const left = list.length + trig.length;
-  const sig = JSON.stringify([open, list, trig.map(t => t.key + t.count), remShowOpp(), deck && deck.name]);
+  const sig = JSON.stringify([open, list, trig.map(t => t.key + t.count + (t.iid || '')), remShowOpp(), deck && deck.name]);
   tab.hidden = open; panel.hidden = !open;
   tab.textContent = '📝 Reminders' + (left ? ' · ' + left : '');
   if (sig === remUI.sig) return;
@@ -1608,7 +1611,7 @@ function renderReminders() {
   if (!trig.length) note('No triggers in play' + (remShowOpp() ? '' : ' (opponents\' triggers are off)') + '.');
   // One box per card, with all of its lines together.
   const groups = new Map();
-  trig.forEach(t => { const k = t.owner + '|' + t.name; const g = groups.get(k) || { name: t.name, owner: t.owner, count: 0, lines: [] }; g.count = Math.max(g.count, t.count); g.lines.push(t); groups.set(k, g); });
+  trig.forEach(t => { const k = t.owner + '|' + t.name; const g = groups.get(k) || { name: t.name, owner: t.owner, count: 0, lines: [], iid: t.iid }; g.count = Math.max(g.count, t.count); g.lines.push(t); groups.set(k, g); });
   groups.forEach(g => {
     const row = document.createElement('div'); row.className = 'rem-row rem-tbl';
     const text = document.createElement('div'); text.className = 'rem-body';
@@ -1618,6 +1621,10 @@ function renderReminders() {
     text.appendChild(who);
     g.lines.forEach(t => text.appendChild(remLineEl(t.line)));
     row.title = g.name;
+    if (g.iid) { // a card I can play from the graveyard or exile: hover to see it, double-click (or Play) to put it onto the battlefield
+      row.classList.add('rem-play'); row.dataset.iid = g.iid; row.title = 'Double-click to play ' + g.name;
+      const play = btn('play', 'Play', 'Play ' + g.name + ' onto the battlefield', { iid: g.iid }); play.classList.add('rem-playbtn'); text.appendChild(play);
+    }
     row.append(text, btn('hide', '✕', 'Hide the triggers of ' + g.name, { key: g.lines.map(t => t.hideKey).join('\n') }));
     body.appendChild(row);
   });

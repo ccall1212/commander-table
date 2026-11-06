@@ -6,6 +6,7 @@ To check this copy, extract the ZIP and double-click **index.html**. No terminal
 2. Player B opens their **Exile**: both cards should be there. B's **Reminders** tab should list "You may play this card from exile (owned by A)" for each.
 3. Player A looks at B's board/exile: the face-up card is visible; the face-down one is only a card back (A cannot see what it is).
 4. B plays one onto the battlefield: it turns face up, the "playable" reminder goes away, and the log says it was played.
+4b. In B's Reminders, hover a "(in exile)" box: the card shows in the preview. **Double-click** it (or press **Play**): it goes onto B's battlefield. Try the same with a Quilled Greatwurm-style card in your graveyard.
 5. B moves the other one (still in exile) to the graveyard: it should end up in **A's** graveyard.
 6. Try 2 or 3 cards at once (the number box): they all arrive in B's exile.
 7. Tell me: is this the flow you wanted? Do you want an on-board "playable" marker or a quick-actions list (Play Commander, play from graveyard, play exiled cards)?

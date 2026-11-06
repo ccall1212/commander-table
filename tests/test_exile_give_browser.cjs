@@ -94,7 +94,11 @@ const mkDeck = who => ({
     const txt = (await son.locator('#remPanel').innerText()).replace(/\s+/g, ' ');
     assert.ok(/in exile\).*You may play this card from exile \(owned by Dad\)/.test(txt), 'play-from-exile reminder: ' + txt);
     // Playing it: leaves exile onto the battlefield face up, mark cleared.
-    await son.evaluate(iid => CT.doMove(iid, 'battlefield'), b);
+    const row = son.locator('#remPanel .rem-play[data-iid="' + b + '"]'); await row.waitFor();
+    assert.ok(await row.locator('button', { hasText: 'Play' }).count() === 1, 'a Play button is shown');
+    await row.hover(); await son.waitForFunction(() => { const pv = document.querySelector('#pv'); return pv && !pv.classList.contains('hidden') && pv.querySelector('img, .pv-imgs, .pv-name, .pv-text'); });
+    await row.dblclick();
+    await son.waitForFunction(iid => CT.S.me.zones.battlefield.some(c => c.iid === iid), b);
     const played = await son.evaluate(iid => { const c = CT.S.me.zones.battlefield.find(x => x.iid === iid); return c && { fd: c.fd, xp: c.xp, own: c.own }; }, b);
     assert.ok(played && !played.fd && !played.xp && played.own === dadPid, 'played face up, no longer marked: ' + JSON.stringify(played));
     // Leaving to the graveyard sends the face-up one home to its owner.

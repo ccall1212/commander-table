@@ -1604,3 +1604,7 @@ body.me-out #myBf .board { filter: grayscale(.9) brightness(.45); }
 .rem-form-row button { height: 28px; min-height: 0; padding: 0 12px; font-size: 13px; }
 .rem-opts { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px; font-size: 12px; color: #aab4c8; }
 .rem-opts button { min-height: 0; height: 24px; padding: 0 10px; font-size: 12px; }
+
+.rem-play { cursor: pointer; }
+.rem-play:hover { background: rgba(255, 255, 255, 0.07); }
+.rem-playbtn { margin-top: 4px; }
