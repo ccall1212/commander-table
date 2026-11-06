@@ -24,8 +24,13 @@ Chris (2026-11-06): Gyre Sage's Evolve was not in Reminders. Fixed with a list o
 
 Chris (2026-11-06): people made a custom "Saga" token to move up and down; wanted a visual cue for Sagas, Classes, Rooms and Battles with the next step shown as unlocked, automatic Saga counters (Tidus, Yuna's Guardian can move them away, so they stay real counters), and Saga reminders only for the current chapter. Built as numbered dots on the card, click to move, menu steps, automatic lore counter each turn, chapter-only Reminders.
 
+### 81. Abilities granted by other cards — Phase 1 built, awaiting Chris's test (v0.73.0)
+
+Chris (2026-11-06): Sphere Grid gives creatures with +1/+1 counters reach and trample; can this be automatic, and recreated for many cards? Phase 1 (built): simple "creatures you control [with a counter] have <icon abilities>" lines, shown as dotted-green granted icons for everyone, never saved. Not included (Phase 2 ideas, only if wanted): power/toughness anthems, "until end of turn" or targeted grants, abilities without an icon, opponents' creatures.
+
 ### Shipped recently (details in CHANGELOG.md)
 
+- #80 Step trackers for Sagas, Classes, Rooms, Battles; grouped menu — v0.72.0.
 - #79 Reminders: replacement effects and cost changes — v0.71.0; word-tag clipping fix — v0.71.1.
 - #77 Printed abilities switch on automatically — v0.69.0.
 - #76 Exile, and give to player plus quick play from Reminders — v0.68.0.
