@@ -1,14 +1,21 @@
 /* grants.js — abilities that one permanent gives to others ("Creatures you control with a +1/+1 counter on them have reach and
  * trample", "Other Dragons you control have flying"). Pure helpers, no page needed. The result is only drawn as extra ability
  * icons on the matching creatures; it never changes what is saved on a card. Only simple, common wording is understood and
- * anything else is left alone, so an unusual card just shows nothing. Everything here is about permanents "you control", so a
- * board's grants only ever apply to that same player's board. */
+ * anything else is left alone, so an unusual card just shows nothing. A grant has a scope: 'you' (permanents you control),
+ * 'opp' (your opponents' permanents), 'all' ("All creatures have…") or 'attached' ("Equipped / Enchanted creature has…", which
+ * applies to whatever the card is attached to, on any board). */
 (function () {
   'use strict';
   const ABILITIES = ['deathtouch', 'defender', 'double strike', 'first strike', 'flying', 'haste', 'hexproof', 'indestructible', 'lifelink', 'menace', 'reach', 'trample', 'vigilance'];
   const TYPES = ['artifact', 'enchantment'];
   const MAX_GRANTS = 4;
-  const LINE_RE = /^(?:[A-Z][\w'’ ]{1,24} — )?(Each |All |Other )?(.+?) you control(?: with (.+?))? (?:have|has) (.+?)\.?$/i;
+  const LINE_RE = /^(?:[A-Z][\w'’ ]{1,24} — )?(Each |All |Other )?(.+?)(?: (you control|your opponents control|you don't control|an opponent controls|opponents control))?(?: with (.+?))? (?:have|has) (.+?)\.?$/i;
+  const ATTACH_RE = /^(?:[A-Z][\w'’ ]{1,24} — )?(Equipped|Enchanted) creature (?:gets [^ ]+ and )?has (.+?)\.?$/i;
+  const SCOPES = ['you', 'opp', 'all', 'attached'];
+  const abilityList = text => {
+    const parts = String(text || '').split(/\s*,\s*(?:and\s+)?|\s+and\s+/i).map(x => x.trim().toLowerCase()).filter(Boolean);
+    return parts.length && parts.every(p => ABILITIES.includes(p)) ? parts.filter((p, i) => parts.indexOf(p) === i) : null;
+  };
   const singular = w => { const x = w.toLowerCase(); return [x, x.replace(/ves$/, 'f'), x.replace(/ves$/, 'fe'), x.replace(/ies$/, 'y'), x.replace(/es$/, ''), x.replace(/s$/, '')]; };
 
   function parseCondition(text) {
@@ -19,15 +26,26 @@
   // The grants stated by one line of rules text, or null if the line is not a simple grant we understand.
   function parseLine(raw) {
     const line = String(raw || '').replace(/\([^)]*\)/g, ' ').replace(/\s+/g, ' ').trim();
+    const at = ATTACH_RE.exec(line);
+    if (at) { // "Equipped creature gets +2/+2 and has trample." / "Enchanted creature has flying."
+      const abilities = abilityList(at[2]);
+      return abilities ? { scope: 'attached', attach: at[1].toLowerCase(), other: false, filters: { creature: true }, cond: null, abilities } : null;
+    }
     const m = LINE_RE.exec(line);
     if (!m) return null;
+    const ctl = String(m[3] || '').toLowerCase();
+    const scope = ctl === 'you control' ? 'you' : ctl ? 'opp' : 'all';
     let other = /^other /i.test(m[1] || '');
+    if (scope === 'all' && !m[1]) return null; // "Creatures have…" with no Each/All/Other is not a card's static ability we want to guess at
     const words = m[2].trim().split(' ');
-    const g = { other: false, filters: {}, cond: null, abilities: [] };
+    const g = { scope, other: false, filters: {}, cond: null, abilities: [] };
     if (words[0].toLowerCase() === 'other') { other = true; words.shift(); }
     g.other = other;
-    const noun = words.pop();
+    let noun = words.pop();
     if (!noun) return null;
+    if (/^creatures?$/i.test(noun) && words.length && /^[A-Z][a-z]+$/.test(words[words.length - 1]) && !['legendary', 'tapped', 'untapped', 'nontoken', 'nonlegendary', 'artifact', 'enchantment'].includes(words[words.length - 1].toLowerCase())) {
+      noun = words.pop(); // "Sliver creatures": the creature type
+    }
     for (const wd of words.map(w => w.toLowerCase())) {
       if (wd === 'legendary') g.filters.legendary = true;
       else if (wd === 'nonlegendary') g.filters.legendary = false;
@@ -42,10 +60,10 @@
     else if (n === 'tokens' || n === 'token') g.filters.token = true;
     else if (/^[A-Z][a-z]+$/.test(noun) && noun.length <= 24) { g.filters.creature = true; g.filters.tribe = noun; } // a creature type: "Elves", "Other Dragons"
     else return null;
-    if (m[3]) { g.cond = parseCondition(m[3]); if (!g.cond) return null; }
-    const parts = m[4].split(/\s*,\s*(?:and\s+)?|\s+and\s+/i).map(x => x.trim().toLowerCase()).filter(Boolean);
-    if (!parts.length || !parts.every(p => ABILITIES.includes(p))) return null;
-    g.abilities = parts.filter((p, i) => parts.indexOf(p) === i);
+    if (m[4]) { g.cond = parseCondition(m[4]); if (!g.cond) return null; }
+    const abilities = abilityList(m[5]);
+    if (!abilities) return null;
+    g.abilities = abilities;
     return g;
   }
   const cache = new Map();
@@ -65,7 +83,8 @@
     return list.slice(0, MAX_GRANTS).map(g => {
       if (!g || typeof g !== 'object') return null;
       const f = g.filters && typeof g.filters === 'object' ? g.filters : {};
-      const out = { other: !!g.other, filters: {}, cond: null, abilities: [] };
+      const out = { scope: SCOPES.includes(g.scope) ? g.scope : 'you', other: !!g.other, filters: {}, cond: null, abilities: [] };
+      if (out.scope === 'attached') out.attach = g.attach === 'enchanted' ? 'enchanted' : 'equipped';
       if (f.creature) out.filters.creature = true;
       if (typeof f.type === 'string' && TYPES.includes(f.type.toLowerCase())) out.filters.type = f.type[0].toUpperCase() + f.type.slice(1).toLowerCase();
       if (typeof f.tribe === 'string' && /^[A-Za-z]{2,24}$/.test(f.tribe)) out.filters.tribe = f.tribe;
@@ -96,25 +115,32 @@
     }
     return true;
   }
-  // entries: [{ c, def }] for one player's battlefield. Returns Map iid -> [{ id, from }] of abilities granted by the other permanents.
-  function forBoard(entries) {
+  // boards: [{ pid, entries: [{ c, def }] }] — every player's battlefield. Returns Map "pid|iid" -> [{ id, from }] of the abilities
+  // other permanents give that card: by scope (yours, your opponents', everyone's, or what an Aura / Equipment is attached to).
+  function forBoards(boards) {
     const sources = [];
-    entries.forEach(e => {
+    boards.forEach(b => b.entries.forEach(e => {
       if (!e || !e.c || !e.def || e.c.fd) return;
       const gr = Array.isArray(e.def.gr) ? clean(e.def.gr) : parse(e.def.oracle);
-      if (gr.length) sources.push({ e, gr });
-    });
+      if (gr.length) sources.push({ pid: b.pid, e, gr });
+    }));
     const out = new Map();
     if (!sources.length) return out;
-    entries.forEach(t => {
+    boards.forEach(b => b.entries.forEach(t => {
       sources.forEach(s => s.gr.forEach(g => {
+        const mine = s.pid === b.pid;
+        if (g.scope === 'you' && !mine) return;
+        if (g.scope === 'opp' && mine) return;
+        if (g.scope === 'attached' && !(s.e.c.att && s.e.c.att.p === b.pid && s.e.c.att.i === t.c.iid)) return;
         if (!applies(g, t.c, t.def, s.e === t)) return;
-        const list = out.get(t.c.iid) || [];
-        g.abilities.forEach(id => { if (!list.some(x => x.id === id)) list.push({ id, from: String(s.e.def.face || s.e.def.name || '').slice(0, 60) }); });
-        out.set(t.c.iid, list);
+        const key = b.pid + '|' + t.c.iid, list = out.get(key) || [];
+        g.abilities.forEach(id => { if (!list.some(x => x.id === id)) list.push({ id, from: String(s.e.def.face || s.e.def.name || '').slice(0, 60), by: String(s.e.c.own || s.pid).slice(0, 40) }); });
+        out.set(key, list);
       }));
-    });
+    }));
     return out;
   }
-  window.CTGrants = { parse, parseLine, clean, applies, forBoard, ABILITIES };
+  // One player's board on its own (everything is "yours").
+  const forBoard = entries => { const m = forBoards([{ pid: 'p', entries }]), out = new Map(); m.forEach((v, k) => out.set(k.slice(2), v)); return out; };
+  window.CTGrants = { parse, parseLine, clean, applies, forBoard, forBoards, ABILITIES };
 }());

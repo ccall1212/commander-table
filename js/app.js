@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.73.0';
+const APP_VERSION = '0.74.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -94,16 +94,17 @@ const markSvg = m => m.p ? `<svg viewBox="${m.vb}" class="glyph" aria-hidden="tr
 // One marker as HTML. Icons and word tags share the .cmark look; the tip is the hover text (they are hover-only, never clickable).
 function markHTML(entry) {
   const id = typeof entry === 'string' ? entry : entry.id, temp = typeof entry === 'string' ? false : !!entry.temp;
-  const granted = typeof entry === 'string' ? '' : (entry.from ? String(entry.from) : (entry.granted ? 'another permanent' : ''));
+  const granted = typeof entry === 'string' ? '' : (entry.from ? String(entry.from) : (entry.granted ? 'another permanent' : '')), by = typeof entry === 'string' ? '' : String(entry.by || '');
   const m = CARD_MARK_BY_ID[id];
-  const label = m ? m.label : id.slice(2), tip = (m ? `${m.label} — ${m.tip}` : `${id.slice(2)} (a marker added by the card's controller)`) + (temp ? ' · Temporary: ends when the turn passes' : '') + (granted ? ` · Granted by ${granted}` : '');
+  const label = m ? m.label : id.slice(2), tip = (m ? `${m.label} — ${m.tip}` : `${id.slice(2)} (a marker added by the card's controller)`) + (temp ? ' · Temporary: ends when the turn passes' : '') + (granted && !by ? ` · Granted by ${granted}` : '');
   const word = !m || !m.p;
-  return `<span class="cmark ${m ? m.kind : 'status'}${word ? ' word' : ''}${m ? '' : ' custom'}${temp ? ' temp' : ''}${granted ? ' granted' : ''}" title="${esc(tip)}" role="img" aria-label="${esc(label + (temp ? ' (temporary)' : '') + (granted ? ' (granted by ' + granted + ')' : ''))}">${m ? markSvg(m) : `<span class="mark-word">${esc(label)}</span>`}</span>`;
+  return `<span class="cmark ${m ? m.kind : 'status'}${word ? ' word' : ''}${m ? '' : ' custom'}${temp ? ' temp' : ''}${granted ? ' granted' : ''}"${granted && by ? ` data-tip="${esc(tip)}" data-from="${esc(granted)}" data-by="${esc(by)}"` : ` title="${esc(tip)}"`} role="img" aria-label="${esc(label + (temp ? ' (temporary)' : '') + (granted ? ' (granted by ' + granted + ')' : ''))}">${m ? markSvg(m) : `<span class="mark-word">${esc(label)}</span>`}</span>`;
 }
 // Everything a card shows: permanent markers first, then temporary ones (those wear off when the turn passes).
 function markEntries(c) {
   const perm = cleanMarks(c && c.st), temp = cleanMarks(c && c.ts).filter(id => !perm.includes(id));
-  const gr = (c && Array.isArray(c.gr) ? c.gr : []).filter(g => g && CARD_MARK_BY_ID[g.id] && !perm.includes(g.id) && !temp.includes(g.id)).map(g => ({ id: g.id, temp: false, granted: true, from: g.from }));
+  const gr = (c && Array.isArray(c.gr) ? c.gr : []).filter(g => g && CARD_MARK_BY_ID[g.id] && !perm.includes(g.id) && !temp.includes(g.id)).map(g => ({ id: g.id, temp: false, granted: true, from: g.from, by: g.by }));
+  gr.sort((x, y) => CARD_MARKS.findIndex(m => m.id === x.id) - CARD_MARKS.findIndex(m => m.id === y.id)); // the same order on every screen
   return perm.map(id => ({ id, temp: false })).concat(temp.map(id => ({ id, temp: true })), gr).slice(0, MAX_CARD_MARKS * 2);
 }
 const isWordMark = e => { const id = typeof e === 'string' ? e : e.id; return !CARD_MARK_BY_ID[id] || !CARD_MARK_BY_ID[id].p; };
@@ -126,18 +127,18 @@ function previewMarksHTML(card) {
 // Abilities another permanent gives this card ("creatures you control with a +1/+1 counter have reach and trample"), worked out
 // per player's board and remembered until the next redraw. Drawn as extra icons only; never saved on the card.
 let grantEpoch = 0;
-const grantCache = new Map();
+const grantCache = { map: null, epoch: -1 };
 function grantsFor(pid, c) {
   if (typeof CTGrants === 'undefined' || !c || !S.me) return [];
-  let hit = grantCache.get(pid);
-  if (!hit || hit.epoch !== grantEpoch) {
-    let entries = [];
-    if (pid === S.pid) entries = S.me.zones.battlefield.map(x => ({ c: x, def: defOf(x) }));
-    else { const p = S.players[pid]; if (p && p.zones) entries = (p.zones.battlefield || []).map(x => ({ c: x, def: x.id ? (p.defs || {})[x.id] : null })); }
-    hit = { epoch: grantEpoch, map: CTGrants.forBoard(entries) };
-    grantCache.set(pid, hit);
+  if (!grantCache.map || grantCache.epoch !== grantEpoch) {
+    const boards = [{ pid: S.pid, entries: S.me.zones.battlefield.map(x => ({ c: x, def: defOf(x) })) }];
+    for (const [opid, p] of Object.entries(S.players)) {
+      if (opid === S.pid || !p || !p.zones) continue;
+      boards.push({ pid: opid, entries: (p.zones.battlefield || []).map(x => ({ c: x, def: x.id ? (p.defs || {})[x.id] : null })) });
+    }
+    grantCache.map = CTGrants.forBoards(boards); grantCache.epoch = grantEpoch; // every board at once: an Aura can sit on an opponent's creature
   }
-  return hit.map.get(c.iid) || [];
+  return grantCache.map.get(pid + '|' + c.iid) || [];
 }
 const withGrants = (pid, c) => { const gr = grantsFor(pid, c).filter(g => !(c.sx || []).includes(g.id)); return gr.length ? Object.assign({}, c, { gr }) : c; }; // grants the owner switched off by hand (sx) are left out
 const PLAYER_COUNTERS = ['Energy', 'Experience', 'Rad', 'Tickets'];
@@ -1513,7 +1514,7 @@ function tableTriggers() {
     lines.forEach(line => {
       const key = (mine ? 'me' : pid) + '|' + name + '|' + line;
       if (hide.has(name + '|' + line)) return;
-      const e = out.get(key) || { key, hideKey: name + '|' + line, owner: mine ? '' : pname(pid), name, line, count: 0 };
+      const e = out.get(key) || { key, hideKey: name + '|' + line, owner: mine ? '' : pname(pid), ownerColor: mine ? '' : colorOf(pid), name, line, count: 0 };
       e.count++; out.set(key, e);
     });
   };
@@ -1620,7 +1621,7 @@ function renderReminders() {
   const tab = $('#remTab'), panel = $('#remPanel'); if (!tab || !panel) return;
   const open = !!LS.get('ct.remOpen', false), list = remList(), trig = tableTriggers(), deck = remDeck();
   const left = list.length + trig.length;
-  const sig = JSON.stringify([open, list, trig.map(t => t.key + t.count + (t.iid || '')), remShowOpp(), deck && deck.name]);
+  const sig = JSON.stringify([open, list, trig.map(t => t.key + t.count + (t.iid || '') + (t.ownerColor || '')), remShowOpp(), deck && deck.name]);
   tab.hidden = open; panel.hidden = !open;
   tab.textContent = '📝 Reminders' + (left ? ' · ' + left : '');
   if (sig === remUI.sig) return;
@@ -1646,13 +1647,13 @@ function renderReminders() {
   if (!trig.length) note('No triggers in play' + (remShowOpp() ? '' : ' (opponents\' triggers are off)') + '.');
   // One box per card, with all of its lines together.
   const groups = new Map();
-  trig.forEach(t => { const k = t.owner + '|' + t.name; const g = groups.get(k) || { name: t.name, owner: t.owner, count: 0, lines: [], iid: t.iid }; g.count = Math.max(g.count, t.count); g.lines.push(t); groups.set(k, g); });
+  trig.forEach(t => { const k = t.owner + '|' + t.name; const g = groups.get(k) || { name: t.name, owner: t.owner, ownerColor: t.ownerColor, count: 0, lines: [], iid: t.iid }; g.count = Math.max(g.count, t.count); g.lines.push(t); groups.set(k, g); });
   groups.forEach(g => {
     const row = document.createElement('div'); row.className = 'rem-row rem-tbl';
     const text = document.createElement('div'); text.className = 'rem-body';
     const who = document.createElement('div'); who.className = 'rem-who';
     const n = document.createElement('b'); n.textContent = g.name + (g.count > 1 ? ' ×' + g.count : ''); who.appendChild(n);
-    if (g.owner) { const o = document.createElement('small'); o.textContent = ' (' + g.owner + ')'; who.appendChild(o); }
+    if (g.owner) { const o = document.createElement('small'); const nm = document.createElement('span'); nm.className = 'rem-owner'; nm.textContent = g.owner; if (g.ownerColor) nm.style.color = g.ownerColor; o.append(' (', nm, ')'); who.appendChild(o); }
     text.appendChild(who);
     g.lines.forEach(t => text.appendChild(remLineEl(t.line)));
     row.title = g.name;
@@ -4153,6 +4154,7 @@ const renderStats = { count: 0, lastMs: 0, maxMs: 0 };
 function renderNow() {
   if (!S.me || $('#game').classList.contains('hidden')) return;
   grantEpoch++;
+  if (document.querySelector('#markTip:not([hidden])') && !document.querySelector('.cmark[data-by]:hover')) document.querySelector('#markTip').hidden = true; // its icon was redrawn or removed
   const t0 = performance.now();
   try { renderBody(); } finally {
     const ms = performance.now() - t0;
@@ -5465,6 +5467,26 @@ function bindGame() {
     if (head) { const pid = head.dataset.phead || head.parentElement.dataset.opp; if (pid) playerMenu(e.clientX, e.clientY, pid); return; }
     if (e.target.closest('#myBf')) mainMenu(e.clientX, e.clientY);
   });
+  // Granted icons: a small tooltip that names the card giving it and its owner, in the owner's colour.
+  const markTipEl = () => { let t = $('#markTip'); if (!t) { t = document.createElement('div'); t.id = 'markTip'; t.className = 'mark-tip'; t.hidden = true; document.body.appendChild(t); } return t; };
+  const hideMarkTip = () => { const t = $('#markTip'); if (t) t.hidden = true; };
+  g.addEventListener('mouseover', e => {
+    const m = e.target.closest('.cmark[data-by]');
+    if (!m) return;
+    const t = markTipEl(), r = m.getBoundingClientRect();
+    t.replaceChildren();
+    const line = document.createElement('div'); line.textContent = m.dataset.tip || ''; t.appendChild(line);
+    const who = document.createElement('div'); who.append('Granted by ');
+    const card = document.createElement('b'); card.textContent = m.dataset.from || 'another permanent'; who.append(card, ' · owner ');
+    const own = document.createElement('b'); own.textContent = pname(m.dataset.by); own.style.color = colorOf(m.dataset.by); who.appendChild(own);
+    t.appendChild(who);
+    t.hidden = false;
+    const w = t.offsetWidth, h = t.offsetHeight;
+    t.style.left = clamp(r.left + r.width / 2 - w / 2, 6, innerWidth - w - 6) + 'px';
+    t.style.top = (r.bottom + 8 + h > innerHeight ? Math.max(6, r.top - h - 8) : r.bottom + 8) + 'px';
+  });
+  g.addEventListener('mouseout', e => { if (e.target.closest && e.target.closest('.cmark[data-by]') && !(e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('.cmark[data-by]'))) hideMarkTip(); });
+  window.addEventListener('scroll', hideMarkTip, true);
   g.addEventListener('mouseover', e => {
     const card = e.target.closest('.card');
     if (S.arrowPick) return;
@@ -7391,7 +7413,7 @@ function boot() {
   if (sess) resume(sess); else showLobby();
 }
 // Expose a little for debugging from the console.
-window.CT = { S, act, render, dragState: () => drag, hostRecv, cleanTable, doMove, giveToExile, giveTopToExile, cardMenu };
+window.CT = { S, act, render, dragState: () => drag, hostRecv, cleanTable, doMove, giveToExile, giveTopToExile, cardMenu, colorOf };
 // ---- stay on one version -----------------------------------------------------------------------
 // GitHub Pages lets browsers reuse cached files for 10 minutes. index.html links every file with ?v=<version>
 // (tools/bump-version.py), so a new page never pulls old files. If this script and the page that loaded it

@@ -1628,3 +1628,9 @@ body.me-out #myBf .board { filter: grayscale(.9) brightness(.45); }
 .cmark.word.granted { border-color: #8fe3b0; border-style: dotted; }
 
 .mark-row.granted .cmark { outline: 1.5px dotted #8fe3b0; outline-offset: 1px; border-radius: 4px; }
+
+/* Tooltip for granted icons: names the card and its owner (in their colour). */
+.mark-tip { position: fixed; z-index: 100000; max-width: 280px; padding: 6px 9px; border-radius: 8px; background: rgba(12, 15, 22, .97); border: 1px solid #3a4256; color: #e8ecf4; font-size: 12px; line-height: 1.35; pointer-events: none; box-shadow: 0 4px 14px rgba(0, 0, 0, .55); }
+.mark-tip[hidden] { display: none; }
+.mark-tip b { font-weight: 700; }
+.rem-owner { font-weight: 700; }

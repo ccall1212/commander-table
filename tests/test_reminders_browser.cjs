@@ -86,6 +86,8 @@ const mkDeck = who => ({
     assert.ok(lines.some(l => /Omnath.*Landfall — Whenever a land you control enters/.test(l)), 'my landfall trigger is quoted');
     assert.ok(lines.some(l => /Dad Only Trigger.*scry 1/.test(l)), 'and my other trigger');
     assert.ok(lines.some(l => /Rhystic Study \(Son\).*Whenever an opponent casts a spell/.test(l)), 'the opponent\'s trigger that affects me is shown with whose it is');
+    const ownerColor = await dad.evaluate(sp => { const e = document.querySelector('#remPanel .rem-tbl .rem-owner'); const x = document.createElement('i'); x.style.color = CT.colorOf(sp); document.body.appendChild(x); const want = getComputedStyle(x).color; x.remove(); return e && { text: e.textContent, color: getComputedStyle(e).color, want }; }, sonPid);
+    assert.ok(ownerColor && ownerColor.text === 'Son' && ownerColor.color === ownerColor.want, 'the owner\'s name is shown in their colour in Reminders: ' + JSON.stringify(ownerColor));
     assert.ok(!lines.some(l => /Elvish Visionary|Son Own Upkeep/.test(l)), 'a one-time enters-the-battlefield trigger and an opponent\'s own upkeep trigger are not shown');
     // Opponents' triggers can be switched off.
     assert.equal(await panel.locator('.rem-form').isVisible(), false, 'the add form is hidden until you want it');
