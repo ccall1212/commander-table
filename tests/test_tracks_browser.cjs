@@ -77,6 +77,9 @@ const mkDeck = who => ({
     // A Saga enters with its first lore counter; the other player sees the same dots.
     await wait(dad, 'saga', 'o* - -'); await wait(son, 'saga', 'o* - -');
     assert.equal(await dad.evaluate(pid => CT.S.me.zones.battlefield.find(c => c.id === 'saga').c.Lore, dadPid), 1, 'the lore counter is a real counter');
+    const chip = pg => pg.evaluate(pid => { const e = document.querySelector('.card[data-iid="' + pid + '_tsaga"] .ctrs .ctr[data-ctr="Lore"]'); return e ? e.textContent : null; }, dadPid);
+    assert.equal(await chip(dad), '1 Lore', 'the Lore counter shows at the top right of the card');
+    await son.waitForFunction(pid => { const e = document.querySelector('.card[data-iid="' + pid + '_tsaga"] .ctrs .ctr[data-ctr="Lore"]'); return e && e.textContent === '1 Lore'; }, dadPid);
     // Clicking a dot moves there; clicking the current one steps back; the other player follows.
     const dot = (pg, name, n) => pg.locator('.card[data-iid="' + dadPid + '_t' + name + '"] .ctrack .tstep[data-step="' + n + '"]');
     await dot(dad, 'saga', 3).click(); await wait(dad, 'saga', 'o o o*'); await wait(son, 'saga', 'o o o*');

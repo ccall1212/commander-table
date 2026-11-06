@@ -3,7 +3,7 @@
 To check this copy, extract the ZIP and double-click **index.html**. A practice game works for most of this; a second player (private window) shows what others see.
 
 0. **The ☰ menu** is now grouped: Arrows, My hand, Display & layout, On my turn, Game & room. Everything should still be reachable; the two switches for automatic abilities/lore counters are gone (always on).
-1. **Saga.** Play a Saga (for example Summon: Ixion). It should enter with **one Lore counter** and dots **I II III** running **down the left side** of the card (not covering power/toughness), I lit and ringed. The "N Lore" chip should not be shown.
+1. **Saga.** Play a Saga (for example Summon: Ixion). It should enter with **one Lore counter** and dots **I II III** running **down the left side** of the card (not covering power/toughness), I lit and ringed. The **"1 Lore" counter at the top right of the card** should appear on its own and go up with each chapter.
 2. **Click** dot III: it jumps there (Lore counter becomes 3). Click the current dot again: it steps back one. The right-click menu has **Add a lore counter**, **Remove a lore counter** and **Go to chapter…**.
 3. **Counters moved by other effects.** Use Tidus, Yuna's Guardian (or the Counters menu) to take a Lore counter off: the dots should follow.
 4. **Automatic counter.** With auto-draw/auto-untap on, pass the turn around so it is your turn again: each of your Sagas should get one more Lore counter (the log says so), but not beyond its last chapter.

@@ -4165,10 +4165,8 @@ function cardHTML(c, def, o) {
       : `<div class="ph">${esc(def ? (c.fl && def.backName ? def.backName : dname(def)) : '?')}${def && def.pt ? `<br>${esc(def.pt)}` : ''}</div>`;
   }
   let badges = '', ctrs = '';
-  const sagaDots = o.zone === 'battlefield' && !c.fd && typeof CTTracks !== 'undefined' && (CTTracks.describe(def) || {}).kind === 'saga'; // the chapter dots already show the Lore counters
   for (const [k, v] of Object.entries(c.c || {})) {
     if (!v && k !== 'Loyalty') continue;
-    if (sagaDots && k === 'Lore') continue;
     const lbl = k === '+1/+1' ? `+${v}/+${v}` : k === '-1/-1' ? `−${v}/−${v}` : k === 'Loyalty' ? `◆${v}` : `${v} ${k}`;
     ctrs += `<span class="ctr" data-ctr="${esc(k)}" title="${esc(k)} counters — left-click +1, right-click −1">${esc(lbl)}</span>`;
   }
