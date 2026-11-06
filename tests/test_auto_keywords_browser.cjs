@@ -1,4 +1,4 @@
-/* Real-browser check of automatic printed abilities: a card entering the battlefield gets the ability icons printed at the start of its rules text (the end, for a Saga creature), not when face down, and the table-menu switch turns it off. Needs the page and the relay running first,
+/* Real-browser check of automatic printed abilities: a card entering the battlefield gets the ability icons printed at the start of its rules text (the end, for a Saga creature), not when face down. Needs the page and the relay running first,
  * like the other *_browser tests:
  *   python3 -m http.server 8107 --bind 127.0.0.1                    (from the project folder)
  *   node <a script that starts relay/worker.js with Miniflare on 127.0.0.1:8112>
@@ -82,12 +82,8 @@ const mkDeck = who => ({
     assert.deepEqual(got, { kim: 'vigilance', ixi: 'first strike', late: '', multi: 'flying,lifelink,trample' }, JSON.stringify(got));
     got = await play({ tag: 'f', faceDown: true });
     assert.deepEqual(got, { kim: '', ixi: '', late: '', multi: '' }, 'face-down cards have no abilities: ' + JSON.stringify(got));
-    // The switch in the table menu turns it off.
-    await dad.evaluate(() => localStorage.setItem('ct.autoKw', 'false'));
-    got = await play({ tag: 'o' });
-    assert.deepEqual(got, { kim: '', ixi: '', late: '', multi: '' }, 'switched off: ' + JSON.stringify(got));
     assert.deepEqual(errors, [], 'no page errors');
-    console.log('PASS auto keywords: icons switched on from the start of the rules text (end for a Saga creature), nothing for later lines or face-down cards, and the menu switch turns it off');
+    console.log('PASS auto keywords: icons switched on from the start of the rules text (end for a Saga creature), and nothing for later lines or face-down cards');
   } finally {
     await browser.close();
   }

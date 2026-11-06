@@ -1618,3 +1618,7 @@ body.me-out #myBf .board { filter: grayscale(.9) brightness(.45); }
 .ctrack .tstep.on { background: #ffd36b; color: #1b1500; border-color: #ffd36b; }
 .ctrack .tstep.cur { box-shadow: 0 0 0 2px #fff, 0 0 6px 2px rgba(255, 211, 107, .9); }
 .ctrack.room .tstep { background: transparent; border-color: transparent; font-size: max(10px, calc(var(--cw, 80px) * .11)); }
+
+/* A Saga's chapters run down the left side of the card (the bottom corner holds its power and toughness). */
+.card .ctrack.saga { left: calc(var(--cw, 80px) * .03); bottom: auto; top: 27%; transform: none; flex-direction: column; max-width: none; padding: calc(var(--cw, 80px) * .03) calc(var(--cw, 80px) * .02); }
+.card.tapped .ctrack.saga { transform: none; }

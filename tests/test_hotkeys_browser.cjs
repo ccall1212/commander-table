@@ -36,6 +36,7 @@ const deck = { id: 'hotkey-deck', name: 'Hotkey test deck', commanders: [], card
     await page.evaluate(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'c', code: 'KeyC', repeat: true, bubbles: true, cancelable: true })));
     assert.equal(await copies(), 1, 'held C does not flood the board with copies');
     await page.locator('[data-a="menu"]').click();
+    await page.getByRole('menuitem', { name: 'Display & layout' }).click();
     await page.getByRole('menuitem', { name: 'Hotkeys' }).click();
     const dialog = page.locator('.w-hotkey-list-dialog');
     await dialog.locator('[data-hotkey-set="copy"]').click();

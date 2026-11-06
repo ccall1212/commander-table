@@ -8,9 +8,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [0.72.0] - 2026-11-06
 
+### Changed
+- **The ☰ menu is grouped into smaller menus**: **Arrows**, **My hand**, **Display & layout** (Display settings, Arrange my zones, Tidy up my cards, Touch mode, Hotkeys, Choose / recover a board), **On my turn** (Auto-untap, Auto-draw) and **Game & room** (Room access, Start a new game, Copy invite link, Connection details). Draw a card, Untap all, Tokens, Concede and Leave stay at the top level.
+- **Printed abilities and Saga lore counters are simply automatic**: the two on/off switches for them in the menu were removed.
+
 ### Added
 - **Step trackers for Sagas, Classes, Rooms and Battles.** Cards that go through stages now show a row of numbered dots along the bottom of the card, visible to everyone: **Sagas** show their chapters (I, II, III…), **Classes** their levels (1, 2, 3…) and **Rooms** their two doors (🔒 locked / 🔓 unlocked). Lit dots are reached, the ringed one is current. **Click a dot** on your own card to move there (click the current dot to step back one; for a Room, click a door to lock or unlock it). The right-click menu also has **Add a lore counter / Remove a lore counter**, **Next level / Previous level**, **Go to chapter…** and **Doors**. Battles get **Defense +1 / −1** and enter with their printed Defense.
-- **Saga lore counters are automatic.** A Saga enters with its first lore counter and gets another after your draw step each turn, up to its last chapter (it is never sacrificed for you). They are ordinary Lore counters, so effects that move counters, like Tidus, Yuna's Guardian, work and the dots follow. Turn this off with **Add Saga lore counters automatically** in the table menu.
+- **Saga lore counters are automatic.** A Saga enters with its first lore counter and gets another after your draw step each turn, up to its last chapter (it is never sacrificed for you). They are ordinary Lore counters, so effects that move counters, like Tidus, Yuna's Guardian, work and the dots follow. 
+- **A Saga's chapter dots run down the left side of the card** so they never cover its power and toughness, and its "N Lore" counter chip is hidden because the dots already show it.
 - **Saga reminders show only the current chapter.** In the Reminders panel a Saga lists just the chapter text for the lore count it is on now (for example "II, III — …" when it has 2 or 3 lore counters), not every chapter.
 
 ## [0.71.1] - 2026-11-06

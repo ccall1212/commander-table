@@ -1743,7 +1743,7 @@ function afterTable() {
         m.zones.hand.push(card);
         bits.push('drew a card'); drew = 1;
       }
-      if (autoLoreOn() && typeof CTTracks !== 'undefined') { // each Saga gets a lore counter after the draw step, up to its last chapter
+      if (typeof CTTracks !== 'undefined') { // each Saga gets a lore counter after the draw step, up to its last chapter
         let sagas = 0;
         m.zones.battlefield.forEach(c => {
           if (c.fd) return;
@@ -1784,18 +1784,16 @@ function reconcileOpeningDeal(table) {
 // =====================================================================
 function canEnterBattlefield() { return !!(S.table && S.table.started); }
 // A card entering the battlefield gets the ability icons printed at the start of its rules text (for a Saga creature, at the end)
-// switched on, unless it is face down or already has markers. Players can turn this off in the table menu.
-const autoKeywordsOn = () => LS.get('ct.autoKw', true) !== false;
+// switched on, unless it is face down or already has markers.
 function autoMarkPrintedAbilities(card) {
-  if (!autoKeywordsOn() || typeof CTKeywords === 'undefined' || card.fd || (card.st && card.st.length)) return;
+  if (typeof CTKeywords === 'undefined' || card.fd || (card.st && card.st.length)) return;
   const d = defOf(card), ids = d ? CTKeywords.fromOracle(d.oracle, d.type) : [];
   if (ids.length) card.st = cleanMarks(ids);
 }
-// A Saga enters with its first lore counter (switch off in the table menu). Lore counters are ordinary counters, so effects that
+// A Saga enters with its first lore counter. Lore counters are ordinary counters, so effects that
 // move counters around (Tidus, Yuna's Guardian) work, and the chapter dots on the card simply follow them.
-const autoLoreOn = () => LS.get('ct.autoLore', true) !== false;
 function autoFirstLoreCounter(card) {
-  if (!autoLoreOn() || typeof CTTracks === 'undefined' || card.fd || card.tok || (card.c && card.c.Lore)) return;
+  if (typeof CTTracks === 'undefined' || card.fd || card.tok || (card.c && card.c.Lore)) return;
   const trk = CTTracks.describe(defOf(card));
   if (trk && trk.kind === 'saga') { card.c = card.c || {}; card.c.Lore = 1; }
 }
@@ -3937,43 +3935,50 @@ function setTouchMode(enabled) {
 }
 function mainMenu(x, y) {
   const m = S.me;
+  const online = S.role !== 'solo' && S.role !== 'spectator';
   const items = [
     { label: 'Draw a card', hint: CTHotkeys.key('draw'), onClick: () => draw(1) },
     { label: 'Untap all', hint: CTHotkeys.key('untapAll'), onClick: untapAll },
-    { label: 'Choose / recover a board…', onClick: () => showBoardRecovery() },
     { label: 'Tokens…', hint: CTHotkeys.key('tokens'), onClick: () => tokensMenu(x, y) },
-    { label: 'Targeting arrow…', hint: CTHotkeys.key('arrow'), onClick: () => startTargeting() },
-    { label: 'Show arrow controls', disabled: !S.targetArrows.length, onClick: showTargetingControls },
-    { label: 'Clear all targeting arrows', disabled: !S.targetArrows.length, onClick: clearTargetArrows },
     { sep: true },
-    { label: S.arrange ? 'Done arranging zones' : 'Arrange my zones', onClick: toggleArrange },
-    { label: 'Tidy up my cards', onClick: () => act(() => { tidyBoard(); return ['tidied up their battlefield']; }) },
-    { label: 'Display settings…', onClick: displaySettings },
-    { label: `Touch mode (Beta): ${S.touchMode ? 'On' : 'Off'}`, checked: S.touchMode, onClick: () => setTouchMode(!S.touchMode) },
-    { label: 'Hotkeys', onClick: showHotkeyList },
-    { sep: true },
-    { label: 'Auto-untap on my turn', checked: m.autoUntap, onClick: () => act(() => { m.autoUntap = !m.autoUntap; }, { noUndo: true }) },
-    { label: 'Add Saga lore counters automatically', checked: autoLoreOn(), onClick: () => LS.set('ct.autoLore', !autoLoreOn()) },
-    { label: 'Turn on printed abilities automatically', checked: autoKeywordsOn(), onClick: () => LS.set('ct.autoKw', !autoKeywordsOn()) },
-    { label: 'Auto-draw on my turn', checked: m.autoDraw, onClick: () => act(() => { m.autoDraw = !m.autoDraw; }, { noUndo: true }) },
-    { label: 'Reveal my hand to everyone', checked: m.revealHand, onClick: () => act(() => { m.revealHand = !m.revealHand; return [m.revealHand ? 'revealed their hand' : 'stopped revealing their hand']; }) },
-    ...(S.role !== 'solo' && S.role !== 'spectator' ? [{ label: 'Share my hand with one player…' + (shareTarget() ? ` (${pname(shareTarget())})` : ''), onClick: showShareDialog }] : []),
-    { label: 'Discard at random', onClick: discardRandom },
-    { sep: true },
-    { label: 'Concede game…', danger: true, onClick: async () => {
-      const r = await showConcedeDialog('Concede this game? You will be marked as out and skipped in turn order.', 'Concede game');
-      if (r.ok) concedeGame(r.clear);
-    } },
-    { sep: true }
+    { label: 'Arrows', sub: [
+      { label: 'Targeting arrow…', hint: CTHotkeys.key('arrow'), onClick: () => startTargeting() },
+      { label: 'Show arrow controls', disabled: !S.targetArrows.length, onClick: showTargetingControls },
+      { label: 'Clear all targeting arrows', disabled: !S.targetArrows.length, onClick: clearTargetArrows }
+    ] },
+    { label: 'My hand', sub: [
+      { label: 'Reveal my hand to everyone', checked: m.revealHand, onClick: () => act(() => { m.revealHand = !m.revealHand; return [m.revealHand ? 'revealed their hand' : 'stopped revealing their hand']; }) },
+      ...(online ? [{ label: 'Share my hand with one player…' + (shareTarget() ? ` (${pname(shareTarget())})` : ''), onClick: showShareDialog }] : []),
+      { label: 'Discard at random', onClick: discardRandom }
+    ] },
+    { label: 'Display & layout', sub: [
+      { label: 'Display settings…', onClick: displaySettings },
+      { label: S.arrange ? 'Done arranging zones' : 'Arrange my zones', onClick: toggleArrange },
+      { label: 'Tidy up my cards', onClick: () => act(() => { tidyBoard(); return ['tidied up their battlefield']; }) },
+      { label: `Touch mode (Beta): ${S.touchMode ? 'On' : 'Off'}`, checked: S.touchMode, onClick: () => setTouchMode(!S.touchMode) },
+      { label: 'Hotkeys', onClick: showHotkeyList },
+      { label: 'Choose / recover a board…', onClick: () => showBoardRecovery() }
+    ] },
+    { label: 'On my turn', sub: [
+      { label: 'Auto-untap on my turn', checked: m.autoUntap, onClick: () => act(() => { m.autoUntap = !m.autoUntap; }, { noUndo: true }) },
+      { label: 'Auto-draw on my turn', checked: m.autoDraw, onClick: () => act(() => { m.autoDraw = !m.autoDraw; }, { noUndo: true }) }
+    ] }
   ];
-  if (S.role === 'host') items.push({ label: 'Room access…' + (S.table && S.table.locked ? ' (locked)' : S.table && S.table.askJoin ? ' (ask first)' : ''), onClick: showRoomAccess });
-  if (S.role !== 'client') items.push({ label: 'Start a new game (everyone)', onClick: async () => {
+  const room = [];
+  if (S.role === 'host') room.push({ label: 'Room access…' + (S.table && S.table.locked ? ' (locked)' : S.table && S.table.askJoin ? ' (ask first)' : ''), onClick: showRoomAccess });
+  if (S.role !== 'client') room.push({ label: 'Start a new game (everyone)', onClick: async () => {
     if (await UI.confirm('Start a new game? Everyone reshuffles and receives a new opening hand.', { okLabel: 'New game' })) toHost({ t: 'op', op: { k: 'newgame' } });
   } });
   if (S.role !== 'solo') {
-    items.push({ label: 'Copy invite link', onClick: copyRoom });
-    items.push({ label: 'Connection details…', onClick: showConnInfo });
+    room.push({ label: 'Copy invite link', onClick: copyRoom });
+    room.push({ label: 'Connection details…', onClick: showConnInfo });
   }
+  items.push({ sep: true });
+  if (room.length) items.push({ label: 'Game & room', sub: room });
+  items.push({ label: 'Concede game…', danger: true, onClick: async () => {
+    const r = await showConcedeDialog('Concede this game? You will be marked as out and skipped in turn order.', 'Concede game');
+    if (r.ok) concedeGame(r.clear);
+  } });
   items.push({ label: 'Leave game', danger: true, onClick: leaveGame });
   UI.menu(x, y, items);
 }
@@ -4160,8 +4165,10 @@ function cardHTML(c, def, o) {
       : `<div class="ph">${esc(def ? (c.fl && def.backName ? def.backName : dname(def)) : '?')}${def && def.pt ? `<br>${esc(def.pt)}` : ''}</div>`;
   }
   let badges = '', ctrs = '';
+  const sagaDots = o.zone === 'battlefield' && !c.fd && typeof CTTracks !== 'undefined' && (CTTracks.describe(def) || {}).kind === 'saga'; // the chapter dots already show the Lore counters
   for (const [k, v] of Object.entries(c.c || {})) {
     if (!v && k !== 'Loyalty') continue;
+    if (sagaDots && k === 'Lore') continue;
     const lbl = k === '+1/+1' ? `+${v}/+${v}` : k === '-1/-1' ? `−${v}/−${v}` : k === 'Loyalty' ? `◆${v}` : `${v} ${k}`;
     ctrs += `<span class="ctr" data-ctr="${esc(k)}" title="${esc(k)} counters — left-click +1, right-click −1">${esc(lbl)}</span>`;
   }

@@ -2,10 +2,11 @@
 
 To check this copy, extract the ZIP and double-click **index.html**. A practice game works for most of this; a second player (private window) shows what others see.
 
-1. **Saga.** Play a Saga (for example Summon: Ixion). It should enter with **one Lore counter** and dots **I II III** along the bottom of the card, I lit and ringed.
+0. **The ☰ menu** is now grouped: Arrows, My hand, Display & layout, On my turn, Game & room. Everything should still be reachable; the two switches for automatic abilities/lore counters are gone (always on).
+1. **Saga.** Play a Saga (for example Summon: Ixion). It should enter with **one Lore counter** and dots **I II III** running **down the left side** of the card (not covering power/toughness), I lit and ringed. The "N Lore" chip should not be shown.
 2. **Click** dot III: it jumps there (Lore counter becomes 3). Click the current dot again: it steps back one. The right-click menu has **Add a lore counter**, **Remove a lore counter** and **Go to chapter…**.
 3. **Counters moved by other effects.** Use Tidus, Yuna's Guardian (or the Counters menu) to take a Lore counter off: the dots should follow.
-4. **Automatic counter.** With auto-draw/auto-untap on, pass the turn around so it is your turn again: each of your Sagas should get one more Lore counter (the log says so), but not beyond its last chapter. Turn it off with **Add Saga lore counters automatically** in the table menu.
+4. **Automatic counter.** With auto-draw/auto-untap on, pass the turn around so it is your turn again: each of your Sagas should get one more Lore counter (the log says so), but not beyond its last chapter.
 5. **Reminders.** Open the Reminders panel: your Saga should show **only the chapter it is on** (e.g. "II, III — …" at 2 or 3), not every chapter.
 6. **Class** (levels 1, 2, 3, starting at 1) and **Room** (two doors 🔒/🔓, click to unlock): try them. A second player should see the same dots; only you can click yours.
 7. **Battle:** play one; Counters menu has **Defense +1 / −1**.
