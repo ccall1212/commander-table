@@ -1,16 +1,12 @@
-# Granted abilities: Equipment, Auras, everyone, opponents — v0.74.0 test copy
+# Temporary effects end with their turn — v0.74.1 test copy
 
-To check this copy, extract the ZIP and double-click **index.html**. Two players (a private window) show what others see.
+To check this copy, extract the ZIP and double-click **index.html**. Two players (a private window) are best.
 
-1. **Equipment.** Play a Sword-style Equipment ("Equipped creature gets +2/+2 and has trample") and a creature. Not attached: nothing. **Attach** it to the creature: the creature shows **Trample** with a dotted green ring (hover: "Granted by …"). Unattach: it goes away. Try attaching to a creature of the other player.
-2. **Aura.** Same with an Aura ("Enchanted creature has flying").
-3. **Everyone.** Play a card like "All creatures have haste": every creature on every board shows Haste (dotted).
-4. **Opponents.** Play a card like "Creatures your opponents control have defender" (for example Test Wall): only the other players' creatures show Defender, not yours.
-4b. **Hover** a granted icon: a small box names the ability, the card granting it, and the **owner's name in their player colour**. In the **Reminders** panel an opponent's name next to their card should also be in their colour.
-5. In **Statuses & abilities** on an affected creature the granted ability is ticked; untick to switch it off for that creature.
-6. Tell me which Equipment/Auras (names) did not work. The +N/+N part is not applied yet.
+1. On your turn, give a creature a temporary effect (right-click -> **Temporary (until end of turn)** -> +1/+1, or a temporary status like Vigilance). **Pass the turn**: it should disappear right away, on your screen and the other player's.
+2. **The case you found:** give a creature a temporary effect, then **reload the page (or leave and rejoin the game)**, then pass the turn. It should now disappear at once; before it stayed until your next turn.
+3. Place a temporary effect on your creature during **another player's turn**: it should disappear when that player passes.
+4. Permanent statuses, counters and abilities are never touched.
 
 ## Assistant verification
-- All 28 automatic unit tests pass; `test_grants` now covers Equipment/Aura wording (including ones to ignore: bare +N/+N, Ward, quoted abilities), "All/Each/Other creatures", tribes, opponents, attachment to a creature on another board, and unattached cards granting nothing.
-- Two-player Chromium test `test_grants_browser` covers a Sword on my creature, an Aura on the other player's creature, unattaching, "All creatures have haste" and an opponent-only card, checked on both screens.
-- Not tested: real Scryfall wording of real cards; real mouse use of Attach.
+- New three-player Chromium test `test_temp_turn_browser`: every player's effect is gone as soon as the turn passes, a repeated check does not clear an effect placed this turn, an effect left over from an earlier turn (what a reload leaves behind) is cleared at once, and an effect placed during another player's turn ends with that turn. The two-player temporary-effects test and all 28 automatic unit tests pass.
+- Not tested: an actual page reload (I simulated the leftover state); real mouse use.
