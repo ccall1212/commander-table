@@ -19,6 +19,7 @@ assert.equal(get('Whenever you cast a spell, draw a card.\nFlying', 'Creature'),
 assert.equal(get('Hexproof from black\nFlying', 'Creature'), 'flying', 'hexproof from a colour is not plain hexproof');
 assert.equal(get('Protection from red\nHexproof', 'Creature'), 'hexproof');
 assert.equal(get('Double strike\nFirst strike', 'Creature'), 'double strike,first strike');
+assert.equal(get('Shroud (This creature can\'t be the target of spells or abilities.)\nWhenever it attacks, draw a card.', 'Creature'), 'shroud', 'Shroud is an ability with an icon');
 assert.equal(get('Destroy target creature.', 'Instant'), '');
 assert.equal(get('', 'Creature'), '');
 // Sagas (Summon: creatures) list their abilities after the chapters.

@@ -6,7 +6,7 @@
  * applies to whatever the card is attached to, on any board). */
 (function () {
   'use strict';
-  const ABILITIES = ['deathtouch', 'defender', 'double strike', 'first strike', 'flying', 'haste', 'hexproof', 'indestructible', 'lifelink', 'menace', 'reach', 'trample', 'vigilance'];
+  const ABILITIES = ['deathtouch', 'defender', 'double strike', 'first strike', 'flying', 'haste', 'hexproof', 'indestructible', 'lifelink', 'menace', 'reach', 'shroud', 'trample', 'vigilance'];
   const TYPES = ['artifact', 'enchantment'];
   const MAX_GRANTS = 4;
   const LINE_RE = /^(?:[A-Z][\w'’ ]{1,24} — )?(Each |All |Other )?(.+?)(?: (you control|your opponents control|you don't control|an opponent controls|opponents control))?(?: with (.+?))? (?:have|has) (.+?)\.?$/i;

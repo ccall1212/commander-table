@@ -5,7 +5,7 @@
 (function () {
   'use strict';
   // Rules-text words (lower case) -> the ability id the card markers use.
-  const ABILITIES = ['deathtouch', 'defender', 'double strike', 'first strike', 'flying', 'haste', 'hexproof', 'indestructible', 'lifelink', 'menace', 'reach', 'trample', 'vigilance'];
+  const ABILITIES = ['deathtouch', 'defender', 'double strike', 'first strike', 'flying', 'haste', 'hexproof', 'indestructible', 'lifelink', 'menace', 'reach', 'shroud', 'trample', 'vigilance'];
   // Other keywords that may share the opening lines. They are skipped over (not turned on) so a later keyword line is still found.
   const OTHER_RE = /^(?:flash|ward\b.*|prowess|protection from .+|hexproof from .+|partner(?: with .+)?|persist|undying|cascade|convoke|delve|devoid|changeling|exalted|fabricate \d+|afterlife \d+|annihilator \d+|bushido \d+|infect|skulk|shadow|fear|intimidate|horsemanship|banding|flanking|wither|riot|decayed|myriad|melee|improvise|training|toxic \d+|storm|cipher|rebound|haunt|split second|enchant .+|equip.*|reconfigure.*|crew \d+|saddle \d+|landwalk|[a-z]+walk|affinity for .+|living weapon|extort|evolve|undying|mentor|spectacle.*|escape.*|flashback.*|cycling.*|kicker.*|multikicker.*|dash.*|mutate.*|ninjutsu.*|morph.*|megamorph.*|disguise.*|bestow.*|unearth.*|embalm.*|eternalize.*|suspend.*|foretell.*|miracle.*)$/;
   // One line made only of keywords ("Flying", "Flying, vigilance", "Trample (This creature…)"): returns the abilities in it, or null

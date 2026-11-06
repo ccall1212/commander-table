@@ -36,8 +36,13 @@ Chris (2026-11-06): extend #81 to Equipment/Auras and "all creatures"/opponents 
 
 Chris (2026-11-06): sort Reminders so all "At the beginning of combat" lines are together, following the phases of a turn (upkeep at the top, main, combat, damage, main 2, end step). Built as headed sections in turn order, alike wording side by side.
 
+### 84. Shroud ability and icon — Built, awaiting Chris's test (v0.76.0)
+
+Chris (2026-11-07): add Shroud as an ability with an icon; Lightning Greaves ("Equipped creature has haste and shroud") was not working. Built: Shroud added (drawn icon: an eye with a slash) and works with printed-ability and granted-ability reading.
+
 ### Shipped recently (details in CHANGELOG.md)
 
+- #83 Reminders sorted by the turn — v0.75.0.
 - #82 Granted abilities: Equipment/Auras, everyone, opponents; owner names in colour — v0.74.0; temporary effects end with their turn — v0.74.1.
 - #81 Granted abilities, phase 1 (Sphere Grid etc.) — v0.73.0.
 - #80 Step trackers for Sagas, Classes, Rooms, Battles; grouped menu — v0.72.0.
