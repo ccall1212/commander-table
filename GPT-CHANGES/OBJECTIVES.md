@@ -4,17 +4,15 @@ Open work and future ideas. Original objective numbers are kept so earlier discu
 
 ## Active and queued
 
-### 73. Temporary effects until end of turn — Next up
+### 76. Exile, and give to player — Built, awaiting Chris's test (v0.68.0)
 
-Chris (2026-11-04): a **Temporary** option for +1/+1 (power/toughness) and for statuses and keyword abilities (for example Vigilance), also on a selected group (select several cards, right-click, choose Temporary). Decision: temporary effects wear off when the turn passes to the next player (any pass by the active player or the host), for everyone's cards. Needs: a temporary layer on cards that is shown differently from permanent changes, cleared on every turn change, synced to all players and forgotten when the card leaves the battlefield. Builds on the group handling shipped in v0.63.0 (#72). Not yet built.
+Chris (2026-11-06): effects that exile an opponent's cards and let you play them (he exiled two cards from an opponent's deck and could play them, but the game had no way to give them to him, face down or up). Decision: the Forge way — the card goes into the receiving player's own exile, marked playable by them, face down when the effect says so (only the receiver can see it). Built: right-click **Exile, and give to…** / **Exile face down, and give to…**, library-viewer buttons per opponent, a "You may play this card from exile" line in the receiver's Reminders. Still an idea for later: a "quick actions" list like Forge's (Play Commander, play from graveyard, play exiled cards, play from library) and an on-board marker for playable exile cards.
 
-### 74. Victory screen — Queued (after #73)
+### Shipped recently (details in CHANGELOG.md)
 
-Chris (2026-11-04): when every player but one has conceded, show a Victory screen with a celebration for everyone at the table. Decision: only concessions count (players who merely disconnect do not). Not yet built.
-
-### 75. Trigger reminders list ("Sideboard") — Queued (after #74)
-
-Idea from a friend of Chris (2026-11-04): a small panel listing the triggers a player must remember each turn, for example "Landfall: draw 2 cards and gain 1 life" or "Whenever an opponent plays a non-creature card, draw 1". Decisions: private to the player and saved with each deck, in a panel that can be opened or hidden. Placement depends on available space on the board; a collapsible side or corner panel is the likely shape. Not yet built.
+- #73 Temporary effects until end of turn — v0.64.0 and v0.66.0.
+- #74 Victory screen and death screens — v0.65.0.
+- #75 Trigger reminders panel, including your graveyard/exile cards that work from there — v0.67.0.
 
 ### 18. Phone and tablet support — In progress
 

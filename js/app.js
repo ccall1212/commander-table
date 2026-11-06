@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.67.0';
+const APP_VERSION = '0.68.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -445,9 +445,9 @@ let undoClearedOpeningDeal = null;
 // =====================================================================
 function pubCard(c) {
   const pos = { x: c.x, y: c.y, att: c.att || null };
-  if (c.fd) return Object.assign({ iid: c.iid, fd: 1, t: c.t ? 1 : 0, c: c.c, st: c.st || [], ts: c.ts || [], tp: c.tp || 0, tt: c.tt || 0, tb: c.tb || undefined, own: c.own, tok: c.tok ? 1 : 0 }, pos);
+  if (c.fd) return Object.assign({ iid: c.iid, fd: 1, t: c.t ? 1 : 0, c: c.c, st: c.st || [], ts: c.ts || [], tp: c.tp || 0, tt: c.tt || 0, tb: c.tb || undefined, own: c.own, tok: c.tok ? 1 : 0, xp: c.xp ? 1 : undefined }, pos);
   return Object.assign({ iid: c.iid, id: c.id, t: c.t ? 1 : 0, fl: c.fl ? 1 : 0, c: c.c, st: c.st || [], ts: c.ts || [], tp: c.tp || 0, tt: c.tt || 0, tb: c.tb || undefined, own: c.own, tok: c.tok ? 1 : 0, cmd: c.cmd ? 1 : 0, cp: c.cp ? 1 : 0,
-    pb: c.pb || undefined, dp: c.dp || 0, dt: c.dt || 0 }, pos);
+    pb: c.pb || undefined, dp: c.dp || 0, dt: c.dt || 0, xp: c.xp ? 1 : undefined }, pos);
 }
 function topIsRevealed(m) {
   const top = m && m.zones && m.zones.library && m.zones.library[0];
@@ -977,7 +977,7 @@ function cleanCards(a, n = 400) {
     x: Number.isFinite(+x.x) && x.x !== null ? clamp(Math.round(+x.x), 0, BW - CW) : undefined,
     y: Number.isFinite(+x.y) && x.y !== null ? clamp(Math.round(+x.y), 0, BH_MAX - CH) : undefined,
     att: isObj(x.att) && typeof x.att.p === 'string' && typeof x.att.i === 'string' ? { p: x.att.p.slice(0, 40), i: x.att.i.slice(0, 40) } : null,
-    pb: typeof x.pb === 'string' && /^-?\d{1,6}\/-?\d{1,6}$/.test(x.pb) ? x.pb : undefined,
+    pb: typeof x.pb === 'string' && /^-?\d{1,6}\/-?\d{1,6}$/.test(x.pb) ? x.pb : undefined, xp: x.xp ? 1 : undefined,
     dp: clamp(num(x.dp), -999999, 999999), dt: clamp(num(x.dt), -999999, 999999), st: cleanMarks(x.st), ts: cleanMarks(x.ts), tp: clamp(num(x.tp), -999999, 999999), tt: clamp(num(x.tt), -999999, 999999), tb: typeof x.tb === 'string' && /^-?\d{1,6}\/-?\d{1,6}$/.test(x.tb) ? x.tb : undefined
   })) : [];
 }
@@ -1233,6 +1233,18 @@ function applyPlayerRequest(req, from) {
     }
     return;
   }
+  if (req.k === 'give-exile') { // another player exiled a card and gave it to me to play from my exile (face down: only I learn what it is)
+    const c = cleanCards([req.card], 1)[0]; const d = isObj(req.def) ? req.def : null;
+    if (!c || !d || typeof d.id !== 'string' || !S.table || !S.table.seats.includes(from) || from === S.pid || c.tok) return;
+    const fd = !!req.fd;
+    act(() => {
+      if (findCard(c.iid)) return null; // already have it (duplicate message)
+      if (!S.me.defs[d.id]) S.me.defs[d.id] = d;
+      insertCard({ iid: c.iid, id: d.id, own: c.own || from, t: false, fl: false, fd: fd, c: {}, st: [], ts: [], tp: 0, tt: 0, cmd: !!c.cmd, xp: 1 }, 'exile', {});
+      return fd ? [`was given a face-down card in exile by ${pname(from)} (playable by them)`] : [`was given {0} in exile by ${pname(from)} (playable by them)`, [d]];
+    }, { noUndo: true });
+    return;
+  }
   if (req.k === 'take' && typeof req.iid === 'string') {
     if (!canEnterBattlefield()) return;
     // only the card's owner may do this; I hand it straight back to them
@@ -1485,9 +1497,11 @@ function tableTriggers() {
   S.me.zones.battlefield.forEach(c => add(S.pid, c, defOf(c)));
   // My own cards in the graveyard or exile whose text says what to do from there ("You may cast this card from your graveyard…", Flashback…).
   ['graveyard', 'exile'].forEach(zone => (S.me.zones[zone] || []).forEach(c => {
-    const def = defOf(c); if (!def || c.fd) return;
+    const def = defOf(c); if (!def || (c.fd && !c.xp)) return; // my own face-down card given to me to play is fine to name for me
     const name = def.face || def.name || '', label = name + ' (in ' + zone + ')';
-    CTReminders.zoneLines(def.oracle, zone).forEach(line => {
+    const lines = CTReminders.zoneLines(def.oracle, zone);
+    if (zone === 'exile' && c.xp) lines.unshift('You may play this card from exile' + (c.own && c.own !== S.pid ? ' (owned by ' + pname(c.own) + ')' : '') + '.');
+    lines.forEach(line => {
       const key = 'me|' + zone + '|' + name + '|' + line;
       if (hide.has(label + '|' + line)) return;
       const e = out.get(key) || { key, hideKey: label + '|' + line, owner: '', name: label, line, count: 0 };
@@ -1807,6 +1821,7 @@ function moveCard(iid, to, opts = {}) {
   }
   if (from === 'battlefield' || from === 'command') { delete card.x; delete card.y; card.att = null; }
   if (to !== 'battlefield' && to !== 'exile') card.fd = false;
+  if (to !== 'exile') delete card.xp; // "playable from exile" only lasts while it is in exile
   if (to === 'battlefield' && from !== 'battlefield' && opts.faceDown == null) card.fd = false;
   if (opts.faceDown != null) card.fd = !!opts.faceDown;
   if (opts.tapped) card.t = true;
@@ -2849,6 +2864,21 @@ function giveControl(iid, to, at) {
     return [`gave control of {0} to ${pname(to)}${f.zone !== 'battlefield' ? ` (from ${ZL[f.zone]})` : ''}`, [d]];
   });
 }
+// "Exile, and give to player": the card goes into THAT player's exile, marked as playable by them. It stays the original
+// owner's card (it returns to the owner's zones when it leaves exile). Face down: only the receiver is told what it is.
+function giveToExile(iid, to, faceDown) {
+  const f = findCard(iid); if (!f || f.card.tok) return;
+  const d = defOf(f.card);
+  act(() => {
+    S.me.zones[f.zone].splice(f.idx, 1);
+    if (f.zone === 'hand') { delete f.card.rvh; delete f.card.rvp; }
+    const orphans = f.zone === 'battlefield' ? detachFrom(S.pid, iid) : [];
+    if (orphans.length) setTimeout(() => orphanToast(orphans), 0);
+    const card = { iid: f.card.iid, id: f.card.id, own: f.card.own, cmd: f.card.cmd ? 1 : 0, c: {} };
+    sendReq(to, { k: 'give-exile', card, def: Deck.slimDef(d), fd: !!faceDown });
+    return faceDown ? [`exiled a card face down and gave it to ${pname(to)} to play`] : [`exiled {0} and gave it to ${pname(to)} to play`, [d]];
+  });
+}
 // Owner reclaims a card they gave away: ask the controller's game to hand it straight back (no approval needed).
 function takeBack(pid, iid) {
   if (!canEnterBattlefield()) { UI.toast('Control changes are available after the host starts the game.', { kind: 'warn' }); return; }
@@ -3052,6 +3082,9 @@ function viewZone(pid, zone) {
   if (mine) actions.push({ key: 'printing', label: 'Switch printing…' });
   actions.push({ key: 'info', label: 'View information' });
   if (mine && zone === 'library') actions.push({ key: 'top', label: 'Move to top' }, { key: 'bottom', label: 'Move to bottom' });
+  if (mine && zone === 'library' && S.role !== 'solo' && S.role !== 'spectator') {
+    ((S.table && S.table.seats) || []).filter(p => p !== S.pid && S.players[p]).forEach(p => actions.push({ key: 'gx:' + p, label: `Exile, give to ${pname(p)}` }, { key: 'gxd:' + p, label: `Exile face down, give to ${pname(p)}` }));
+  }
   let footer = [];
   if (mine && zone === 'library') footer = [{ key: 'shuffle', label: 'Shuffle & close', primary: true }, { key: 'close', label: 'Close without shuffling' }];
   if (mine && zone === 'library') say('is searching their library');
@@ -3064,6 +3097,7 @@ function viewZone(pid, zone) {
       if (k === 'copy') { const x = get().find(c => c.iid === iid); if (x && !x.faceDown && x.def && x.def.id) copyCard(x.def); return; }
       if (k === 'printing') { switchPrinting(iid); return; }
       if (k === 'info') { const x = get().find(c => c.iid === iid); if (x && x.def && x.def.id && !(x.faceDown && !mine)) viewInfo(x.def); return; }
+      if (/^gxd?:/.test(k)) { giveToExile(iid, k.slice(k.indexOf(':') + 1), k.startsWith('gxd:')); return; }
       runMove(k, iid);
     },
     onFooter: k => { if (k === 'shuffle') shuffleLib(); v.close(); }
@@ -3211,6 +3245,10 @@ function cardMenu(x, y, iid) {
   if (!c.fd && d.name) items.push({ label: 'Switch printing…', onClick: () => switchPrinting(iid) });
   const moves = MOVE_ACTIONS.filter(a => a.key !== z && !(z === 'battlefield' && a.key === 'bftapped'));
   items.push({ label: 'Move to', sub: moves.map(a => ({ label: a.label, hint: moveHotkey(a.key), onClick: () => runMove(a.key, iid) })) });
+  if (opps.length && !c.tok) {
+    items.push({ label: 'Exile, and give to…', sub: opps.map(p => ({ label: pname(p), onClick: () => giveToExile(iid, p, false) })) });
+    items.push({ label: 'Exile face down, and give to…', sub: opps.map(p => ({ label: pname(p), onClick: () => giveToExile(iid, p, true) })) });
+  }
   if (c.tok) items.push({ label: c.cp ? 'Remove copy' : 'Remove token', danger: true, onClick: () => doMove(iid, 'graveyard') });
   UI.menu(x, y, items);
 }
@@ -7183,7 +7221,7 @@ function boot() {
   if (sess) resume(sess); else showLobby();
 }
 // Expose a little for debugging from the console.
-window.CT = { S, act, render, dragState: () => drag, hostRecv, cleanTable, doMove };
+window.CT = { S, act, render, dragState: () => drag, hostRecv, cleanTable, doMove, giveToExile };
 // ---- stay on one version -----------------------------------------------------------------------
 // GitHub Pages lets browsers reuse cached files for 10 minutes. index.html links every file with ?v=<version>
 // (tools/bump-version.py), so a new page never pulls old files. If this script and the page that loaded it
