@@ -2,12 +2,12 @@
 
 To check this copy, extract the ZIP and double-click **index.html**. No terminal or local server is needed. Two players are best (your window plus a private window or a friend).
 
-1. Start a game with two players. Player A opens their **Library** and clicks a card, then uses the buttons **Exile, give to <B>** and, for another card, **Exile face down, give to <B>**.
+1. Start a game with two players. Player A **right-clicks their Library** and chooses **Exile, and give to…**, then B, then 1. Then again with **Exile face down, and give to…**. (The Search library window also has buttons for one chosen card.)
 2. Player B opens their **Exile**: both cards should be there. B's **Reminders** tab should list "You may play this card from exile (owned by A)" for each.
 3. Player A looks at B's board/exile: the face-up card is visible; the face-down one is only a card back (A cannot see what it is).
 4. B plays one onto the battlefield: it turns face up, the "playable" reminder goes away, and the log says it was played.
 5. B moves the other one (still in exile) to the graveyard: it should end up in **A's** graveyard.
-6. Also try right-clicking a card on your battlefield or in your hand: **Exile, and give to…** / **Exile face down, and give to…**.
+6. Try 2 or 3 cards at once (the number box): they all arrive in B's exile.
 7. Tell me: is this the flow you wanted? Do you want an on-board "playable" marker or a quick-actions list (Play Commander, play from graveyard, play exiled cards)?
 
 ## Assistant verification

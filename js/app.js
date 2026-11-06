@@ -2879,6 +2879,24 @@ function giveToExile(iid, to, faceDown) {
     return faceDown ? [`exiled a card face down and gave it to ${pname(to)} to play`] : [`exiled {0} and gave it to ${pname(to)} to play`, [d]];
   });
 }
+// From the library menu: exile the top X cards of MY library and give them to another player to play from their exile.
+async function giveTopToExile(to, faceDown) {
+  const n = await UI.prompt({ title: faceDown ? `Exile from the top face down, and give to ${pname(to)}` : `Exile from the top, and give to ${pname(to)}`, label: 'How many cards?', type: 'number', value: 1, min: 1, max: 99 });
+  if (!n || !S.table || !S.table.seats.includes(to) || to === S.pid) return;
+  act(() => {
+    const moved = [];
+    for (let i = 0; i < n && S.me.zones.library.length; i++) {
+      const c = S.me.zones.library.shift(), d = defOf(c);
+      sendReq(to, { k: 'give-exile', card: { iid: c.iid, id: c.id, own: c.own, cmd: c.cmd ? 1 : 0, c: {} }, def: Deck.slimDef(d), fd: !!faceDown });
+      moved.push(d);
+    }
+    if (!moved.length) return null;
+    S.me.revealTopOnce = null;
+    if (faceDown) return [`exiled the top ${plural(moved.length, 'card')} of their library face down and gave ${moved.length > 1 ? 'them' : 'it'} to ${pname(to)} to play`];
+    const refs = moved.slice(0, 8).map((_, i) => `{${i}}`).join(', ');
+    return [`exiled the top ${moved.length} of their library and gave ${moved.length > 1 ? 'them' : 'it'} to ${pname(to)} to play: ${refs}${moved.length > 8 ? '…' : ''}`, moved.slice(0, 8)];
+  });
+}
 // Owner reclaims a card they gave away: ask the controller's game to hand it straight back (no approval needed).
 function takeBack(pid, iid) {
   if (!canEnterBattlefield()) { UI.toast('Control changes are available after the host starts the game.', { kind: 'warn' }); return; }
@@ -3245,10 +3263,6 @@ function cardMenu(x, y, iid) {
   if (!c.fd && d.name) items.push({ label: 'Switch printing…', onClick: () => switchPrinting(iid) });
   const moves = MOVE_ACTIONS.filter(a => a.key !== z && !(z === 'battlefield' && a.key === 'bftapped'));
   items.push({ label: 'Move to', sub: moves.map(a => ({ label: a.label, hint: moveHotkey(a.key), onClick: () => runMove(a.key, iid) })) });
-  if (opps.length && !c.tok) {
-    items.push({ label: 'Exile, and give to…', sub: opps.map(p => ({ label: pname(p), onClick: () => giveToExile(iid, p, false) })) });
-    items.push({ label: 'Exile face down, and give to…', sub: opps.map(p => ({ label: pname(p), onClick: () => giveToExile(iid, p, true) })) });
-  }
   if (c.tok) items.push({ label: c.cp ? 'Remove copy' : 'Remove token', danger: true, onClick: () => doMove(iid, 'graveyard') });
   UI.menu(x, y, items);
 }
@@ -3596,6 +3610,7 @@ function quickGrabBasicLandItems() {
   }));
 }
 function libraryMenu(x, y) {
+  const others = S.role === 'solo' || S.role === 'spectator' ? [] : ((S.table && S.table.seats) || []).filter(p => p !== S.pid && S.players[p]);
   UI.menu(x, y, [
     { label: 'Draw', hint: CTHotkeys.key('draw'), onClick: () => draw(1) },
     { label: 'Draw X…', onClick: async () => { const n = await UI.prompt({ title: 'Draw cards', type: 'number', value: 2, min: 1, max: 30 }); if (n) draw(n); } },
@@ -3610,7 +3625,10 @@ function libraryMenu(x, y) {
     { label: 'Mill top card to Graveyard', hint: CTHotkeys.key('mill'), onClick: millTopCard },
     { label: 'Mill X…', onClick: () => millN('graveyard') },
     { label: 'Exile top X…', onClick: () => millN('exile') },
-    { label: 'Exile top X face down…', onClick: () => millN('exile', true) }
+    { label: 'Exile top X face down…', onClick: () => millN('exile', true) },
+    ...(others.length ? [{ sep: true },
+      { label: 'Exile, and give to…', sub: others.map(p => ({ label: pname(p), onClick: () => giveTopToExile(p, false) })) },
+      { label: 'Exile face down, and give to…', sub: others.map(p => ({ label: pname(p), onClick: () => giveTopToExile(p, true) })) }] : [])
   ]);
 }
 // --- card-type helpers (graveyard counter, hover breakdown, random picks)
@@ -7221,7 +7239,7 @@ function boot() {
   if (sess) resume(sess); else showLobby();
 }
 // Expose a little for debugging from the console.
-window.CT = { S, act, render, dragState: () => drag, hostRecv, cleanTable, doMove, giveToExile };
+window.CT = { S, act, render, dragState: () => drag, hostRecv, cleanTable, doMove, giveToExile, giveTopToExile };
 // ---- stay on one version -----------------------------------------------------------------------
 // GitHub Pages lets browsers reuse cached files for 10 minutes. index.html links every file with ?v=<version>
 // (tools/bump-version.py), so a new page never pulls old files. If this script and the page that loaded it

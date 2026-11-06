@@ -67,13 +67,21 @@ const mkDeck = who => ({
     for (const pg of [dad, son]) await pg.evaluate(() => { const o = document.querySelector('#firstRollOverlay'); if (o) o.remove(); });
     const libTop = async (pg, n) => pg.evaluate(n => CT.S.me.zones.library.slice(0, n).map(c => c.iid), n);
     const [a, b] = await libTop(dad, 2);
-    // Face up: Son gets it in his exile, marked playable, and its name is in the log.
-    await dad.evaluate(iid => CT.giveToExile(iid, CT.S.table.seats.find(p => p !== CT.S.pid), false), a);
+    // Through the real library right-click menu: "Exile, and give to…" -> Son -> how many.
+    const viaMenu = async (item, count) => {
+      await dad.evaluate(pid => { const el = document.querySelector('.zbox[data-pile="library"][data-pid="' + pid + '"]'); const r = el.getBoundingClientRect(); el.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: r.x + 20, clientY: r.y + 20, button: 2 })); }, dadPid);
+      await dad.locator('.w-menu, .ct-menu, [role="menu"]').first().waitFor();
+      await dad.getByText(item, { exact: true }).hover();
+      await dad.getByText('Son', { exact: true }).last().click();
+      const box = dad.locator('input[type="number"]').last(); await box.fill(String(count));
+      await dad.getByRole('button', { name: /^(OK|Continue|Done|Exile)/ }).last().click();
+    };
+    await viaMenu('Exile, and give to…', 1);
     await son.waitForFunction(iid => CT.S.me.zones.exile.some(c => c.iid === iid && c.xp && !c.fd), a);
     assert.equal(await dad.evaluate(iid => !CT.S.me.zones.library.concat(CT.S.me.zones.exile).some(c => c.iid === iid), a), true, 'it left the giver\'s zones');
-    // Face down: only Son can tell what it is.
-    await dad.evaluate(iid => CT.giveToExile(iid, CT.S.table.seats.find(p => p !== CT.S.pid), true), b);
+    await viaMenu('Exile face down, and give to…', 1);
     await son.waitForFunction(iid => CT.S.me.zones.exile.some(c => c.iid === iid && c.xp && c.fd), b);
+    // Face down: only Son can tell what it is.
     await dad.waitForFunction(([pid, iid]) => ((CT.S.players[pid] || { zones: { exile: [] } }).zones.exile || []).some(x => x.iid === iid), [sonPid, b]);
     const seenByDad = await dad.evaluate(([pid, iid]) => { const c = CT.S.players[pid].zones.exile.find(x => x.iid === iid); return c && { id: c.id, fd: c.fd, xp: c.xp }; }, [sonPid, b]);
     assert.ok(seenByDad && seenByDad.fd && !seenByDad.id, 'the giver and everyone else only see a face-down card: ' + JSON.stringify(seenByDad));

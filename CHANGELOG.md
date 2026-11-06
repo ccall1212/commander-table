@@ -9,7 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ## [0.68.0] - 2026-11-06
 
 ### Added
-- **Exile, and give to player.** For effects like "exile the top cards of target opponent's library; you may play them". Right-click a card (in your library viewer, hand, graveyard, battlefield...) and choose **Exile, and give to…** or **Exile face down, and give to…**, then pick the player. The card goes into **that player's exile**, marked as playable by them, and stays its owner's card (it goes back to the owner's zones if it later leaves exile for anywhere but the battlefield). Face down, only the player it is given to can see what it is; everyone else sees a card back. In your library viewer there are matching **Exile, give to <player>** buttons per opponent.
+- **Exile, and give to player.** For effects like "exile the top cards of target opponent's library; you may play them". Right-click (or hover and right-click) your **Library** and choose **Exile, and give to…** or **Exile face down, and give to…**, pick the player, then how many cards from the top. The cards go into **that player's exile**, marked as playable by them, and stay their owner's cards (they go back to the owner's zones if they later leave exile for anywhere but the battlefield). Face down, only the player it is given to can see what each card is; everyone else sees a card back. Your Library window (Search library) has matching **Exile, give to <player>** buttons for a chosen card.
 - The receiver's **Reminders** panel lists "You may play this card from exile (owned by …)" for each such card, so nothing is forgotten.
 
 ## [0.67.0] - 2026-11-06
