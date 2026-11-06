@@ -8,8 +8,13 @@ Open work and future ideas. Original objective numbers are kept so earlier discu
 
 Chris (2026-11-06): effects that exile an opponent's cards and let you play them (he exiled two cards from an opponent's deck and could play them, but the game had no way to give them to him, face down or up). Decision: the Forge way — the card goes into the receiving player's own exile, marked playable by them, face down when the effect says so (only the receiver can see it). Built: the **Library** right-click menu has **Exile, and give to…** / **Exile face down, and give to…** (player, then how many from the top), plus Search-library buttons per opponent, a "You may play this card from exile" line in the receiver's Reminders. Quick play is built too: playable graveyard/exile cards have a Play button and double-click in Reminders. Still an idea for later: a fuller "quick actions" list like Forge's (Play Commander, play from library) and an on-board marker for playable exile cards.
 
+### 77. Printed abilities switch on automatically — Built, awaiting Chris's test (v0.69.0)
+
+Chris (2026-11-06): abilities printed at the very start of a card (Vigilance on Kimarhri, Valiant Guardian) should be turned on automatically; Saga creatures like Summon: Ixion list theirs at the bottom. Built with a menu switch to turn it off.
+
 ### Shipped recently (details in CHANGELOG.md)
 
+- #76 Exile, and give to player plus quick play from Reminders — v0.68.0.
 - #73 Temporary effects until end of turn — v0.64.0 and v0.66.0.
 - #74 Victory screen and death screens — v0.65.0.
 - #75 Trigger reminders panel, including your graveyard/exile cards that work from there — v0.67.0.

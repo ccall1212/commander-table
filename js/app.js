@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.68.0';
+const APP_VERSION = '0.69.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -1223,7 +1223,7 @@ function applyPlayerRequest(req, from) {
       if (findCard(c.iid)) return null; // already have it (duplicate message)
       const card = { iid: c.iid, id: d.id, own: c.own || from, t: zone === 'battlefield' ? !!c.t : false, fl: false, fd: false, c: zone === 'battlefield' ? c.c : {}, st: zone === 'battlefield' ? c.st : [], ts: zone === 'battlefield' ? c.ts : [], tp: zone === 'battlefield' ? c.tp : 0, tt: zone === 'battlefield' ? c.tt : 0, tb: zone === 'battlefield' ? c.tb : undefined, tok: !!c.tok, cmd: !!c.cmd, cp: !!c.cp };
       if (req.k === 'return' && card.tok && zone !== 'battlefield') return null;
-      insertCard(card, zone, zone === 'battlefield' && Number.isFinite(+req.x) && Number.isFinite(+req.y) ? { x: +req.x, y: +req.y } : { pos: req.pos });
+      insertCard(card, zone, zone === 'battlefield' && Number.isFinite(+req.x) && Number.isFinite(+req.y) ? { x: +req.x, y: +req.y, noAuto: true } : { pos: req.pos, noAuto: true });
       return req.k === 'give'
         ? [`gained control of {0} from ${pname(from)}`, [d]]
         : [`got {0} back from ${pname(from)} (to ${ZL[zone]})`, [d]];
@@ -1756,6 +1756,14 @@ function reconcileOpeningDeal(table) {
 //  Card moves
 // =====================================================================
 function canEnterBattlefield() { return !!(S.table && S.table.started); }
+// A card entering the battlefield gets the ability icons printed at the start of its rules text (for a Saga creature, at the end)
+// switched on, unless it is face down or already has markers. Players can turn this off in the table menu.
+const autoKeywordsOn = () => LS.get('ct.autoKw', true) !== false;
+function autoMarkPrintedAbilities(card) {
+  if (!autoKeywordsOn() || typeof CTKeywords === 'undefined' || card.fd || (card.st && card.st.length)) return;
+  const d = defOf(card), ids = d ? CTKeywords.fromOracle(d.oracle, d.type) : [];
+  if (ids.length) card.st = cleanMarks(ids);
+}
 function insertCard(card, to, opts = {}) {
   if (to === 'battlefield' && !canEnterBattlefield()) return false;
   const z = S.me.zones[to];
@@ -1764,6 +1772,7 @@ function insertCard(card, to, opts = {}) {
     if (opts.x != null) { card.x = clamp(Math.round(opts.x), 0, BW - CW); card.y = clamp(Math.round(opts.y), 0, myBH() - CH); }
     else if (card.x == null) { autoPlace(card, to); if (card.y != null && card.y + CH > boardVisibleBottom()) centerSpot(card); } // never leave it under the hand strip
   }
+  if (to === 'battlefield' && !opts.noAuto) autoMarkPrintedAbilities(card);
   if (to === 'battlefield') {
     const d = defOf(card);
     if (d && d.loyalty && !card.c.Loyalty && /Planeswalker/.test(d.type || '')) card.c.Loyalty = parseInt(d.loyalty, 10) || 0;
@@ -3863,6 +3872,7 @@ function mainMenu(x, y) {
     { label: 'Hotkeys', onClick: showHotkeyList },
     { sep: true },
     { label: 'Auto-untap on my turn', checked: m.autoUntap, onClick: () => act(() => { m.autoUntap = !m.autoUntap; }, { noUndo: true }) },
+    { label: 'Turn on printed abilities automatically', checked: autoKeywordsOn(), onClick: () => LS.set('ct.autoKw', !autoKeywordsOn()) },
     { label: 'Auto-draw on my turn', checked: m.autoDraw, onClick: () => act(() => { m.autoDraw = !m.autoDraw; }, { noUndo: true }) },
     { label: 'Reveal my hand to everyone', checked: m.revealHand, onClick: () => act(() => { m.revealHand = !m.revealHand; return [m.revealHand ? 'revealed their hand' : 'stopped revealing their hand']; }) },
     ...(S.role !== 'solo' && S.role !== 'spectator' ? [{ label: 'Share my hand with one player…' + (shareTarget() ? ` (${pname(shareTarget())})` : ''), onClick: showShareDialog }] : []),
