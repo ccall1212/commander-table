@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.73.0] - 2026-11-06
+
+### Added
+- **Abilities granted by other permanents (phase 1).** Cards such as Sphere Grid ("Each creature you control with a +1/+1 counter on it has reach and trample") now automatically show the abilities they give. The granted icons appear on every matching creature of that player, for everyone at the table, with a **dotted green ring** and a "Granted by <card>" tooltip, and they go away by themselves when the condition stops (for example when the counter is removed). They are never saved on the card, so nothing you turned on by hand is changed or duplicated. Understood wording: "Creatures / Each creature / Other creatures / a creature type (Elves, Other Dragons) / Legendary or tapped or token creatures you control [with a +1/+1 (or other) counter on them] have <abilities>", for the abilities that have an icon. Anything else (power/toughness anthems, targets, "until end of turn", abilities without an icon) is left alone for now.
+
 ## [0.72.0] - 2026-11-06
 
 ### Changed
@@ -367,7 +372,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.72.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.73.0...HEAD
+[0.73.0]: https://github.com/ccall1212/commander-table/compare/v0.72.0...v0.73.0
 [0.72.0]: https://github.com/ccall1212/commander-table/compare/v0.71.1...v0.72.0
 [0.71.1]: https://github.com/ccall1212/commander-table/compare/v0.71.0...v0.71.1
 [0.71.0]: https://github.com/ccall1212/commander-table/compare/v0.70.2...v0.71.0
