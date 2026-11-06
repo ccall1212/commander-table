@@ -40,8 +40,13 @@ Chris (2026-11-06): sort Reminders so all "At the beginning of combat" lines are
 
 Chris (2026-11-07): add Shroud as an ability with an icon; Lightning Greaves ("Equipped creature has haste and shroud") was not working. Built: Shroud added (drawn icon: an eye with a slash) and works with printed-ability and granted-ability reading.
 
+### 85. Shroud icon redesign and non-creature grants — Built, awaiting Chris's test (v0.77.0)
+
+Chris (2026-11-07): Shroud icon should be a hooded figure; asked whether Shroud of Protection ("Other enchantments you control have shroud") works and whether it covers all enchantments. It did not; built support for enchantments, artifacts, lands, planeswalkers and permanents.
+
 ### Shipped recently (details in CHANGELOG.md)
 
+- #84 Shroud ability and Lightning Greaves — v0.76.0.
 - #83 Reminders sorted by the turn — v0.75.0.
 - #82 Granted abilities: Equipment/Auras, everyone, opponents; owner names in colour — v0.74.0; temporary effects end with their turn — v0.74.1.
 - #81 Granted abilities, phase 1 (Sphere Grid etc.) — v0.73.0.

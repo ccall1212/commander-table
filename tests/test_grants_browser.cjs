@@ -156,6 +156,12 @@ const mkDeck = who => ({
     await dad.evaluate(([sp]) => { const m = CT.S.me; CT.act(() => { m.zones.battlefield.find(x => x.id === 'greaves').att = { p: sp, i: sp + '_gsonBear2' }; }); }, [sonPid]);
     await son.waitForFunction(pid => [...document.querySelectorAll('.card[data-iid="' + pid + '_gsonBear2"] .cmark')].some(x => x.getAttribute('aria-label') === 'Shroud (granted by Lightning Greaves)'), sonPid, { timeout: 10000 });
     await dad.waitForFunction(pid => [...document.querySelectorAll('.card[data-iid="' + pid + '_gsonBear2"] .cmark')].some(x => x.getAttribute('aria-label') === 'Shroud (granted by Lightning Greaves)'), sonPid, { timeout: 10000 });
+    // Shroud of Protection: "Other enchantments you control have shroud." (not creatures, not itself, not the other player's)
+    await mk(dad, [['prot', 'Enchantment', 'Shroud of Protection', 'Other enchantments you control have shroud.'], ['ench1', 'Enchantment', 'Plain Enchantment', '']]);
+    for (const pg of [dad, son]) await waitLabel(pg, dadPid, 'ench1', 'Shroud (granted by Shroud of Protection)');
+    assert.ok(!/Shroud/.test(await label(son, dadPid, 'prot')), 'the card does not give itself shroud');
+    assert.ok(!/Shroud/.test(await label(son, dadPid, 'bearA')), 'creatures are not enchantments');
+    assert.ok(!/Shroud/.test(await label(son, sonPid, 'sonBear')), 'nor are the other player\'s permanents affected');
     assert.deepEqual(errors, [], 'no page errors');
     console.log('PASS granted abilities: Sphere Grid-style grant appears for both players on creatures with a +1/+1 counter only, follows the counter, is never saved, and does not duplicate a hand-made ability');
   } finally {
