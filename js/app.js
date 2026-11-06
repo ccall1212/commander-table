@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.69.0';
+const APP_VERSION = '0.70.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -1638,6 +1638,10 @@ function remLineEl(line) {
   if (aw) { const k = document.createElement('span'); k.className = 'rem-kw'; k.textContent = aw[1]; el.append(k, ' — '); rest = rest.slice(aw[0].length); }
   const cond = /^((?:Whenever|At the beginning of)\b[^,]*?)(, )/.exec(rest);
   if (cond) { const c = document.createElement('span'); c.className = 'rem-cond'; c.textContent = cond[1]; el.append(c, ', '); rest = rest.slice(cond[0].length); }
+  if (!aw && !cond && typeof CTReminders !== 'undefined') { // a keyword ability such as Evolve or Annihilator 2
+    const kw = CTReminders.leadingKeyword(rest);
+    if (kw && rest.startsWith(kw)) { const k = document.createElement('span'); k.className = 'rem-kw'; k.textContent = kw; el.append(k); rest = rest.slice(kw.length); }
+  }
   el.append(rest);
   return el;
 }

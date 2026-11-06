@@ -12,8 +12,13 @@ Chris (2026-11-06): effects that exile an opponent's cards and let you play them
 
 Chris (2026-11-06): abilities printed at the very start of a card (Vigilance on Kimarhri, Valiant Guardian) should be turned on automatically; Saga creatures like Summon: Ixion list theirs at the bottom. Built with a menu switch to turn it off.
 
+### 78. Reminders: missing keyword triggers — Built, awaiting Chris's test (v0.70.0)
+
+Chris (2026-11-06): Gyre Sage's Evolve was not in Reminders. Fixed with a list of trigger-type keywords (Evolve, Exalted, Prowess, Battle cry, Annihilator, Extort, Persist, Undying, Afterlife, Cascade, Echo and more). Chris will report any cards still missing.
+
 ### Shipped recently (details in CHANGELOG.md)
 
+- #77 Printed abilities switch on automatically — v0.69.0.
 - #76 Exile, and give to player plus quick play from Reminders — v0.68.0.
 - #73 Temporary effects until end of turn — v0.64.0 and v0.66.0.
 - #74 Victory screen and death screens — v0.65.0.

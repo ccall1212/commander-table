@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.70.0] - 2026-11-06
+
+### Fixed
+- **Reminders now include keyword abilities that are really triggers.** Gyre Sage's **Evolve** was missing because the panel only looked for "Whenever…" and "At the beginning of…" lines. It now also lists, for your own permanents: Evolve, Exalted, Prowess, Battle cry, Annihilator, Myriad, Melee, Mentor, Training, Extort, Bushido, Flanking, Dethrone, Afflict, Provoke, Rampage, Soulbond, Persist, Undying, Afterlife, Renown, Poisonous, Enlist, Cascade, Storm, Exploit, Decayed, Ingest, Cumulative upkeep, Echo, Fading and Vanishing. A keyword on its own line is quoted as printed on the card (with its reminder text); when it shares a line with others ("Flying, prowess") it is listed by name with the standard rules reminder. The keyword is highlighted in blue. Plain keywords with nothing to remember (Flying, Vigilance, Ward…) are not listed.
+
 ## [0.69.0] - 2026-11-06
 
 ### Added
@@ -330,7 +335,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.69.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.70.0...HEAD
+[0.70.0]: https://github.com/ccall1212/commander-table/compare/v0.69.0...v0.70.0
 [0.69.0]: https://github.com/ccall1212/commander-table/compare/v0.68.0...v0.69.0
 [0.68.0]: https://github.com/ccall1212/commander-table/compare/v0.67.0...v0.68.0
 [0.67.0]: https://github.com/ccall1212/commander-table/compare/v0.66.0...v0.67.0
