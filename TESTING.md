@@ -1,16 +1,13 @@
-# Printed abilities switch on automatically — v0.69.0 test copy
+# Reminders: keyword abilities — v0.70.0 test copy
 
-To check this copy, extract the ZIP and double-click **index.html**. No terminal or local server is needed. A practice game is enough.
+To check this copy, extract the ZIP and double-click **index.html**. No terminal or local server is needed.
 
-1. Play **Kimarhri, Valiant Guardian** (Vigilance is its first word): the **Vigilance** icon should appear on it right away.
-2. Play a Saga creature such as **Summon: Ixion**: **First strike** (printed at the bottom) should be on.
-3. Play a card with several, for example one that starts "Flying, lifelink" or has Flying and Trample on separate opening lines: all of them should be on.
-4. A card whose ability only appears after a trigger line (or "Hexproof from black") should get nothing. A card played **face down** should get nothing.
-5. Create a token or a copy of a creature with Flying: it should show the icon too.
-6. Right-click your board -> turn **Turn on printed abilities automatically** off, play another: no icons. You can still add icons by hand (Statuses & abilities…).
-7. Tell me about any card where it picked wrong or missed an ability, with the card's name.
+1. Play **Gyre Sage**: its box in Reminders (**From the table**) should now show **Evolve** (highlighted in blue) with its rules text.
+2. Try other cards of yours with keyword triggers: Exalted, Prowess, Battle cry, Annihilator, Extort, Persist/Undying, Afterlife, Mentor, Myriad, Cascade. Each should appear with its keyword highlighted.
+3. Plain keywords (Flying, Vigilance, Trample, Ward) should NOT appear.
+4. Tell me which cards still show nothing in Reminders that you expected, with their names, and I will add those keywords.
 
 ## Assistant verification
-- All automatic unit tests pass, including the new `test_keywords` (start of text, several per line, Saga bottom, skipped keywords like Flash/Ward, "Hexproof from", later lines, two-faced).
-- Real browser (Chromium, two players): new `test_auto_keywords_browser` plays made-up cards and checks icons, face down, and the menu switch.
-- Not tested: real Scryfall text for every card; real mouse use of the menu item.
+- Unit tests (`test_reminders`) cover Evolve as printed on Gyre Sage, keywords sharing a line, Annihilator with a number, opponents' cards, and plain keywords being left out; all 26 automatic test files pass.
+- Real browser (two players): `test_reminders_browser` plays a Gyre Sage-style card and checks the box and the highlight.
+- Not tested: real Scryfall text for each keyword card.

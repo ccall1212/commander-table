@@ -104,6 +104,14 @@ const mkDeck = who => ({
     assert.ok(/in graveyard.*You may cast this card from your graveyard/.test(gy) && !/Whenever a creature you control deals/.test(gy), 'the graveyard line only: ' + gy);
     await dad.evaluate(() => { const m = CT.S.me; CT.act(() => { m.zones.graveyard.length = 0; }); });
     await dad.waitForFunction(() => document.querySelectorAll('#remPanel .rem-tbl').length === 4);
+    // A keyword ability that is really a trigger (Gyre Sage's Evolve) is listed, with the keyword highlighted.
+    await dad.evaluate(() => { const m = CT.S.me, d = { id: 'gyre', name: 'Gyre Sage', face: 'Gyre Sage', type: 'Creature', oracle: 'Evolve (Whenever a creature enters the battlefield under your control, if that creature has greater power or toughness than this creature, put a +1/+1 counter on this creature.)\n{T}: Add {G} for each +1/+1 counter on this creature.', img: '', tokens: [], ci: [] }; CT.act(() => { m.defs.gyre = d; m.zones.battlefield.push({ iid: CT.S.pid + '_gy', id: 'gyre', own: CT.S.pid, t: 0, fl: 0, fd: 0, c: {}, x: 500, y: 300 }); }); });
+    await dad.waitForFunction(() => document.querySelectorAll('#remPanel .rem-tbl').length === 5);
+    const gs = await panel.locator('.rem-tbl', { hasText: 'Gyre Sage' }).innerText();
+    assert.ok(/Evolve \(Whenever a creature enters the battlefield under your control/.test(gs.replace(/\s+/g, ' ')), 'Evolve is listed: ' + gs);
+    assert.ok((await panel.locator('.rem-tbl', { hasText: 'Gyre Sage' }).locator('.rem-kw').allInnerTexts()).includes('Evolve'), 'and highlighted');
+    await dad.evaluate(() => { const m = CT.S.me; CT.act(() => { m.zones.battlefield = m.zones.battlefield.filter(c => c.id !== 'gyre'); }); });
+    await dad.waitForFunction(() => document.querySelectorAll('#remPanel .rem-tbl').length === 4);
     // Layout: a long reminder with a tag, in a narrow window, never overflows or overlaps inside the panel.
     await panel.locator('[data-rem="show-add"]').click();
     await panel.locator('.rem-text').fill('Can play lands, mutants, ninjas, or turtles from the top of the library'); await panel.locator('.rem-when').fill('Upkeep'); await panel.locator('[data-rem="add"]').click();

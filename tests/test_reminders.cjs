@@ -49,4 +49,17 @@ assert.notEqual(cleaned[1].id, cleaned[0].id, 'ids stay unique'); assert.equal(c
 assert.equal(cleaned[2].text.length, 240);
 assert.equal(plain(R.cleanList(Array.from({ length: 100 }, (_, i) => ({ text: 'r' + i })))).length, 60, 'at most 60 reminders');
 assert.deepEqual(plain(R.cleanList('nope')), []);
+// Keyword abilities that are triggers (Gyre Sage's Evolve) are listed, quoted as printed.
+{
+  const gyre = 'Evolve (Whenever a creature enters the battlefield under your control, if that creature has greater power or toughness than this creature, put a +1/+1 counter on this creature.)\n{T}: Add {G} for each +1/+1 counter on this creature.';
+  const l = R.triggerLines(gyre, true);
+  assert.equal(l.length, 1); assert.match(l[0], /^Evolve \(Whenever a creature enters/);
+  assert.equal(R.triggerLines(gyre, false).length, 0, 'an opponent\'s keyword is not listed');
+  assert.equal(R.triggerLines('Flying, prowess\nVigilance', true).length, 1, 'a keyword sharing a line is found');
+  assert.match(R.triggerLines('Flying, prowess', true)[0], /^Prowess \(Whenever you cast a noncreature spell/);
+  assert.match(R.triggerLines('Annihilator 2', true)[0], /^Annihilator 2 \(.*sacrifices 2 permanents/);
+  assert.match(R.triggerLines('Exalted', true)[0], /^Exalted \(/);
+  assert.equal(R.triggerLines('Flying\nVigilance\nWard {2}\nFlash', true).length, 0, 'plain keywords are not reminders');
+  assert.equal(R.leadingKeyword('Evolve (Whenever…)'), 'Evolve'); assert.equal(R.leadingKeyword('Annihilator 2').trim(), 'Annihilator'); assert.equal(R.leadingKeyword('Flying'), '');
+}
 console.log('PASS reminders: trigger lines are found and filtered for opponents, saved reminders are cleaned and limited');
