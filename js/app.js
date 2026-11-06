@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.73.0';
+const APP_VERSION = '0.74.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -104,6 +104,7 @@ function markHTML(entry) {
 function markEntries(c) {
   const perm = cleanMarks(c && c.st), temp = cleanMarks(c && c.ts).filter(id => !perm.includes(id));
   const gr = (c && Array.isArray(c.gr) ? c.gr : []).filter(g => g && CARD_MARK_BY_ID[g.id] && !perm.includes(g.id) && !temp.includes(g.id)).map(g => ({ id: g.id, temp: false, granted: true, from: g.from }));
+  gr.sort((x, y) => CARD_MARKS.findIndex(m => m.id === x.id) - CARD_MARKS.findIndex(m => m.id === y.id)); // the same order on every screen
   return perm.map(id => ({ id, temp: false })).concat(temp.map(id => ({ id, temp: true })), gr).slice(0, MAX_CARD_MARKS * 2);
 }
 const isWordMark = e => { const id = typeof e === 'string' ? e : e.id; return !CARD_MARK_BY_ID[id] || !CARD_MARK_BY_ID[id].p; };
@@ -126,18 +127,18 @@ function previewMarksHTML(card) {
 // Abilities another permanent gives this card ("creatures you control with a +1/+1 counter have reach and trample"), worked out
 // per player's board and remembered until the next redraw. Drawn as extra icons only; never saved on the card.
 let grantEpoch = 0;
-const grantCache = new Map();
+const grantCache = { map: null, epoch: -1 };
 function grantsFor(pid, c) {
   if (typeof CTGrants === 'undefined' || !c || !S.me) return [];
-  let hit = grantCache.get(pid);
-  if (!hit || hit.epoch !== grantEpoch) {
-    let entries = [];
-    if (pid === S.pid) entries = S.me.zones.battlefield.map(x => ({ c: x, def: defOf(x) }));
-    else { const p = S.players[pid]; if (p && p.zones) entries = (p.zones.battlefield || []).map(x => ({ c: x, def: x.id ? (p.defs || {})[x.id] : null })); }
-    hit = { epoch: grantEpoch, map: CTGrants.forBoard(entries) };
-    grantCache.set(pid, hit);
+  if (!grantCache.map || grantCache.epoch !== grantEpoch) {
+    const boards = [{ pid: S.pid, entries: S.me.zones.battlefield.map(x => ({ c: x, def: defOf(x) })) }];
+    for (const [opid, p] of Object.entries(S.players)) {
+      if (opid === S.pid || !p || !p.zones) continue;
+      boards.push({ pid: opid, entries: (p.zones.battlefield || []).map(x => ({ c: x, def: x.id ? (p.defs || {})[x.id] : null })) });
+    }
+    grantCache.map = CTGrants.forBoards(boards); grantCache.epoch = grantEpoch; // every board at once: an Aura can sit on an opponent's creature
   }
-  return hit.map.get(c.iid) || [];
+  return grantCache.map.get(pid + '|' + c.iid) || [];
 }
 const withGrants = (pid, c) => { const gr = grantsFor(pid, c).filter(g => !(c.sx || []).includes(g.id)); return gr.length ? Object.assign({}, c, { gr }) : c; }; // grants the owner switched off by hand (sx) are left out
 const PLAYER_COUNTERS = ['Energy', 'Experience', 'Rad', 'Tickets'];

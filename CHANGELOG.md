@@ -6,6 +6,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.74.0] - 2026-11-06
+
+### Added
+- **Granted abilities now also cover Equipment, Auras, "all creatures" and opponents.** The same dotted-ring icons (and the same untick-to-remove in Statuses & abilities) now appear for:
+  - **Equipment and Auras:** "Equipped creature gets +2/+2 and has trample", "Enchanted creature has flying and lifelink". The icons appear on whatever the card is attached to, even on another player's creature, and disappear when it is unattached or leaves. (Only the ability part is used; the +N/+N part is not applied yet.)
+  - **Everyone's creatures:** "All creatures have haste", "Each creature has trample", "Other creatures have vigilance", "All Sliver creatures have flying".
+  - **Opponents' creatures:** "Creatures your opponents control have defender" (and "you don't control"), applied only to the other players' creatures.
+  When several cards grant different abilities they are listed in the same order on every screen.
+
 ## [0.73.0] - 2026-11-06
 
 ### Added
@@ -372,7 +381,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.73.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.74.0...HEAD
+[0.74.0]: https://github.com/ccall1212/commander-table/compare/v0.73.0...v0.74.0
 [0.73.0]: https://github.com/ccall1212/commander-table/compare/v0.72.0...v0.73.0
 [0.72.0]: https://github.com/ccall1212/commander-table/compare/v0.71.1...v0.72.0
 [0.71.1]: https://github.com/ccall1212/commander-table/compare/v0.71.0...v0.71.1

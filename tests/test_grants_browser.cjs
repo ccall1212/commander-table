@@ -117,6 +117,28 @@ const mkDeck = who => ({
     await dad.evaluate(() => { const c = CT.S.me.zones.battlefield.find(x => x.id === 'bearA'); CT.act(() => { c.c = {}; }); });
     await waitGranted(dad, 'bearA', ''); await waitGranted(son, 'bearA', '');
     assert.equal(await dad.evaluate(() => CT.S.me.zones.battlefield.find(x => x.id === 'bearA').st.join()), 'reach', 'the ability turned on by hand is still there');
+    // ---- Equipment / Auras (attached), "All creatures", and effects on opponents' creatures ----
+    const sonPid = await son.evaluate(() => CT.S.pid);
+    const mk = (pg, list) => pg.evaluate(list => { const m = CT.S.me; CT.act(() => { list.forEach(([id, type, name, oracle]) => { m.defs[id] = { id, name, face: name, type, oracle, img: '', tokens: [], ci: [] }; m.zones.hand.push({ iid: CT.S.pid + '_g' + id, id, own: CT.S.pid, t: 0, fl: 0, fd: 0, c: {} }); }); }); list.forEach(([id]) => CT.doMove(CT.S.pid + '_g' + id, 'battlefield')); }, list);
+    await mk(son, [['sonBear', 'Creature — Bear', 'Son Bear', ''], ['sonBear2', 'Creature — Bear', 'Son Bear 2', '']]);
+    await mk(dad, [['sword', 'Artifact — Equipment', 'Test Sword', 'Equipped creature gets +2/+2 and has trample.'], ['wings', 'Enchantment — Aura', 'Test Wings', 'Enchanted creature has flying.']]);
+    const label = (pg, pid, id) => pg.evaluate(([pid, id]) => [...document.querySelectorAll('.card[data-iid="' + pid + '_g' + id + '"] .cmark')].map(x => x.getAttribute('aria-label')).join('|'), [pid, id]);
+    const waitLabel = (pg, pid, id, want) => pg.waitForFunction(([pid, id, want]) => [...document.querySelectorAll('.card[data-iid="' + pid + '_g' + id + '"] .cmark')].map(x => x.getAttribute('aria-label')).join('|') === want, [pid, id, want], { timeout: 10000 });
+    // An unattached Sword and Aura give nothing.
+    await dad.waitForTimeout(400);
+    assert.equal(await label(dad, dadPid, 'bearB'), '', 'unattached Equipment/Aura grant nothing');
+    // The Sword is attached to my Bear B, the Aura to the other player's bear.
+    await dad.evaluate(([dp, sp]) => { const m = CT.S.me; CT.act(() => { m.zones.battlefield.find(x => x.id === 'sword').att = { p: dp, i: dp + '_gbearB' }; m.zones.battlefield.find(x => x.id === 'wings').att = { p: sp, i: sp + '_gsonBear' }; }); }, [dadPid, sonPid]);
+    await waitLabel(dad, dadPid, 'bearB', 'Trample (granted by Test Sword)'); await waitLabel(son, dadPid, 'bearB', 'Trample (granted by Test Sword)');
+    await waitLabel(son, sonPid, 'sonBear', 'Flying (granted by Test Wings)'); await waitLabel(dad, sonPid, 'sonBear', 'Flying (granted by Test Wings)');
+    assert.equal(await label(son, sonPid, 'sonBear2'), '', 'only the creature the Aura is attached to');
+    // Unattaching ends it for everyone.
+    await dad.evaluate(() => { const m = CT.S.me; CT.act(() => { m.zones.battlefield.find(x => x.id === 'sword').att = null; }); });
+    await waitLabel(dad, dadPid, 'bearB', ''); await waitLabel(son, dadPid, 'bearB', '');
+    // "All creatures have haste" reaches every board; an opponent-only card reaches only the other player's creatures.
+    await mk(dad, [['cross', 'Enchantment', 'Test Crossroads', 'All creatures have haste.'], ['wall', 'Creature — Wall', 'Test Wall', 'Creatures your opponents control have defender.']]);
+    await waitLabel(dad, dadPid, 'bearB', 'Haste (granted by Test Crossroads)'); await waitLabel(son, sonPid, 'sonBear2', 'Defender (granted by Test Wall)|Haste (granted by Test Crossroads)');
+    assert.equal(await label(son, dadPid, 'wall'), 'Haste (granted by Test Crossroads)', 'the Wall does not give defender to its own side');
     assert.deepEqual(errors, [], 'no page errors');
     console.log('PASS granted abilities: Sphere Grid-style grant appears for both players on creatures with a +1/+1 counter only, follows the counter, is never saved, and does not duplicate a hand-made ability');
   } finally {

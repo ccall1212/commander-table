@@ -28,8 +28,13 @@ Chris (2026-11-06): people made a custom "Saga" token to move up and down; wante
 
 Chris (2026-11-06): Sphere Grid gives creatures with +1/+1 counters reach and trample; can this be automatic, and recreated for many cards? Phase 1 (built): simple "creatures you control [with a counter] have <icon abilities>" lines, shown as dotted-green granted icons for everyone, never saved. Not included (Phase 2 ideas, only if wanted): power/toughness anthems, "until end of turn" or targeted grants, abilities without an icon, opponents' creatures.
 
+### 82. Granted abilities: Equipment/Auras, everyone, opponents — Built, awaiting Chris's test (v0.74.0)
+
+Chris (2026-11-06): extend #81 to Equipment/Auras and "all creatures"/opponents effects. Built. Still not done (only if wanted): power/toughness bonuses (anthems and the +N/+N on Equipment/Auras), extra conditions (power N or greater, has flying, attacking).
+
 ### Shipped recently (details in CHANGELOG.md)
 
+- #81 Granted abilities, phase 1 (Sphere Grid etc.) — v0.73.0.
 - #80 Step trackers for Sagas, Classes, Rooms, Battles; grouped menu — v0.72.0.
 - #79 Reminders: replacement effects and cost changes — v0.71.0; word-tag clipping fix — v0.71.1.
 - #77 Printed abilities switch on automatically — v0.69.0.
