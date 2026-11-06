@@ -20,8 +20,13 @@ Chris (2026-11-06): Hardened Scales did not show up in Reminders ("kinda a big o
 
 Chris (2026-11-06): Gyre Sage's Evolve was not in Reminders. Fixed with a list of trigger-type keywords (Evolve, Exalted, Prowess, Battle cry, Annihilator, Extort, Persist, Undying, Afterlife, Cascade, Echo and more). Chris will report any cards still missing.
 
+### 80. Step trackers for Sagas, Classes, Rooms and Battles — Built, awaiting Chris's test (v0.72.0)
+
+Chris (2026-11-06): people made a custom "Saga" token to move up and down; wanted a visual cue for Sagas, Classes, Rooms and Battles with the next step shown as unlocked, automatic Saga counters (Tidus, Yuna's Guardian can move them away, so they stay real counters), and Saga reminders only for the current chapter. Built as numbered dots on the card, click to move, menu steps, automatic lore counter each turn, chapter-only Reminders.
+
 ### Shipped recently (details in CHANGELOG.md)
 
+- #79 Reminders: replacement effects and cost changes — v0.71.0; word-tag clipping fix — v0.71.1.
 - #77 Printed abilities switch on automatically — v0.69.0.
 - #76 Exile, and give to player plus quick play from Reminders — v0.68.0.
 - #73 Temporary effects until end of turn — v0.64.0 and v0.66.0.

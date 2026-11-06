@@ -15,7 +15,7 @@
   function def(v) {
     if (!obj(v)) fail('Invalid card in backup.');
     const out = { id: string(v.id, 200, 'card ID'), name: string(v.name, 500, 'card name') };
-    for (const key of ['face', 'backName', 'type', 'backType', 'oracle', 'mana', 'pt', 'loyalty', 'set', 'setName', 'cn', 'year', 'rarity']) {
+    for (const key of ['face', 'backName', 'type', 'backType', 'oracle', 'mana', 'pt', 'loyalty', 'defense', 'set', 'setName', 'cn', 'year', 'rarity']) {
       if (v[key] != null) out[key] = string(v[key], key === 'oracle' ? 20000 : 1000, 'card ' + key, true);
     }
     // Token printing equivalence depends on these Scryfall fields. They are
