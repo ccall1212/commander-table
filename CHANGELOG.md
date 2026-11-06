@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.70.2] - 2026-11-06
+
+### Changed
+- **Statuses & abilities window:** a status that is shown as a word tag (Prepared, Suspected, Monstrous, Renowned, Exerted, Saddled, Unblockable…) no longer repeats its name in plain text next to the tag. The name is only written out for icons (Goaded and the abilities). Hovering a row still shows what it means.
+
 ## [0.70.1] - 2026-11-06
 
 ### Changed
@@ -340,7 +345,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.70.1...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.70.2...HEAD
+[0.70.2]: https://github.com/ccall1212/commander-table/compare/v0.70.1...v0.70.2
 [0.70.1]: https://github.com/ccall1212/commander-table/compare/v0.70.0...v0.70.1
 [0.70.0]: https://github.com/ccall1212/commander-table/compare/v0.69.0...v0.70.0
 [0.69.0]: https://github.com/ccall1212/commander-table/compare/v0.68.0...v0.69.0
