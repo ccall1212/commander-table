@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.70.1';
+const APP_VERSION = '0.70.2';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -3502,7 +3502,7 @@ function showMarksDialog(iid, targets, temp) {
   if (!f0 || f0.zone !== 'battlefield') return;
   const d = defOf(f0.card);
   const group = (title, kind) => `<fieldset class="mark-group"><legend>${title}</legend>${CARD_MARKS.filter(m => m.kind === kind).map(m =>
-    `<label class="mark-row"><input type="checkbox" data-mark="${esc(m.id)}"><span class="cmark ${m.kind}${m.p ? '' : ' word'} static">${markSvg(m)}</span><span>${esc(m.label)}</span></label>`).join('')}</fieldset>`;
+    `<label class="mark-row" title="${esc(m.tip)}"><input type="checkbox" data-mark="${esc(m.id)}"><span class="cmark ${m.kind}${m.p ? '' : ' word'} static">${markSvg(m)}</span>${m.p ? `<span>${esc(m.label)}</span>` : ''}</label>`).join('')}</fieldset>`;
   const dlg = UI.modal({
     title: (temp ? 'Temporary statuses & abilities' : 'Statuses & abilities') + (ids.length > 1 ? ` — ${ids.length} selected cards` : (d && !f0.card.fd ? ' — ' + dname(d) : '')), className: 'w-marks-dialog',
     html: `<div class="marks-dialog"><p class="muted small">${temp ? 'These wear off when the turn passes to the next player.' : 'Icons that hang beside the card for everyone to see.'} They are separate from counters.${ids.length > 1 ? ' Ticking or unticking applies to every selected card.' : ''}</p>
