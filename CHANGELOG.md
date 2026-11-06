@@ -9,7 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ## [0.67.0] - 2026-11-06
 
 ### Added
-- **Trigger reminders panel.** A small 📝 **Reminders** tab on your board opens a panel (drag it, collapse it back to the tab). **My reminders** are your own typed notes (with an optional "when" tag and a tick box), saved with each deck, included in backups and the sync code, and ticks start fresh each turn of yours. **From the table** quotes, word for word, the repeating triggers (Whenever…, At the beginning of…) of the cards in play: all of yours, and an opponent's only when the trigger mentions opponents or players (such as Rhystic Study). Opponent triggers can be switched off and any line can be hidden.
+- **Trigger reminders panel.** A small 📝 **Reminders** tab on your board opens a panel (drag it, collapse it back to the tab). **My reminders** are your own typed notes (with an optional "when" tag), saved with each deck and included in backups and the sync code. **From the table** quotes, word for word, the repeating triggers (Whenever…, At the beginning of…) of the cards in play: all of yours, and an opponent's only when the trigger mentions opponents or players (such as Rhystic Study). Opponent triggers can be switched off and any line can be hidden.
 
 ## [0.66.0] - 2026-11-05
 

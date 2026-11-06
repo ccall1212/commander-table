@@ -1,4 +1,4 @@
-/* Real-browser check of the trigger reminders panel: my own reminders (saved with the deck, ticks reset on my turn) and the
+/* Real-browser check of the trigger reminders panel: my own reminders (saved with the deck) and the
  * triggers quoted from cards in play, including an opponent's trigger that mentions opponents (two real players). Needs the page and the relay running first,
  * like the other *_browser tests:
  *   python3 -m http.server 8107 --bind 127.0.0.1                    (from the project folder)
@@ -21,7 +21,7 @@ const mkDeck = who => ({
   const errors = [];
 
   async function player(name) {
-    const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 } });
+    const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 }, deviceScaleFactor: 2 });
     const page = await ctx.newPage();
     await page.route('https://cards.scryfall.io/**', r => r.fulfill({ status: 200, contentType: 'image/png', body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64') }));
     page.setDefaultTimeout(30000);
@@ -84,10 +84,26 @@ const mkDeck = who => ({
     assert.ok(lines.some(l => /Rhystic Study \(Son\).*Whenever an opponent casts a spell/.test(l)), 'the opponent\'s trigger that affects me is shown with whose it is');
     assert.ok(!lines.some(l => /Elvish Visionary|Son Own Upkeep/.test(l)), 'a one-time enters-the-battlefield trigger and an opponent\'s own upkeep trigger are not shown');
     // Opponents' triggers can be switched off.
-    await panel.locator('[data-rem="opp"]').uncheck();
+    await panel.locator('[data-rem="opp"]').click();
+    assert.equal(await panel.locator('[data-rem="opp"]').innerText(), 'Off');
     await dad.waitForFunction(() => document.querySelectorAll('#remPanel .rem-tbl').length === 2);
-    await panel.locator('[data-rem="opp"]').check();
+    await panel.locator('[data-rem="opp"]').click();
+    assert.equal(await panel.locator('[data-rem="opp"]').innerText(), 'On');
     await dad.waitForFunction(() => document.querySelectorAll('#remPanel .rem-tbl').length === 3);
+    // Layout: a long reminder with a tag, in a narrow window, never overflows or overlaps inside the panel.
+    await panel.locator('.rem-text').fill('Can play lands, mutants, ninjas, or turtles from the top of the library'); await panel.locator('.rem-when').fill('Upkeep'); await panel.locator('[data-rem="add"]').click();
+    await panel.locator('.rem-row:not(.rem-tbl)', { hasText: 'Can play lands' }).waitFor();
+    const fit = await dad.evaluate(() => {
+      const p = document.querySelector('#remPanel'), r = p.getBoundingClientRect(), bad = [];
+      p.querySelectorAll('*').forEach(el => { const b = el.getBoundingClientRect(); if (b.width && (b.right > r.right + 1 || b.left < r.left - 1)) bad.push(el.className || el.tagName); });
+      const row = p.querySelector('.rem-row:not(.rem-tbl)'), txt = row.querySelector('.rem-txt').getBoundingClientRect(), pill = row.querySelector('.rem-pill').getBoundingClientRect();
+      return { bad, overlap: !(pill.top >= txt.bottom - 1 || pill.bottom <= txt.top + 1 || pill.left >= txt.right - 1 || pill.right <= txt.left + 1), horizontalScroll: p.querySelector('.rem-scroll').scrollWidth > p.querySelector('.rem-scroll').clientWidth + 1 };
+    });
+    assert.deepEqual(fit.bad, [], 'nothing sticks out of the panel: ' + fit.bad);
+    assert.equal(fit.overlap, false, 'the tag does not overlap the reminder text'); assert.equal(fit.horizontalScroll, false);
+    if (process.env.CT_SHOTS) await dad.locator('#remPanel').screenshot({ path: process.env.CT_SHOTS + '/reminders-panel.png' });
+    await panel.locator('[data-rem="del"]').first().click();
+    await dad.waitForFunction(() => !document.querySelector('#remPanel .rem-row:not(.rem-tbl)'));
     // Hide one line.
     await panel.locator('.rem-tbl', { hasText: 'Dad Only Trigger' }).locator('[data-rem="hide"]').click();
     await dad.waitForFunction(() => document.querySelectorAll('#remPanel .rem-tbl').length === 2);
@@ -104,17 +120,7 @@ const mkDeck = who => ({
     await panel.locator('.rem-txt').first().click();
     await dad.locator('.w-dialog input').first().fill('Landfall: draw 2, gain 1'); await dad.keyboard.press('Enter');
     await dad.waitForFunction(() => /draw 2, gain 1/.test(document.querySelector('#remPanel .rem-txt').innerText));
-    // Tick it; a new turn of mine starts unticked again.
-    await panel.locator('.rem-row:not(.rem-tbl) input[type=checkbox]').first().check();
-    await dad.waitForFunction(() => document.querySelector('#remPanel .rem-row.done'));
-    assert.match(await dad.locator('#remTab').evaluate(n => n.textContent).catch(() => ''), /Reminders/);
-    const active = () => dad.evaluate(() => CT.S.table.active);
-    const waitActive = pid => Promise.all([dad, son].map(pg => pg.waitForFunction(p => CT.S.table.active === p, pid)));
-    if ((await active()) === dadPid) { await dad.locator('button[data-a="pass"]').first().click(); await waitActive(sonPid); }
-    await dad.locator('button[data-a="pass"]').first().click().catch(() => {});
-    if ((await active()) !== dadPid) { await dad.locator('button', { hasText: 'Pass their turn' }).click().catch(() => {}); }
-    await waitActive(dadPid);
-    await dad.waitForFunction(() => !document.querySelector('#remPanel .rem-row.done'), null, { timeout: 8000 });
+    assert.equal(await panel.locator('input[type=checkbox]').count(), 0, 'there are no tick boxes');
     // Remove it again, and collapse to the tab.
     await panel.locator('[data-rem="del"]').first().click();
     await dad.waitForFunction(() => !document.querySelector('#remPanel .rem-row:not(.rem-tbl)'));
@@ -123,7 +129,7 @@ const mkDeck = who => ({
     assert.equal(await dad.locator('#remPanel').isVisible(), false); assert.equal(await dad.locator('#remTab').isVisible(), true);
     if (process.env.CT_SHOTS) { await dad.locator('#remTab').click(); await dad.waitForTimeout(300); await dad.screenshot({ path: process.env.CT_SHOTS + '/reminders.png' }); }
     assert.deepEqual(errors, [], 'no page errors in any browser');
-    console.log('PASS reminders (two real browsers): table triggers quoted (mine, and an opponent trigger that affects me), one-time and opponent-only triggers left out, opponents toggle, hide, my own reminders saved with the deck and in backups, edit, ticks reset on my turn, collapse to a tab');
+    console.log('PASS reminders (two real browsers): table triggers quoted (mine, and an opponent trigger that affects me), one-time and opponent-only triggers left out, opponents toggle, hide, my own reminders saved with the deck and in backups, edit, no tick boxes, collapse to a tab');
   } finally {
     await browser.close();
   }
