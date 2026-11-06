@@ -1608,3 +1608,17 @@ body.me-out #myBf .board { filter: grayscale(.9) brightness(.45); }
 .rem-play { cursor: pointer; }
 .rem-play:hover { background: rgba(255, 255, 255, 0.07); }
 .rem-playbtn { margin-top: 4px; }
+
+/* Step trackers (Saga chapters, Class levels, Room doors): numbered dots along the bottom of the card; lit = reached, ringed = current. */
+.card .ctrack { position: absolute; left: 50%; bottom: calc(var(--cw, 80px) * .03); transform: translateX(-50%); z-index: 29; display: flex; gap: calc(var(--cw, 80px) * .025); padding: calc(var(--cw, 80px) * .02) calc(var(--cw, 80px) * .04); border-radius: 999px; background: rgba(10, 13, 19, .82); box-shadow: 0 1px 3px rgba(0, 0, 0, .7); pointer-events: none; max-width: 96%; }
+.card .ctrack.mine { pointer-events: auto; }
+.card.tapped .ctrack { transform: translateX(-50%) rotate(-90deg); }
+.ctrack .tstep { display: grid; place-items: center; min-width: max(13px, calc(var(--cw, 80px) * .13)); height: max(13px, calc(var(--cw, 80px) * .13)); padding: 0 2px; box-sizing: border-box; border-radius: 999px; border: 1px solid rgba(255, 211, 107, .55); color: rgba(255, 211, 107, .6); font-size: max(8px, calc(var(--cw, 80px) * .075)); font-weight: 700; line-height: 1; cursor: default; }
+.ctrack.mine .tstep { cursor: pointer; }
+.ctrack .tstep.on { background: #ffd36b; color: #1b1500; border-color: #ffd36b; }
+.ctrack .tstep.cur { box-shadow: 0 0 0 2px #fff, 0 0 6px 2px rgba(255, 211, 107, .9); }
+.ctrack.room .tstep { background: transparent; border-color: transparent; font-size: max(10px, calc(var(--cw, 80px) * .11)); }
+
+/* A Saga's chapters run down the left side of the card (the bottom corner holds its power and toughness). */
+.card .ctrack.saga { left: calc(var(--cw, 80px) * .03); bottom: auto; top: 27%; transform: none; flex-direction: column; max-width: none; padding: calc(var(--cw, 80px) * .03) calc(var(--cw, 80px) * .02); }
+.card.tapped .ctrack.saga { transform: none; }

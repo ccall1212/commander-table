@@ -198,6 +198,7 @@ const deck = {
     await guest.page.waitForFunction(() => CT.S.me.zones.battlefield.length > 0);
 
     await host.page.locator('#topbar [data-a="menu"]').click();
+    await host.page.getByText('Game & room', { exact: true }).click();
     await host.page.getByText('Start a new game (everyone)', { exact: true }).click();
     await host.page.getByRole('button', { name: 'New game', exact: true }).click();
     await host.page.waitForFunction(() => !CT.S.table.started && CT.S.me.openingDeal === CT.S.table.openingDeal, { timeout: 15000 });

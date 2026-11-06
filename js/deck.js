@@ -133,6 +133,7 @@
     const pw = pick('power');
     const tg = pick('toughness');
     const loyalty = pick('loyalty');
+    const defense = pick('defense'); // Battles
 
     const topImg = c.image_uris && c.image_uris.normal;
     const f0Img = f0 && f0.image_uris && f0.image_uris.normal;
@@ -159,6 +160,7 @@
       ci: Array.isArray(c.color_identity) ? c.color_identity.slice() : [],
       pt: (pw != null && tg != null) ? (pw + '/' + tg) : null,
       loyalty: loyalty != null ? String(loyalty) : null,
+      defense: defense != null ? String(defense) : null,
       img: img,
       imgBack: imgBack,
       tokens: tokenIds,

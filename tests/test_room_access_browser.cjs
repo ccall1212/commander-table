@@ -55,6 +55,7 @@ const deck = {
   }
   async function setAccess(host, { lock, ask }) {
     await host.getByRole('button', { name: /^(☰|Menu)/ }).first().click();
+    await host.getByText('Game & room', { exact: true }).click(); 
     await host.locator('text=/^Room access…/').first().click();
     const dialog = host.locator('.w-room-access-dialog');
     await dialog.waitFor();
@@ -74,12 +75,13 @@ const deck = {
     assert.match(room, /^[A-Z2-9]{5}$/);
     assert.equal(await host.getByRole('button', { name: /^(☰|Menu)/ }).first().count(), 1);
     await host.getByRole('button', { name: /^(☰|Menu)/ }).first().click();
+    await host.getByText('Game & room', { exact: true }).click(); 
     assert.equal(await host.locator('text=/^Room access…/').count(), 1, 'the host has a Room access menu item');
     await host.keyboard.press('Escape');
 
     // ---- 1. Locked room: a stranger is turned away and receives nothing from the table. ----
     await setAccess(host, { lock: true });
-    const menuLabel = await (async () => { await host.getByRole('button', { name: /^(☰|Menu)/ }).first().click(); const t = await host.locator('text=/^Room access…/').first().innerText(); await host.keyboard.press('Escape'); return t; })();
+    const menuLabel = await (async () => { await host.getByRole('button', { name: /^(☰|Menu)/ }).first().click(); await host.getByText('Game & room', { exact: true }).click(); const t = await host.locator('text=/^Room access…/').first().innerText(); await host.keyboard.press('Escape'); return t; })();
     assert.match(menuLabel, /\(locked\)/, 'the menu item shows the room is locked');
     const stranger = await player('Stranger Sam');
     await startJoin(stranger, room);
@@ -142,6 +144,7 @@ const deck = {
 
     // ---- 6. Unblock from the Room access dialog: they can join again. ----
     await host.getByRole('button', { name: /^(☰|Menu)/ }).first().click();
+    await host.getByText('Game & room', { exact: true }).click(); 
     await host.locator('text=/^Room access…/').first().click();
     const dialog = host.locator('.w-room-access-dialog');
     await dialog.waitFor();

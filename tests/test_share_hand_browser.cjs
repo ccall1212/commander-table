@@ -61,6 +61,7 @@ const mkDeck = who => ({
   const backsOf = (page, pid) => page.locator(`.opp[data-opp="${pid}"] .thand .card.oback`).count();
   async function openShare(page) {
     await menu(page).click();
+    await page.getByText('My hand', { exact: true }).click();
     await page.locator('text=/^Share my hand with one player/').first().click();
     const dialog = page.locator('.w-share-dialog');
     await dialog.waitFor();
@@ -173,6 +174,7 @@ const mkDeck = who => ({
 
     // ---- 5. The existing "Reveal my hand to everyone" still works for everyone. ----
     await menu(son).click();
+    await son.getByText('My hand', { exact: true }).click();
     await son.locator('text=/^Reveal my hand to everyone$/').click();
     await mom.waitForFunction(p => document.querySelectorAll(`.opp[data-opp="${p}"] .thand .card:not(.oback)`).length >= 6, sonPid);
     await dad.waitForFunction(p => document.querySelectorAll(`.opp[data-opp="${p}"] .thand .card:not(.oback)`).length >= 6, sonPid);
