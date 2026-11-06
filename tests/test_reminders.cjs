@@ -62,4 +62,16 @@ assert.deepEqual(plain(R.cleanList('nope')), []);
   assert.equal(R.triggerLines('Flying\nVigilance\nWard {2}\nFlash', true).length, 0, 'plain keywords are not reminders');
   assert.equal(R.leadingKeyword('Evolve (Whenever…)'), 'Evolve'); assert.equal(R.leadingKeyword('Annihilator 2').trim(), 'Annihilator'); assert.equal(R.leadingKeyword('Flying'), '');
 }
+// Replacement effects and cost changes (Hardened Scales was missing).
+{
+  const hs = 'If one or more +1/+1 counters would be put on a creature you control, that many plus one +1/+1 counters are put on it instead.';
+  assert.equal(R.triggerLines(hs, true).length, 1, 'Hardened Scales');
+  assert.equal(R.triggerLines(hs, false).length, 0, 'an opponent\'s Hardened Scales only affects them');
+  assert.equal(R.triggerLines('If an effect would create one or more tokens under your control, it creates twice that many of those tokens instead.\nIf an effect would put one or more counters on a permanent you control, it puts twice that many of those counters on that permanent instead.', true).length, 2, 'Doubling Season has two lines');
+  assert.equal(R.triggerLines('If an artifact or creature entering the battlefield causes a triggered ability of a permanent you control to trigger, that ability triggers an additional time.', true).length, 1, 'Panharmonicon');
+  assert.equal(R.triggerLines('Creature spells you cast cost {1} less to cast.', true).length, 1, 'cost reduction');
+  assert.equal(R.triggerLines('Noncreature spells cost {1} more to cast.', true).length, 1, 'cost increase');
+  assert.equal(R.triggerLines('If you control a Forest, draw a card.', true).length, 0, 'an ordinary "If" line is not a replacement effect');
+  assert.equal(R.triggerLines('If an opponent would draw a card, they draw two instead.', false).length, 1, 'a replacement effect that mentions opponents counts for them too');
+}
 console.log('PASS reminders: trigger lines are found and filtered for opponents, saved reminders are cleaned and limited');
