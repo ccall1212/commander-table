@@ -9,6 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ## [0.75.0] - 2026-11-06
 
 ### Changed
+- **The "My reminders" heading and its hint are hidden until you add a reminder.** The panel starts with just the table's reminders; use **+ Add reminder** at the bottom.
 - **The "From the table" part of Reminders is sorted by the turn.** Under small headings, in the order of a turn: **Upkeep, Draw step, Main phase 1, Beginning of combat, Declare attackers and blockers, Combat damage, Main phase 2, End step**, then **When spells are cast**, **Other triggers**, **Playable from graveyard / exile** and **Always on** (replacement effects, cost changes and permissions). All "At the beginning of combat…" lines sit together, and lines that read alike (for example "…combat on your turn" and "…each combat") are next to each other. A card with triggers at different times appears once under each heading, with only the lines for that time. A Saga's current chapter is listed under Main phase 1.
 
 ## [0.74.1] - 2026-11-06

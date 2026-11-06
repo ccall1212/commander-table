@@ -116,9 +116,11 @@ const mkDeck = who => ({
     await dad.evaluate(() => { const m = CT.S.me; CT.act(() => { m.zones.battlefield = m.zones.battlefield.filter(c => c.id !== 'gyre'); }); });
     await dad.waitForFunction(() => document.querySelectorAll('#remPanel .rem-tbl').length === 5);
     // Layout: a long reminder with a tag, in a narrow window, never overflows or overlaps inside the panel.
+    assert.deepEqual(await panel.locator('.rem-sec').evaluateAll(els => els.map(e => e.textContent)), ['From the table'], 'no "My reminders" heading or note until you add a reminder');
     await panel.locator('[data-rem="show-add"]').click();
     await panel.locator('.rem-text').fill('Can play lands, mutants, ninjas, or turtles from the top of the library'); await panel.locator('.rem-when').fill('Upkeep'); await panel.locator('[data-rem="add"]').click();
     await panel.locator('.rem-row:not(.rem-tbl)', { hasText: 'Can play lands' }).waitFor();
+    assert.deepEqual(await panel.locator('.rem-sec').evaluateAll(els => els.map(e => e.textContent)), ['My reminders', 'From the table'], 'the "My reminders" heading appears once there is one');
     const fit = await dad.evaluate(() => {
       const p = document.querySelector('#remPanel'), r = p.getBoundingClientRect(), bad = [];
       p.querySelectorAll('*').forEach(el => { const b = el.getBoundingClientRect(); if (b.width && (b.right > r.right + 1 || b.left < r.left - 1)) bad.push(el.className || el.tagName); });

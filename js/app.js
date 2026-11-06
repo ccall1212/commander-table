@@ -1632,8 +1632,7 @@ function renderReminders() {
   const heading = (t) => { const h = document.createElement('div'); h.className = 'rem-sec'; h.textContent = t; body.appendChild(h); };
   const note = t => { const p = document.createElement('p'); p.className = 'rem-note'; p.textContent = t; body.appendChild(p); };
   const btn = (kind, label, aria, extra) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'rem-mini'; b.dataset.rem = kind; b.textContent = label; b.setAttribute('aria-label', aria); Object.assign(b.dataset, extra || {}); return b; };
-  heading('My reminders');
-  if (!list.length) note('Add things your deck wants you to remember, for example "Landfall: draw 2 cards and gain 1 life".');
+  if (list.length) heading('My reminders'); // nothing is shown for it until you add a reminder (use + Add reminder below)
   list.forEach(r => {
     const row = document.createElement('div'); row.className = 'rem-row';
     const txt = document.createElement('button'); txt.type = 'button'; txt.className = 'rem-txt'; txt.dataset.rem = 'edit'; txt.dataset.id = r.id; txt.textContent = r.text; txt.title = 'Click to edit';

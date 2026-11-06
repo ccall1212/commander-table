@@ -6,6 +6,7 @@ To check this copy, extract the ZIP and double-click **index.html**. A practice 
 2. Open the **Reminders** panel. Under **From the table** you should see small headings in turn order: **Upkeep, Draw step, Main phase 1, Beginning of combat, Declare attackers and blockers, Combat damage, Main phase 2, End step**, then **When spells are cast, Other triggers, Playable from graveyard / exile, Always on**. Only headings that have something are shown.
 3. **All the beginning-of-combat cards are under one heading**, with alike wording next to each other.
 4. A card that has triggers at different times appears under each heading with just those lines (✕ hides only that box).
+4b. With **no reminders of your own**, the panel should not show a "My reminders" heading or hint at the top; add one with **+ Add reminder** and the heading appears.
 5. Tell me if the order or the headings should change (for example where "When spells are cast" should sit).
 
 ## Assistant verification
