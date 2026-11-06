@@ -14,6 +14,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
   - **Everyone's creatures:** "All creatures have haste", "Each creature has trample", "Other creatures have vigilance", "All Sliver creatures have flying".
   - **Opponents' creatures:** "Creatures your opponents control have defender" (and "you don't control"), applied only to the other players' creatures.
   When several cards grant different abilities they are listed in the same order on every screen.
+- **Who owns it, in their colour.** Hovering a granted icon shows the ability, the card that grants it and its **owner's name in their player colour**. In the **Reminders** panel the owner's name next to an opponent's card is now in their colour too.
 
 ## [0.73.0] - 2026-11-06
 

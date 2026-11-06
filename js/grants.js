@@ -134,7 +134,7 @@
         if (g.scope === 'attached' && !(s.e.c.att && s.e.c.att.p === b.pid && s.e.c.att.i === t.c.iid)) return;
         if (!applies(g, t.c, t.def, s.e === t)) return;
         const key = b.pid + '|' + t.c.iid, list = out.get(key) || [];
-        g.abilities.forEach(id => { if (!list.some(x => x.id === id)) list.push({ id, from: String(s.e.def.face || s.e.def.name || '').slice(0, 60) }); });
+        g.abilities.forEach(id => { if (!list.some(x => x.id === id)) list.push({ id, from: String(s.e.def.face || s.e.def.name || '').slice(0, 60), by: String(s.e.c.own || s.pid).slice(0, 40) }); });
         out.set(key, list);
       }));
     }));

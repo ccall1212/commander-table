@@ -86,6 +86,18 @@ const mkDeck = who => ({
     assert.equal(await granted(son, 'grid'), '', 'the enchantment is not a creature');
     // Not saved on the card, so nothing else changes.
     assert.equal(await dad.evaluate(() => (CT.S.me.zones.battlefield.find(x => x.id === 'bearA').st || []).length), 0, 'granted abilities are never saved on the card');
+    await dad.evaluate(() => { const t = document.querySelector('#remTab'); if (t) t.style.display = 'none'; const b = CT.S.me.zones.battlefield.find(x => x.id === 'bearB'); CT.act(() => { b.x = 600; b.y = 150; }); });
+    await dad.waitForTimeout(500);
+    // Hovering a granted icon names the card and its owner, in the owner's colour (the other player sees Dad's colour too).
+    for (const pg of [dad, son]) {
+      await pg.locator('.card[data-iid="'+dadPid+'_gbearA"] .cmark.granted').first().hover();
+      await pg.waitForFunction(() => { const t = document.querySelector('#markTip'); return t && !t.hidden && /Granted by/.test(t.textContent); });
+      const tip = await pg.evaluate(dp => { const t = document.querySelector('#markTip'); const b = [...t.querySelectorAll('b')]; const x = document.createElement('i'); x.style.color = CT.colorOf(dp); document.body.appendChild(x); const want = getComputedStyle(x).color; x.remove(); return { text: t.textContent, owner: b[1].textContent, color: getComputedStyle(b[1]).color, want }; }, dadPid);
+      assert.ok(/Granted by Sphere Grid · owner Dad/.test(tip.text) && tip.owner === 'Dad', 'the tooltip names the card and its owner: ' + tip.text);
+      assert.equal(tip.color, tip.want, 'the owner is shown in their colour');
+      await pg.mouse.move(5, 5);
+      await pg.waitForFunction(() => document.querySelector('#markTip').hidden);
+    }
     // The Statuses window shows the granted abilities as ticked; unticking one switches it off for that creature only.
     const openDlg = async () => { await dad.evaluate(pid => { CT.cardMenu(300, 300, pid + '_gbearA'); }, dadPid); await dad.locator('.w-menu-item .w-menu-label', { hasText: /^Statuses & abilities/ }).first().click(); return dad.locator('.w-marks-dialog'); };
     let dlg = await openDlg();

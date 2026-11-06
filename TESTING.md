@@ -6,6 +6,7 @@ To check this copy, extract the ZIP and double-click **index.html**. Two players
 2. **Aura.** Same with an Aura ("Enchanted creature has flying").
 3. **Everyone.** Play a card like "All creatures have haste": every creature on every board shows Haste (dotted).
 4. **Opponents.** Play a card like "Creatures your opponents control have defender" (for example Test Wall): only the other players' creatures show Defender, not yours.
+4b. **Hover** a granted icon: a small box names the ability, the card granting it, and the **owner's name in their player colour**. In the **Reminders** panel an opponent's name next to their card should also be in their colour.
 5. In **Statuses & abilities** on an affected creature the granted ability is ticked; untick to switch it off for that creature.
 6. Tell me which Equipment/Auras (names) did not work. The +N/+N part is not applied yet.
 
