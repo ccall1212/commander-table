@@ -129,7 +129,7 @@ const mkDeck = who => ({
     await dad.evaluate(() => { const f = CT.S.me.zones.battlefield[0]; CT.act(() => { f.st = ['goaded', 'deathtouch', 'defender', 'double strike', 'first strike', 'flying', 'haste', 'hexproof', 'indestructible', 'lifelink', 'menace', 'reach']; }); });
     await dad.waitForFunction(() => document.querySelectorAll('#myBf .card .cstat .cmark').length === 12);
     if (process.env.CT_SHOTS) await dad.screenshot({ path: process.env.CT_SHOTS + '/marks12.png' });
-    await dad.evaluate(() => { const f = CT.S.me.zones.battlefield[0]; CT.act(() => { f.st = ['goaded', 'prepared', 'suspected', 'monstrous', 'renowned', 'exerted', 'saddled', 'blocked', 'shield', 'x:Cursed']; }); });
+    await dad.evaluate(() => { const f = CT.S.me.zones.battlefield[0]; CT.act(() => { f.st = ['goaded', 'prepared', 'suspected', 'monstrous', 'renowned', 'exerted', 'saddled', 'unblockable', 'shield', 'x:Cursed']; }); });
     await dad.waitForFunction(() => document.querySelectorAll('#myBf .card .cmark').length === 10);
     if (process.env.CT_SHOTS) await dad.screenshot({ path: process.env.CT_SHOTS + '/marksS.png', clip: { x: 280, y: 120, width: 240, height: 200 } });
     await dad.evaluate(() => { const f = CT.S.me.zones.battlefield[0]; CT.act(() => { f.st = ['goaded', 'flying', 'x:Cursed']; }); });
