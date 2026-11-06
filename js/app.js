@@ -139,7 +139,7 @@ function grantsFor(pid, c) {
   }
   return hit.map.get(c.iid) || [];
 }
-const withGrants = (pid, c) => { const gr = grantsFor(pid, c); return gr.length ? Object.assign({}, c, { gr }) : c; };
+const withGrants = (pid, c) => { const gr = grantsFor(pid, c).filter(g => !(c.sx || []).includes(g.id)); return gr.length ? Object.assign({}, c, { gr }) : c; }; // grants the owner switched off by hand (sx) are left out
 const PLAYER_COUNTERS = ['Energy', 'Experience', 'Rad', 'Tickets'];
 const IMG_OK = u => typeof u === 'string' && u.startsWith('https://cards.scryfall.io/');
 
@@ -466,7 +466,7 @@ function pubCard(c) {
   const pos = { x: c.x, y: c.y, att: c.att || null };
   if (c.fd) return Object.assign({ iid: c.iid, fd: 1, t: c.t ? 1 : 0, c: c.c, st: c.st || [], ts: c.ts || [], tp: c.tp || 0, tt: c.tt || 0, tb: c.tb || undefined, own: c.own, tok: c.tok ? 1 : 0, xp: c.xp ? 1 : undefined }, pos);
   return Object.assign({ iid: c.iid, id: c.id, t: c.t ? 1 : 0, fl: c.fl ? 1 : 0, c: c.c, st: c.st || [], ts: c.ts || [], tp: c.tp || 0, tt: c.tt || 0, tb: c.tb || undefined, own: c.own, tok: c.tok ? 1 : 0, cmd: c.cmd ? 1 : 0, cp: c.cp ? 1 : 0,
-    pb: c.pb || undefined, dp: c.dp || 0, dt: c.dt || 0, xp: c.xp ? 1 : undefined, tk: c.tk || undefined }, pos);
+    pb: c.pb || undefined, dp: c.dp || 0, dt: c.dt || 0, xp: c.xp ? 1 : undefined, tk: c.tk || undefined, sx: c.sx && c.sx.length ? c.sx : undefined }, pos);
 }
 function topIsRevealed(m) {
   const top = m && m.zones && m.zones.library && m.zones.library[0];
@@ -1000,7 +1000,7 @@ function cleanCards(a, n = 400) {
     x: Number.isFinite(+x.x) && x.x !== null ? clamp(Math.round(+x.x), 0, BW - CW) : undefined,
     y: Number.isFinite(+x.y) && x.y !== null ? clamp(Math.round(+x.y), 0, BH_MAX - CH) : undefined,
     att: isObj(x.att) && typeof x.att.p === 'string' && typeof x.att.i === 'string' ? { p: x.att.p.slice(0, 40), i: x.att.i.slice(0, 40) } : null,
-    pb: typeof x.pb === 'string' && /^-?\d{1,6}\/-?\d{1,6}$/.test(x.pb) ? x.pb : undefined, xp: x.xp ? 1 : undefined, tk: clamp(num(x.tk), 0, 99) || undefined,
+    pb: typeof x.pb === 'string' && /^-?\d{1,6}\/-?\d{1,6}$/.test(x.pb) ? x.pb : undefined, xp: x.xp ? 1 : undefined, tk: clamp(num(x.tk), 0, 99) || undefined, sx: (a => (a.length ? a : undefined))(cleanMarks(x.sx).filter(id => CARD_MARK_BY_ID[id] && CARD_MARK_BY_ID[id].kind === 'ability')),
     dp: clamp(num(x.dp), -999999, 999999), dt: clamp(num(x.dt), -999999, 999999), st: cleanMarks(x.st), ts: cleanMarks(x.ts), tp: clamp(num(x.tp), -999999, 999999), tt: clamp(num(x.tt), -999999, 999999), tb: typeof x.tb === 'string' && /^-?\d{1,6}\/-?\d{1,6}$/.test(x.tb) ? x.tb : undefined
   })) : [];
 }
@@ -1887,7 +1887,7 @@ function moveCard(iid, to, opts = {}) {
   if (from === 'hand' && to !== 'hand') { delete card.rvh; delete card.rvp; }
   let orphans = [];
   if (from === 'battlefield' && to !== 'battlefield') {
-    card.t = false; card.c = {}; card.st = []; card.ts = []; card.tp = 0; card.tt = 0; card.tb = undefined; card.fl = false; card.pb = undefined; card.dp = 0; card.dt = 0; delete card.tk; // a card that leaves forgets everything
+    card.t = false; card.c = {}; card.st = []; card.ts = []; card.tp = 0; card.tt = 0; card.tb = undefined; card.fl = false; card.pb = undefined; card.dp = 0; card.dt = 0; delete card.tk; delete card.sx; // a card that leaves forgets everything
     orphans = detachFrom(S.pid, iid);
   }
   if (from === 'battlefield' || from === 'command') { delete card.x; delete card.y; card.att = null; }
@@ -3542,7 +3542,14 @@ function setCardMarks(iids, id, on, temp) {
   const key = temp ? 'ts' : 'st';
   act(() => {
     cards.forEach(f => {
-      const next = cleanMarks((f.card[key] || []).filter(x => x !== id).concat(on ? [id] : []));
+      // An ability another card grants to this creature can be switched off by hand (and back on): it is remembered in `sx`.
+      const granted = !temp && grantsFor(S.pid, f.card).some(g => g.id === id);
+      if (granted) {
+        const sx = cleanMarks((f.card.sx || []).filter(x => x !== id).concat(on ? [] : [id]));
+        if (sx.length) f.card.sx = sx; else delete f.card.sx;
+        if (on) return; // switched back on: the grant shows it again
+      }
+      const next = cleanMarks((f.card[key] || []).filter(x => x !== id).concat(on && !granted ? [id] : []));
       if (on && next.length >= MAX_CARD_MARKS && !next.includes(id)) { UI.toast('A card can show up to ' + MAX_CARD_MARKS + ' markers.', { kind: 'warn' }); return; }
       f.card[key] = next;
     });
@@ -3566,7 +3573,14 @@ function showMarksDialog(iid, targets, temp) {
   const sync = () => {
     const f = findCard(iid);
     const cur = new Set(f && f.zone === 'battlefield' ? cleanMarks(f.card[key]) : []);
-    dlg.el.querySelectorAll('input[data-mark]').forEach(i => { i.checked = cur.has(i.dataset.mark); });
+    // Abilities granted by another card show as checked too (untick to switch one off for this creature).
+    const grantedNow = new Map(f && f.zone === 'battlefield' && !temp ? grantsFor(S.pid, f.card).filter(g => !(f.card.sx || []).includes(g.id)).map(g => [g.id, g.from]) : []);
+    grantedNow.forEach((from, id) => cur.add(id));
+    dlg.el.querySelectorAll('input[data-mark]').forEach(i => {
+      i.checked = cur.has(i.dataset.mark);
+      const row = i.closest('.mark-row'), from = grantedNow.get(i.dataset.mark), m = CARD_MARK_BY_ID[i.dataset.mark];
+      if (row) { row.classList.toggle('granted', !!from); row.title = from ? `Granted by ${from} — untick to switch it off for this creature` : (m ? m.tip : ''); }
+    });
     const list = dlg.el.querySelector('.mark-custom-list');
     list.replaceChildren();
     [...cur].filter(x => x.startsWith('x:')).forEach(x => {

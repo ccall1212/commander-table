@@ -5,6 +5,7 @@ To check this copy, extract the ZIP and double-click **index.html**. A practice 
 1. Play **Sphere Grid** and two creatures. Put a **+1/+1 counter** on one of them: it should show **Reach** and **Trample** icons with a **dotted green ring** (hover: "Granted by Sphere Grid"). The other creature shows nothing.
 2. Remove the counter: the granted icons disappear on their own. A second player sees the same.
 3. Turn **Reach** on by hand for the creature too: it shows once (solid), and stays when the counter is removed.
+3b. Open the creature's **Statuses & abilities…**: the granted **Reach** and **Trample** should be **ticked**. Untick **Trample**: it disappears from that creature (for everyone) while Reach stays and Sphere Grid stays. Tick it again and it returns. Also try a creature that already has Trample turned on by hand: unticking removes it completely.
 4. Try other cards of yours with this kind of line, for example one that says "Other Dragons you control have flying" or "Elves you control have ...". Tell me which cards did not work, with their names.
 5. Reminder: power/toughness bonuses ("Creatures you control get +1/+1") are NOT included yet.
 

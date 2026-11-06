@@ -86,6 +86,30 @@ const mkDeck = who => ({
     assert.equal(await granted(son, 'grid'), '', 'the enchantment is not a creature');
     // Not saved on the card, so nothing else changes.
     assert.equal(await dad.evaluate(() => (CT.S.me.zones.battlefield.find(x => x.id === 'bearA').st || []).length), 0, 'granted abilities are never saved on the card');
+    // The Statuses window shows the granted abilities as ticked; unticking one switches it off for that creature only.
+    const openDlg = async () => { await dad.evaluate(pid => { CT.cardMenu(300, 300, pid + '_gbearA'); }, dadPid); await dad.locator('.w-menu-item .w-menu-label', { hasText: /^Statuses & abilities/ }).first().click(); return dad.locator('.w-marks-dialog'); };
+    let dlg = await openDlg();
+    assert.equal(await dlg.locator('input[data-mark="trample"]').isChecked(), true, 'granted Trample is ticked');
+    assert.equal(await dlg.locator('input[data-mark="reach"]').isChecked(), true, 'granted Reach is ticked');
+    assert.equal(await dlg.locator('input[data-mark="flying"]').isChecked(), false, 'something not granted is not');
+    await dlg.locator('input[data-mark="trample"]').uncheck();
+    await waitGranted(dad, 'bearA', 'Reach (granted by Sphere Grid)'); await waitGranted(son, 'bearA', 'Reach (granted by Sphere Grid)');
+    assert.equal(await dad.evaluate(() => CT.S.me.zones.battlefield.find(x => x.id === 'bearA').sx.join()), 'trample', 'the switched-off ability is remembered');
+    await dlg.locator('input[data-mark="trample"]').check();
+    await waitGranted(dad, 'bearA', 'Reach (granted by Sphere Grid)|Trample (granted by Sphere Grid)');
+    assert.equal(await dad.evaluate(() => CT.S.me.zones.battlefield.find(x => x.id === 'bearA').sx), undefined, 'ticking it again forgets that');
+    await dad.keyboard.press('Escape');
+    // A creature that already HAS trample printed (turned on by hand) and is also granted it: unticking removes it completely.
+    await dad.evaluate(() => { const c = CT.S.me.zones.battlefield.find(x => x.id === 'bearA'); CT.act(() => { c.st = ['trample']; }); });
+    await waitGranted(dad, 'bearA', 'Reach (granted by Sphere Grid)');
+    dlg = await openDlg();
+    assert.equal(await dlg.locator('input[data-mark="trample"]').isChecked(), true);
+    await dlg.locator('input[data-mark="trample"]').uncheck();
+    await waitGranted(son, 'bearA', 'Reach (granted by Sphere Grid)');
+    assert.equal(await son.evaluate(pid => [...document.querySelectorAll('.card[data-iid="' + pid + '_gbearA"] .cmark')].map(x => x.getAttribute('aria-label')).join('|'), dadPid), 'Reach (granted by Sphere Grid)', 'no Trample at all, hand-made or granted');
+    await dad.keyboard.press('Escape');
+    await dad.evaluate(() => { const c = CT.S.me.zones.battlefield.find(x => x.id === 'bearA'); CT.act(() => { delete c.sx; c.st = []; }); });
+    await waitGranted(dad, 'bearA', 'Reach (granted by Sphere Grid)|Trample (granted by Sphere Grid)');
     // A hand-made Reach on the same card is not duplicated; the hand-made one stays when the grant ends.
     await dad.evaluate(() => { const c = CT.S.me.zones.battlefield.find(x => x.id === 'bearA'); CT.act(() => { c.st = ['reach']; }); });
     await waitGranted(dad, 'bearA', 'Trample (granted by Sphere Grid)');

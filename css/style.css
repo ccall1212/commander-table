@@ -1626,3 +1626,5 @@ body.me-out #myBf .board { filter: grayscale(.9) brightness(.45); }
 /* An ability granted by another permanent (not turned on by hand): a dotted green ring, so it is clear it can go away by itself. */
 .cmark.granted { outline: 1.5px dotted #8fe3b0; outline-offset: 1px; border-radius: 4px; }
 .cmark.word.granted { border-color: #8fe3b0; border-style: dotted; }
+
+.mark-row.granted .cmark { outline: 1.5px dotted #8fe3b0; outline-offset: 1px; border-radius: 4px; }
