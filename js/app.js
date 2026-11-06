@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.67.0';
+const APP_VERSION = '0.68.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -445,9 +445,9 @@ let undoClearedOpeningDeal = null;
 // =====================================================================
 function pubCard(c) {
   const pos = { x: c.x, y: c.y, att: c.att || null };
-  if (c.fd) return Object.assign({ iid: c.iid, fd: 1, t: c.t ? 1 : 0, c: c.c, st: c.st || [], ts: c.ts || [], tp: c.tp || 0, tt: c.tt || 0, tb: c.tb || undefined, own: c.own, tok: c.tok ? 1 : 0 }, pos);
+  if (c.fd) return Object.assign({ iid: c.iid, fd: 1, t: c.t ? 1 : 0, c: c.c, st: c.st || [], ts: c.ts || [], tp: c.tp || 0, tt: c.tt || 0, tb: c.tb || undefined, own: c.own, tok: c.tok ? 1 : 0, xp: c.xp ? 1 : undefined }, pos);
   return Object.assign({ iid: c.iid, id: c.id, t: c.t ? 1 : 0, fl: c.fl ? 1 : 0, c: c.c, st: c.st || [], ts: c.ts || [], tp: c.tp || 0, tt: c.tt || 0, tb: c.tb || undefined, own: c.own, tok: c.tok ? 1 : 0, cmd: c.cmd ? 1 : 0, cp: c.cp ? 1 : 0,
-    pb: c.pb || undefined, dp: c.dp || 0, dt: c.dt || 0 }, pos);
+    pb: c.pb || undefined, dp: c.dp || 0, dt: c.dt || 0, xp: c.xp ? 1 : undefined }, pos);
 }
 function topIsRevealed(m) {
   const top = m && m.zones && m.zones.library && m.zones.library[0];
@@ -977,7 +977,7 @@ function cleanCards(a, n = 400) {
     x: Number.isFinite(+x.x) && x.x !== null ? clamp(Math.round(+x.x), 0, BW - CW) : undefined,
     y: Number.isFinite(+x.y) && x.y !== null ? clamp(Math.round(+x.y), 0, BH_MAX - CH) : undefined,
     att: isObj(x.att) && typeof x.att.p === 'string' && typeof x.att.i === 'string' ? { p: x.att.p.slice(0, 40), i: x.att.i.slice(0, 40) } : null,
-    pb: typeof x.pb === 'string' && /^-?\d{1,6}\/-?\d{1,6}$/.test(x.pb) ? x.pb : undefined,
+    pb: typeof x.pb === 'string' && /^-?\d{1,6}\/-?\d{1,6}$/.test(x.pb) ? x.pb : undefined, xp: x.xp ? 1 : undefined,
     dp: clamp(num(x.dp), -999999, 999999), dt: clamp(num(x.dt), -999999, 999999), st: cleanMarks(x.st), ts: cleanMarks(x.ts), tp: clamp(num(x.tp), -999999, 999999), tt: clamp(num(x.tt), -999999, 999999), tb: typeof x.tb === 'string' && /^-?\d{1,6}\/-?\d{1,6}$/.test(x.tb) ? x.tb : undefined
   })) : [];
 }
@@ -1233,6 +1233,18 @@ function applyPlayerRequest(req, from) {
     }
     return;
   }
+  if (req.k === 'give-exile') { // another player exiled a card and gave it to me to play from my exile (face down: only I learn what it is)
+    const c = cleanCards([req.card], 1)[0]; const d = isObj(req.def) ? req.def : null;
+    if (!c || !d || typeof d.id !== 'string' || !S.table || !S.table.seats.includes(from) || from === S.pid || c.tok) return;
+    const fd = !!req.fd;
+    act(() => {
+      if (findCard(c.iid)) return null; // already have it (duplicate message)
+      if (!S.me.defs[d.id]) S.me.defs[d.id] = d;
+      insertCard({ iid: c.iid, id: d.id, own: c.own || from, t: false, fl: false, fd: fd, c: {}, st: [], ts: [], tp: 0, tt: 0, cmd: !!c.cmd, xp: 1 }, 'exile', {});
+      return fd ? [`was given a face-down card in exile by ${pname(from)} (playable by them)`] : [`was given {0} in exile by ${pname(from)} (playable by them)`, [d]];
+    }, { noUndo: true });
+    return;
+  }
   if (req.k === 'take' && typeof req.iid === 'string') {
     if (!canEnterBattlefield()) return;
     // only the card's owner may do this; I hand it straight back to them
@@ -1485,12 +1497,14 @@ function tableTriggers() {
   S.me.zones.battlefield.forEach(c => add(S.pid, c, defOf(c)));
   // My own cards in the graveyard or exile whose text says what to do from there ("You may cast this card from your graveyard…", Flashback…).
   ['graveyard', 'exile'].forEach(zone => (S.me.zones[zone] || []).forEach(c => {
-    const def = defOf(c); if (!def || c.fd) return;
+    const def = defOf(c); if (!def || (c.fd && !c.xp)) return; // my own face-down card given to me to play is fine to name for me
     const name = def.face || def.name || '', label = name + ' (in ' + zone + ')';
-    CTReminders.zoneLines(def.oracle, zone).forEach(line => {
+    const lines = CTReminders.zoneLines(def.oracle, zone);
+    if (zone === 'exile' && c.xp) lines.unshift('You may play this card from exile' + (c.own && c.own !== S.pid ? ' (owned by ' + pname(c.own) + ')' : '') + '.');
+    lines.forEach(line => {
       const key = 'me|' + zone + '|' + name + '|' + line;
       if (hide.has(label + '|' + line)) return;
-      const e = out.get(key) || { key, hideKey: label + '|' + line, owner: '', name: label, line, count: 0 };
+      const e = out.get(key) || { key, hideKey: label + '|' + line, owner: '', name: label, line, count: 0, iid: c.iid };
       e.count++; out.set(key, e);
     });
   }));
@@ -1540,6 +1554,7 @@ function ensureRemPanel() {
     else if (kind === 'cancel') { panel.querySelector('.rem-form').hidden = true; panel.querySelector('.rem-text').value = ''; panel.querySelector('.rem-when').value = ''; }
     else if (kind === 'show-opts') { const o = panel.querySelector('.rem-opts'); o.hidden = !o.hidden; }
     else if (kind === 'opp') { LS.set('ct.remOpp', !remShowOpp()); remUI.sig = ''; renderReminders(); }
+    else if (kind === 'play') { const f = findCard(b.dataset.iid); if (f) doMove(b.dataset.iid, 'battlefield'); }
     else if (kind === 'del') { if (saveRemList(remList().filter(r => r.id !== id))) { remUI.sig = ''; renderReminders(); } }
     else if (kind === 'edit') {
       const r = remList().find(x => x.id === id); if (!r) return;
@@ -1549,6 +1564,8 @@ function ensureRemPanel() {
     }
     else if (kind === 'hide') { const h = remHidden(); String(b.dataset.key || '').split('\n').forEach(k => k && h.add(k)); LS.set('ct.remHide', [...h].slice(-300)); remUI.sig = ''; renderReminders(); }
   });
+  panel.addEventListener('dblclick', e => { const row = e.target.closest('.rem-play'); if (row && !e.target.closest('button') && findCard(row.dataset.iid)) doMove(row.dataset.iid, 'battlefield'); });
+  panel.addEventListener('mouseover', e => { const row = e.target.closest('.rem-play'); const f = row && findCard(row.dataset.iid); const d = f && defOf(f.card); if (d) preview(d); });
   panel.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches('.rem-text, .rem-when')) { e.preventDefault(); addReminder(); } if (e.key === 'Escape' && e.target.matches('.rem-text, .rem-when')) { panel.querySelector('.rem-form').hidden = true; } e.stopPropagation(); });
   // Drag the panel (or the tab) by its title to put it where it is out of the way.
   const drag = (handle, moveEls) => handle.addEventListener('pointerdown', e => {
@@ -1568,7 +1585,7 @@ function renderReminders() {
   const tab = $('#remTab'), panel = $('#remPanel'); if (!tab || !panel) return;
   const open = !!LS.get('ct.remOpen', false), list = remList(), trig = tableTriggers(), deck = remDeck();
   const left = list.length + trig.length;
-  const sig = JSON.stringify([open, list, trig.map(t => t.key + t.count), remShowOpp(), deck && deck.name]);
+  const sig = JSON.stringify([open, list, trig.map(t => t.key + t.count + (t.iid || '')), remShowOpp(), deck && deck.name]);
   tab.hidden = open; panel.hidden = !open;
   tab.textContent = '📝 Reminders' + (left ? ' · ' + left : '');
   if (sig === remUI.sig) return;
@@ -1594,7 +1611,7 @@ function renderReminders() {
   if (!trig.length) note('No triggers in play' + (remShowOpp() ? '' : ' (opponents\' triggers are off)') + '.');
   // One box per card, with all of its lines together.
   const groups = new Map();
-  trig.forEach(t => { const k = t.owner + '|' + t.name; const g = groups.get(k) || { name: t.name, owner: t.owner, count: 0, lines: [] }; g.count = Math.max(g.count, t.count); g.lines.push(t); groups.set(k, g); });
+  trig.forEach(t => { const k = t.owner + '|' + t.name; const g = groups.get(k) || { name: t.name, owner: t.owner, count: 0, lines: [], iid: t.iid }; g.count = Math.max(g.count, t.count); g.lines.push(t); groups.set(k, g); });
   groups.forEach(g => {
     const row = document.createElement('div'); row.className = 'rem-row rem-tbl';
     const text = document.createElement('div'); text.className = 'rem-body';
@@ -1604,6 +1621,10 @@ function renderReminders() {
     text.appendChild(who);
     g.lines.forEach(t => text.appendChild(remLineEl(t.line)));
     row.title = g.name;
+    if (g.iid) { // a card I can play from the graveyard or exile: hover to see it, double-click (or Play) to put it onto the battlefield
+      row.classList.add('rem-play'); row.dataset.iid = g.iid; row.title = 'Double-click to play ' + g.name;
+      const play = btn('play', 'Play', 'Play ' + g.name + ' onto the battlefield', { iid: g.iid }); play.classList.add('rem-playbtn'); text.appendChild(play);
+    }
     row.append(text, btn('hide', '✕', 'Hide the triggers of ' + g.name, { key: g.lines.map(t => t.hideKey).join('\n') }));
     body.appendChild(row);
   });
@@ -1807,6 +1828,7 @@ function moveCard(iid, to, opts = {}) {
   }
   if (from === 'battlefield' || from === 'command') { delete card.x; delete card.y; card.att = null; }
   if (to !== 'battlefield' && to !== 'exile') card.fd = false;
+  if (to !== 'exile') delete card.xp; // "playable from exile" only lasts while it is in exile
   if (to === 'battlefield' && from !== 'battlefield' && opts.faceDown == null) card.fd = false;
   if (opts.faceDown != null) card.fd = !!opts.faceDown;
   if (opts.tapped) card.t = true;
@@ -2849,6 +2871,39 @@ function giveControl(iid, to, at) {
     return [`gave control of {0} to ${pname(to)}${f.zone !== 'battlefield' ? ` (from ${ZL[f.zone]})` : ''}`, [d]];
   });
 }
+// "Exile, and give to player": the card goes into THAT player's exile, marked as playable by them. It stays the original
+// owner's card (it returns to the owner's zones when it leaves exile). Face down: only the receiver is told what it is.
+function giveToExile(iid, to, faceDown) {
+  const f = findCard(iid); if (!f || f.card.tok) return;
+  const d = defOf(f.card);
+  act(() => {
+    S.me.zones[f.zone].splice(f.idx, 1);
+    if (f.zone === 'hand') { delete f.card.rvh; delete f.card.rvp; }
+    const orphans = f.zone === 'battlefield' ? detachFrom(S.pid, iid) : [];
+    if (orphans.length) setTimeout(() => orphanToast(orphans), 0);
+    const card = { iid: f.card.iid, id: f.card.id, own: f.card.own, cmd: f.card.cmd ? 1 : 0, c: {} };
+    sendReq(to, { k: 'give-exile', card, def: Deck.slimDef(d), fd: !!faceDown });
+    return faceDown ? [`exiled a card face down and gave it to ${pname(to)} to play`] : [`exiled {0} and gave it to ${pname(to)} to play`, [d]];
+  });
+}
+// From the library menu: exile the top X cards of MY library and give them to another player to play from their exile.
+async function giveTopToExile(to, faceDown) {
+  const n = await UI.prompt({ title: faceDown ? `Exile from the top face down, and give to ${pname(to)}` : `Exile from the top, and give to ${pname(to)}`, label: 'How many cards?', type: 'number', value: 1, min: 1, max: 99 });
+  if (!n || !S.table || !S.table.seats.includes(to) || to === S.pid) return;
+  act(() => {
+    const moved = [];
+    for (let i = 0; i < n && S.me.zones.library.length; i++) {
+      const c = S.me.zones.library.shift(), d = defOf(c);
+      sendReq(to, { k: 'give-exile', card: { iid: c.iid, id: c.id, own: c.own, cmd: c.cmd ? 1 : 0, c: {} }, def: Deck.slimDef(d), fd: !!faceDown });
+      moved.push(d);
+    }
+    if (!moved.length) return null;
+    S.me.revealTopOnce = null;
+    if (faceDown) return [`exiled the top ${plural(moved.length, 'card')} of their library face down and gave ${moved.length > 1 ? 'them' : 'it'} to ${pname(to)} to play`];
+    const refs = moved.slice(0, 8).map((_, i) => `{${i}}`).join(', ');
+    return [`exiled the top ${moved.length} of their library and gave ${moved.length > 1 ? 'them' : 'it'} to ${pname(to)} to play: ${refs}${moved.length > 8 ? '…' : ''}`, moved.slice(0, 8)];
+  });
+}
 // Owner reclaims a card they gave away: ask the controller's game to hand it straight back (no approval needed).
 function takeBack(pid, iid) {
   if (!canEnterBattlefield()) { UI.toast('Control changes are available after the host starts the game.', { kind: 'warn' }); return; }
@@ -3052,6 +3107,9 @@ function viewZone(pid, zone) {
   if (mine) actions.push({ key: 'printing', label: 'Switch printing…' });
   actions.push({ key: 'info', label: 'View information' });
   if (mine && zone === 'library') actions.push({ key: 'top', label: 'Move to top' }, { key: 'bottom', label: 'Move to bottom' });
+  if (mine && zone === 'library' && S.role !== 'solo' && S.role !== 'spectator') {
+    ((S.table && S.table.seats) || []).filter(p => p !== S.pid && S.players[p]).forEach(p => actions.push({ key: 'gx:' + p, label: `Exile, give to ${pname(p)}` }, { key: 'gxd:' + p, label: `Exile face down, give to ${pname(p)}` }));
+  }
   let footer = [];
   if (mine && zone === 'library') footer = [{ key: 'shuffle', label: 'Shuffle & close', primary: true }, { key: 'close', label: 'Close without shuffling' }];
   if (mine && zone === 'library') say('is searching their library');
@@ -3064,6 +3122,7 @@ function viewZone(pid, zone) {
       if (k === 'copy') { const x = get().find(c => c.iid === iid); if (x && !x.faceDown && x.def && x.def.id) copyCard(x.def); return; }
       if (k === 'printing') { switchPrinting(iid); return; }
       if (k === 'info') { const x = get().find(c => c.iid === iid); if (x && x.def && x.def.id && !(x.faceDown && !mine)) viewInfo(x.def); return; }
+      if (/^gxd?:/.test(k)) { giveToExile(iid, k.slice(k.indexOf(':') + 1), k.startsWith('gxd:')); return; }
       runMove(k, iid);
     },
     onFooter: k => { if (k === 'shuffle') shuffleLib(); v.close(); }
@@ -3558,6 +3617,7 @@ function quickGrabBasicLandItems() {
   }));
 }
 function libraryMenu(x, y) {
+  const others = S.role === 'solo' || S.role === 'spectator' ? [] : ((S.table && S.table.seats) || []).filter(p => p !== S.pid && S.players[p]);
   UI.menu(x, y, [
     { label: 'Draw', hint: CTHotkeys.key('draw'), onClick: () => draw(1) },
     { label: 'Draw X…', onClick: async () => { const n = await UI.prompt({ title: 'Draw cards', type: 'number', value: 2, min: 1, max: 30 }); if (n) draw(n); } },
@@ -3572,7 +3632,10 @@ function libraryMenu(x, y) {
     { label: 'Mill top card to Graveyard', hint: CTHotkeys.key('mill'), onClick: millTopCard },
     { label: 'Mill X…', onClick: () => millN('graveyard') },
     { label: 'Exile top X…', onClick: () => millN('exile') },
-    { label: 'Exile top X face down…', onClick: () => millN('exile', true) }
+    { label: 'Exile top X face down…', onClick: () => millN('exile', true) },
+    ...(others.length ? [{ sep: true },
+      { label: 'Exile, and give to…', sub: others.map(p => ({ label: pname(p), onClick: () => giveTopToExile(p, false) })) },
+      { label: 'Exile face down, and give to…', sub: others.map(p => ({ label: pname(p), onClick: () => giveTopToExile(p, true) })) }] : [])
   ]);
 }
 // --- card-type helpers (graveyard counter, hover breakdown, random picks)
@@ -7183,7 +7246,7 @@ function boot() {
   if (sess) resume(sess); else showLobby();
 }
 // Expose a little for debugging from the console.
-window.CT = { S, act, render, dragState: () => drag, hostRecv, cleanTable, doMove };
+window.CT = { S, act, render, dragState: () => drag, hostRecv, cleanTable, doMove, giveToExile, giveTopToExile };
 // ---- stay on one version -----------------------------------------------------------------------
 // GitHub Pages lets browsers reuse cached files for 10 minutes. index.html links every file with ?v=<version>
 // (tools/bump-version.py), so a new page never pulls old files. If this script and the page that loaded it

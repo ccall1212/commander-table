@@ -6,6 +6,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.68.0] - 2026-11-06
+
+### Added
+- **Exile, and give to player.** For effects like "exile the top cards of target opponent's library; you may play them". Right-click (or hover and right-click) your **Library** and choose **Exile, and give to…** or **Exile face down, and give to…**, pick the player, then how many cards from the top. The cards go into **that player's exile**, marked as playable by them, and stay their owner's cards (they go back to the owner's zones if they later leave exile for anywhere but the battlefield). Face down, only the player it is given to can see what each card is; everyone else sees a card back. Your Library window (Search library) has matching **Exile, give to <player>** buttons for a chosen card.
+- **Quick play from Reminders.** Cards you can play from your graveyard or exile (given to you, or with text like Quilled Greatwurm's) get a **Play** button in their Reminders box. Hover the box to see the card, **double-click it** (or press Play) to put it onto the battlefield, like Forge's quick actions.
+- The receiver's **Reminders** panel lists "You may play this card from exile (owned by …)" for each such card, so nothing is forgotten.
+
 ## [0.67.0] - 2026-11-06
 
 ### Added
@@ -318,7 +325,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.67.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.68.0...HEAD
+[0.68.0]: https://github.com/ccall1212/commander-table/compare/v0.67.0...v0.68.0
 [0.67.0]: https://github.com/ccall1212/commander-table/compare/v0.66.0...v0.67.0
 [0.66.0]: https://github.com/ccall1212/commander-table/compare/v0.65.2...v0.66.0
 [0.65.2]: https://github.com/ccall1212/commander-table/compare/v0.65.1...v0.65.2
