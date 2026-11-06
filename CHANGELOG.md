@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.69.0] - 2026-11-06
+
+### Added
+- **Printed abilities switch on automatically.** When a card enters the battlefield (played, from the graveyard or exile, a token, or a copy), the ability icons printed at the very start of its rules text are turned on for you: for example Vigilance on Kimarhri, Valiant Guardian, or "Flying, lifelink" and then "Trample" on the next line. Saga creatures such as Summon: Ixion list their abilities at the end, so those are read from the bottom. Only the abilities with an icon are used (Deathtouch, Defender, Double strike, First strike, Flying, Haste, Hexproof, Indestructible, Lifelink, Menace, Reach, Trample, Vigilance); "Hexproof from black" or "Protection from…" never turn on the plain ability, abilities that appear later in the text (after a trigger) are left alone, and face-down cards get nothing. You can still add or remove icons by hand. Turn this off with **Turn on printed abilities automatically** in the table menu (right-click your board).
+
 ## [0.68.0] - 2026-11-06
 
 ### Added
@@ -325,7 +330,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.68.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.69.0...HEAD
+[0.69.0]: https://github.com/ccall1212/commander-table/compare/v0.68.0...v0.69.0
 [0.68.0]: https://github.com/ccall1212/commander-table/compare/v0.67.0...v0.68.0
 [0.67.0]: https://github.com/ccall1212/commander-table/compare/v0.66.0...v0.67.0
 [0.66.0]: https://github.com/ccall1212/commander-table/compare/v0.65.2...v0.66.0
