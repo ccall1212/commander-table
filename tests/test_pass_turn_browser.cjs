@@ -70,6 +70,10 @@ const mkDeck = who => ({
 
     // Make it the HOST's turn (use the host's own pass if needed), then the guest tries to pass it.
     if ((await active()) !== hostPid) { await passBtn(guest).click(); await waitActive(hostPid); }
+    await host.evaluate(pid => CT.hostRecv({ t: 'arrows', k: 'add', arrow: {
+      from: { kind: 'player', pid: CT.S.pid }, to: { kind: 'player', pid }
+    } }, CT.S.pid), guestPid);
+    await Promise.all([host, guest].map(pg => pg.waitForFunction(() => CT.S.targetArrows.length === 1)));
     assert.equal(await passBtn(guest).isDisabled(), true, 'the guest cannot press Pass turn on the host\'s turn');
     assert.match(await passBtn(guest).getAttribute('title'), /Only the host can pass/);
     await guest.keyboard.press('Space');
@@ -77,10 +81,12 @@ const mkDeck = who => ({
     // A hand-made pass from the guest (an old page, or someone poking at the console) is ignored by the host.
     await host.waitForTimeout(500);
     assert.equal(await active(), hostPid, 'the host\'s turn is untouched');
+    assert.equal(await host.evaluate(() => CT.S.targetArrows.length), 1, 'an attempted pass from the wrong player leaves arrows visible');
     if (process.env.CT_SHOTS) await guest.screenshot({ path: process.env.CT_SHOTS + '/pass-guest.png', clip: { x: 0, y: 0, width: 800, height: 50 } });
 
     // The host passes his own turn, then passes the guest's turn for him (with the confirmation).
     await passBtn(host).click(); await waitActive(guestPid);
+    await Promise.all([host, guest].map(pg => pg.waitForFunction(() => CT.S.targetArrows.length === 0)));
     assert.equal(await passBtn(guest).isDisabled(), false, 'on his own turn the guest can press it');
     await passBtn(host).click();
     await host.locator('.w-confirm-text', { hasText: /Pass it for them/ }).waitFor();

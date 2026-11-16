@@ -75,6 +75,29 @@ const mkDeck = who => ({
     const states = async key => (await bf()).map(c => c[key]);
     const press = async (iid, key) => { await dad.mouse.move(5, 5); await hoverCard(iid); await dad.keyboard.press(key); };
     const undo = async () => { await dad.keyboard.press('Control+z'); await dad.waitForTimeout(300); };
+    const moveFromMenu = async label => {
+      await select(sel);
+      await dad.locator(`#myBf .card[data-iid="${sel[0]}"]`).click({ button: 'right' });
+      await dad.locator('.w-menu').first().getByRole('menuitem', { name: /^Move to/ }).click();
+      await dad.locator('.w-menu').last().getByRole('menuitem', { name: label, exact: true }).click();
+    };
+
+    // In Grid, an empty part of the host's own tile opens the same table menu as Sidebar.
+    await dad.locator('button[data-a="view"][data-v="grid"]').click();
+    const emptyGridPoint = await dad.locator('.opp.mytile .obf').evaluate(el => {
+      const r = el.getBoundingClientRect();
+      for (const fy of [0.15, 0.3, 0.5, 0.7]) for (const fx of [0.85, 0.7, 0.5, 0.3, 0.15]) {
+        const x = r.left + r.width * fx, y = r.top + r.height * fy;
+        const hit = document.elementFromPoint(x, y);
+        if (hit && hit.closest('.opp.mytile .obf') === el && !hit.closest('.card, [data-pile], .tstrip, .thand, .tpile, button')) return { x, y };
+      }
+      return null;
+    });
+    assert(emptyGridPoint, 'the own Grid tile has a visible empty battlefield point');
+    await dad.mouse.click(emptyGridPoint.x, emptyGridPoint.y, { button: 'right' });
+    await dad.getByRole('menuitem', { name: /^Draw a card/ }).waitFor();
+    await dad.keyboard.press('Escape');
+    await dad.locator('button[data-a="view"][data-v="side"]').click();
 
     // T taps every selected card; T again untaps them all; one Undo steps back the whole group.
     await select(sel); await press(sel[0], 't');
@@ -119,8 +142,25 @@ const mkDeck = who => ({
     await undo();
     assert.equal(await dad.evaluate(() => CT.S.me.zones.battlefield.length), 5, 'one Undo returned all four cards');
     assert.equal(await dad.evaluate(() => CT.S.me.zones.graveyard.length), 0);
+
+    // The contextual Move to submenu matches the group hotkeys and keeps one Undo step.
+    await moveFromMenu('Exile');
+    await dad.waitForFunction(() => CT.S.me.zones.exile.length === 4);
+    assert.equal(await dad.evaluate(() => CT.S.me.zones.battlefield.length), 1);
+    await undo();
+    assert.equal(await dad.evaluate(() => CT.S.me.zones.battlefield.length), 5, 'one Undo restored the whole contextual move');
+
+    // Shuffle the existing library first, then put the selected cards underneath it.
+    const libraryBefore = await dad.evaluate(() => CT.S.me.zones.library.map(c => c.iid));
+    await moveFromMenu('Shuffle library, then put on bottom');
+    await dad.waitForFunction(n => CT.S.me.zones.library.length === n + 4, libraryBefore.length);
+    const libraryAfter = await dad.evaluate(() => CT.S.me.zones.library.map(c => c.iid));
+    assert.deepEqual(libraryAfter.slice(0, libraryBefore.length).sort(), [...libraryBefore].sort(), 'the old library was shuffled as a set before the cards were added');
+    assert.deepEqual(libraryAfter.slice(-4).sort(), [...sel].sort(), 'the selected set is at the bottom');
+    await undo();
+    assert.deepEqual(await dad.evaluate(() => CT.S.me.zones.library.map(c => c.iid)), libraryBefore, 'one Undo restores the library');
     assert.deepEqual(errors, [], 'no page errors in any browser');
-    console.log('PASS group hotkeys (two real browsers): T, Z, G and W act on every selected card as one Undo step; a card outside the selection and an empty selection still act alone');
+    console.log('PASS group actions (two real browsers): Grid empty-board menu, T/Z/G/W hotkeys, group Move to, library shuffle before bottom placement and one-step Undo');
   } finally {
     await browser.close();
   }

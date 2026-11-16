@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.77.0';
+const APP_VERSION = '0.78.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -885,6 +885,7 @@ function tableOp(op, from) {
       T.active = live[next];
       if (next === 0) T.turn++;
       T.turnSeq = expectedSeq + 1; T.phase = 3;
+      if (S.targetArrows.length) broadcast({ t: 'arrows', arrows: [] });
       sysLog(`Round ${T.turn}: ${pname(T.active)}'s turn${from !== T.active && from !== live[i] ? ` (passed by ${pname(from)})` : ''}`);
       break;
     }
@@ -3143,13 +3144,44 @@ const MOVE_ACTIONS = [
   { key: 'hand', label: 'To hand', hint: 'H' }, { key: 'battlefield', label: 'To battlefield', hint: 'B' },
   { key: 'bftapped', label: 'To battlefield tapped' }, { key: 'graveyard', label: 'To graveyard', hint: 'G' },
   { key: 'exile', label: 'Exile', hint: 'E' }, { key: 'top', label: 'Library — top' }, { key: 'bottom', label: 'Library — bottom' },
+  { key: 'shufflebottom', label: 'Shuffle library, then put on bottom' },
   { key: 'command', label: 'Command zone' }
 ];
 function moveHotkey(key) { return CTHotkeys.key(({ hand: 'hand', battlefield: 'battlefield', graveyard: 'graveyard', exile: 'exile' })[key]); }
+function shuffleThenBottom(iids) {
+  const found = iids.map(findCard).filter(Boolean);
+  if (!found.length) return;
+  if (found.some(f => f.card.own !== S.pid)) {
+    UI.toast('Only the card owner can shuffle their library. Return borrowed cards to their owner separately.', { kind: 'warn' });
+    return;
+  }
+  const moved = [];
+  act(() => {
+    S.me.revealTopOnce = null;
+    shuffle(S.me.zones.library);
+    iids.forEach(id => { const r = moveCard(id, 'library', { pos: 'bottom' }); if (r) moved.push(r); });
+    const placed = moved.filter(r => !r.gone).length, vanished = moved.length - placed;
+    return [`shuffled their library, then put ${plural(placed, 'card')} on the bottom${vanished ? `; ${vanished} tokens/copies vanished` : ''}`];
+  }, { label: `Shuffled library and moved ${plural(iids.length, 'card')} to its bottom` });
+  if (!moved.length) return;
+  animateOwnPile('library', 'shuffling');
+  playShuffleSound();
+  moved.forEach(r => {
+    if (r.orphans && r.orphans.length) orphanToast(r.orphans);
+    if (r.card.cmd && !r.gone) UI.toast(`${dname(r.def)} went to your library.`, {
+      ms: 8000, action: { label: 'Move to command zone', onClick: () => doMove(r.card.iid, 'command') }
+    });
+  });
+}
 function runMove(key, iid) {
   const map = { hand: ['hand'], battlefield: ['battlefield'], bftapped: ['battlefield', { tapped: true }], graveyard: ['graveyard'],
     exile: ['exile'], top: ['library', { pos: 'top' }], bottom: ['library', { pos: 'bottom' }], command: ['command'] };
-  const m = map[key]; if (m) doMove(iid, m[0], m[1] || {});
+  const group = groupTargets(iid);
+  if (key === 'shufflebottom') { shuffleThenBottom(group); return; }
+  const m = map[key]; if (!m) return;
+  const move = () => group.forEach(id => doMove(id, m[0], m[1] || {}));
+  if (group.length > 1) oneUndo(`Moved ${group.length} cards to ${m[0] === 'library' ? `library ${m[1].pos}` : ZL[m[0]]}`, move);
+  else move();
 }
 function openViewer(opts, getCards) {
   let sig = '';
@@ -5481,7 +5513,7 @@ function bindGame() {
     if (pile) { if (pile.dataset.pile !== 'library') viewZone(pile.dataset.pid, pile.dataset.pile); return; }
     const head = e.target.closest('[data-phead]') || e.target.closest('.ohead');
     if (head) { const pid = head.dataset.phead || head.parentElement.dataset.opp; if (pid) playerMenu(e.clientX, e.clientY, pid); return; }
-    if (e.target.closest('#myBf')) mainMenu(e.clientX, e.clientY);
+    if (e.target.closest('#myBf, .opp.mytile .obf')) mainMenu(e.clientX, e.clientY);
   });
   // Granted icons: a small tooltip that names the card giving it and its owner, in the owner's colour.
   const markTipEl = () => { let t = $('#markTip'); if (!t) { t = document.createElement('div'); t.id = 'markTip'; t.className = 'mark-tip'; t.hidden = true; document.body.appendChild(t); } return t; };
