@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.77.0';
+const APP_VERSION = '0.78.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -885,6 +885,7 @@ function tableOp(op, from) {
       T.active = live[next];
       if (next === 0) T.turn++;
       T.turnSeq = expectedSeq + 1; T.phase = 3;
+      if (S.targetArrows.length) broadcast({ t: 'arrows', arrows: [] });
       sysLog(`Round ${T.turn}: ${pname(T.active)}'s turn${from !== T.active && from !== live[i] ? ` (passed by ${pname(from)})` : ''}`);
       break;
     }
@@ -1946,7 +1947,7 @@ function doMove(iid, to, opts = {}) {
     res = moveCard(iid, to, opts);
     if (!res) return null;
     if (res.repos) return res.wasAtt ? ['unattached {0}', [res.def]] : null;
-    return [moveText(res, to, opts), [res.def]];
+    return opts.quiet ? null : [moveText(res, to, opts), [res.def]];
   });
   if (!res) return;
   if (res.repos) {
@@ -1964,6 +1965,7 @@ function doMove(iid, to, opts = {}) {
     UI.toast(`${dname(def)} went to your ${ZL[to]}.`, { ms: 8000, action: { label: 'Move to command zone', onClick: () => doMove(iid, 'command') } });
   }
   if (to === 'battlefield' && res.from !== 'battlefield' && def && def.tokens && def.tokens.length && !card.fd) suggestTokens(def);
+  return res;
 }
 function suggestTokens(def) {
   const toks = def.tokens.map(id => S.me.defs[id]).filter(Boolean);
@@ -3148,8 +3150,17 @@ const MOVE_ACTIONS = [
 function moveHotkey(key) { return CTHotkeys.key(({ hand: 'hand', battlefield: 'battlefield', graveyard: 'graveyard', exile: 'exile' })[key]); }
 function runMove(key, iid) {
   const map = { hand: ['hand'], battlefield: ['battlefield'], bftapped: ['battlefield', { tapped: true }], graveyard: ['graveyard'],
-    exile: ['exile'], top: ['library', { pos: 'top' }], bottom: ['library', { pos: 'bottom' }], command: ['command'] };
-  const m = map[key]; if (m) doMove(iid, m[0], m[1] || {});
+    exile: ['exile'], top: ['library', { pos: 'top' }], bottom: ['library', { pos: 'bottom' }],
+    bottomshuffle: ['library', { pos: 'bottom' }], command: ['command'] };
+  const m = map[key]; if (!m) return;
+  const group = groupTargets(iid);
+  if (key === 'bottomshuffle' && group.length < 2) return;
+  const targets = key === 'bottomshuffle' ? shuffle(group.slice()) : group;
+  const moved = [];
+  const move = () => targets.forEach(id => { const r = doMove(id, m[0], key === 'bottomshuffle' ? { ...m[1], quiet: true } : (m[1] || {})); if (r) moved.push(r); });
+  if (targets.length > 1) oneUndo(`${key === 'bottomshuffle' ? 'Shuffled and moved' : 'Moved'} ${targets.length} cards to ${m[0] === 'library' ? `library ${m[1].pos}` : ZL[m[0]]}`, move);
+  else move();
+  if (key === 'bottomshuffle' && moved.length) say(`put ${moved.length} selected cards on the bottoms of their libraries in random order`);
 }
 function openViewer(opts, getCards) {
   let sig = '';
@@ -3346,6 +3357,7 @@ function cardMenu(x, y, iid) {
   if (d.id) items.push({ label: 'View information', hint: CTHotkeys.key('info'), onClick: () => viewInfo(d) });
   if (!c.fd && d.name) items.push({ label: 'Switch printing…', onClick: () => switchPrinting(iid) });
   const moves = MOVE_ACTIONS.filter(a => a.key !== z && !(z === 'battlefield' && a.key === 'bftapped'));
+  if (z === 'battlefield' && groupTargets(iid).length > 1) moves.push({ key: 'bottomshuffle', label: 'Shuffle selected cards to library bottom' });
   items.push({ label: 'Move to', sub: moves.map(a => ({ label: a.label, hint: moveHotkey(a.key), onClick: () => runMove(a.key, iid) })) });
   if (c.tok) items.push({ label: c.cp ? 'Remove copy' : 'Remove token', danger: true, onClick: () => doMove(iid, 'graveyard') });
   UI.menu(x, y, items);
@@ -5481,7 +5493,7 @@ function bindGame() {
     if (pile) { if (pile.dataset.pile !== 'library') viewZone(pile.dataset.pid, pile.dataset.pile); return; }
     const head = e.target.closest('[data-phead]') || e.target.closest('.ohead');
     if (head) { const pid = head.dataset.phead || head.parentElement.dataset.opp; if (pid) playerMenu(e.clientX, e.clientY, pid); return; }
-    if (e.target.closest('#myBf')) mainMenu(e.clientX, e.clientY);
+    if (e.target.closest('#myBf, .opp.mytile .obf')) mainMenu(e.clientX, e.clientY);
   });
   // Granted icons: a small tooltip that names the card giving it and its owner, in the owner's colour.
   const markTipEl = () => { let t = $('#markTip'); if (!t) { t = document.createElement('div'); t.id = 'markTip'; t.className = 'mark-tip'; t.hidden = true; document.body.appendChild(t); } return t; };

@@ -6,6 +6,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.78.0] - 2026-11-16
+
+### Added
+- **Move a selected group from the card menu.** When several battlefield cards are selected, right-click one of them and choose any **Move to** destination to move the whole group in one Undo step. **Shuffle selected cards to library bottom** randomizes only the selected cards and puts them after the existing library.
+
+### Changed
+- Passing the turn now clears all targeting arrows for everyone at the table.
+
+### Fixed
+- Right-clicking empty space on your own battlefield in Grid now opens the table menu, as it does in Sidebar.
+
 ## [0.77.0] - 2026-11-07
 
 ### Added
@@ -409,7 +420,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.77.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.78.0...HEAD
+[0.78.0]: https://github.com/ccall1212/commander-table/compare/v0.77.0...v0.78.0
 [0.77.0]: https://github.com/ccall1212/commander-table/compare/v0.76.0...v0.77.0
 [0.76.0]: https://github.com/ccall1212/commander-table/compare/v0.75.0...v0.76.0
 [0.75.0]: https://github.com/ccall1212/commander-table/compare/v0.74.1...v0.75.0

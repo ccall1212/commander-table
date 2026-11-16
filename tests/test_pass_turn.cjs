@@ -24,7 +24,7 @@ const context = vm.createContext({
   console, URL, URLSearchParams, Set, Map, Uint32Array, performance,
   innerWidth: 1200, innerHeight: 900,
   location: { search: '?nettest', protocol: 'http:', href: 'http://localhost/?nettest' },
-  document: { querySelector: () => null, querySelectorAll: () => [], body: { classList: { toggle() {} } } },
+  document: { querySelector: s => s === '#game' ? { classList: { contains: () => true } } : null, querySelectorAll: () => [], body: { classList: { toggle() {} } } },
   localStorage, sessionStorage: storage,
   setTimeout: fn => { timers.push(fn); return timers.length; }, clearTimeout() {}, setInterval: () => 1,
   requestAnimationFrame: () => 1, cancelAnimationFrame() {},
@@ -73,14 +73,18 @@ const pass = (from, seq) => CT.hostRecv({ t: 'op', op: { k: 'pass', turn: seq, t
 (async () => {
   // ---- Host side: who may pass. ----
   startTable('alice');
+  S.targetArrows = [{ id: 'test-arrow', by: 'host', from: { kind: 'player', pid: 'host' }, to: { kind: 'player', pid: 'alice' } }];
   pass('bob', 1);
   assert.equal(S.table.active, 'alice', 'another player cannot pass Alice\'s turn');
   assert.equal(S.table.turnSeq, 1);
+  assert.equal(S.targetArrows.length, 1, 'an invalid pass does not clear arrows');
   pass('stranger', 1);
   assert.equal(S.table.active, 'alice', 'someone who is not even at the table cannot either');
   pass('alice', 1);
   assert.equal(S.table.active, 'bob', 'the active player can pass their own turn');
   assert.equal(S.table.turnSeq, 2);
+  assert.equal(S.targetArrows.length, 0, 'a valid pass clears shared arrows');
+  assert(sent.some(([, msg]) => msg.t === 'arrows' && msg.arrows.length === 0), 'the host tells every player to clear arrows');
   pass('alice', 2);
   assert.equal(S.table.active, 'bob', 'Alice can no longer pass: it is Bob\'s turn now');
   pass('host', 2);

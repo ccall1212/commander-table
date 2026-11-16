@@ -1,12 +1,14 @@
-# Shroud icon and Shroud of Protection — v0.77.0 test copy
+# Grid menu, group moves, and turn arrows — v0.78.0 test copy
 
-To check this copy, extract the ZIP and double-click **index.html**. A practice game is enough.
+Download the ZIP, extract it, and double-click **index.html**. These changes are in the test copy only. Use two players in separate browsers or a normal and private window for the Grid check. You can also try the group actions in Practice mode.
 
-1. Right-click a creature -> **Statuses & abilities…**: the **Shroud** icon is now a **hooded figure with its face in shadow and two eyes showing**. Tick it and check it on the card.
-2. Play **Shroud of Protection** ("Other enchantments you control have shroud") and a couple of other enchantments, plus a creature, a land and an artifact. Only your **other enchantments** should show Shroud (dotted green ring; hover shows who owns the card). Not Shroud of Protection itself, not the creature/land/artifact, and not another player's enchantments.
-3. Try other cards of yours that say "Artifacts you control have…" or "Other permanents you control have…". Tell me which cards did not work, with their names.
+1. With two players seated, choose **Grid** (▦). Right-click empty space on **your own** battlefield. The table menu should open with **Draw a card** at the top. Right-clicking a card, pile, or another player's board should keep its usual behavior. Switch to **Sidebar** (▥) and check that its empty-board menu still works.
+2. Put at least three cards on your battlefield. Select them with a selection rectangle or Shift-click. Right-click one of the selected cards → **Move to** → **Exile**. All selected cards should move; an unselected card should stay. Press **Ctrl+Z** (or **⌘Z** on Mac) once to bring the whole group back. Try another **Move to** destination. Right-click an unselected card to confirm it still moves alone.
+3. Select at least three battlefield cards again. Right-click a selected card → **Move to** → **Shuffle selected cards to library bottom**. Only those cards should be randomized and put after the cards already in your library. Open **Library** to inspect its order. One Undo should restore the group and your previous library order.
+4. Draw an arrow to a card or player. Use **Pass turn** when it is your turn (or, as host, confirm a pass for someone else). The arrow should disappear for both players. A failed or cancelled pass should leave it in place.
 
 ## Assistant verification
-- All 28 automatic unit tests pass, with new checks for Shroud of Protection's wording, artifacts/lands/permanents/nonland permanents, "Other" excluding the card itself, and an Enchantment Creature counting as an enchantment.
-- Two-player Chromium test: Shroud of Protection gives Shroud to my other enchantment on both screens, and not to itself, a creature, or the other player's permanents. I looked at a screenshot of the new icon.
-- Not tested: real Scryfall text for the real cards.
+
+- JavaScript and Python syntax checks passed; the version agrees in 31 places.
+- All 29 dependency-free unit suites passed, including new group-move and turn-arrow checks.
+- Browser tests were added for the Grid menu, group Move to, shuffled library bottom, and turn-arrow clearing. They could not be run here: the browser tool refused the local `file://` test copy under its URL policy. The browser behavior needs this hands-on check.
