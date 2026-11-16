@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.78.0';
+const APP_VERSION = '0.78.1';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -1843,6 +1843,9 @@ function insertCard(card, to, opts = {}) {
     const d = defOf(card);
     if (d && d.loyalty && !card.c.Loyalty && /Planeswalker/.test(d.type || '')) card.c.Loyalty = parseInt(d.loyalty, 10) || 0;
     if (d && d.defense && !card.c.Defense && /\bBattle\b/.test(d.type || '')) card.c.Defense = parseInt(d.defense, 10) || 0; // a Battle enters with its defense
+    if (d && !card.fd && typeof CTReminders !== 'undefined') CTReminders.entryLines(d.oracle).forEach(line => {
+      UI.toast(`${dname(d)} — ${line}`, { ms: 15000 }); // once on entry; never a standing "Always on" reminder
+    });
   }
   return true;
 }

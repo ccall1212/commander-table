@@ -1,6 +1,6 @@
 /* reminders.js — the trigger reminders list: pure helpers (no page needed).
  * Your own reminders are saved with each deck. "From the table" lines are quoted word for word from the rules text of the
- * permanents in play: the repeating triggers ("Whenever…", "At the beginning of…"), permissions to play from another zone, and "enters with" effects. An opponent's card is only listed when the
+ * permanents in play: the repeating triggers ("Whenever…", "At the beginning of…"), permissions to play from another zone, and ongoing "enters with" effects. An opponent's card is only listed when the
  * trigger mentions opponents or players, so it can affect you. This never decides when a trigger happens or what it does. */
 (function () {
   'use strict';
@@ -16,6 +16,8 @@
   const REPLACEMENT_RE = /^If\b.*\b(?:would|instead|additional time|twice that many|that many plus)\b/;
   const COST_RE = /\bcosts? (?:\{[^}]+\})+ (?:less|more)\b/;
   const ENTERS_WITH_RE = /\benters (?:the battlefield )?with\b/;
+  // "As Sin enters, ... Sin enters with ..." applies only to that entry, even when the line also says "enters with".
+  const AS_ENTERS_RE = /^As (?!(?:long as|a|an|any|each|another|other|one or more)\b).{1,100}?\benters\b/i;
   // Lines that only matter while the card sits in a pile: "You may cast this card from your graveyard…", "If this card is in your
   // graveyard…", Flashback, Escape, "from exile"…  Cards in play do not list these.
   const IN_PILE = /\byour graveyard\b|\bfrom exile\b/;
@@ -80,9 +82,13 @@
   function triggerLines(oracle, own) {
     return String(oracle == null ? '' : oracle).split(/\n+/).map(l => l.trim()).flatMap(l => {
       if (!l) return [];
+      if (AS_ENTERS_RE.test(l)) return []; // shown once on entry, not under Always on
       if (TRIGGER_RE.test(l) || (PERMISSION_RE.test(l) && !IN_PILE.test(l)) || ENTERS_WITH_RE.test(l) || REPLACEMENT_RE.test(l) || COST_RE.test(l)) return (own || AFFECTS_YOU_RE.test(l)) ? [clip(l, 400)] : [];
       return own ? keywordLines(l) : []; // keyword abilities only matter for the card's own controller
     });
+  }
+  function entryLines(oracle) {
+    return String(oracle == null ? '' : oracle).split(/\n+/).map(l => l.trim()).filter(l => AS_ENTERS_RE.test(l)).map(l => clip(l, 400));
   }
   // Lines of a card that is in my graveyard or exile (mine only) which tell me what I can do with it from there.
   function zoneLines(oracle, zone) {
@@ -143,5 +149,5 @@
     });
     return out;
   }
-  window.CTReminders = { PHASES, phaseOf, sortKey, leadingKeyword, keywordLines, triggerLines, zoneLines, cleanList, clip, MAX_ITEMS, MAX_TEXT, MAX_WHEN };
+  window.CTReminders = { PHASES, phaseOf, sortKey, leadingKeyword, keywordLines, entryLines, triggerLines, zoneLines, cleanList, clip, MAX_ITEMS, MAX_TEXT, MAX_WHEN };
 }());
