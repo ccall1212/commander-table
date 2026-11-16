@@ -150,17 +150,17 @@ const mkDeck = who => ({
     await undo();
     assert.equal(await dad.evaluate(() => CT.S.me.zones.battlefield.length), 5, 'one Undo restored the whole contextual move');
 
-    // Shuffle just the selected set and put it after every card already in the library.
+    // Shuffle the existing library first, then put the selected cards underneath it.
     const libraryBefore = await dad.evaluate(() => CT.S.me.zones.library.map(c => c.iid));
-    await moveFromMenu('Shuffle selected cards to library bottom');
+    await moveFromMenu('Shuffle library, then put on bottom');
     await dad.waitForFunction(n => CT.S.me.zones.library.length === n + 4, libraryBefore.length);
     const libraryAfter = await dad.evaluate(() => CT.S.me.zones.library.map(c => c.iid));
-    assert.deepEqual(libraryAfter.slice(0, libraryBefore.length), libraryBefore, 'the existing library stays in place');
+    assert.deepEqual(libraryAfter.slice(0, libraryBefore.length).sort(), [...libraryBefore].sort(), 'the old library was shuffled as a set before the cards were added');
     assert.deepEqual(libraryAfter.slice(-4).sort(), [...sel].sort(), 'the selected set is at the bottom');
     await undo();
     assert.deepEqual(await dad.evaluate(() => CT.S.me.zones.library.map(c => c.iid)), libraryBefore, 'one Undo restores the library');
     assert.deepEqual(errors, [], 'no page errors in any browser');
-    console.log('PASS group actions (two real browsers): Grid empty-board menu, T/Z/G/W hotkeys, group Move to, shuffled library bottom and one-step Undo');
+    console.log('PASS group actions (two real browsers): Grid empty-board menu, T/Z/G/W hotkeys, group Move to, library shuffle before bottom placement and one-step Undo');
   } finally {
     await browser.close();
   }

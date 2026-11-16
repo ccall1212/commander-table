@@ -1947,7 +1947,7 @@ function doMove(iid, to, opts = {}) {
     res = moveCard(iid, to, opts);
     if (!res) return null;
     if (res.repos) return res.wasAtt ? ['unattached {0}', [res.def]] : null;
-    return opts.quiet ? null : [moveText(res, to, opts), [res.def]];
+    return [moveText(res, to, opts), [res.def]];
   });
   if (!res) return;
   if (res.repos) {
@@ -1965,7 +1965,6 @@ function doMove(iid, to, opts = {}) {
     UI.toast(`${dname(def)} went to your ${ZL[to]}.`, { ms: 8000, action: { label: 'Move to command zone', onClick: () => doMove(iid, 'command') } });
   }
   if (to === 'battlefield' && res.from !== 'battlefield' && def && def.tokens && def.tokens.length && !card.fd) suggestTokens(def);
-  return res;
 }
 function suggestTokens(def) {
   const toks = def.tokens.map(id => S.me.defs[id]).filter(Boolean);
@@ -3145,22 +3144,44 @@ const MOVE_ACTIONS = [
   { key: 'hand', label: 'To hand', hint: 'H' }, { key: 'battlefield', label: 'To battlefield', hint: 'B' },
   { key: 'bftapped', label: 'To battlefield tapped' }, { key: 'graveyard', label: 'To graveyard', hint: 'G' },
   { key: 'exile', label: 'Exile', hint: 'E' }, { key: 'top', label: 'Library — top' }, { key: 'bottom', label: 'Library — bottom' },
+  { key: 'shufflebottom', label: 'Shuffle library, then put on bottom' },
   { key: 'command', label: 'Command zone' }
 ];
 function moveHotkey(key) { return CTHotkeys.key(({ hand: 'hand', battlefield: 'battlefield', graveyard: 'graveyard', exile: 'exile' })[key]); }
+function shuffleThenBottom(iids) {
+  const found = iids.map(findCard).filter(Boolean);
+  if (!found.length) return;
+  if (found.some(f => f.card.own !== S.pid)) {
+    UI.toast('Only the card owner can shuffle their library. Return borrowed cards to their owner separately.', { kind: 'warn' });
+    return;
+  }
+  const moved = [];
+  act(() => {
+    S.me.revealTopOnce = null;
+    shuffle(S.me.zones.library);
+    iids.forEach(id => { const r = moveCard(id, 'library', { pos: 'bottom' }); if (r) moved.push(r); });
+    const placed = moved.filter(r => !r.gone).length, vanished = moved.length - placed;
+    return [`shuffled their library, then put ${plural(placed, 'card')} on the bottom${vanished ? `; ${vanished} tokens/copies vanished` : ''}`];
+  }, { label: `Shuffled library and moved ${plural(iids.length, 'card')} to its bottom` });
+  if (!moved.length) return;
+  animateOwnPile('library', 'shuffling');
+  playShuffleSound();
+  moved.forEach(r => {
+    if (r.orphans && r.orphans.length) orphanToast(r.orphans);
+    if (r.card.cmd && !r.gone) UI.toast(`${dname(r.def)} went to your library.`, {
+      ms: 8000, action: { label: 'Move to command zone', onClick: () => doMove(r.card.iid, 'command') }
+    });
+  });
+}
 function runMove(key, iid) {
   const map = { hand: ['hand'], battlefield: ['battlefield'], bftapped: ['battlefield', { tapped: true }], graveyard: ['graveyard'],
-    exile: ['exile'], top: ['library', { pos: 'top' }], bottom: ['library', { pos: 'bottom' }],
-    bottomshuffle: ['library', { pos: 'bottom' }], command: ['command'] };
-  const m = map[key]; if (!m) return;
+    exile: ['exile'], top: ['library', { pos: 'top' }], bottom: ['library', { pos: 'bottom' }], command: ['command'] };
   const group = groupTargets(iid);
-  if (key === 'bottomshuffle' && group.length < 2) return;
-  const targets = key === 'bottomshuffle' ? shuffle(group.slice()) : group;
-  const moved = [];
-  const move = () => targets.forEach(id => { const r = doMove(id, m[0], key === 'bottomshuffle' ? { ...m[1], quiet: true } : (m[1] || {})); if (r) moved.push(r); });
-  if (targets.length > 1) oneUndo(`${key === 'bottomshuffle' ? 'Shuffled and moved' : 'Moved'} ${targets.length} cards to ${m[0] === 'library' ? `library ${m[1].pos}` : ZL[m[0]]}`, move);
+  if (key === 'shufflebottom') { shuffleThenBottom(group); return; }
+  const m = map[key]; if (!m) return;
+  const move = () => group.forEach(id => doMove(id, m[0], m[1] || {}));
+  if (group.length > 1) oneUndo(`Moved ${group.length} cards to ${m[0] === 'library' ? `library ${m[1].pos}` : ZL[m[0]]}`, move);
   else move();
-  if (key === 'bottomshuffle' && moved.length) say(`put ${moved.length} selected cards on the bottoms of their libraries in random order`);
 }
 function openViewer(opts, getCards) {
   let sig = '';
@@ -3357,7 +3378,6 @@ function cardMenu(x, y, iid) {
   if (d.id) items.push({ label: 'View information', hint: CTHotkeys.key('info'), onClick: () => viewInfo(d) });
   if (!c.fd && d.name) items.push({ label: 'Switch printing…', onClick: () => switchPrinting(iid) });
   const moves = MOVE_ACTIONS.filter(a => a.key !== z && !(z === 'battlefield' && a.key === 'bftapped'));
-  if (z === 'battlefield' && groupTargets(iid).length > 1) moves.push({ key: 'bottomshuffle', label: 'Shuffle selected cards to library bottom' });
   items.push({ label: 'Move to', sub: moves.map(a => ({ label: a.label, hint: moveHotkey(a.key), onClick: () => runMove(a.key, iid) })) });
   if (c.tok) items.push({ label: c.cp ? 'Remove copy' : 'Remove token', danger: true, onClick: () => doMove(iid, 'graveyard') });
   UI.menu(x, y, items);

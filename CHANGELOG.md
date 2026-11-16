@@ -9,7 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ## [0.78.0] - 2026-11-16
 
 ### Added
-- **Move a selected group from the card menu.** When several battlefield cards are selected, right-click one of them and choose any **Move to** destination to move the whole group in one Undo step. **Shuffle selected cards to library bottom** randomizes only the selected cards and puts them after the existing library.
+- **Move a selected group from the card menu.** When several battlefield cards are selected, right-click one of them and choose any **Move to** destination to move the whole group in one Undo step. **Shuffle library, then put on bottom** shuffles the library first and then places the chosen card or selected group underneath it, also in one Undo step. This action is available for cards in your graveyard and exile viewers too.
 
 ### Changed
 - Passing the turn now clears all targeting arrows for everyone at the table.
