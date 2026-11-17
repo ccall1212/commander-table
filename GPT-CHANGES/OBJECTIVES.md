@@ -88,16 +88,17 @@ Goal: version 1.0 means the game is safe to share beyond friends, and what playe
 
 **Done:** automatic checks on every pull request (v0.56.0); PeerJS bundled instead of loaded from a CDN (v0.56.0); Report a bug and Privacy links and a Privacy section in the guide (v0.56.0); license changed to PolyForm Noncommercial (docs); accessibility pass on dialogs, labels and landmarks, supported-browsers list and an Accessibility section in the guide (v0.56.1); room lock, ask-before-joining and blocking removed players by browser and name, with a real connection-drop ability so refused and removed people receive nothing (v0.57.0); the saved-data upgrade tests (14 releases, v0.3.0 to v0.57.0); and the sync code for moving decks between computers (relay in v0.59.0's release train via PR #97, browser side v0.60.0).
 
-**Still to do (Chris asked to finish all of these except full touch support):**
-1. ~~Release-candidate multiplayer test.~~ Not needed (Chris, 2026-11-04): the game is working fine in Chrome, Edge and Safari. Firefox was not mentioned.
-2. **Artwork and Scryfall audit.** Check all card backs and backgrounds for look-alikes of Wizards branding (two card backs were removed for this), and check use of Scryfall against its API guidelines. Consider a quick professional opinion on the license change and the Fan Content Policy. Not legal advice.
-3. **Saved-data compatibility promise — decision pending.** The upgrade tests are published: 14 real releases (v0.3.0 to v0.57.0) are loaded into the current game by two tests (`tests/test_saved_data_upgrade.cjs`, automatic; and a real-browser one) and no upgrade problem was found. Still to decide with Chris: the compatibility promise for 1.0. Proposed: decks, backups and saved games made by any 1.x version keep opening in later 1.x versions; a change that would break that ships with a migration; the fixture tests enforce it. Not covered by the fixtures yet: uploaded custom images, hotkey and chat-panel preferences, and multiplayer (host or guest) saved games.
-4. **Relay abuse protection.** Room codes are 5 characters from a 32-character set (about 33 million codes) with no rate limiting on the relay, and admin passphrase guesses are not throttled (the passphrase itself must be at least 20 characters and is compared safely). Relay changes deploy through Cloudflare and must stay backward compatible.
-5. **Accessibility leftovers.** Cards on the table cannot be used from the keyboard alone, and the Deck Builder's card list has small buttons nested inside list items. Text over background images was not checked by the automatic scanner, so contrast there needs a manual look.
+**Still to do (updated by Chris after v0.78.2):**
+1. **Artwork.** The ten play-area backgrounds are done (redrawn in v0.78.2). Remaining: redo the 12 card backs in a less noisy style, the same way as the backgrounds, then glance at them for look-alikes of Wizards branding (two card backs were removed for this earlier) and do a quick read of Scryfall's API guidelines against how the game uses Scryfall. A professional opinion on the license is optional and not planned.
+2. **Saved-data compatibility promise — decision pending.** The upgrade tests are published: 14 real releases (v0.3.0 to v0.57.0) are loaded into the current game by two tests (`tests/test_saved_data_upgrade.cjs`, automatic; and a real-browser one) and no upgrade problem was found. Still to decide with Chris: the compatibility promise for 1.0. Proposed: decks, backups and saved games made by any 1.x version keep opening in later 1.x versions; a change that would break that ships with a migration; the fixture tests enforce it. Gaps: the newest fixture is v0.57.0, and things saved since then (per-deck reminders, Saga/Class/Room steps, granted-ability switch-offs, temporary-effect turn stamps) have no fixture yet, so add one from a recent release; also not covered: uploaded custom images, hotkey and chat-panel preferences, and multiplayer (host or guest) saved games.
+
+**Not part of 1.0 (Chris, after v0.78.2):**
+- ~~Relay abuse protection~~ (rate limiting room codes and admin passphrase guesses): this is a friend-of-a-friend project, so revisit only if it grows.
+- ~~Accessibility leftovers~~ (keyboard-only card use, nested buttons in the Deck Builder list, a manual contrast check over backgrounds): treated as later visual changes.
 
 **Should have:** a short "relay is down" note for the owner and a known-limitations list in the guide.
 
-**After 1.0:** the automation ideas (#55, #58, #62–65), #48, #4 and #45.
+**After 1.0:** relay abuse protection, accessibility leftovers, the automation ideas (#55, #58, #62–65), #4 and #45. New-player help (links to Moxfield and Archidekt, ready-made decks) is wanted but is not a 1.0 blocker.
 
 ## Paused and on hold
 
