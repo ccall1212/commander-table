@@ -74,9 +74,9 @@ Show a small, dismissible reminder with a saved **Don’t show again** checkbox.
 
 Include only: **T** tap/untap or Tokens over empty battlefield; **Space** pass; **R** In response; **D** draw; **G** graveyard; **E** exile; **C** copy; **Ctrl+Z / ⌘Z** Undo.
 
-### 48. More distinctive backgrounds — In progress (first five redone, v0.78.2 test copy)
+### 48. More distinctive backgrounds — All ten redone, awaiting Chris's test (v0.78.2 test copy)
 
-Chris (2026-11-17): the stock backgrounds look too AI-made, with too much detail in walls, floors and rock. Redrawing the ten scenes one set at a time in a softer, less detailed style, keeping the same names and ids. First five (Dragon's Lair, Knight's Vigil, Into Nature, Arcane Study, Mage Duel) are in the v0.78.2 test copy; the other five are still the old art. Two of the new images (Into Nature, Dragon's Lair) arrived at 1024×572 and were enlarged to 1672×941.
+Chris (2026-11-17): the stock backgrounds look too AI-made, with too much detail in walls, floors and rock. Redrawing the ten scenes one set at a time in a softer, less detailed style, keeping the same names and ids. All ten are in the v0.78.2 test copy. Seven arrived at 1024×572 and were enlarged to 1672×941 (Into Nature, Dragon's Lair, Necromancer's Dominion, Celestial Realm, Haunted Ruins, Tranquil Shores, Eldritch Horizon); higher-resolution versions can replace them. Knight's Vigil and Arcane Study are still fairly detailed.
 
 Develop a small set of original background concepts and review the art direction with Chris before adding them. Keep cards readable and check both layouts.
 

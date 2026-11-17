@@ -9,7 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ## [0.78.2] - 2026-11-17
 
 ### Changed
-- **Five play-area backgrounds were redrawn in a softer, less detailed style:** **Dragon's Lair**, **Knight's Vigil**, **Into Nature**, **Arcane Study** and **Mage Duel**. They keep the same names and scenes, so anyone who already picked one keeps it. The other five (Necromancer's Dominion, Celestial Realm, Haunted Ruins, Tranquil Shores, Eldritch Horizon) are unchanged for now.
+- **All ten play-area backgrounds were redrawn in a softer, less detailed style:** Dragon's Lair, Knight's Vigil, Into Nature, Arcane Study, Mage Duel, Necromancer's Dominion, Celestial Realm, Haunted Ruins, Tranquil Shores and Eldritch Horizon. They keep the same names and scenes, so anyone who already picked one keeps it. Eldritch Horizon now has a tentacled horror looming over its ruined castle.
 
 ## [0.78.1] - 2026-11-16
 
