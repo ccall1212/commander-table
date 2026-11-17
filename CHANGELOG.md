@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.78.2] - 2026-11-17
+
+### Changed
+- **All ten play-area backgrounds were redrawn in a softer, less detailed style:** Dragon's Lair, Knight's Vigil, Into Nature, Arcane Study, Mage Duel, Necromancer's Dominion, Celestial Realm, Haunted Ruins, Tranquil Shores and Eldritch Horizon. They keep the same names and scenes, so anyone who already picked one keeps it. Eldritch Horizon now has a tentacled horror looming over its ruined castle.
+
 ## [0.78.1] - 2026-11-16
 
 ### Fixed
@@ -425,7 +430,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.78.1...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.78.2...HEAD
+[0.78.2]: https://github.com/ccall1212/commander-table/compare/v0.78.1...v0.78.2
 [0.78.1]: https://github.com/ccall1212/commander-table/compare/v0.78.0...v0.78.1
 [0.78.0]: https://github.com/ccall1212/commander-table/compare/v0.77.0...v0.78.0
 [0.77.0]: https://github.com/ccall1212/commander-table/compare/v0.76.0...v0.77.0
