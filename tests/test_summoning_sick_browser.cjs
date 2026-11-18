@@ -72,7 +72,7 @@ const mkDeck = who => ({
         let card = CT.S.me.zones.battlefield.find(c => c.iid === iid);
         for (const p of Object.values(CT.S.players)) if (!card && p && p.zones) card = (p.zones.battlefield || []).find(c => c.iid === iid);
         const el = document.querySelector('.card[data-iid="' + iid + '"]');
-        return { present: !!card, stored: !!(card && (card.st || []).includes('sick')), shown: !!(el && [...el.querySelectorAll('.cmark')].some(x => /Summoning sick/.test(x.getAttribute('aria-label') || ''))) };
+        return { present: !!card, stored: !!(card && (card.st || []).includes('sick')), shown: !!(el && [...el.querySelectorAll('.cmark')].some(x => /Summoning sick/.test(x.getAttribute('aria-label') || x.textContent || ''))) };
       };
     });
     const expectSick = async (pg, iid, stored, shown, why) => {

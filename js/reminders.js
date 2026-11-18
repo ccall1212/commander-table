@@ -6,7 +6,16 @@
   'use strict';
   const MAX_ITEMS = 60, MAX_TEXT = 240, MAX_WHEN = 24;
   // A repeating trigger line, optionally led by an ability word ("Landfall — Whenever…"). Single-use "When …" lines are left out.
-  const TRIGGER_RE = /^(?:[A-Z][\w'’ ]{1,24} — )?(?:Whenever|At the beginning of)\b/;
+  // The ability word may carry punctuation ("Bring it Down! —", "ED-E My Love —", "Nitro-9 —") and a mode bullet may lead the line
+  // ("• Khans — At the beginning of your upkeep…", the Sieges).
+  // Saga chapter lines ("II, III — Whenever…") are not ability words: the Saga tracker lists those.
+  const ABILITY_WORD = String.raw`(?![IVX]+(?:, [IVX]+)* — )[A-Z][\w'’.!,\- ]{1,38} — `;
+  const WORD_PREFIX = String.raw`(?:• )?(?:` + ABILITY_WORD + String.raw`)?`;
+  const TRIGGER_RE = new RegExp('^' + WORD_PREFIX + '(?:Whenever|At the beginning of)\\b');
+  // An Aura or Equipment that gives the creature a trigger ('Enchanted creature has "Whenever this creature attacks, …"'): the controller of
+  // the Aura has to remember it. The trigger inside the quotes decides when it matters.
+  const GRANT_TRIGGER_RE = /^(?:Enchanted|Equipped) \w+\b[^"]*"(?:Whenever|At the beginning of)\b/;
+  const grantInner = line => { const m = /"((?:Whenever|At the beginning of)\b[^"]*)/.exec(line); return m ? m[1] : ''; };
   // Also worth remembering: permission to play or cast from another zone ("You may play lands … from the top of your library")
   // and replacement effects about how things enter ("… enters with a +1/+1 counter on it").
   const PERMISSION_RE = /^You may (?:play|cast|look at)\b.*\b(?:from|top of|among)\b/;
@@ -22,7 +31,7 @@
   // graveyard…", Flashback, Escape, "from exile"…  Cards in play do not list these.
   const IN_PILE = /\byour graveyard\b|\bfrom exile\b/;
   const GRAVE_RE = /\bfrom your graveyard\b|\b(?:this card|it) is in your graveyard\b|\bis in your graveyard\b/i;
-  const GRAVE_KW_RE = /^(?:Flashback|Escape|Unearth|Embalm|Eternalize|Disturb|Jump-start|Retrace|Aftermath|Dredge|Scavenge|Encore|Harmonize)\b/;
+  const GRAVE_KW_RE = /^(?:Mayhem|Flashback|Escape|Unearth|Embalm|Eternalize|Disturb|Jump-start|Retrace|Aftermath|Dredge|Scavenge|Encore|Harmonize)\b/;
   const EXILE_RE = /\b(?:cast|play)\b[^.]*\bfrom exile\b|\bfrom exile\b/i;
   const EXILE_KW_RE = /^(?:Foretell|Suspend|Plot)\b/;
   const AFFECTS_YOU_RE = /\b(an opponent|each opponent|opponents|target opponent|a player|each player|any player|target player|each other player|another player|that player)\b/i;
@@ -60,10 +69,15 @@
     'cumulative upkeep': 'At the beginning of your upkeep, put an age counter on this permanent, then sacrifice it unless you pay its upkeep cost for each age counter on it.',
     'echo': 'At the beginning of your upkeep, if this permanent came under your control since your last upkeep, sacrifice it unless you pay its echo cost.',
     'fading': 'At the beginning of your upkeep, remove a fade counter from this permanent. If you can\'t, sacrifice it.',
+    'graft': 'Whenever another creature enters, you may move a +1/+1 counter from this permanent onto it.',
+    'mobilize': 'Whenever this creature attacks, create {n} tapped and attacking 1/1 red Warrior creature tokens. Sacrifice them at the beginning of the next end step.',
+    'umbra armor': 'If enchanted creature would be destroyed, instead remove all damage from it and destroy this Aura.',
+    'daybound': 'If a player casts no spells during their own turn, it becomes night next turn.',
+    'nightbound': 'If a player casts at least two spells during their own turn, it becomes day next turn.',
     'vanishing': 'At the beginning of your upkeep, remove a time counter from this permanent. When the last is removed, sacrifice it.'
   };
   const KEYWORD_NAMES = Object.keys(KEYWORD_TRIGGERS).sort((a, b) => b.length - a.length);
-  const KEYWORD_RE = new RegExp('^(' + KEYWORD_NAMES.map(n => n.replace(/ /g, '\\s')).join('|') + ')\\b(?:\\s+([\\dXN]+|\\{[^}]+\\}[\\w{}\\/ ]*))?\\s*$', 'i');
+  const KEYWORD_RE = new RegExp('^(' + KEYWORD_NAMES.map(n => n.replace(/ /g, '\\s')).join('|') + ')\\b(?:\\s+([\\dXN]+|\\{[^}]+\\}[\\w{}\\/ ]*))?(?:\\s*[—-].*)?\\s*$', 'i'); // "Cumulative upkeep—Pay 1 life" has its cost after a dash
   // The keyword at the start of a line, as written ("Evolve", "Annihilator 2"), or '' when the line does not start with one.
   const leadingKeyword = line => { const m = /^([A-Za-z][A-Za-z ]{2,20}?)(?:\s+(?:\d+|[XN]|\{[^}]+\}))?(?:\s*[,(]|\s*$)/.exec(String(line || '').trim()); return m && KEYWORD_TRIGGERS[m[1].toLowerCase()] ? m[1] : ''; };
   // Keyword lines of one card: a line that is just the keyword (with its printed reminder text) is quoted as printed; keywords sharing a
@@ -83,7 +97,7 @@
     return String(oracle == null ? '' : oracle).split(/\n+/).map(l => l.trim()).flatMap(l => {
       if (!l) return [];
       if (AS_ENTERS_RE.test(l)) return []; // shown once on entry, not under Always on
-      if (TRIGGER_RE.test(l) || (PERMISSION_RE.test(l) && !IN_PILE.test(l)) || ENTERS_WITH_RE.test(l) || REPLACEMENT_RE.test(l) || COST_RE.test(l)) return (own || AFFECTS_YOU_RE.test(l)) ? [clip(l, 400)] : [];
+      if (TRIGGER_RE.test(l) || GRANT_TRIGGER_RE.test(l) || (PERMISSION_RE.test(l) && !IN_PILE.test(l)) || ENTERS_WITH_RE.test(l) || REPLACEMENT_RE.test(l) || COST_RE.test(l)) return (own || AFFECTS_YOU_RE.test(l)) ? [clip(l, 400)] : [];
       return own ? keywordLines(l) : []; // keyword abilities only matter for the card's own controller
     });
   }
@@ -113,8 +127,10 @@
     { key: 'static', label: 'Always on' }
   ];
   const conditionOf = line => {
-    let t = String(line || '').replace(/^[A-Z][\w'’ ]{1,24} — /, '').trim();
+    let t = String(line || '').replace(/^• /, '').replace(new RegExp('^' + ABILITY_WORD), '').trim();
+    if (GRANT_TRIGGER_RE.test(t)) t = grantInner(t);
     if (/^(?:Whenever|When|At the beginning of|At end of|At the end of|If)\b/i.test(t)) t = t.split(',')[0];
+    else { const k = /\((?=(?:Whenever|When|At the beginning of|At end of|At the end of)\b)([^)]*)/i.exec(t); if (k) t = k[1].split(',')[0]; } // a keyword line: the condition of its reminder text ("Mobilize 1 (Whenever this creature attacks, …)")
     return t;
   };
   function phaseOf(line) {
