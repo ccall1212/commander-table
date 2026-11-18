@@ -3403,7 +3403,7 @@ function cardMenu(x, y, iid) {
   if (!c.fd && d.name) items.push({ label: 'Switch printing…', onClick: () => switchPrinting(iid) });
   const moves = MOVE_ACTIONS.filter(a => a.key !== z && !(z === 'battlefield' && a.key === 'bftapped'));
   items.push({ label: 'Move to', sub: moves.map(a => ({ label: a.label, hint: moveHotkey(a.key), onClick: () => runMove(a.key, iid) })) });
-  if (c.tok) items.push({ label: c.cp ? 'Remove copy' : 'Remove token', danger: true, onClick: () => doMove(iid, 'graveyard') });
+  if (c.tok && c.id !== 'ct-daynight') items.push({ label: c.cp ? 'Remove copy' : 'Remove token', danger: true, onClick: () => doMove(iid, 'graveyard') });
   UI.menu(x, y, items);
 }
 // ---- Private reveals: show my hand, or chosen cards, to ONE other player -----------------------------------------
@@ -4367,7 +4367,8 @@ function cardHTML(c, def, o) {
     const casts = (ctrl === S.pid ? S.me.casts : ((S.players[ctrl] || {}).casts || {}))[c.iid] || 0;
     if (casts) badges += `<span class="tax" title="Commander tax">+${2 * casts}</span>`;
   }
-  const extra = (c.cp ? '<span class="tk cp" title="A copy — it disappears when it leaves the battlefield">TOKEN COPY</span>' : c.tok ? '<span class="tk">TOKEN</span>' : '') +
+  const extra = (c.cp ? '<span class="tk cp" title="A copy — it disappears when it leaves the battlefield">TOKEN COPY</span>' : c.tok && c.id !== 'ct-daynight' ? '<span class="tk">TOKEN</span>' : '') + // the Day / Night marker is a reminder card, not a token, so it carries no label
+
     (c.own && c.own !== o.pid ? `<span class="own" style="--oc:${colorOf(c.own)}" title="Owned by ${esc(pname(c.own))}">${esc(pname(c.own))}</span>` : '');
   const marks = o.zone === 'battlefield' ? marksHTML(c.fd ? c : withGrants(ctrl, c)) : '';
   if (marks && Number.isFinite(+c.x) && +c.x > BW - CW - 40) cls.push('marks-left'); // near the right edge: hang them on the left instead
@@ -5188,7 +5189,7 @@ function preview(def, hidden, tag, st) {
     (tag ? `<div class="pv-tag"><span class="tag ${tag === 'Copy' ? 'cp' : ''}">${esc(tag.toUpperCase())}</span></div>` : '') + previewMarksHTML(st) +
     (S.touchMode && S.touchPreview ? `<button class="ct-touch-actions" type="button" data-touch-actions="${esc(S.touchPreview.iid)}">Actions</button>` : '');
 }
-const tagOf = c => (c.cp ? 'Copy' : c.tok ? 'Token' : '');
+const tagOf = c => (c.cp ? 'Copy' : c.tok && c.id !== 'ct-daynight' ? 'Token' : '');
 function previewFromEl(cardEl) {
   const pid = cardEl.dataset.pid, iid = cardEl.dataset.iid;
   // Anonymous card backs in an opponent's hand have no identity to preview.

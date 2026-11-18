@@ -81,6 +81,9 @@ const mkDeck = who => ({
     const mine = await dad.evaluate(() => CT.S.me.zones.battlefield.filter(c => c.id === 'ct-daynight').length);
     assert.equal(mine, 1, 'Dad has exactly one marker on his battlefield');
 
+    assert.equal(await dad.locator('.card:has(.ctrack.daynight) .tk').count(), 0, 'it is a reminder card, so it has no TOKEN label');
+    assert.equal(await son.locator('.card:has(.ctrack.daynight) .tk').count(), 0, 'and no label on the other screen either');
+
     // ---- 2. Son sees it but cannot change it or start another. ----
     await openMenu(son);
     const sonLabel = await menuLabel(son);
