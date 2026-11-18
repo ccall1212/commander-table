@@ -3695,6 +3695,19 @@ function dayNightMarker() {
   }
   return null;
 }
+// A short sound for everyone when the card changes side: a wolf howl at night, a rooster at day. Both files are turned down (about -26 LUFS)
+// and played at 60%, so they are a gentle cue, not a jolt. Nothing plays when the marker first appears or disappears, and each player can switch it off.
+const DAYNIGHT_SOUNDS = { night: 'assets/sounds/night-wolf.mp3', day: 'assets/sounds/day-rooster.mp3' };
+const daynightSoundOn = () => LS.get('ct.dayNightSound', true) !== false;
+function playDayNightSound(night) {
+  if (!daynightSoundOn()) return;
+  try { const a = new Audio(DAYNIGHT_SOUNDS[night ? 'night' : 'day'] + '?v=' + APP_VERSION); a.volume = 0.6; const p = a.play(); if (p && p.catch) p.catch(() => {}); } catch (e) { /* no audio available: stay silent */ }
+}
+function noteDayNight() { // called on every render: plays when the card's side differs from the last one this player saw
+  const dn = dayNightMarker(), now = dn ? (dn.night ? 'night' : 'day') : null;
+  if (S.dnSeen && now && S.dnSeen !== now) playDayNightSound(now === 'night');
+  S.dnSeen = now;
+}
 function startDayNight() {
   if (!canEnterBattlefield()) { UI.toast('The battlefield opens when the host starts the game.', { kind: 'warn' }); return false; }
   const dn = dayNightMarker();
@@ -4101,6 +4114,7 @@ function mainMenu(x, y) {
     { label: 'Untap all', hint: CTHotkeys.key('untapAll'), onClick: untapAll },
     { label: 'Tokens…', hint: CTHotkeys.key('tokens'), onClick: () => tokensMenu(x, y) },
     dayNightMenuItem(),
+    ...(dayNightMarker() ? [{ label: 'Day / Night sounds', checked: daynightSoundOn(), onClick: () => { LS.set('ct.dayNightSound', !daynightSoundOn()); UI.toast(`Day / Night sounds ${daynightSoundOn() ? 'on' : 'off'}`, { ms: 1500 }); } }] : []),
     { sep: true },
     { label: 'Arrows', sub: [
       { label: 'Targeting arrow…', hint: CTHotkeys.key('arrow'), onClick: () => startTargeting() },
@@ -4680,6 +4694,7 @@ function renderTop() {
   } else {
     const mine = S.role !== 'spectator' && T.active === S.pid;
     const dn = dayNightMarker();
+    noteDayNight();
     const dnChip = dn ? ` <span class="ct-daynight ${dn.night ? 'night' : 'day'}" title="${esc(dn.mine ? 'You keep the Day / Night marker: click the sun or the moon on it to change it.' : pname(dn.pid) + ' keeps the Day / Night marker.')}">${dn.night ? '☾ Night' : '☀ Day'}</span>` : '';
     html = `${ruleControl}<span>Round <b>${T.turn}</b> · <b style="color:${colorOf(T.active)}">${esc(mine ? 'Your' : pname(T.active) + "'s")}</b> turn</span>${dnChip}`;
   }

@@ -25,6 +25,7 @@ const mkDeck = who => ({
     const frames = [];
     page.on('websocket', ws => ws.on('framereceived', f => frames.push(typeof f.payload === 'string' ? f.payload : '')));
     page.on('pageerror', e => errors.push(`${name}: ${e.message}`));
+    await page.addInitScript(() => { window.__played = []; window.Audio = class { constructor(src) { this.src = String(src); this.volume = 1; } play() { window.__played.push({ src: this.src, volume: this.volume }); return Promise.resolve(); } }; }); // records sounds instead of playing them
     await page.addInitScript(({ deck, name }) => {
       localStorage.setItem('ct.decks.v1', JSON.stringify([deck]));
       localStorage.setItem('ct.name', JSON.stringify(name));
@@ -105,6 +106,19 @@ const mkDeck = who => ({
     await waitChip(dad, '☀ Day'); await waitChip(son, '☀ Day');
     assert.match(await faceSrc(dad), /\/front\//, 'the card is back on its Day face');
     assert.match(await faceSrc(son), /\/front\//);
+
+    // Sounds: nothing played when the marker appeared; the moon plays the (quiet) wolf, the sun the rooster, for both players.
+    const played = pg => pg.evaluate(() => window.__played.map(p => p.src.replace(/\?.*$/, '').split('/').pop() + '@' + p.volume).join());
+    assert.equal(await played(dad), 'night-wolf.mp3@0.6,day-rooster.mp3@0.6', 'Dad heard the wolf then the rooster, at 60% volume');
+    assert.equal(await played(son), 'night-wolf.mp3@0.6,day-rooster.mp3@0.6', 'Son heard both too (nothing when the marker first appeared)');
+    await son.evaluate(() => localStorage.setItem('ct.dayNightSound', 'false'));
+    await dad.locator('#myBf .ctrack.daynight.mine .tstep[data-step="2"]').click();
+    await waitChip(son, '☾ Night');
+    assert.equal((await played(dad)).split(',').length, 3, 'Dad hears the next change');
+    assert.equal((await played(son)).split(',').length, 2, 'Son switched the sounds off, so he hears nothing');
+    await dad.locator('#myBf .ctrack.daynight.mine .tstep[data-step="1"]').click();
+    await waitChip(son, '☀ Day');
+    await son.evaluate(() => localStorage.removeItem('ct.dayNightSound'));
 
     // ---- 4. The log says what happened; the right-click menu can also change it. ----
     const log = await dad.evaluate(() => JSON.stringify(CT.S.table.log || CT.S.log || []));
