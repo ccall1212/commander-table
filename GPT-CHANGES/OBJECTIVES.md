@@ -44,8 +44,13 @@ Chris (2026-11-07): add Shroud as an ability with an icon; Lightning Greaves ("E
 
 Chris (2026-11-07): Shroud icon should be a hooded figure; asked whether Shroud of Protection ("Other enchantments you control have shroud") works and whether it covers all enchantments. It did not; built support for enchantments, artifacts, lands, planeswalkers and permanents.
 
+### 86. New-player help: pre-con decks and deck links — Built, awaiting Chris's test (v0.79.0)
+
+Chris (2026-11-18): help new players start without hunting for a deck. Chosen: links to Moxfield and Archidekt under Your deck, and pre-con decks players can pick from a dropdown or add at random (Chris did not want all twelve shown as buttons). A start-up pop-up was considered and skipped (too many pop-ups already, see #45). Chris supplied twelve decklists; they live in `js/precons.js` as plain exported lists and go through the normal importer. To add one: paste the list (commander in its own block at the end) and give it an id. Open questions: whether any card name fails the real Scryfall lookup (tell Chris to check a few in the Deck Builder).
+
 ### Shipped recently (details in CHANGELOG.md)
 
+- #48 All ten play-area backgrounds redrawn — v0.78.2.
 - #84 Shroud ability and Lightning Greaves — v0.76.0.
 - #83 Reminders sorted by the turn — v0.75.0.
 - #82 Granted abilities: Equipment/Auras, everyone, opponents; owner names in colour — v0.74.0; temporary effects end with their turn — v0.74.1.

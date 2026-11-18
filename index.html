@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="app-version" content="0.78.2">
+<meta name="app-version" content="0.79.0">
 <title>Commander Table</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='14' y='6' width='36' height='52' rx='5' fill='%23d4a72c'/%3E%3Crect x='19' y='11' width='26' height='42' rx='3' fill='%2312161e'/%3E%3C/svg%3E">
-<link rel="stylesheet" href="css/style.css?v=0.78.2">
-<link rel="stylesheet" href="css/widgets.css?v=0.78.2">
+<link rel="stylesheet" href="css/style.css?v=0.79.0">
+<link rel="stylesheet" href="css/widgets.css?v=0.79.0">
 </head>
 <body>
 
@@ -66,8 +66,8 @@
 
       <div id="importBox" class="hidden">
         <p class="muted small">
-          <b>Moxfield:</b> open the deck → <i>More</i> → <i>Export</i> → <i>Copy Plain Text</i> (or <i>Copy for MTGA</i>).<br>
-          <b>Archidekt:</b> open the deck → <i>Export</i> → <i>Copy to clipboard</i>.<br>
+          <b><a href="https://moxfield.com/" target="_blank" rel="noopener noreferrer">Moxfield</a>:</b> open the deck → <i>More</i> → <i>Export</i> → <i>Copy Plain Text</i> (or <i>Copy for MTGA</i>).<br>
+          <b><a href="https://archidekt.com/" target="_blank" rel="noopener noreferrer">Archidekt</a>:</b> open the deck → <i>Export</i> → <i>Copy to clipboard</i>.<br>
           Then paste it below. Commander is detected automatically when the export marks it — otherwise you'll pick it.
         </p>
         <textarea id="deckText" rows="12" placeholder="1 Atraxa, Praetors' Voice&#10;1 Sol Ring&#10;1 Arcane Signet&#10;…"></textarea>
@@ -78,6 +78,17 @@
         </div>
         <div id="impResult"></div>
       </div>
+
+      <div id="readyDecks" class="ready-decks hidden">
+        <h3>Pre-con decks</h3>
+        <p class="muted small">New here? Choose a pre-con to add it to your decks, or let the game pick one for you. The cards are looked up online, so it takes a few seconds.</p>
+        <div class="row wrap">
+          <select id="readyDeckSelect" aria-label="Choose a pre-con deck"></select>
+          <button id="readySurprise" type="button" class="primary">🎲 Surprise me</button>
+          <span id="readyStatus" class="muted small" role="status"></span>
+        </div>
+      </div>
+      <p class="muted small find-decks">Want a different deck? Browse <a href="https://moxfield.com/" target="_blank" rel="noopener noreferrer">Moxfield</a> or <a href="https://archidekt.com/" target="_blank" rel="noopener noreferrer">Archidekt</a>, then use <b>+ Import a deck</b>.</p>
     </section>
 
     <section class="box">
@@ -172,28 +183,29 @@
 <!-- floating card preview (follows the cursor) -->
 <div id="pv" class="floatpv hidden"></div>
 
-<script src="js/vendor/peerjs.min.js?v=0.78.2"></script>
-<script src="js/relay-peer.js?v=0.78.2"></script>
-<script src="js/widgets.js?v=0.78.2"></script>
-<script src="js/appearance.js?v=0.78.2"></script>
-<script src="js/deck.js?v=0.78.2"></script>
-<script src="js/deck-health.js?v=0.78.2"></script>
-<script src="js/deck-editor.js?v=0.78.2"></script>
-<script src="js/backup.js?v=0.78.2"></script>
-<script src="js/tracks.js?v=0.78.2"></script>
-<script src="js/grants.js?v=0.78.2"></script>
-<script src="js/reminders.js?v=0.78.2"></script>
-<script src="js/keywords.js?v=0.78.2"></script>
-<script src="js/sync.js?v=0.78.2"></script>
-<script src="js/turn-config.js?v=0.78.2"></script>
-<script src="js/net-config.js?v=0.78.2"></script>
-<script src="js/net.js?v=0.78.2"></script>
-<script src="js/targeting.js?v=0.78.2"></script>
-<script src="js/chat-panel.js?v=0.78.2"></script>
-<script src="js/player-colors.js?v=0.78.2"></script>
-<script src="js/mulligan.js?v=0.78.2"></script>
-<script src="js/hotkeys.js?v=0.78.2"></script>
-<script src="js/app.js?v=0.78.2"></script>
-<script src="js/lens.js?v=0.78.2"></script>
+<script src="js/vendor/peerjs.min.js?v=0.79.0"></script>
+<script src="js/relay-peer.js?v=0.79.0"></script>
+<script src="js/widgets.js?v=0.79.0"></script>
+<script src="js/appearance.js?v=0.79.0"></script>
+<script src="js/deck.js?v=0.79.0"></script>
+<script src="js/precons.js?v=0.79.0"></script>
+<script src="js/deck-health.js?v=0.79.0"></script>
+<script src="js/deck-editor.js?v=0.79.0"></script>
+<script src="js/backup.js?v=0.79.0"></script>
+<script src="js/tracks.js?v=0.79.0"></script>
+<script src="js/grants.js?v=0.79.0"></script>
+<script src="js/reminders.js?v=0.79.0"></script>
+<script src="js/keywords.js?v=0.79.0"></script>
+<script src="js/sync.js?v=0.79.0"></script>
+<script src="js/turn-config.js?v=0.79.0"></script>
+<script src="js/net-config.js?v=0.79.0"></script>
+<script src="js/net.js?v=0.79.0"></script>
+<script src="js/targeting.js?v=0.79.0"></script>
+<script src="js/chat-panel.js?v=0.79.0"></script>
+<script src="js/player-colors.js?v=0.79.0"></script>
+<script src="js/mulligan.js?v=0.79.0"></script>
+<script src="js/hotkeys.js?v=0.79.0"></script>
+<script src="js/app.js?v=0.79.0"></script>
+<script src="js/lens.js?v=0.79.0"></script>
 </body>
 </html>

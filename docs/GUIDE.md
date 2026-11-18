@@ -34,6 +34,12 @@ During a game a small **📝 Reminders** tab sits at the top-left of your board.
 
 Before starting a game, use **Your look** on the opening screen to choose from 12 painted card backs and 10 illustrated play-area backgrounds. To upload your own JPG, PNG, or WebP image, open the small **Upload your own images** control. Card backs should be at least 250 × 350 pixels (5:7 portrait recommended); backgrounds should be at least 1280 × 720 pixels (16:9 recommended). Uploads up to 10 MB are optimized and saved only in your browser, so they remain available after you reopen the page in that browser and are not sent to other players. A saved **Your upload** tile shows the actual image and whether it is selected. Choose a preset without deleting your saved upload, or click **Your upload** to use it again. Use the remove button inside the upload panel only when you want to delete a saved image. Preset choices remain shared with the table. Click a background thumbnail to select it; double-click it to enlarge the complete image without the gameplay dark overlay. This also works for a saved **Your upload**. With a keyboard, focus a thumbnail and press **Shift+Enter** to preview it without changing your selection; Enter or Space selects it. Close the preview with **Close preview**, the ×, Escape, or a click outside the dialog. Backgrounds fill the play area and may crop at the edges; a dark overlay helps keep cards readable.
 
+## Pre-con decks (no deck yet?)
+
+Under **Your deck** on the start screen there are **Pre-con decks**: twelve complete 100-card Commander decks. Open the **Choose a pre-con deck…** dropdown and pick one to add it to your saved decks (the game looks the cards up online, which takes a few seconds), or click **🎲 Surprise me** for a random one you haven't added yet. A ✓ in the dropdown marks the ones you already have. The new deck is selected for you, so you can go straight to **Host a game** or **Practice solo**. Picking a deck you already added just selects it, and deleting a pre-con deck lets you add it again later. They are normal saved decks: you can open them in the Deck Builder and change them.
+
+Want something else? The links under Your deck go to **[Moxfield](https://moxfield.com/)** and **[Archidekt](https://archidekt.com/)** (they open in a new tab) where you can find a deck, then use **+ Import a deck** below.
+
 ## Importing your deck
 
 1. Export your deck:

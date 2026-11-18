@@ -6,6 +6,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.79.0] - 2026-11-18
+
+### Added
+- **Pre-con decks for new players.** Under **Your deck** a **Choose a pre-con deck…** dropdown offers twelve complete 100-card decks (Tidus, Terra, Cloud, Y'shtola, Inquisitor Greyfax, The Swarmlord, Abaddon the Despoiler, Szarekh, Éowyn, Sauron, Frodo and Sam, and Galadriel). Pick one to add it to your saved decks, or click **🎲 Surprise me** for a random one you haven't added yet. It is selected for you and behaves like any imported deck (open it in the Deck Builder, edit it, delete it). Picking one you already have just selects it. If a card can't be found the deck is still added and the missing card is named; with no internet the game says so and saves nothing.
+- **Links to Moxfield and Archidekt** under Your deck (and in the import help) so a new player can find a deck, then paste it with **+ Import a deck**. They open in a new tab.
+
+### Changed
+- The empty deck list now says "No decks yet — choose a pre-con deck or import one below."
+
 ## [0.78.2] - 2026-11-17
 
 ### Changed
@@ -430,7 +439,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.78.2...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.79.0...HEAD
+[0.79.0]: https://github.com/ccall1212/commander-table/compare/v0.78.2...v0.79.0
 [0.78.2]: https://github.com/ccall1212/commander-table/compare/v0.78.1...v0.78.2
 [0.78.1]: https://github.com/ccall1212/commander-table/compare/v0.78.0...v0.78.1
 [0.78.0]: https://github.com/ccall1212/commander-table/compare/v0.77.0...v0.78.0
