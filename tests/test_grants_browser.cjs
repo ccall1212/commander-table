@@ -72,7 +72,7 @@ const mkDeck = who => ({
       ['bearA', 'Creature — Bear', 'Bear A', ''],
       ['bearB', 'Creature — Bear', 'Bear B', '']
     ];
-    await dad.evaluate(defs => { const m = CT.S.me; CT.act(() => { defs.forEach(([id, type, name, oracle], i) => { m.defs[id] = { id, name, face: name, type, oracle, img: '', tokens: [], ci: [] }; m.zones.hand.push({ iid: CT.S.pid + '_g' + id, id, own: CT.S.pid, t: 0, fl: 0, fd: 0, c: {} }); }); }); defs.forEach(([id]) => CT.doMove(CT.S.pid + '_g' + id, 'battlefield')); }, defs);
+    await dad.evaluate(defs => { const m = CT.S.me; CT.act(() => { defs.forEach(([id, type, name, oracle], i) => { m.defs[id] = { id, name, face: name, type, oracle, img: '', tokens: [], ci: [] }; m.zones.hand.push({ iid: CT.S.pid + '_g' + id, id, own: CT.S.pid, t: 0, fl: 0, fd: 0, c: {} }); }); }); defs.forEach(([id]) => CT.doMove(CT.S.pid + '_g' + id, 'battlefield')); CT.act(() => { CT.S.me.zones.battlefield.forEach(c => { c.st = (c.st || []).filter(x => x !== 'sick'); }); }, { noUndo: true }); }, defs);
     const granted = (pg, id) => pg.evaluate(([pid, id]) => [...document.querySelectorAll('.card[data-iid="' + pid + '_g' + id + '"] .cmark.granted')].map(x => x.getAttribute('aria-label')).join('|'), [dadPid, id]);
     const waitGranted = (pg, id, want) => pg.waitForFunction(([pid, id, want]) => [...document.querySelectorAll('.card[data-iid="' + pid + '_g' + id + '"] .cmark.granted')].map(x => x.getAttribute('aria-label')).join('|') === want, [dadPid, id, want], { timeout: 10000 });
     // Nobody has a counter yet.
@@ -131,7 +131,7 @@ const mkDeck = who => ({
     assert.equal(await dad.evaluate(() => CT.S.me.zones.battlefield.find(x => x.id === 'bearA').st.join()), 'reach', 'the ability turned on by hand is still there');
     // ---- Equipment / Auras (attached), "All creatures", and effects on opponents' creatures ----
     const sonPid = await son.evaluate(() => CT.S.pid);
-    const mk = (pg, list) => pg.evaluate(list => { const m = CT.S.me; CT.act(() => { list.forEach(([id, type, name, oracle]) => { m.defs[id] = { id, name, face: name, type, oracle, img: '', tokens: [], ci: [] }; m.zones.hand.push({ iid: CT.S.pid + '_g' + id, id, own: CT.S.pid, t: 0, fl: 0, fd: 0, c: {} }); }); }); list.forEach(([id]) => CT.doMove(CT.S.pid + '_g' + id, 'battlefield')); }, list);
+    const mk = (pg, list) => pg.evaluate(list => { const m = CT.S.me; CT.act(() => { list.forEach(([id, type, name, oracle]) => { m.defs[id] = { id, name, face: name, type, oracle, img: '', tokens: [], ci: [] }; m.zones.hand.push({ iid: CT.S.pid + '_g' + id, id, own: CT.S.pid, t: 0, fl: 0, fd: 0, c: {} }); }); }); list.forEach(([id]) => CT.doMove(CT.S.pid + '_g' + id, 'battlefield')); CT.act(() => { CT.S.me.zones.battlefield.forEach(c => { c.st = (c.st || []).filter(x => x !== 'sick'); }); }, { noUndo: true }); }, list);
     await mk(son, [['sonBear', 'Creature — Bear', 'Son Bear', ''], ['sonBear2', 'Creature — Bear', 'Son Bear 2', '']]);
     await mk(dad, [['sword', 'Artifact — Equipment', 'Test Sword', 'Equipped creature gets +2/+2 and has trample.'], ['wings', 'Enchantment — Aura', 'Test Wings', 'Enchanted creature has flying.']]);
     const label = (pg, pid, id) => pg.evaluate(([pid, id]) => [...document.querySelectorAll('.card[data-iid="' + pid + '_g' + id + '"] .cmark')].map(x => x.getAttribute('aria-label')).join('|'), [pid, id]);

@@ -75,7 +75,7 @@ const mkDeck = who => ({
       const m = CT.S.me; const out = {};
       CT.act(() => { cases.forEach(([id, type, oracle], i) => { m.defs[id] = { id, name: id, face: id, type, oracle, img: '', tokens: [], ci: [] }; m.zones.hand.push({ iid: CT.S.pid + '_a' + i + opts.tag, id, own: CT.S.pid, t: 0, fl: 0, fd: 0, c: {} }); }); });
       cases.forEach(([id], i) => CT.doMove(CT.S.pid + '_a' + i + opts.tag, 'battlefield', opts.faceDown ? { faceDown: true } : {}));
-      cases.forEach(([id], i) => { const c = m.zones.battlefield.find(x => x.iid === CT.S.pid + '_a' + i + opts.tag); out[id] = c ? (c.st || []).join(',') : 'missing'; });
+      cases.forEach(([id], i) => { const c = m.zones.battlefield.find(x => x.iid === CT.S.pid + '_a' + i + opts.tag); out[id] = c ? (c.st || []).filter(x => x !== 'sick').join(',') : 'missing'; });
       return out;
     }, [cases, opts]);
     let got = await play({ tag: 'x' });

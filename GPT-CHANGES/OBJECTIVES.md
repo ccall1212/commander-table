@@ -48,8 +48,13 @@ Chris (2026-11-07): Shroud icon should be a hooded figure; asked whether Shroud 
 
 Chris (2026-11-18): help new players start without hunting for a deck. Chosen: links to Moxfield and Archidekt under Your deck, and a **Choose a pre-con deck…** dropdown with **Surprise me**. A start-up pop-up was considered and skipped (too many pop-ups already, see #45). Chris first supplied twelve decklists, then asked for every Commander pre-con from 2016 on with **no duplicates**, grouped like "Final Fantasy: 2025". Built: 158 decks from MTGJSON (MIT license), 48 groups, exact duplicates (Collector's Edition versions and Commander Anthology / Commander Anthology II reprints) removed by comparing card lists, earliest release kept. Chris's twelve decks match the official lists. All 6,583 card names verified on the real Scryfall. `tools/build-precons.py` regenerates `js/precons.js` when new pre-cons come out; the MIT notice must stay in that file and in the guide's Credits. Open ideas: include older (pre-2016) decks, Secret Lair single decks are included (9 of them), other products (Brawl, Duel Decks) are not.
 
+### 87. Summoning sickness icon — Built, awaiting Chris's test (v0.80.0)
+
+Chris (2026-11-18): add summoning sickness to the table, as an icon in the statuses, if the research shows it is workable. Research (Comprehensive Rules of 2026-11-06, rule 302.6 and haste 702.10, plus a check of 6,064 distinct pre-con cards) found: sickness lasts until the controller's next turn begins; it applies to the permanent (Vehicles, animated lands) not just creatures; haste ignores it; a control change restarts it. Chosen design: advisory only (never blocks), a **Zz** status added when a creature or Vehicle enters or changes controller and cleared when its controller's next turn begins; the icon is hidden while tapped or hasty (printed, temporary, granted); lands never marked; manual tick/untick in Statuses & abilities. Defaults used where Chris did not choose: visible to everyone, no on/off setting. Not handled: extra turns (the game has none), one-turn "gains haste until end of turn" effects (use Temporary haste or untick), conditional haste, and "can attack as though it had haste" (no pre-con card uses it).
+
 ### Shipped recently (details in CHANGELOG.md)
 
+- #86 Pre-con decks (158, grouped, no duplicates) and links to Moxfield and Archidekt — v0.79.0.
 - #48 All ten play-area backgrounds redrawn — v0.78.2.
 - #84 Shroud ability and Lightning Greaves — v0.76.0.
 - #83 Reminders sorted by the turn — v0.75.0.

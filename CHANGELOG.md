@@ -6,6 +6,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.80.0] - 2026-11-18
+
+### Added
+- **Summoning sickness icon.** A creature (or Vehicle) that enters the battlefield, or comes under a new controller (Give control, Return control), now gets a small **Zz** "Summoning sick" status that everyone can see. It is only a reminder, so it never stops you from tapping or attacking. It **clears by itself when its controller's next turn begins** (so it also covers using a {T} ability during an opponent's turn right after you cast it). The icon is **hidden while the creature is tapped or has haste**: printed haste, Temporary haste, or haste given by a card such as Lightning Greaves; the status stays on the card underneath, so the icon comes back if the creature untaps or loses haste. Lands and other non-creatures are never marked. You can tick or untick it for any creature (or a selection) in **Statuses & abilities**; it is not offered under Temporary.
+- **Summoning sickness never lingers.** Whatever way it was added (automatically or ticked by hand), it comes off when its controller's next turn begins.
+- **Take an extra turn.** A small **▾** beside **Pass turn** opens a menu with *Take an extra turn*: the same player goes again (no new round, they untap/draw, and summoning sickness clears). Only the player whose turn it is, or the host, can use it.
+- Two more "have haste" wordings are understood by the granted-abilities reader: **"Creature tokens you control have haste"** and **"Commander creatures you control get +2/+2 and have haste"** (only the ability part is applied). "Creatures you control get +1/+1 and have flying" now shows Flying as well.
+
 ## [0.79.0] - 2026-11-18
 
 ### Added
@@ -439,7 +447,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.79.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.80.0...HEAD
+[0.80.0]: https://github.com/ccall1212/commander-table/compare/v0.79.0...v0.80.0
 [0.79.0]: https://github.com/ccall1212/commander-table/compare/v0.78.2...v0.79.0
 [0.78.2]: https://github.com/ccall1212/commander-table/compare/v0.78.1...v0.78.2
 [0.78.1]: https://github.com/ccall1212/commander-table/compare/v0.78.0...v0.78.1
