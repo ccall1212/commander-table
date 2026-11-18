@@ -2,8 +2,8 @@
 
 To check this copy, extract the ZIP and double-click **index.html**. A practice game works for the basics; a second player (private window) shows what others see. The battlefield opens once the game has started.
 
-1. Click the **☰ menu → Start Day / Night marker**. A small "Day / Night" token appears on your battlefield with a ☀ and a ☾, and a **☀ Day** chip appears next to "Round N" at the top. Everyone else sees the chip too.
-2. Click the **☾** on the token: the chip changes to **☾ Night** for everyone and the log says you changed it to night. Click the **☀**: back to day. Right-click the token → **Change to night / day** does the same.
+1. Click the **☰ menu → Start Day / Night marker**. The real **Day // Night** card (Day side, sunrise art) appears on your battlefield with a ☀ and a ☾ button at the bottom, and a **☀ Day** chip appears next to "Round N" at the top. Everyone else sees the chip too.
+2. Click the **☾** on the card: the card **flips to its Night side** (moon art), the chip changes to **☾ Night** for everyone and the log says you changed it to night. Click the **☀**: it flips back to Day. The flip key (F) does the same. Right-click the token → **Change to night / day** does the same.
 3. As the **other** player: the chip shows, the token on the keeper's board shows the sun and moon but clicking does nothing, and the ☰ menu says "Day / Night: <name> keeps it (day)" and is greyed out (you can't start a second one).
 4. As the keeper: **☰ menu → Day / Night marker → Remove the marker**. The chip disappears for everyone. Now the other player can start their own.
 5. Remove the marker, then put a **Daybound** card (e.g. Tovolar's Huntmaster or Arlinn, the Pack's Hope) onto the battlefield: a notice offers **Start Day / Night**. Clicking it creates the marker. (The offer comes once per game.)

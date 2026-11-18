@@ -3684,7 +3684,7 @@ function showMarksDialog(iid, targets, temp) {
 function dayNightMarker() {
   const find = (pid, zones, defs) => {
     const c = ((zones && zones.battlefield) || []).find(x => x && !x.fd && defs && defs[x.id] && defs[x.id].trk && defs[x.id].trk.kind === 'daynight');
-    return c ? { pid, iid: c.iid, night: !!((c.tk | 0) & 1), mine: pid === S.pid } : null;
+    return c ? { pid, iid: c.iid, night: !!c.fl, mine: pid === S.pid } : null;
   };
   const mine = S.me && find(S.pid, S.me.zones, S.me.defs);
   if (mine) return mine;
@@ -3735,8 +3735,8 @@ function setTrackStep(iid, step) {
     act(() => { if (to > 1) c.tk = to; else delete c.tk; return [`${to > from ? 'advanced' : 'moved back'} {0} to level ${to}`, [t.def]]; });
   } else if (t.trk.kind === 'daynight') {
     const night = step === 2;
-    if (night === !!((c.tk | 0) & 1)) return;
-    act(() => { if (night) c.tk = 1; else delete c.tk; return [night ? 'changed it to night ☾' : 'changed it to day ☀']; });
+    if (night === !!c.fl) return;
+    act(() => { c.fl = night; return [night ? 'changed it to night ☾ (flipped the Day / Night card)' : 'changed it to day ☀ (flipped the Day / Night card)']; });
   } else {
     const bit = step === 2 ? 2 : 1, was = !!((c.tk | 0) & bit), name = (t.trk.names && t.trk.names[bit - 1]) || `door ${bit}`;
     act(() => { c.tk = (c.tk | 0) ^ bit; if (!c.tk) delete c.tk; return [`${was ? 'locked' : 'unlocked'} the door ${name} of {0}`, [t.def]]; });

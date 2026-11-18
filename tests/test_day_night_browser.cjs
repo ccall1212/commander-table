@@ -94,9 +94,14 @@ const mkDeck = who => ({
     await dad.evaluate(() => { CT.S.view = 'side'; CT.render(); });
     await dad.locator('#myBf .ctrack.daynight.mine .tstep[data-step="2"]').click();
     await waitChip(dad, '☾ Night'); await waitChip(son, '☾ Night');
-    assert.equal(await dad.evaluate(() => CT.S.me.zones.battlefield.find(c => c.id === 'ct-daynight').tk), 1, 'night is stored on the marker');
+    assert.equal(await dad.evaluate(() => !!CT.S.me.zones.battlefield.find(c => c.id === 'ct-daynight').fl), true, 'night is the flipped card');
+    const faceSrc = pg => pg.evaluate(() => { const el = [...document.querySelectorAll('.card')].find(x => x.querySelector('.ctrack.daynight')); const im = el && el.querySelector('img'); return im ? im.getAttribute('src') : ''; });
+    assert.match(await faceSrc(dad), /\/back\//, 'Dad sees the Night face');
+    assert.match(await faceSrc(son), /\/back\//, 'Son sees the Night face too');
     await dad.locator('#myBf .ctrack.daynight.mine .tstep[data-step="1"]').click();
     await waitChip(dad, '☀ Day'); await waitChip(son, '☀ Day');
+    assert.match(await faceSrc(dad), /\/front\//, 'the card is back on its Day face');
+    assert.match(await faceSrc(son), /\/front\//);
 
     // ---- 4. The log says what happened; the right-click menu can also change it. ----
     const log = await dad.evaluate(() => JSON.stringify(CT.S.table.log || CT.S.log || []));
