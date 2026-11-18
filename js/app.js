@@ -4098,7 +4098,7 @@ function toggleArrange() {
 function passBtn() {
   const T = S.table, started = !!(T && T.started && T.active), mine = started && T.active === S.pid;
   const blocked = started && !mine && S.role !== 'host' && S.role !== 'solo'; // only the host may pass another player's turn
-  return `<div class="ztool"><button data-a="pass" class="${mine ? 'primary' : ''}"${started && !blocked ? '' : ' disabled'} title="${blocked ? "Only the host can pass another player's turn" : 'Pass the turn to the next player'}">Pass turn ▶</button><button data-a="passmenu" class="pass-more" aria-label="More turn options" title="More turn options (take an extra turn)"${started && !blocked ? '' : ' disabled'}>▾</button></div>`;
+  return `<div class="ztool"><button data-a="pass" class="${mine ? 'primary' : ''}"${started && !blocked ? '' : ' disabled'} title="${blocked ? "Only the host can pass another player's turn" : 'Pass the turn to the next player'}">Pass turn ▶</button>${started ? `<button data-a="passmenu" class="pass-more" aria-label="More turn options" title="More turn options (take an extra turn)"${blocked ? ' disabled' : ''}>▾</button>` : ''}</div>`; // only once the game has started, so the pre-game top bar stays as narrow as before
 }
 function toggleFocus(pid) { S.focus = S.focus === pid ? null : pid; render(); }
 function showHotkeyList() {
