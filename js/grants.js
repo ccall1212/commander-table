@@ -9,7 +9,7 @@
   const ABILITIES = ['deathtouch', 'defender', 'double strike', 'first strike', 'flying', 'haste', 'hexproof', 'indestructible', 'lifelink', 'menace', 'reach', 'shroud', 'trample', 'vigilance'];
   const TYPES = ['artifact', 'enchantment', 'land', 'planeswalker'];
   const MAX_GRANTS = 4;
-  const LINE_RE = /^(?:[A-Z][\w'’ ]{1,24} — )?(Each |All |Other )?(.+?)(?: (you control|your opponents control|you don't control|an opponent controls|opponents control))?(?: with (.+?))? (?:have|has) (.+?)\.?$/i;
+  const LINE_RE = /^(?:[A-Z][\w'’ ]{1,24} — )?(Each |All |Other )?(.+?)(?: (you control|your opponents control|you don't control|an opponent controls|opponents control))?(?: with (.+?))? (?:(?:gets?) [+\-\u2212]?\d+\/[+\-\u2212]?\d+ and )?(?:have|has) (.+?)\.?$/i;
   const ATTACH_RE = /^(?:[A-Z][\w'’ ]{1,24} — )?(Equipped|Enchanted) creature (?:gets [^ ]+ and )?has (.+?)\.?$/i;
   const SCOPES = ['you', 'opp', 'all', 'attached'];
   const abilityList = text => {
@@ -43,7 +43,7 @@
     g.other = other;
     let noun = words.pop();
     if (!noun) return null;
-    if (/^creatures?$/i.test(noun) && words.length && /^[A-Z][a-z]+$/.test(words[words.length - 1]) && !['legendary', 'tapped', 'untapped', 'nontoken', 'nonlegendary', 'artifact', 'enchantment'].includes(words[words.length - 1].toLowerCase())) {
+    if (/^creatures?$/i.test(noun) && words.length && /^[A-Z][a-z]+$/.test(words[words.length - 1]) && !['legendary', 'tapped', 'untapped', 'nontoken', 'nonlegendary', 'artifact', 'enchantment', 'commander', 'creature'].includes(words[words.length - 1].toLowerCase())) {
       noun = words.pop(); // "Sliver creatures": the creature type
     }
     for (const wd of words.map(w => w.toLowerCase())) {
@@ -53,6 +53,8 @@
       else if (wd === 'untapped') g.filters.tapped = false;
       else if (wd === 'nontoken') g.filters.token = false;
       else if (wd === 'nonland') g.filters.notLand = true;
+      else if (wd === 'commander') g.filters.commander = true; // "Commander creatures you control have haste"
+      else if (wd === 'creature') g.filters.creature = true;   // "Creature tokens you control have haste"
       else if (TYPES.includes(wd)) g.filters.type = wd[0].toUpperCase() + wd.slice(1);
       else return null; // an adjective we do not understand: leave the line alone
     }
@@ -94,6 +96,7 @@
       if (typeof f.tribe === 'string' && /^[A-Za-z]{2,24}$/.test(f.tribe)) out.filters.tribe = f.tribe;
       ['legendary', 'tapped', 'token'].forEach(k => { if (typeof f[k] === 'boolean') out.filters[k] = f[k]; });
       if (f.notLand === true) out.filters.notLand = true;
+      if (f.commander === true) out.filters.commander = true;
       if (g.cond && typeof g.cond.counter === 'string' && /^(?:any|[A-Za-z+\-/0-9' ]{1,21})$/.test(g.cond.counter)) out.cond = { counter: g.cond.counter };
       out.abilities = (Array.isArray(g.abilities) ? g.abilities : []).filter(a => ABILITIES.includes(a)).slice(0, 6);
       return out.abilities.length ? out : null;
@@ -108,6 +111,7 @@
     if (f.type && !new RegExp('\\b' + f.type + '\\b').test(type)) return false;
     if (f.tribe) { const subs = String(type).split('—')[1] || ''; const have = subs.toLowerCase().split(/\s+/).filter(Boolean); if (!singular(f.tribe).some(t => have.includes(t))) return false; }
     if (f.notLand && /\bLand\b/.test(type)) return false;
+    if (f.commander && !c.cmd) return false;
     if (f.legendary === true && !/\bLegendary\b/.test(type)) return false;
     if (f.legendary === false && /\bLegendary\b/.test(type)) return false;
     if (f.token === true && !c.tok) return false;

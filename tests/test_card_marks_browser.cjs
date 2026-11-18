@@ -67,6 +67,7 @@ const mkDeck = who => ({
     const card = dad.locator('#myHand .card').first();
     await card.hover(); await dad.keyboard.press('b');
     await dad.waitForFunction(() => CT.S.me.zones.battlefield.length === 1);
+    await dad.evaluate(() => { CT.act(() => { CT.S.me.zones.battlefield.forEach(c => { c.st = (c.st || []).filter(x => x !== 'sick'); }); }, { noUndo: true }); });
     await dad.evaluate(() => { CT.S.view = 'side'; CT.render(); });
     const bf = dad.locator('#myBf .card[data-zone="battlefield"]').first();
     const ctxMenu = () => bf.dispatchEvent('contextmenu', { button: 2, clientX: 400, clientY: 300, bubbles: true });

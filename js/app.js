@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.79.0';
+const APP_VERSION = '0.80.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -59,6 +59,7 @@ const CARD_MARKS = [
   { id: 'exerted', kind: 'status', label: 'Exerted', tip: "Was exerted: it won't untap during your next untap step." },
   { id: 'saddled', kind: 'status', label: 'Saddled', tip: "A Mount that has been saddled until end of turn." },
   { id: 'unblockable', kind: 'status', label: 'Unblockable', tip: "Can't be blocked." },
+  { id: 'sick', kind: 'status', auto: true, label: 'Summoning sick', tip: "Just arrived or changed hands: it can't attack or use {T} abilities until your next turn begins, unless it has haste. It is added and cleared automatically, and is only shown while the creature is untapped and has no haste.", vb: '0 0 32 32', p: 'M3 13h15v3.2L9.6 24.8H18.5V28H3v-3.2L11.4 16.2H3zM19 3h9.5v2.6l-6 6.1H28.5V14.5H19v-2.6l6-6.1H19z' },
   { id: 'deathtouch', kind: 'ability', label: 'Deathtouch', tip: "Any damage this deals to a creature is enough to destroy it.", vb: '0 0 26 32', p: 'M14.628 0c1.741 0.678 3.785 1.508 4.362 3.481 0.536 2.049-2.12 3.076-2.11 5.040 1.199 0.83 2.525 1.452 3.815 2.125 1.604-1.381 0.678-3.517 0.84-5.333 1.503 1.422 3.532 2.454 4.326 4.478 0.597 1.619 0.374 3.395 0.471 5.090 0.167 4.174-0.653 8.546-3.142 11.987-1.786 2.596-4.721 4.048-7.651 4.959-1.386 0.218-2.823 0.238-4.205 0.015-2.267-0.673-4.519-1.614-6.29-3.218-3.668-3.051-5.146-8.066-5.014-12.7 0.051-2.155-0.152-4.367 0.395-6.477 0.754-2.282 3.056-3.4 4.731-4.923-0.445 1.614-1.528 3.102-1.381 4.832 0.025 1.154 1.128 1.771 1.847 2.495 0.521-2.024-0.162-4.493 1.493-6.087 1.72-1.902 4.696-1.098 6.745-2.434 0.88-0.865 0.627-2.221 0.769-3.329zM4.225 15.949c-0.002 0.049-0.050 0.085-0.031 0.131 0.861 2.103 0.58 4.604-0.025 6.892 1.275 1.533 3.299 1.29 5.070 1.128-0.283 1.386-1.569 2.94-0.349 4.215 0.324-0.248 0.972-0.754 1.295-1.007 0.633 0.572 1.275 1.144 1.928 1.705 0.369-0.673 0.734-1.346 1.113-2.009 0.455 0.663 0.891 1.346 1.326 2.029 0.541-0.511 1.083-1.027 1.624-1.538 0.815 0.405 2.087 1.201 2.261 0.16 0.166-0.994-0.166-2.153-0.995-3.248-0.061-0.081-0.060-0.192-0.086-0.287 1.872 0.233 3.901 0.228 5.202-1.361-0.964-1.816-0.675-4.676-0.051-6.503 0.025-0.073-0.038-0.148-0.061-0.22-0.961-2.955-2.686-4.090-5.13-5.244-4.751-2.343-11.289 0.142-13.090 5.156zM6.353 20.983c1.7 1.037 6.114 0.525 5.195-1.773-0.464-1.159-1.717-3.235-2.981-2.73-1.434 0.573-3.251 2.686-2.213 4.503zM11.117 25.403c0.754-0.309 1.497-0.918 2.181-1.374 0.729 0.541 1.41 0.957 2.159 1.473-0.349-1.746-0.629-3.213-1.656-4.703-1.056-1.533-2.379 2.894-2.683 4.604zM20.203 20.983c-1.7 1.037-6.114 0.525-5.195-1.773 0.464-1.159 1.717-3.235 2.981-2.73 1.433 0.573 3.251 2.686 2.213 4.503z' },
   { id: 'defender', kind: 'ability', label: 'Defender', tip: "Can't attack.", vb: '0 0 21 32', p: 'M20.741 1.653c0.004 1.097 0.005 2.194 0.009 3.292-1.315 0.605-1.732 1.91-1.831 3.251-5.682 0.016-11.359 0.010-17.036-0.005-0.073-1.372-0.496-2.666-1.873-3.204-0-1.111-0.004-2.222-0.009-3.333h2.919c0.134 0.979 0.241 1.961 0.352 2.942 0.788 0 1.576 0.005 2.369 0.005 0.005-0.982 0.009-1.965 0.019-2.947h3.33c0.095 0.974 0.167 1.95 0.24 2.926 0.824 0.005 1.649 0.010 2.473 0.010 0.032-0.979 0.056-1.958 0.096-2.937h3.333c0.035 0.982 0.067 1.965 0.108 2.947 0.845-0.005 1.696-0.021 2.546-0.042 0.022-0.969 0.042-1.937 0.082-2.905h2.872zM2.519 12.494c5.244-0.057 10.498-0.084 15.747 0.010 0.678-0.95 1.263-1.978 1.534-3.125-6.267 0-12.538 0.037-18.805 0.031 0.297 1.122 0.882 2.124 1.524 3.084zM3.62 13.402c-0.292 3.517-0.464 7.049-0.851 10.561-0.563 0.699-1.315 1.205-1.993 1.785 0 1.529 0.005 3.063 0 4.592 6.413 0.010 12.825 0.010 19.238 0.005 0.005-1.56 0.005-3.115-0.010-4.67-0.683-0.47-1.357-0.944-2.030-1.419-0.23-3.621-0.506-7.242-0.84-10.858-4.503-0.010-9.011-0.016-13.514 0.005z' },
   { id: 'double strike', kind: 'ability', label: 'Double strike', tip: "Deals both first-strike and regular combat damage.", vb: '0 0 28 32', p: 'M5.761 1.259c6.96-3.011 15.829-0.336 19.844 6.133 3.431 5.146 3.337 12.377-0.149 17.473-4.109 6.321-12.895 8.88-19.767 5.819 3.458 0.116 7.076-0.165 10.038-2.145 3.795-2.322 6.312-6.421 6.927-10.843 0.077-0.556 0.185-1.198 0.271-1.289 1.208-1.272 2.057-2.103 2.768-3.162 0.182-1.594 0.114-3.143-0.007-4.731-1.881-0.452-3.947-0.514-5.828-0.062-1.826-2.068-4.578-2.967-7.247-3.226-4.793-0.392-9.646 2.658-11.312 7.181-0.745 2.035-0.596 4.225-0.689 6.354-0.778-2.752-0.938-5.714 0.276-8.367 1.737-4.451 6.41-7.551 11.174-7.391 1.263 0.043 2.453 0.2 3.809 0.578 0.029 0.008 0.060 0.008 0.090 0.012-2.956-2.107-6.69-2.35-10.198-2.333zM13.73 18.574c-1.164-1.004-2.45-2.263-4.117-1.595 0.745 0.949 1.518 1.876 2.296 2.798-0.579 0.668-1.159 1.335-1.738 2.003-0.662 0.16-1.319 0.315-1.981 0.469 0.039 1.159 0.061 2.323 0.066 3.482 1.148-0.017 2.296 0.061 3.444-0.028 0.193-0.624 0.359-1.258 0.497-1.893 0.662-0.579 1.324-1.153 1.998-1.722 0.944 0.728 1.882 1.457 2.826 2.191 0.083-0.442 0.243-1.335 0.326-1.777-0.635-0.734-1.275-1.462-1.915-2.18 3.493-1.871 5.828-5.232 8.791-7.781 0.044-0.955 0.072-1.915 0.105-2.864-0.955 0.033-1.909 0.066-2.859 0.099-2.511 2.986-5.916 5.287-7.737 8.797zM6.553 16.95c-1.164-1.004-2.45-2.263-4.117-1.595 0.745 0.949 1.518 1.876 2.296 2.798-0.579 0.668-1.159 1.335-1.738 2.003-0.662 0.16-1.319 0.315-1.981 0.469 0.039 1.159 0.061 2.323 0.066 3.482 1.148-0.017 2.296 0.061 3.444-0.028 0.193-0.624 0.359-1.258 0.497-1.893 0.662-0.579 1.324-1.153 1.998-1.722 0.944 0.728 1.882 1.457 2.826 2.191 0.083-0.442 0.243-1.335 0.326-1.777-0.635-0.734-1.275-1.462-1.915-2.18 3.493-1.871 5.828-5.232 8.791-7.781 0.044-0.955 0.072-1.915 0.105-2.864-0.955 0.033-1.909 0.066-2.859 0.099-2.511 2.986-5.916 5.287-7.737 8.797z' },
@@ -106,7 +107,11 @@ function markEntries(c) {
   const perm = cleanMarks(c && c.st), temp = cleanMarks(c && c.ts).filter(id => !perm.includes(id));
   const gr = (c && Array.isArray(c.gr) ? c.gr : []).filter(g => g && CARD_MARK_BY_ID[g.id] && !perm.includes(g.id) && !temp.includes(g.id)).map(g => ({ id: g.id, temp: false, granted: true, from: g.from, by: g.by }));
   gr.sort((x, y) => CARD_MARKS.findIndex(m => m.id === x.id) - CARD_MARKS.findIndex(m => m.id === y.id)); // the same order on every screen
-  return perm.map(id => ({ id, temp: false })).concat(temp.map(id => ({ id, temp: true })), gr).slice(0, MAX_CARD_MARKS * 2);
+  // Summoning sickness only matters for an untapped creature without haste (printed or granted, permanent or temporary), so the icon is
+  // hidden otherwise; the status itself stays on the card until your turn begins, so it comes back if the creature untaps or loses haste.
+  const hasty = perm.includes('haste') || temp.includes('haste') || (c && Array.isArray(c.gr) && c.gr.some(g => g && g.id === 'haste'));
+  const shownPerm = (c && c.t) || hasty ? perm.filter(id => id !== 'sick') : perm;
+  return shownPerm.map(id => ({ id, temp: false })).concat(temp.map(id => ({ id, temp: true })), gr).slice(0, MAX_CARD_MARKS * 2);
 }
 const isWordMark = e => { const id = typeof e === 'string' ? e : e.id; return !CARD_MARK_BY_ID[id] || !CARD_MARK_BY_ID[id].p; };
 // Icons hang in a column just outside the card; word tags sit across the middle of the card.
@@ -881,12 +886,15 @@ function tableOp(op, from) {
       if (!live.length) return;
       const i = live.indexOf(T.active);
       if (i < 0) return;
-      const next = (i + 1) % live.length;
+      // An extra turn keeps the same player active and does not start a new round; the new turnSeq makes them untap/draw again.
+      const extra = op.extra === true;
+      const next = extra ? i : (i + 1) % live.length;
       T.active = live[next];
-      if (next === 0) T.turn++;
+      if (!extra && next === 0) T.turn++;
       T.turnSeq = expectedSeq + 1; T.phase = 3;
       if (S.targetArrows.length) broadcast({ t: 'arrows', arrows: [] });
-      sysLog(`Round ${T.turn}: ${pname(T.active)}'s turn${from !== T.active && from !== live[i] ? ` (passed by ${pname(from)})` : ''}`);
+      if (extra) sysLog(`${pname(T.active)} takes an extra turn${from !== T.active ? ` (given by ${pname(from)})` : ''}`);
+      else sysLog(`Round ${T.turn}: ${pname(T.active)}'s turn${from !== T.active && from !== live[i] ? ` (passed by ${pname(from)})` : ''}`);
       break;
     }
     case 'phase': T.phase = clamp(num(op.v), 0, PHASES.length - 1); break;
@@ -1776,6 +1784,7 @@ function afterTable() {
         m.zones.hand.push(card);
         bits.push('drew a card'); drew = 1;
       }
+      ((m.zones && m.zones.battlefield) || []).forEach(c => { if (c.st && c.st.includes('sick')) c.st = c.st.filter(id => id !== 'sick'); }); // summoning sickness ends when my turn begins
       if (typeof CTTracks !== 'undefined') { // each Saga gets a lore counter after the draw step, up to its last chapter
         let sagas = 0;
         m.zones.battlefield.forEach(c => {
@@ -1830,6 +1839,15 @@ function autoFirstLoreCounter(card) {
   const trk = CTTracks.describe(defOf(card));
   if (trk && trk.kind === 'saga') { card.c = card.c || {}; card.c.Lore = 1; }
 }
+// Summoning sickness (advisory only, it never blocks anything): a creature or Vehicle that enters the battlefield or comes under a new
+// controller gets the "sick" status. It is cleared when its controller's next turn begins (see afterTable). Lands and other
+// permanents are left alone because they would just add noise.
+const SICK_TYPE_RE = /\b(?:Creature|Vehicle)\b/;
+function autoSummoningSick(card) {
+  const d = defOf(card);
+  const type = card.fd ? 'Creature' : ((card.fl && d && d.backType) || (d && d.type) || '');
+  if (SICK_TYPE_RE.test(type)) card.st = cleanMarks((card.st || []).concat('sick'));
+}
 function insertCard(card, to, opts = {}) {
   if (to === 'battlefield' && !canEnterBattlefield()) return false;
   const z = S.me.zones[to];
@@ -1839,6 +1857,7 @@ function insertCard(card, to, opts = {}) {
     else if (card.x == null) { autoPlace(card, to); if (card.y != null && card.y + CH > boardVisibleBottom()) centerSpot(card); } // never leave it under the hand strip
   }
   if (to === 'battlefield' && !opts.noAuto) { autoMarkPrintedAbilities(card); autoFirstLoreCounter(card); }
+  if (to === 'battlefield') autoSummoningSick(card); // after the printed abilities (they are skipped on a card that already has a status); also when it arrives from another player
   if (to === 'battlefield') {
     const d = defOf(card);
     if (d && d.loyalty && !card.c.Loyalty && /Planeswalker/.test(d.type || '')) card.c.Loyalty = parseInt(d.loyalty, 10) || 0;
@@ -3613,7 +3632,7 @@ function showMarksDialog(iid, targets, temp) {
   const f0 = findCard(iid);
   if (!f0 || f0.zone !== 'battlefield') return;
   const d = defOf(f0.card);
-  const group = (title, kind) => `<fieldset class="mark-group"><legend>${title}</legend>${CARD_MARKS.filter(m => m.kind === kind).map(m =>
+  const group = (title, kind) => `<fieldset class="mark-group"><legend>${title}</legend>${CARD_MARKS.filter(m => m.kind === kind && !(temp && m.auto)).map(m =>
     `<label class="mark-row" title="${esc(m.tip)}"><input type="checkbox" data-mark="${esc(m.id)}"><span class="cmark ${m.kind}${m.p ? '' : ' word'} static">${markSvg(m)}</span>${m.p ? `<span>${esc(m.label)}</span>` : ''}</label>`).join('')}</fieldset>`;
   const dlg = UI.modal({
     title: (temp ? 'Temporary statuses & abilities' : 'Statuses & abilities') + (ids.length > 1 ? ` — ${ids.length} selected cards` : (d && !f0.card.fd ? ' — ' + dname(d) : '')), className: 'w-marks-dialog',
@@ -4079,7 +4098,7 @@ function toggleArrange() {
 function passBtn() {
   const T = S.table, started = !!(T && T.started && T.active), mine = started && T.active === S.pid;
   const blocked = started && !mine && S.role !== 'host' && S.role !== 'solo'; // only the host may pass another player's turn
-  return `<div class="ztool"><button data-a="pass" class="${mine ? 'primary' : ''}"${started && !blocked ? '' : ' disabled'} title="${blocked ? "Only the host can pass another player's turn" : 'Pass the turn to the next player'}">Pass turn ▶</button></div>`;
+  return `<div class="ztool"><button data-a="pass" class="${mine ? 'primary' : ''}"${started && !blocked ? '' : ' disabled'} title="${blocked ? "Only the host can pass another player's turn" : 'Pass the turn to the next player'}">Pass turn ▶</button>${started ? `<button data-a="passmenu" class="pass-more" aria-label="More turn options" title="More turn options (take an extra turn)"${blocked ? ' disabled' : ''}>▾</button>` : ''}</div>`; // only once the game has started, so the pre-game top bar stays as narrow as before
 }
 function toggleFocus(pid) { S.focus = S.focus === pid ? null : pid; render(); }
 function showHotkeyList() {
@@ -6122,6 +6141,7 @@ function onButton(a, btn, e) {
     case 'mull': mulligan(); break;
     case 'start': toHost({ t: 'op', op: { k: 'start' } }); break;
     case 'pass': passTurn(); break;
+    case 'passmenu': UI.menu(r.left, r.bottom + 4, [{ label: 'Take an extra turn', onClick: () => passTurn({ extra: true }) }]); break;
     case 'phase': toHost({ t: 'op', op: { k: 'phase', v: num(btn.dataset.i) } }); break;
     case 'dice': diceMenu(r.left, r.bottom + 4); break;
     case 'undo': undo(); break;
@@ -6207,17 +6227,18 @@ function concedeGame(clear = true) {
   if (clear) clearMyCards();
   toHost({ t: 'op', op: { k: 'concede' } });
 }
-async function passTurn() {
+async function passTurn(opts = {}) {
   const T = S.table; if (!T || !T.started || !T.active) return;
   if (T.active !== S.pid) {
     if (S.role !== 'host' && S.role !== 'solo') { // only the host may pass someone else's turn
       UI.toast(`It's ${pname(T.active)}'s turn. Only the host can pass it for them.`, { kind: 'warn' });
       return;
     }
-    if (!(await UI.confirm(`It's ${pname(T.active)}'s turn. Pass it for them?`, { okLabel: 'Pass their turn' }))) return;
+    const ask = opts.extra ? `It's ${pname(T.active)}'s turn. Give them an extra turn?` : `It's ${pname(T.active)}'s turn. Pass it for them?`;
+    if (!(await UI.confirm(ask, { okLabel: opts.extra ? 'Extra turn for them' : 'Pass their turn' }))) return;
   }
   const seq = Math.max(1, num(T.turnSeq, num(T.turn)));
-  toHost({ t: 'op', op: { k: 'pass', turn: seq, turnSeq: seq } });
+  toHost({ t: 'op', op: { k: 'pass', turn: seq, turnSeq: seq, extra: opts.extra === true } });
 }
 // Invite link = this page's address (works on GitHub Pages' /commander-table/ path,
 // a local HTTP preview and file://) + ?join=CODE. The bare room code still works as a fallback.
@@ -7522,7 +7543,7 @@ function boot() {
   if (sess) resume(sess); else showLobby();
 }
 // Expose a little for debugging from the console.
-window.CT = { S, act, render, dragState: () => drag, hostRecv, cleanTable, doMove, giveToExile, giveTopToExile, cardMenu, colorOf, clearTempOnTurnChange };
+window.CT = { S, act, render, dragState: () => drag, hostRecv, cleanTable, doMove, giveToExile, giveTopToExile, cardMenu, colorOf, clearTempOnTurnChange, giveControl, returnControl };
 // ---- stay on one version -----------------------------------------------------------------------
 // GitHub Pages lets browsers reuse cached files for 10 minutes. index.html links every file with ?v=<version>
 // (tools/bump-version.py), so a new page never pulls old files. If this script and the page that loaded it

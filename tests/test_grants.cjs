@@ -108,4 +108,18 @@ const both = { id: 'ec', face: 'Enchantment Creature', type: 'Enchantment Creatu
 mm = G.forBoards([board('A', [e('p', prot), e('c', both)])]); assert.equal(mm.size, 1, 'an Enchantment Creature is also an enchantment');
 mm = G.forBoards([board('A', [e('n', { id: 'np', face: 'Nonland Thing', type: 'Enchantment', oracle: 'Nonland permanents you control have shroud.' }), e('r', arti), e('l', land)])]);
 assert.deepEqual(Array.from(mm.keys()).sort(), ['A|n', 'A|r'], 'nonland permanents, including the card itself');
+// ---- Two more haste wordings (found in the pre-con decks): tokens, and an anthem that also gives an ability ----
+assert.equal(sc('Creature tokens you control have haste.'), 'you:haste', 'Brudiclad');
+assert.equal(sc('Commander creatures you control get +2/+2 and have haste.'), 'you:haste', 'Bloodsworn Steward');
+assert.equal(G.parse('Commander creatures you control get +2/+2 and have haste.')[0].filters.commander, true);
+assert.equal(G.parse('Commander creatures you control get +2/+2 and have haste.')[0].filters.tribe, undefined, '"Commander" is not a creature type');
+assert.equal(sc('Creatures you control get +1/+1 and have flying.'), 'you:flying', 'an anthem with a keyword');
+assert.equal(sc('Creatures you control get +1/+1.'), '', 'an anthem alone is still not a grant');
+const brud = { id: 'br', face: 'Test Brudiclad', type: 'Creature — Phyrexian', oracle: 'Creature tokens you control have haste.' };
+const steward = { id: 'st', face: 'Test Steward', type: 'Creature — Human', oracle: 'Commander creatures you control get +2/+2 and have haste.' };
+const soldier = { id: 'so', face: 'Soldier', type: 'Token Creature — Soldier', oracle: '' };
+mm = G.forBoards([board('A', [e('b', brud), e('t', soldier, { tok: 1 }), e('n', bear), e('tl', { id: 'tr', face: 'Treasure', type: 'Token Artifact — Treasure', oracle: '' }, { tok: 1 })])]);
+assert.deepEqual(Array.from(mm.keys()).sort(), ['A|t'], 'only creature TOKENS get it (not the card, not a normal creature, not a Treasure token)');
+mm = G.forBoards([board('A', [e('s', steward), e('c', bear, { cmd: 1 }), e('n', bear)])]);
+assert.deepEqual(Array.from(mm.keys()).sort(), ['A|c'], 'only the commander gets it');
 console.log('PASS grants: simple "you control … have …" lines are read; they apply by type, tribe, condition, other; anything else is left alone');
