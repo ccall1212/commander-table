@@ -54,7 +54,7 @@ Chris (2026-11-18): add summoning sickness to the table, as an icon in the statu
 
 ### 88. Keyword coverage in the Reminders panel and Zz on the card — Built, awaiting Chris's test (v0.81.0)
 
-Chris (2026-11-18): the Zz should sit ON the card like Suspected and Prepared, and the reminders were missing some keywords (Retrace was his example), so read all the pre-cons and fill the gaps. Built: Zz drawn on the card; 54 pre-con cards gain a reminder (named-ability triggers with punctuation, bulleted Siege modes, Auras/Equipment that grant a trigger, Mobilize, Graft, Umbra armor, Daybound/Nightbound, Cumulative upkeep with a cost, Mayhem). Retrace already listed while the card is in the graveyard (checked); still to learn exactly what Chris saw.
+Chris (2026-11-18): the Zz should sit ON the card like Suspected and Prepared, and the reminders were missing some keywords (Retrace was his example), so read all the pre-cons and fill the gaps. Built: Zz drawn on the card; 52 pre-con cards gain a reminder (named-ability triggers with punctuation, bulleted Siege modes, Auras/Equipment that grant a trigger, Mobilize, Graft, Umbra armor, Daybound/Nightbound, Cumulative upkeep with a cost, Mayhem). Retrace already listed while the card is in the graveyard (checked); still to learn exactly what Chris saw.
 
 ### Shipped recently (details in CHANGELOG.md)
 

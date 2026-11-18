@@ -16,6 +16,6 @@ To check this copy, extract the ZIP and double-click **index.html**. A practice 
 
 ## Assistant verification
 - 30 automatic unit tests pass, including new checks for each reminder form above.
-- I read every card of the 158 pre-cons (rules text from Scryfall) and compared old and new reminder results: 54 cards gain a reminder (list in the chat message).
+- I read every card of the 158 pre-cons (rules text from Scryfall) and compared old and new reminder results: 52 cards gain a reminder (list in the chat message).
 - Two-player Chromium tests for summoning sickness and reminders pass.
 - **Not tested:** real card images, touch, and the Grid layout.

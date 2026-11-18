@@ -9,7 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ## [0.81.0] - 2026-11-18
 
 ### Added
-- **More triggers in the Reminders panel,** found by reading every card in the 158 pre-con decks. Newly listed: named-ability triggers whose name has punctuation ("Bring it Down! —", "Allons-y! —", "ED-E My Love —"); the **Siege** modes and other bulleted modes ("• Khans — At the beginning of your upkeep…"); **Auras and Equipment that give a creature a trigger** ("Enchanted creature has "Whenever this creature attacks…""), placed by the trigger inside the quotes; and the keywords **Mobilize**, **Graft**, **Umbra armor**, **Daybound**, **Nightbound** and **Cumulative upkeep** with a cost. 54 cards in the pre-cons gain a reminder. Saga chapter lines stay with the Saga tracker.
+- **More triggers in the Reminders panel,** found by reading every card in the 158 pre-con decks. Newly listed: named-ability triggers whose name has punctuation ("Bring it Down! —", "Allons-y! —", "ED-E My Love —"); the **Siege** modes and other bulleted modes ("• Khans — At the beginning of your upkeep…"); **Auras and Equipment that give a creature a trigger** ("Enchanted creature has "Whenever this creature attacks…""), placed by the trigger inside the quotes; and the keywords **Mobilize**, **Graft**, **Umbra armor**, **Daybound**, **Nightbound** and **Cumulative upkeep** with a cost. 52 cards in the pre-cons gain a reminder. Saga chapter lines stay with the Saga tracker.
 - **Mayhem** is recognised as a "cast it from the graveyard" keyword even without its reminder text.
 
 ### Changed
