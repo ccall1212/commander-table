@@ -103,7 +103,7 @@ Goal: version 1.0 means the game is safe to share beyond friends, and what playe
 
 **Should have:** a short "relay is down" note for the owner and a known-limitations list in the guide.
 
-**After 1.0:** relay abuse protection, accessibility leftovers, the automation ideas (#55, #58, #62–65), #4 and #45. New-player help (links to Moxfield and Archidekt, ready-made decks) is wanted but is not a 1.0 blocker.
+**After 1.0:** relay abuse protection, accessibility leftovers, the automation ideas (#55, #58, #62–65), #4 and #45. New-player help (links to Moxfield and Archidekt, pre-con decks) is built (#86) and is not a 1.0 blocker.
 
 ## Paused and on hold
 
