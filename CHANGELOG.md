@@ -6,6 +6,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.81.0] - 2026-11-18
+
+### Added
+- **More triggers in the Reminders panel,** found by reading every card in the 158 pre-con decks. Newly listed: named-ability triggers whose name has punctuation ("Bring it Down! —", "Allons-y! —", "ED-E My Love —"); the **Siege** modes and other bulleted modes ("• Khans — At the beginning of your upkeep…"); **Auras and Equipment that give a creature a trigger** ("Enchanted creature has "Whenever this creature attacks…""), placed by the trigger inside the quotes; and the keywords **Mobilize**, **Graft**, **Umbra armor**, **Daybound**, **Nightbound** and **Cumulative upkeep** with a cost. 54 cards in the pre-cons gain a reminder. Saga chapter lines stay with the Saga tracker.
+- **Mayhem** is recognised as a "cast it from the graveyard" keyword even without its reminder text.
+
+### Changed
+- The **Summoning sick** Zz icon now sits on the card, in the middle where Suspected and Prepared sit, instead of hanging outside it. The other ability icons still hang outside.
+
 ## [0.80.0] - 2026-11-18
 
 ### Added
@@ -447,7 +456,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.80.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.81.0...HEAD
+[0.81.0]: https://github.com/ccall1212/commander-table/compare/v0.80.0...v0.81.0
 [0.80.0]: https://github.com/ccall1212/commander-table/compare/v0.79.0...v0.80.0
 [0.79.0]: https://github.com/ccall1212/commander-table/compare/v0.78.2...v0.79.0
 [0.78.2]: https://github.com/ccall1212/commander-table/compare/v0.78.1...v0.78.2

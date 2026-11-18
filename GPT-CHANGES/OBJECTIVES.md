@@ -52,7 +52,13 @@ Chris (2026-11-18): help new players start without hunting for a deck. Chosen: l
 
 Chris (2026-11-18): add summoning sickness to the table, as an icon in the statuses, if the research shows it is workable. Research (Comprehensive Rules of 2026-11-06, rule 302.6 and haste 702.10, plus a check of 6,064 distinct pre-con cards) found: sickness lasts until the controller's next turn begins; it applies to the permanent (Vehicles, animated lands) not just creatures; haste ignores it; a control change restarts it. Chosen design: advisory only (never blocks), a **Zz** status added when a creature or Vehicle enters or changes controller and cleared when its controller's next turn begins; the icon is hidden while tapped or hasty (printed, temporary, granted); lands never marked; manual tick/untick in Statuses & abilities. Defaults used where Chris did not choose: visible to everyone, no on/off setting. Not handled: extra turns (the game has none), one-turn "gains haste until end of turn" effects (use Temporary haste or untick), conditional haste, and "can attack as though it had haste" (no pre-con card uses it).
 
+### 88. Keyword coverage in the Reminders panel and Zz on the card — Built, awaiting Chris's test (v0.81.0)
+
+Chris (2026-11-18): the Zz should sit ON the card like Suspected and Prepared, and the reminders were missing some keywords (Retrace was his example), so read all the pre-cons and fill the gaps. Built: Zz drawn on the card; 54 pre-con cards gain a reminder (named-ability triggers with punctuation, bulleted Siege modes, Auras/Equipment that grant a trigger, Mobilize, Graft, Umbra armor, Daybound/Nightbound, Cumulative upkeep with a cost, Mayhem). Retrace already listed while the card is in the graveyard (checked); still to learn exactly what Chris saw.
+
 ### Shipped recently (details in CHANGELOG.md)
+
+- #87 Summoning sickness icon and Take an extra turn — v0.80.0.
 
 - #86 Pre-con decks (158, grouped, no duplicates) and links to Moxfield and Archidekt — v0.79.0.
 - #48 All ten play-area backgrounds redrawn — v0.78.2.

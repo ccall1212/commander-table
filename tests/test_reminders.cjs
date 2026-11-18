@@ -102,6 +102,26 @@ assert.deepEqual(plain(R.cleanList('nope')), []);
   assert.equal(ph('Creature spells you cast cost {1} less to cast.'), 'static', 'a cost change has no time');
   assert.equal(ph('If one or more +1/+1 counters would be put on a creature you control, that many plus one are put on it instead.'), 'static');
   assert.equal(ph('You may play lands from the top of your library.'), 'static');
+  // Wider coverage found by reading every pre-con card (v0.81.0).
+  const mine = l => R.triggerLines(l, true);
+  assert.equal(mine('• Khans — At the beginning of your upkeep, exile the top card of your library.').length, 1, 'a Siege mode with a bullet is listed');
+  assert.equal(ph('• Khans — At the beginning of your upkeep, exile the top card.'), 'upkeep', 'and placed by its trigger');
+  assert.equal(mine('Bring it Down! — Whenever this creature attacks, creatures you control gain deathtouch until end of turn.').length, 1, 'ability words may carry punctuation');
+  assert.equal(mine('ED-E My Love — Whenever you attack, put a quest counter on ED-E.').length, 1);
+  assert.equal(mine('I. AM. TALKING! — Whenever The Eleventh Doctor deals combat damage to a player, you may exile a card.').length, 1);
+  assert.equal(mine('II, III — Whenever you cast a spell this turn, put a counter.').length, 0, 'Saga chapters stay with the Saga tracker');
+  assert.equal(mine('Enchanted creature gets +2/+2 and has "Whenever this creature attacks, untap all lands you control."').length, 1, 'an Aura that gives a trigger');
+  assert.equal(ph('Enchanted creature gets +2/+2 and has "Whenever this creature attacks, untap all lands you control."'), 'combat', 'placed by the trigger inside the quotes');
+  assert.equal(mine('Equipped creature has trample and "Whenever this creature deals combat damage to a player, draw a card."').length, 1, 'Equipment too');
+  assert.equal(mine('Enchanted creature gets +2/+2 and has flying.').length, 0, 'a plain bonus is not a reminder');
+  assert.equal(R.triggerLines('Enchanted creature has "Whenever this creature attacks, draw a card."', false).length, 0, 'an opponent\'s Aura is only shown when it can affect me');
+  assert.equal(mine('Mobilize 1 (Whenever this creature attacks, create a tapped and attacking 1/1 red Warrior creature token. Sacrifice it at the beginning of the next end step.)').length, 1);
+  assert.equal(ph('Mobilize 1 (Whenever this creature attacks, create a tapped and attacking 1/1 red Warrior creature token. Sacrifice it at the beginning of the next end step.)'), 'combat', 'a keyword is placed by the first condition in its reminder');
+  assert.ok(/^Umbra armor \(If enchanted creature would be destroyed/.test(mine('Umbra armor')[0]), 'a bare keyword gets the standard reminder');
+  assert.ok(/^Daybound \(/.test(mine('Daybound')[0]) && /^Nightbound \(/.test(mine('Nightbound')[0]));
+  assert.ok(/^Cumulative upkeep/.test(mine("Cumulative upkeep—Flip a coin. (At the beginning of your upkeep, put an age counter on this permanent.)")[0]), 'cumulative upkeep with a cost after the dash');
+  assert.equal(R.zoneLines('Retrace (You may cast this card from your graveyard by discarding a land card in addition to paying its other costs.)', 'graveyard').length, 1, 'Retrace is listed while the card is in the graveyard');
+  assert.equal(R.zoneLines('Mayhem {4}{R}', 'graveyard').length, 1, 'Mayhem without its reminder text too');
   assert.equal(R.PHASES.map(p => p.key).join(), 'upkeep,draw,main,begincombat,combat,damage,main2,end,cast,event,play,static', 'sections follow the turn');
   assert.equal(R.sortKey('At the beginning of combat on your turn, put a counter.'), 'at the beginning of combat on your turn', 'lines are sorted by their condition, so alike wording ends up side by side');
 }
