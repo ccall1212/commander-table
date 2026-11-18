@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.78.2';
+const APP_VERSION = '0.79.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -6944,6 +6944,7 @@ function showLobby() {
   renderAppearancePickers();
   selDeck = LS.get('ct.selDeck', null);
   renderDeckList();
+  renderReadyDecks();
   $('#netWarn').classList.toggle('hidden', typeof Peer !== 'undefined');
   const inv = (new URLSearchParams(location.search).get('join') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
   const ib = $('#inviteBox');
@@ -6980,6 +6981,61 @@ function renderDeckList() {
       <input type="radio" name="deck" aria-label="${esc(d.name)}" ${d.id === selDeck ? 'checked' : ''}>
       <span class="dn">${esc(d.name)}</span><span class="dc">${esc(d.commanderNames.join(' + ') || 'no commander')} · ${d.count} cards</span>
       <button class="x" data-del="${esc(d.id)}" title="Delete deck">✕</button></div>`).join('');
+  renderReadyDecks(); // the ✓ marks follow what is saved
+}
+// ---- Pre-con decks (js/precons.js) --------------------------------------------------------------------------------------
+// The dropdown lists the pre-con decks grouped by set and year ("Final Fantasy: 2025"). Choosing one puts a complete deck into the
+// player's saved decks through the normal importer, so it behaves like any imported deck. A saved pre-con deck remembers which one it
+// is in its source ("precon:<id>"), so picking it again selects the saved copy instead of making a second one.
+const readyDecks = () => (typeof CTPrecons !== 'undefined' && Array.isArray(CTPrecons) ? CTPrecons : []);
+const readySource = p => 'precon:' + p.id;
+const savedReadySources = () => new Set(Deck.list().map(d => (Deck.get(d.id) || {}).source));
+let readyBusy = false;
+function renderReadyDecks() {
+  const box = $('#readyDecks'); if (!box) return;
+  const list = readyDecks();
+  box.classList.toggle('hidden', !list.length);
+  $('#readySurprise').classList.toggle('hidden', list.length < 2);
+  const have = savedReadySources(), groups = new Map();
+  list.forEach(p => { const g = p.group || 'More decks'; if (!groups.has(g)) groups.set(g, []); groups.get(g).push(p); });
+  const pick = $('#readyDeckSelect');
+  pick.innerHTML = '<option value="">Choose a pre-con deck…</option>' + [...groups].map(([g, items]) =>
+    `<optgroup label="${esc(g)}">${items.map(p => `<option value="${esc(p.id)}">${have.has(readySource(p)) ? '✓ ' : ''}${esc(p.name)}</option>`).join('')}</optgroup>`).join('');
+  pick.value = '';
+  box.querySelectorAll('button, select').forEach(b => { b.disabled = readyBusy; });
+}
+async function addReadyDeck(id) {
+  const p = readyDecks().find(x => x.id === id);
+  if (!p || readyBusy) return;
+  const have = Deck.list().map(d => Deck.get(d.id)).find(d => d && d.source === readySource(p));
+  if (have) { // already added: just select it instead of making a second copy
+    selDeck = have.id; LS.set('ct.selDeck', selDeck); renderDeckList();
+    UI.toast(`“${p.name}” is already in your decks, so it is selected.`);
+    return;
+  }
+  readyBusy = true; renderReadyDecks();
+  const status = $('#readyStatus');
+  try {
+    status.textContent = 'Looking up cards…';
+    const res = await Deck.resolve(Deck.parse(p.text), (done, total, msg) => { status.textContent = msg || `Looking up cards… ${done}/${total}`; });
+    if (!res.commanders.length) throw new Error('Could not find this deck\'s commander. Please try again in a moment.');
+    const saved = Deck.save({ name: p.name, commanders: res.commanders, cards: res.cards.map(c => ({ def: c.def, qty: c.qty })), tokens: res.tokens || [], source: readySource(p) });
+    selDeck = saved.id; LS.set('ct.selDeck', selDeck);
+    renderDeckList();
+    if (res.notFound.length) UI.toast(`Added “${p.name}”, but ${plural(res.notFound.length, 'card')} could not be found: ${res.notFound.slice(0, 5).join(', ')}${res.notFound.length > 5 ? '…' : ''}`, { kind: 'warn', ms: 9000 });
+    else UI.toast(`Added “${p.name}”. It is selected and ready to play.`);
+  } catch (e) {
+    UI.toast(e && e.message ? e.message : 'Card lookup failed', { kind: 'error' });
+  } finally {
+    readyBusy = false; status.textContent = ''; renderReadyDecks();
+  }
+}
+// "Surprise me": a random deck, preferring ones you have not added yet.
+function surpriseReadyDeck() {
+  const list = readyDecks(); if (!list.length) return;
+  const have = savedReadySources(), fresh = list.filter(p => !have.has(readySource(p)));
+  const pool = fresh.length ? fresh : list;
+  addReadyDeck(pool[Math.floor(Math.random() * pool.length)].id);
 }
 function bindLobby() {
   $('#ver').textContent = APP_VERSION;
@@ -7023,6 +7079,8 @@ function bindLobby() {
   $('#importBtn').onclick = () => { $('#importBox').classList.remove('hidden'); $('#importBtn').classList.add('hidden'); $('#deckText').focus(); };
   $('#cancelImport').onclick = closeImport;
   $('#loadDeck').onclick = loadDeck;
+  $('#readyDeckSelect').addEventListener('change', e => { const id = e.target.value; e.target.value = ''; if (id) addReadyDeck(id); });
+  $('#readySurprise').onclick = surpriseReadyDeck;
   $('#nameIn').addEventListener('change', () => LS.set('ct.name', $('#nameIn').value.trim()));
   let hostStartPending = false;
   $('#hostBtn').onclick = async () => {
