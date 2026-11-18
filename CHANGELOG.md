@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.82.0] - 2026-11-18
+
+### Added
+- **Day / Night marker** for Daybound / Nightbound cards (werewolves). Open the **☰ menu → Start Day / Night marker**: a small "Day / Night" token appears on **your** battlefield with a ☀ and a ☾ button, and you are the one who keeps it up to date (right-click it, or click the sun or moon). Everyone at the table sees a small **☀ Day / ☾ Night** chip next to the round number while the marker exists; the chip is not there otherwise. Other players can see the marker but not change it, and nobody can start a second one while it exists. The keeper can remove it (☰ menu → Day / Night marker → Remove) so someone else can take over; the log records every change. When a Daybound or Nightbound permanent enters and nobody keeps a marker, a notice offers to start it (once per game).
+
 ## [0.81.0] - 2026-11-18
 
 ### Added
@@ -456,7 +461,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.81.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.82.0...HEAD
+[0.82.0]: https://github.com/ccall1212/commander-table/compare/v0.81.0...v0.82.0
 [0.81.0]: https://github.com/ccall1212/commander-table/compare/v0.80.0...v0.81.0
 [0.80.0]: https://github.com/ccall1212/commander-table/compare/v0.79.0...v0.80.0
 [0.79.0]: https://github.com/ccall1212/commander-table/compare/v0.78.2...v0.79.0

@@ -1,4 +1,4 @@
-/* tracks.js — step trackers for cards that go through stages: Sagas (chapters I, II, III…), Classes (levels), Rooms (two doors).
+/* tracks.js — step trackers for cards that go through stages: Sagas (chapters I, II, III…), Classes (levels), Rooms (two doors), and the Day / Night marker (a token with a sun and a moon).
  * Pure helpers, no page needed. A Saga's progress is its lore counters, so effects that move counters (Tidus, Yuna's Guardian) work.
  * describe() reads the card's rules text/type/name; a published card definition carries the result in `trk` because other players'
  * definitions do not include the rules text. */
@@ -40,7 +40,7 @@
     return null;
   }
   function clean(t) {
-    const kind = ['saga', 'class', 'room'].includes(t.kind) ? t.kind : null;
+    const kind = ['saga', 'class', 'room', 'daynight'].includes(t.kind) ? t.kind : null;
     const labels = Array.isArray(t.labels) ? t.labels.slice(0, MAX_STEPS).map(x => String(x).slice(0, 6)) : [];
     if (!kind || !labels.length) return null;
     const out = { kind, labels };
@@ -53,8 +53,11 @@
     const n = trk.labels.length;
     if (trk.kind === 'saga') { const lore = Math.max(0, Math.min(n, Math.round(+((card && card.c && card.c.Lore) || 0)))); return { on: trk.labels.map((_, i) => i < lore), cur: lore - 1 }; }
     if (trk.kind === 'class') { const lvl = Math.max(1, Math.min(n, Math.round(+(card && card.tk) || 1))); return { on: trk.labels.map((_, i) => i < lvl), cur: lvl - 1 }; }
+    if (trk.kind === 'daynight') { const night = !!(((card && card.tk) | 0) & 1); return { on: [!night, night], cur: night ? 1 : 0 }; } // tk bit 1 = night
     const bits = (card && card.tk) | 0;
     return { on: [!!(bits & 1), !!(bits & 2)], cur: -1 };
   }
-  window.CTTracks = { chapters, chapterLines, describe, state, MAX_STEPS };
+  // The Day / Night marker's definition: an ordinary token card whose tracker has two buttons. Day is the starting side (rule 702.145d).
+  const DAYNIGHT_DEF = { id: 'ct-daynight', name: 'Day / Night', face: 'Day / Night', type: 'Token — Day/Night', oracle: 'Shows whether it is day or night for the whole table. Only the player who keeps this marker can click the sun or the moon.', mana: '', img: '', tokens: [], ci: [], trk: { kind: 'daynight', labels: ['☀', '☾'] } };
+  window.CTTracks = { chapters, chapterLines, describe, state, DAYNIGHT_DEF, MAX_STEPS };
 }());

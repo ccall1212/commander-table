@@ -1642,3 +1642,9 @@ body.me-out #myBf .board { filter: grayscale(.9) brightness(.45); }
 .ready-decks h3 { margin: 0 0 4px; font-size: 13px; color: var(--muted); letter-spacing: .35px; text-transform: uppercase; }
 .ready-decks select { max-width: 100%; min-width: 0; }
 .find-decks { margin: 12px 0 0; }
+
+/* Day / Night chip beside the round number (only while somebody keeps the Day / Night marker) */
+.ct-daynight { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; border: 1px solid; }
+.ct-daynight.day { color: #ffd36b; border-color: rgba(255, 211, 107, .6); background: rgba(255, 211, 107, .12); }
+.ct-daynight.night { color: #aab8ff; border-color: rgba(170, 184, 255, .55); background: rgba(120, 140, 255, .14); }
+.ctrack.daynight .tstep { min-width: max(16px, calc(var(--cw, 80px) * .16)); height: max(16px, calc(var(--cw, 80px) * .16)); font-size: max(10px, calc(var(--cw, 80px) * .12)); }
