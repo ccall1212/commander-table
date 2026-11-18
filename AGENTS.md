@@ -85,6 +85,7 @@ The normal flow for game changes is:
 | `css/style.css`, `css/widgets.css` | Styles (dark theme, CSS variables) |
 | `js/widgets.js` | `UI.menu / toast / modal / confirm / prompt / viewer` helpers |
 | `js/net.js`, `js/relay-peer.js` | Networking session layer + relay transport |
+| `js/precons.js` | **Generated** list of Commander pre-con decks (start screen dropdown). Don't edit by hand: run `python tools/build-precons.py` (needs internet; about a minute) when a new Commander product is released, then run `node tests/test_precons.cjs`. Data is from MTGJSON (MIT license; the notice is kept in the file's header and in the guide's Credits). It removes duplicate lists (Collector's Edition versions, reprints) and keeps 2016 and newer |
 | `js/lens.js` | Magnifier (hold V) |
 | `js/net-config.js` | Relay URL (public, not a secret) |
 | `tools/bump-version.py` | Sets the version everywhere in one step |
