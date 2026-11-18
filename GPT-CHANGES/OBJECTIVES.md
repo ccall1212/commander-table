@@ -56,7 +56,13 @@ Chris (2026-11-18): add summoning sickness to the table, as an icon in the statu
 
 Chris (2026-11-18): the Zz should sit ON the card like Suspected and Prepared, and the reminders were missing some keywords (Retrace was his example), so read all the pre-cons and fill the gaps. Built: Zz drawn on the card; 52 pre-con cards gain a reminder (named-ability triggers with punctuation, bulleted Siege modes, Auras/Equipment that grant a trigger, Mobilize, Graft, Umbra armor, Daybound/Nightbound, Cumulative upkeep with a cost, Mayhem). Retrace already listed while the card is in the graveyard (checked); still to learn exactly what Chris saw.
 
+### 89. Day / Night marker — Built, awaiting Chris's test (v0.82.0)
+
+Chris (2026-11-18): werewolf decks need day and night. Decision: the player who plays the starting card keeps the marker and controls it, but everyone can see day or night. Built: the real Day // Night card (Midnight Hunt token, Day front and Night back; ☀ / ☾ buttons like the Saga dots flip it) started from the ☰ menu or from an offer when a Daybound/Nightbound card enters; a chip beside the round number shows the state to everyone while the marker exists; only the keeper can change or remove it; removing lets someone else start one. Also built: a quiet wolf howl (night) and rooster (day) when the card flips, from files Chris supplied, with a per-player off switch. Not built (ideas): a faint warm/cool board tint (Friend 2), spell counting to suggest the turn-start change.
+
 ### Shipped recently (details in CHANGELOG.md)
+
+- #88 Zz on the card and more reminders from the pre-cons — v0.81.0.
 
 - #87 Summoning sickness icon and Take an extra turn — v0.80.0.
 

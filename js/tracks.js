@@ -1,4 +1,4 @@
-/* tracks.js — step trackers for cards that go through stages: Sagas (chapters I, II, III…), Classes (levels), Rooms (two doors).
+/* tracks.js — step trackers for cards that go through stages: Sagas (chapters I, II, III…), Classes (levels), Rooms (two doors), and the Day / Night marker (a token with a sun and a moon).
  * Pure helpers, no page needed. A Saga's progress is its lore counters, so effects that move counters (Tidus, Yuna's Guardian) work.
  * describe() reads the card's rules text/type/name; a published card definition carries the result in `trk` because other players'
  * definitions do not include the rules text. */
@@ -40,7 +40,7 @@
     return null;
   }
   function clean(t) {
-    const kind = ['saga', 'class', 'room'].includes(t.kind) ? t.kind : null;
+    const kind = ['saga', 'class', 'room', 'daynight'].includes(t.kind) ? t.kind : null;
     const labels = Array.isArray(t.labels) ? t.labels.slice(0, MAX_STEPS).map(x => String(x).slice(0, 6)) : [];
     if (!kind || !labels.length) return null;
     const out = { kind, labels };
@@ -53,8 +53,15 @@
     const n = trk.labels.length;
     if (trk.kind === 'saga') { const lore = Math.max(0, Math.min(n, Math.round(+((card && card.c && card.c.Lore) || 0)))); return { on: trk.labels.map((_, i) => i < lore), cur: lore - 1 }; }
     if (trk.kind === 'class') { const lvl = Math.max(1, Math.min(n, Math.round(+(card && card.tk) || 1))); return { on: trk.labels.map((_, i) => i < lvl), cur: lvl - 1 }; }
+    if (trk.kind === 'daynight') { const night = !!(card && card.fl); return { on: [!night, night], cur: night ? 1 : 0 }; } // the marker is a double-faced card: Day on the front, Night on the back (flipped)
     const bits = (card && card.tk) | 0;
     return { on: [!!(bits & 1), !!(bits & 2)], cur: -1 };
   }
-  window.CTTracks = { chapters, chapterLines, describe, state, MAX_STEPS };
+  // The Day / Night marker's definition: an ordinary token card whose tracker has two buttons. Day is the starting side (rule 702.145d).
+  // The real Day // Night card (Midnight Hunt token): flipping it (or clicking the sun / moon on it) switches between the two faces.
+  const FRONT = 'https://cards.scryfall.io/normal/front/9/c/9c0f7843-4cbb-4d0f-8887-ec823a9238da.jpg', BACK = 'https://cards.scryfall.io/normal/back/9/c/9c0f7843-4cbb-4d0f-8887-ec823a9238da.jpg';
+  const DAYNIGHT_DEF = { id: 'ct-daynight', name: 'Day // Night', face: 'Day', backName: 'Night', type: 'Card', backType: 'Card', mana: '', cmc: 0, pt: null,
+    oracle: '(If it becomes day or night or if a daybound permanent enters the battlefield, track day/night for the rest of the game.)\nAs it becomes day, transform all nightbound permanents.\nIf a player casts no spells during their own turn, it becomes night next turn.\n—\nAs it becomes night, transform all daybound permanents.\nPermanents enter the battlefield nightbound.\nIf a player casts at least two spells during their own turn, it becomes day next turn.',
+    img: FRONT, imgBack: BACK, tokens: [], ci: [], trk: { kind: 'daynight', labels: ['☀', '☾'] } };
+  window.CTTracks = { chapters, chapterLines, describe, state, DAYNIGHT_DEF, MAX_STEPS };
 }());

@@ -38,4 +38,12 @@ assert.equal(T.state(cls, {}).on.join(), 'true,false,false', 'a Class starts at 
 assert.equal(T.state(cls, { tk: 2 }).cur, 1);
 assert.equal(T.state(room, { tk: 2 }).on.join(), 'false,true');
 assert.equal(T.state(room, { tk: 3 }).on.join(), 'true,true');
-console.log('PASS tracks: Saga chapters, Class levels and Room doors are read, and lit dots follow lore counters / level / doors');
+// Day / Night marker (v0.82.0): the Day // Night card; its tracker has a sun (day, the start) and a moon (night = the card flipped).
+const dn = T.describe(T.DAYNIGHT_DEF);
+assert.equal(dn.kind, 'daynight'); assert.equal(dn.labels.join(), '\u2600,\u263e');
+assert.equal(T.state(dn, {}).cur, 0, 'it starts as day'); assert.equal(T.state(dn, {}).on.join(), 'true,false');
+assert.equal(T.state(dn, { fl: true }).cur, 1, 'night is the flipped card'); assert.equal(T.state(dn, { fl: true }).on.join(), 'false,true');
+assert.ok(T.DAYNIGHT_DEF.img && T.DAYNIGHT_DEF.imgBack && T.DAYNIGHT_DEF.backName === 'Night', 'it is a two-faced card with Day and Night art');
+assert.equal(T.describe({ trk: { kind: 'daynight', labels: ['a', 'b'] } }).kind, 'daynight', 'a published marker is understood by other players');
+assert.equal(T.describe({ trk: { kind: 'nonsense', labels: ['a'] } }), null, 'unknown kinds are still refused');
+console.log('PASS tracks: Saga chapters, Class levels, Room doors and the Day / Night marker are read, and lit dots follow lore counters / level / doors');

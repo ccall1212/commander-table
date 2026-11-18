@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.81.0';
+const APP_VERSION = '0.82.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -1858,6 +1858,7 @@ function insertCard(card, to, opts = {}) {
     else if (card.x == null) { autoPlace(card, to); if (card.y != null && card.y + CH > boardVisibleBottom()) centerSpot(card); } // never leave it under the hand strip
   }
   if (to === 'battlefield' && !opts.noAuto) { autoMarkPrintedAbilities(card); autoFirstLoreCounter(card); }
+  if (to === 'battlefield') offerDayNight(card);
   if (to === 'battlefield') autoSummoningSick(card); // after the printed abilities (they are skipped on a card that already has a status); also when it arrives from another player
   if (to === 'battlefield') {
     const d = defOf(card);
@@ -3402,7 +3403,7 @@ function cardMenu(x, y, iid) {
   if (!c.fd && d.name) items.push({ label: 'Switch printing…', onClick: () => switchPrinting(iid) });
   const moves = MOVE_ACTIONS.filter(a => a.key !== z && !(z === 'battlefield' && a.key === 'bftapped'));
   items.push({ label: 'Move to', sub: moves.map(a => ({ label: a.label, hint: moveHotkey(a.key), onClick: () => runMove(a.key, iid) })) });
-  if (c.tok) items.push({ label: c.cp ? 'Remove copy' : 'Remove token', danger: true, onClick: () => doMove(iid, 'graveyard') });
+  if (c.tok && c.id !== 'ct-daynight') items.push({ label: c.cp ? 'Remove copy' : 'Remove token', danger: true, onClick: () => doMove(iid, 'graveyard') });
   UI.menu(x, y, items);
 }
 // ---- Private reveals: show my hand, or chosen cards, to ONE other player -----------------------------------------
@@ -3677,6 +3678,56 @@ function showMarksDialog(iid, targets, temp) {
   input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addCustom(); } });
   sync();
 }
+// ---- Day / Night marker ---------------------------------------------------------------------------------------------------
+// One player (whoever played the card that starts it) keeps a "Day / Night" marker on their battlefield and clicks its sun or moon.
+// Everyone sees the result in a small chip next to the round number. The marker is an ordinary token, so nothing here is table state.
+function dayNightMarker() {
+  const find = (pid, zones, defs) => {
+    const c = ((zones && zones.battlefield) || []).find(x => x && !x.fd && defs && defs[x.id] && defs[x.id].trk && defs[x.id].trk.kind === 'daynight');
+    return c ? { pid, iid: c.iid, night: !!c.fl, mine: pid === S.pid } : null;
+  };
+  const mine = S.me && find(S.pid, S.me.zones, S.me.defs);
+  if (mine) return mine;
+  for (const pid of ((S.table && S.table.seats) || [])) {
+    if (pid === S.pid || !S.players[pid]) continue;
+    const found = find(pid, S.players[pid].zones, S.players[pid].defs);
+    if (found) return found;
+  }
+  return null;
+}
+// A short sound for everyone when the card changes side: a wolf howl at night, a rooster at day. Both files are turned down (about -26 LUFS)
+// and played at 60%, so they are a gentle cue, not a jolt. Nothing plays when the marker first appears or disappears, and each player can switch it off.
+const DAYNIGHT_SOUNDS = { night: 'assets/sounds/night-wolf.mp3', day: 'assets/sounds/day-rooster.mp3' };
+const daynightSoundOn = () => LS.get('ct.dayNightSound', true) !== false;
+function playDayNightSound(night) {
+  if (!daynightSoundOn()) return;
+  try { const a = new Audio(DAYNIGHT_SOUNDS[night ? 'night' : 'day'] + '?v=' + APP_VERSION); a.volume = 0.6; const p = a.play(); if (p && p.catch) p.catch(() => {}); } catch (e) { /* no audio available: stay silent */ }
+}
+function noteDayNight() { // called on every render: plays when the card's side differs from the last one this player saw
+  const dn = dayNightMarker(), now = dn ? (dn.night ? 'night' : 'day') : null;
+  if (S.dnSeen && now && S.dnSeen !== now) playDayNightSound(now === 'night');
+  S.dnSeen = now;
+}
+function startDayNight() {
+  if (!canEnterBattlefield()) { UI.toast('The battlefield opens when the host starts the game.', { kind: 'warn' }); return false; }
+  const dn = dayNightMarker();
+  if (dn) { UI.toast(dn.mine ? 'You already keep the Day / Night marker.' : `${pname(dn.pid)} already keeps the Day / Night marker. Ask them to remove it first if you want to take over.`, { kind: 'warn' }); return false; }
+  const def = Object.assign({}, CTTracks.DAYNIGHT_DEF);
+  act(() => { S.me.defs[def.id] = def; insertCard(mkCard(def, { tok: true }), 'battlefield', { noAuto: true }); return ['started the Day / Night marker (it is day ☀)']; });
+  return true;
+}
+function removeDayNight(iid) {
+  act(() => { const z = S.me.zones.battlefield, i = z.findIndex(c => c.iid === iid); if (i >= 0) z.splice(i, 1); return ['removed the Day / Night marker']; });
+}
+// A daybound or nightbound permanent entering is the moment the day/night cycle begins (rule 702.145d): offer to start it once.
+function offerDayNight(card) {
+  const d = defOf(card);
+  if (!d || card.fd || !/\b(?:daybound|nightbound)\b/i.test(String(d.oracle || '')) || dayNightMarker()) return;
+  const game = String((S.table && S.table.openingDeal) || '');
+  if (S.dayNightOffered === game) return;
+  S.dayNightOffered = game; // once per game: not again if they decline
+  setTimeout(() => { if (!dayNightMarker()) UI.toast('A daybound card entered, so it is now day. Start the Day / Night marker?', { ms: 12000, action: { label: 'Start Day / Night', onClick: startDayNight } }); }, 0);
+}
 // ---- Step trackers (Saga chapters, Class levels, Room doors) --------------------------------------------------------------
 function trackOfCard(iid) {
   const f = findCard(iid); if (!f || f.zone !== 'battlefield' || f.card.fd || typeof CTTracks === 'undefined') return null;
@@ -3695,6 +3746,10 @@ function setTrackStep(iid, step) {
     const to = clamp(Math.round(step), 1, n), from = t.st.cur + 1;
     if (to === from) return;
     act(() => { if (to > 1) c.tk = to; else delete c.tk; return [`${to > from ? 'advanced' : 'moved back'} {0} to level ${to}`, [t.def]]; });
+  } else if (t.trk.kind === 'daynight') {
+    const night = step === 2;
+    if (night === !!c.fl) return;
+    act(() => { c.fl = night; return [night ? 'changed it to night ☾ (flipped the Day / Night card)' : 'changed it to day ☀ (flipped the Day / Night card)']; });
   } else {
     const bit = step === 2 ? 2 : 1, was = !!((c.tk | 0) & bit), name = (t.trk.names && t.trk.names[bit - 1]) || `door ${bit}`;
     act(() => { c.tk = (c.tk | 0) ^ bit; if (!c.tk) delete c.tk; return [`${was ? 'locked' : 'unlocked'} the door ${name} of {0}`, [t.def]]; });
@@ -3703,12 +3758,13 @@ function setTrackStep(iid, step) {
 // Clicking a dot moves to that step; clicking the current (last lit) dot of a Saga or Class steps back one.
 function clickTrackStep(iid, step) {
   const t = trackOfCard(iid); if (!t) return;
-  if (t.trk.kind === 'room') { setTrackStep(iid, step); return; }
+  if (t.trk.kind === 'room' || t.trk.kind === 'daynight') { setTrackStep(iid, step); return; }
   setTrackStep(iid, t.st.cur + 1 === step ? step - 1 : step);
 }
 function trackItems(iid) {
   const t = trackOfCard(iid); if (!t) return [];
   const n = t.trk.labels.length, cur = t.st.cur + 1;
+  if (t.trk.kind === 'daynight') return [{ label: cur === 2 ? 'Change to day ☀' : 'Change to night ☾', onClick: () => setTrackStep(iid, cur === 2 ? 1 : 2) }, { label: 'Remove the Day / Night marker', onClick: () => removeDayNight(iid) }];
   if (t.trk.kind === 'room') return [{ label: 'Doors', sub: t.trk.labels.map((_, i) => ({ label: `${(t.trk.names && t.trk.names[i]) || 'Door ' + (i + 1)} — ${t.st.on[i] ? 'unlocked (lock again)' : 'locked (unlock)'}`, onClick: () => setTrackStep(iid, i + 1) })) }];
   const word = t.trk.kind === 'saga' ? 'chapter' : 'level', lo = t.trk.kind === 'saga' ? 0 : 1;
   return [
@@ -4040,6 +4096,16 @@ function setTouchMode(enabled) {
   refreshTouchOrientationHint();
   UI.toast(S.touchMode ? 'Touch mode on: page scrolling is disabled; drag cards to move them. Landscape is recommended on phones.' : 'Touch mode off: standard desktop controls restored.', { ms: 4000 });
 }
+// The menu entry for the Day / Night marker: start it, change it (if I keep it), or see who does.
+function dayNightMenuItem() {
+  const dn = dayNightMarker();
+  if (!dn) return { label: 'Start Day / Night marker', disabled: !canEnterBattlefield(), onClick: startDayNight };
+  if (!dn.mine) return { label: `Day / Night: ${pname(dn.pid)} keeps it (${dn.night ? 'night' : 'day'})`, disabled: true };
+  return { label: 'Day / Night marker', sub: [
+    { label: dn.night ? 'Change to day ☀' : 'Change to night ☾', onClick: () => setTrackStep(dn.iid, dn.night ? 1 : 2) },
+    { label: 'Remove the marker', onClick: () => removeDayNight(dn.iid) }
+  ] };
+}
 function mainMenu(x, y) {
   const m = S.me;
   const online = S.role !== 'solo' && S.role !== 'spectator';
@@ -4047,6 +4113,8 @@ function mainMenu(x, y) {
     { label: 'Draw a card', hint: CTHotkeys.key('draw'), onClick: () => draw(1) },
     { label: 'Untap all', hint: CTHotkeys.key('untapAll'), onClick: untapAll },
     { label: 'Tokens…', hint: CTHotkeys.key('tokens'), onClick: () => tokensMenu(x, y) },
+    dayNightMenuItem(),
+    ...(dayNightMarker() ? [{ label: 'Day / Night sounds', checked: daynightSoundOn(), onClick: () => { LS.set('ct.dayNightSound', !daynightSoundOn()); UI.toast(`Day / Night sounds ${daynightSoundOn() ? 'on' : 'off'}`, { ms: 1500 }); } }] : []),
     { sep: true },
     { label: 'Arrows', sub: [
       { label: 'Targeting arrow…', hint: CTHotkeys.key('arrow'), onClick: () => startTargeting() },
@@ -4299,8 +4367,8 @@ function cardHTML(c, def, o) {
     const trk = CTTracks.describe(def);
     if (trk) {
       const st = CTTracks.state(trk, c), own = ctrl === S.pid;
-      const tip = i => trk.kind === 'room' ? `${(trk.names && trk.names[i]) || 'Door ' + (i + 1)} — ${st.on[i] ? 'unlocked' : 'locked'}` : `${trk.kind === 'saga' ? 'Chapter' : 'Level'} ${trk.labels[i]}${st.cur === i ? ' (current)' : ''}`;
-      track = `<div class="ctrack ${trk.kind}${own ? ' mine' : ''}">${trk.labels.map((l, i) => `<span class="tstep${st.on[i] ? ' on' : ''}${st.cur === i ? ' cur' : ''}" data-step="${i + 1}" title="${esc(tip(i) + (own ? ' · click to ' + (trk.kind === 'room' ? 'toggle' : 'move here') : ''))}">${trk.kind === 'room' ? (st.on[i] ? '🔓' : '🔒') : esc(l)}</span>`).join('')}</div>`;
+      const tip = i => trk.kind === 'daynight' ? `${i === 0 ? 'Day' : 'Night'}${st.cur === i ? ' (now)' : ''}` : trk.kind === 'room' ? `${(trk.names && trk.names[i]) || 'Door ' + (i + 1)} — ${st.on[i] ? 'unlocked' : 'locked'}` : `${trk.kind === 'saga' ? 'Chapter' : 'Level'} ${trk.labels[i]}${st.cur === i ? ' (current)' : ''}`;
+      track = `<div class="ctrack ${trk.kind}${own ? ' mine' : ''}">${trk.labels.map((l, i) => `<span class="tstep${st.on[i] ? ' on' : ''}${st.cur === i ? ' cur' : ''}" data-step="${i + 1}" title="${esc(tip(i) + (own ? ' · click to ' + (trk.kind === 'room' ? 'toggle' : trk.kind === 'daynight' ? 'switch to this' : 'move here') : ''))}">${trk.kind === 'room' ? (st.on[i] ? '🔓' : '🔒') : esc(l)}</span>`).join('')}</div>`;
     }
   }
   // mana cost along the top edge of cards in hand
@@ -4313,7 +4381,8 @@ function cardHTML(c, def, o) {
     const casts = (ctrl === S.pid ? S.me.casts : ((S.players[ctrl] || {}).casts || {}))[c.iid] || 0;
     if (casts) badges += `<span class="tax" title="Commander tax">+${2 * casts}</span>`;
   }
-  const extra = (c.cp ? '<span class="tk cp" title="A copy — it disappears when it leaves the battlefield">TOKEN COPY</span>' : c.tok ? '<span class="tk">TOKEN</span>' : '') +
+  const extra = (c.cp ? '<span class="tk cp" title="A copy — it disappears when it leaves the battlefield">TOKEN COPY</span>' : c.tok && c.id !== 'ct-daynight' ? '<span class="tk">TOKEN</span>' : '') + // the Day / Night marker is a reminder card, not a token, so it carries no label
+
     (c.own && c.own !== o.pid ? `<span class="own" style="--oc:${colorOf(c.own)}" title="Owned by ${esc(pname(c.own))}">${esc(pname(c.own))}</span>` : '');
   const marks = o.zone === 'battlefield' ? marksHTML(c.fd ? c : withGrants(ctrl, c)) : '';
   if (marks && Number.isFinite(+c.x) && +c.x > BW - CW - 40) cls.push('marks-left'); // near the right edge: hang them on the left instead
@@ -4624,7 +4693,10 @@ function renderTop() {
     html = `${ruleControl}<span class="muted">No active player · everyone has conceded</span>`;
   } else {
     const mine = S.role !== 'spectator' && T.active === S.pid;
-    html = `${ruleControl}<span>Round <b>${T.turn}</b> · <b style="color:${colorOf(T.active)}">${esc(mine ? 'Your' : pname(T.active) + "'s")}</b> turn</span>`;
+    const dn = dayNightMarker();
+    noteDayNight();
+    const dnChip = dn ? ` <span class="ct-daynight ${dn.night ? 'night' : 'day'}" title="${esc(dn.mine ? 'You keep the Day / Night marker: click the sun or the moon on it to change it.' : pname(dn.pid) + ' keeps the Day / Night marker.')}">${dn.night ? '☾ Night' : '☀ Day'}</span>` : '';
+    html = `${ruleControl}<span>Round <b>${T.turn}</b> · <b style="color:${colorOf(T.active)}">${esc(mine ? 'Your' : pname(T.active) + "'s")}</b> turn</span>${dnChip}`;
   }
   $('#turnBox').innerHTML = html;
   refreshOpeningRoster();
@@ -5132,7 +5204,7 @@ function preview(def, hidden, tag, st) {
     (tag ? `<div class="pv-tag"><span class="tag ${tag === 'Copy' ? 'cp' : ''}">${esc(tag.toUpperCase())}</span></div>` : '') + previewMarksHTML(st) +
     (S.touchMode && S.touchPreview ? `<button class="ct-touch-actions" type="button" data-touch-actions="${esc(S.touchPreview.iid)}">Actions</button>` : '');
 }
-const tagOf = c => (c.cp ? 'Copy' : c.tok ? 'Token' : '');
+const tagOf = c => (c.cp ? 'Copy' : c.tok && c.id !== 'ct-daynight' ? 'Token' : '');
 function previewFromEl(cardEl) {
   const pid = cardEl.dataset.pid, iid = cardEl.dataset.iid;
   // Anonymous card backs in an opponent's hand have no identity to preview.
