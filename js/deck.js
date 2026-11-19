@@ -163,6 +163,7 @@
       defense: defense != null ? String(defense) : null,
       img: img,
       imgBack: imgBack,
+      lay: typeof c.layout === 'string' ? c.layout : '', // Scryfall's layout (split, transform…): tells which pictures are printed sideways
       tokens: tokenIds,
       legendary: type.indexOf('Legendary') !== -1,
       isToken: c.layout === 'token' || c.layout === 'double_faced_token' || c.layout === 'emblem' ||
@@ -197,6 +198,7 @@
       type: d.type, backType: d.backType, cmc: d.cmc, pt: d.pt,
       img: d.img, imgBack: d.imgBack, set: d.set, setName: d.setName
     };
+    if (d.lay) slim.lay = d.lay;
     if (d.isToken || /\b(?:Token|Emblem)\b/i.test(String(d.type || ''))) {
       ['isToken', 'oracle', 'mana', 'loyalty', 'ci', 'tokenLayout', 'tokenColors',
         'tokenColorsBack', 'tokenOracleId', 'tokenOracleBack', 'tokenManaBack',

@@ -1648,3 +1648,11 @@ body.me-out #myBf .board { filter: grayscale(.9) brightness(.45); }
 .ct-daynight.day { color: #ffd36b; border-color: rgba(255, 211, 107, .6); background: rgba(255, 211, 107, .12); }
 .ct-daynight.night { color: #aab8ff; border-color: rgba(170, 184, 255, .55); background: rgba(120, 140, 255, .14); }
 .ctrack.daynight .tstep { min-width: max(16px, calc(var(--cw, 80px) * .16)); height: max(16px, calc(var(--cw, 80px) * .16)); font-size: max(10px, calc(var(--cw, 80px) * .12)); }
+
+/* Cards printed sideways (split cards, Rooms, a Battle's front) are shown upright in the hover preview: a landscape frame holding the
+   picture turned a quarter turn. On the board they simply use the tapped turn the other way round (see the .sideways class). */
+#pv.floatpv .pv-side { position: relative; width: 100%; aspect-ratio: 680 / 488; }
+#pv.floatpv .pv-side img { position: absolute; left: 50%; top: 50%; width: 71.76%; height: auto; transform: translate(-50%, -50%) rotate(90deg); }
+#pv.floatpv:has(.pv-side) { width: 440px; }
+#pv.floatpv:has(.pv-imgs.two .pv-side) { width: 700px; }
+#pv.floatpv .pv-imgs.two { align-items: start; }

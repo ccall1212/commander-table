@@ -697,3 +697,5 @@ a.w-ci-price:focus-visible { outline: 2px solid var(--accent, #7c9cff); outline-
   .w-export-action { text-align: center; padding-inline: 7px; }
   .w-export-text { height: 35vh; }
 }
+.lens-tile img.side { position: absolute; left: 50%; top: 50%; max-width: none; transform: translate(-50%, -50%) rotate(90deg); }
+.lens-tile img.side.rot { transform: translate(-50%, -50%) rotate(270deg); }

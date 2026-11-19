@@ -60,7 +60,13 @@ Chris (2026-11-18): the Zz should sit ON the card like Suspected and Prepared, a
 
 Chris (2026-11-18): werewolf decks need day and night. Decision: the player who plays the starting card keeps the marker and controls it, but everyone can see day or night. Built: the real Day // Night card (Midnight Hunt token, Day front and Night back; ☀ / ☾ buttons like the Saga dots flip it) started from the ☰ menu or from an offer when a Daybound/Nightbound card enters; a chip beside the round number shows the state to everyone while the marker exists; only the keeper can change or remove it; removing lets someone else start one. Also built: a quiet wolf howl (night) and rooster (day) when the card flips, from files Chris supplied, with a per-player off switch. Not built (ideas): a faint warm/cool board tint (Friend 2), spell counting to suggest the turn-start change.
 
+### 90. Sideways cards shown upright — Built, awaiting Chris's test (v0.83.0)
+
+Chris (2026-11-19): split cards (his friend played Wear // Tear) are "technically horizontal", so show them horizontal. Built: `js/orient.js` decides which pictures are printed sideways (Scryfall layout `split` except Aftermath, Rooms, a Battle's front; saved cards without a layout use a safe guess; the owner publishes an `hz` flag so other players agree). On the board they get the tapped turn the other way (tapping shows the plain picture), plus a landscape hover preview and magnifier. Not done: hand and pile thumbnails stay plain; Aftermath cards (half sideways) are left alone.
+
 ### Shipped recently (details in CHANGELOG.md)
+
+- #89 Day / Night marker with sounds — v0.82.0.
 
 - #88 Zz on the card and more reminders from the pre-cons — v0.81.0.
 
