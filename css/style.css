@@ -1656,3 +1656,10 @@ body.me-out #myBf .board { filter: grayscale(.9) brightness(.45); }
 #pv.floatpv:has(.pv-side) { width: 440px; }
 #pv.floatpv:has(.pv-imgs.two .pv-side) { width: 700px; }
 #pv.floatpv .pv-imgs.two { align-items: start; }
+
+/* The Types row: the card types and creature types other cards give, over the printed type line. It is as wide as the card at most and its tags shrink
+   (--tsc, set by the page from how much text there is) so they never go past the card edge. */
+.card .ctypes { position: absolute; left: 4%; width: 92%; top: 55%; z-index: 30; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: calc(var(--cw, 80px) * .01); pointer-events: none; }
+.card .ctypes .cmark { pointer-events: auto; flex: 0 1 auto; min-width: 0; max-width: 100%; height: auto; min-height: 0; padding: .1em .45em; box-sizing: border-box; overflow: hidden; border-radius: 3px;
+  font-size: calc(var(--cw, 80px) * .085 * var(--tsc, 1)); line-height: 1.15; background: rgba(240, 232, 210, .96); color: #222; border: 1px solid #6b5a2e; }
+.card .ctypes .cmark .mark-word { font-size: inherit; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

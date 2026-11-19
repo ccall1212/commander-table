@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.87.0';
+const APP_VERSION = '0.87.1';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -119,12 +119,38 @@ function markEntries(c) {
 // onCard = an icon that is drawn on the card (in the middle, where word tags sit) instead of hanging outside it: Summoning sick.
 const isWordMark = e => { const id = typeof e === 'string' ? e : e.id; return !CARD_MARK_BY_ID[id] || !CARD_MARK_BY_ID[id].p || !!CARD_MARK_BY_ID[id].onCard; };
 // Icons hang in a column just outside the card; word tags (and on-card icons) sit across the middle of the card.
+const isTypeTag = e => String(typeof e === 'string' ? e : e.id).startsWith('t:');
+// The card types and creature types other cards give ("Frog", "Island", "All types") sit in one small row over the card's printed type line. The row never goes
+// past the card: the more tags (and the more letters) it holds, the smaller they get, and beyond four it shows "+N". Several tags wrap onto a second line.
+function typesRowHTML(tags) {
+  if (!tags.length) return '';
+  const shown = tags.length > 4 ? tags.slice(0, 3).concat([{ id: 't:+' + (tags.length - 3), granted: true, from: tags.slice(3).map(t => String(t.id).slice(2)).join(', ') }]) : tags;
+  const chars = shown.reduce((n, t) => n + String(t.id).length - 2, 0) + 2.5 * shown.length;
+  const scale = Math.max(0.6, Math.min(1, 17 / chars)); // about 17 letters fit across the card at full size; with many tags they get smaller and wrap onto a second line
+  return `<div class="ctypes" data-tsc="${Math.round(scale * 100) / 100}" style="--tsc:${Math.round(scale * 100) / 100}">${shown.map(markHTML).join('')}</div>`;
+}
+// After each redraw, make sure every Types row shows ALL of its text: if a tag is cut off, or the tags need more than two lines, shrink the text a little and look
+// again. (The first guess from the number of letters is usually right; this catches wide letters and narrow cards.)
+function fitTypeRows() {
+  document.querySelectorAll('.card .ctypes').forEach(row => {
+    let s = parseFloat(row.dataset.tsc) || 1;
+    row.style.setProperty('--tsc', String(s));
+    for (let i = 0; i < 14 && s > 0.2; i++) {
+      const tags = [...row.children];
+      const cut = tags.some(t => { const w = t.querySelector('.mark-word'); return w && (w.scrollWidth > w.clientWidth + 0.5 || t.scrollWidth > t.clientWidth + 0.5); });
+      const lines = new Set(tags.map(t => Math.round(t.offsetTop))).size;
+      if (!cut && lines <= 2) break;
+      s *= 0.88;
+      row.style.setProperty('--tsc', String(Math.round(s * 100) / 100));
+    }
+  });
+}
 function marksHTML(c) {
   const list = markEntries(c);
   if (!list.length) return '';
-  const icons = list.filter(id => !isWordMark(id)), words = list.filter(isWordMark);
+  const icons = list.filter(id => !isWordMark(id)), types = list.filter(isTypeTag), words = list.filter(e => isWordMark(e) && !isTypeTag(e));
   return (icons.length ? '<div class="cstat">' + icons.map(markHTML).join('') + '</div>' : '') +
-    (words.length ? '<div class="cwords">' + words.map(markHTML).join('') + '</div>' : '');
+    (words.length ? '<div class="cwords">' + words.map(markHTML).join('') + '</div>' : '') + typesRowHTML(types);
 }
 // The enlarged copy beside the hover preview: everything sits off the card so the card text stays readable.
 function previewMarksHTML(card) {
@@ -4375,6 +4401,7 @@ function renderBody() {
   { const row = $('#myRow'), h = row && row.offsetHeight; if (h) $('#table').style.setProperty('--stripH', h + 'px'); }
   renderTop(); renderOpps(idx); renderMine(idx); renderLog();
   fitBoards();
+  fitTypeRows();
   renderOppPanel();
   refreshTargeting();
   renderReminders();

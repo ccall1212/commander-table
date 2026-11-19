@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.87.1] - 2026-11-19
+
+### Changed
+- **A "Types" row for card types and creature types.** The type tags that other cards give (Frog, Island, Angel, All types…) no longer sit in the middle of the card with the statuses. They now form one small row **over the card's printed type line**, so the middle stays free for Suspected, Prepared and the other statuses. The row **never goes past the card and never cuts a word off**: the more tags (and letters) it holds, the smaller the text gets (the page measures the row after every redraw and keeps shrinking until every word fits), several tags wrap onto a second line, and beyond four it shows "+N" (hover for the full list).
+
 ## [0.87.0] - 2026-11-19
 
 ### Added
@@ -506,7 +511,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.87.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.87.1...HEAD
+[0.87.1]: https://github.com/ccall1212/commander-table/compare/v0.87.0...v0.87.1
 [0.87.0]: https://github.com/ccall1212/commander-table/compare/v0.86.1...v0.87.0
 [0.86.1]: https://github.com/ccall1212/commander-table/compare/v0.86.0...v0.86.1
 [0.86.0]: https://github.com/ccall1212/commander-table/compare/v0.85.0...v0.86.0
