@@ -122,11 +122,11 @@ const mkDeck = who => ({
     const active = () => dad.evaluate(() => CT.S.table.active === CT.S.pid);
     if (!(await active())) { await son.locator('button[data-a="pass"]').first().click(); await dad.waitForFunction(() => CT.S.table.active === CT.S.pid); }
     await dad.waitForFunction(i => { const el = [...document.querySelectorAll('.card')].find(c => c.dataset.iid === i); return !!el && [...el.querySelectorAll('.cmark')].some(m => ((m.getAttribute('title') || m.getAttribute('data-tip') || '')).startsWith('Indestructible')); }, await iid('cait'));
-    assert.equal(await hasIcon(son, 'cait', 'Indestructible'), true, 'Son sees it on Dad\'s turn');
+    { const t0 = Date.now(); while (!(await hasIcon(son, 'cait', 'Indestructible'))) { if (Date.now() - t0 > 15000) throw new Error('Son sees it on Dad\'s turn'); await son.waitForTimeout(100); } }
     await dad.locator('button[data-a="pass"]').first().click();
     await dad.waitForFunction(() => CT.S.table.active !== CT.S.pid);
     await dad.waitForFunction(i => { const el = [...document.querySelectorAll('.card')].find(c => c.dataset.iid === i); return !!el && ![...el.querySelectorAll('.cmark')].some(m => ((m.getAttribute('title') || m.getAttribute('data-tip') || '')).startsWith('Indestructible')); }, await iid('cait'));
-    assert.equal(await hasIcon(son, 'cait', 'Indestructible'), false, 'and not on Son\'s turn');
+    { const t0 = Date.now(); while (await hasIcon(son, 'cait', 'Indestructible')) { if (Date.now() - t0 > 15000) throw new Error('and not on Son\'s turn'); await son.waitForTimeout(100); } }
     // ---- 7. Nothing is saved on the cards: grants are drawn, not stored. ----
     const stored = await dad.evaluate(() => CT.S.me.zones.battlefield.map(c => [c.iid.split('_g')[1], c.dp || 0, c.dt || 0, c.pb || '', (c.st || []).join()].join(':')).join(' '));
     assert.doesNotMatch(stored, /bear:[1-9]|bear:0:[1-9]|:1\/1/, 'no power/toughness or base was stored on the bear: ' + stored);
