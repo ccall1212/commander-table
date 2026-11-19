@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.85.0';
+const APP_VERSION = '0.86.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -150,6 +150,22 @@ function grantsFor(pid, c) {
   return grantCache.map.get(pid + '|' + c.iid) || [];
 }
 // Power/toughness other permanents give this card: { dp, dt, base, from: [...] } or null (see CTGrants.forBoards). Drawn on the badge, never saved.
+// Power/toughness a card defines from a count ("equal to the number of artifacts you control", cards in graveyards, cards in hand, life total): { p, t } (a side is
+// null when the card does not define it) or null. It is the card's BASE power/toughness; counters, Equipment and other bonuses still add on top (see effPT).
+const cdaCache = { ctx: null, epoch: -1 };
+function cdaFor(pid, c, def) {
+  if (typeof CTCda === 'undefined' || !def || c.fd || !S.me) return null;
+  const spec = def.cda ? CTCda.clean(def.cda) : (/ equal to /.test(def.oracle || '') ? CTCda.parse(def.oracle, def.face || def.name) : null);
+  if (!spec) return null;
+  if (!cdaCache.ctx || cdaCache.epoch !== grantEpoch) {
+    const view = (p, id, hand) => ({ pid: id, hand, life: p.life, battlefield: (p.zones.battlefield || []).map(x => ({ c: x, def: x.id ? (id === S.pid ? S.me.defs : (p.defs || {}))[x.id] : null })), graveyard: (p.zones.graveyard || []).map(x => ({ c: x, def: x.id ? (id === S.pid ? S.me.defs : (p.defs || {}))[x.id] : null })) });
+    const boards = [view(S.me, S.pid, S.me.zones.hand.length)];
+    for (const [opid, p] of Object.entries(S.players)) { if (opid !== S.pid && p && p.zones) boards.push(view(p, opid, p.hand || 0)); }
+    cdaCache.ctx = { boards }; cdaCache.epoch = grantEpoch;
+  }
+  const ctx = { boards: cdaCache.ctx.boards, pid, iid: c.iid };
+  return { p: spec.power ? CTCda.evaluate(spec.power, ctx) : null, t: spec.toughness ? CTCda.evaluate(spec.toughness, ctx) : null };
+}
 function ptGrantFor(pid, c) { grantsFor(pid, c); return (grantCache.pt && grantCache.pt.get(pid + '|' + c.iid)) || null; }
 // Abilities other permanents take away ("Equipped creature … loses flying", "loses all abilities"): { ids, all, keep } or null. Their icons are hidden, never un-saved.
 function loseFor(pid, c) { grantsFor(pid, c); return (grantCache.lose && grantCache.lose.get(pid + '|' + c.iid)) || null; }
@@ -500,6 +516,8 @@ function publicView() {
       if (trk) defs[p.id].trk = trk;
       const gr = typeof CTGrants === 'undefined' ? [] : CTGrants.parse(m.defs[p.id].oracle, m.defs[p.id].face || m.defs[p.id].name); // abilities and power/toughness this card gives to its controller's other permanents, for the other players' screens
       if (gr.length) defs[p.id].gr = gr;
+      const cda = typeof CTCda === 'undefined' ? null : CTCda.parse(m.defs[p.id].oracle, m.defs[p.id].face || m.defs[p.id].name); // power/toughness this card works out from a count (Bronze Guardian), for the other players' screens
+      if (cda) defs[p.id].cda = cda;
     }
     return p;
   });
@@ -2802,13 +2820,19 @@ async function customCounter(iid, targets) {
 }
 
 // --- power / toughness: optional base override (pb "3/3") + modifiers (dp, dt), plus +1/+1 / -1/-1 counters
-function effPT(c, def, gp) {
+function effPT(c, def, gp, cda) {
   if (c.fd) return { text: '2/2', modified: false };
-  const base = c.tb || c.pb || (gp && gp.base) || (def && def.pt) || ''; // a base set by hand wins over one an Aura gives, which wins over the printed one // tb: base power/toughness set until end of turn
+  const manualBase = c.tb || c.pb || (gp && gp.base); // a base set by hand (tb: until end of turn) wins over one an Aura gives, which wins over the card's own count, which wins over the printed one
+  const base = manualBase || (def && def.pt) || '';
   const parts = String(base).split('/').map(v => v.trim());
-  // Symbolic printed stats use a manual baseline of zero; numeric sides keep their value.
-  const stats = parts.length === 2 && parts.every(Boolean)
+  // Symbolic printed stats (the * in */*) use a manual baseline of zero; numeric sides keep their value.
+  let stats = parts.length === 2 && parts.every(Boolean)
     ? parts.map(v => /^-?\d+$/.test(v) ? +v : 0) : null;
+  if (cda && !manualBase && (cda.p !== null || cda.t !== null)) { // "power equal to the number of artifacts you control": the count is the base
+    stats = stats || [0, 0];
+    if (cda.p !== null) stats[0] = cda.p;
+    if (cda.t !== null) stats[1] = cda.t;
+  }
   const cnt = ((c.c && c.c['+1/+1']) || 0) - ((c.c && c.c['-1/-1']) || 0);
   const tp = c.tp || 0, tt = c.tt || 0, temp = !!(tp || tt || c.tb); // temporary changes that end when the turn passes
   const dp = (c.dp || 0) + cnt + tp + (gp ? gp.dp : 0), dt = (c.dt || 0) + cnt + tt + (gp ? gp.dt : 0);
@@ -4386,9 +4410,10 @@ function cardHTML(c, def, o) {
     ctrs += `<span class="ctr" data-ctr="${esc(k)}" title="${esc(k)} counters — left-click +1, right-click −1">${esc(lbl)}</span>`;
   }
   if (o.zone === 'battlefield' && !c.fd) {
-    const gp = ptGrantFor(ctrl, c), pt = effPT(c, def, gp);
+    const gp = ptGrantFor(ctrl, c), cda = cdaFor(ctrl, c, def), pt = effPT(c, def, gp, cda);
     const sg = v => (v >= 0 ? '+' + v : '\u2212' + Math.abs(v));
-    const gpNote = gp ? ` Includes ${gp.from.map(f => (f.base ? 'base ' + f.base : '') + (f.dp || f.dt ? (f.base ? ' and ' : '') + sg(f.dp) + '/' + sg(f.dt) : '') + ' from ' + f.from).join(', ')}.` : '';
+    const cdaNote = cda && !(c.tb || c.pb || (gp && gp.base)) ? ` Base ${[cda.p !== null ? 'power ' + cda.p : '', cda.t !== null ? 'toughness ' + cda.t : ''].filter(Boolean).join(' and ')} counted from the card's own text.` : '';
+    const gpNote = cdaNote + (gp ? ` Includes ${gp.from.map(f => (f.base ? 'base ' + f.base : '') + (f.dp || f.dt ? (f.base ? ' and ' : '') + sg(f.dp) + '/' + sg(f.dt) : '') + ' from ' + f.from).join(', ')}.` : '');
     const creature = def && /Creature/.test((c.fl && def.backType) || def.type || '');
     if (pt.text && (pt.modified || creature)) {
       const parts = String(pt.text).split('/');

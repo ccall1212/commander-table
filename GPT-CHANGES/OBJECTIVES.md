@@ -72,7 +72,13 @@ Chris (2026-11-19): lands that only say "This land enters tapped" should tap the
 
 Chris (2026-11-19): look through the pre-cons for effects like Sphere Grid. Chosen: Auras/Equipment with extra clauses (and their +N/+N and base power/toughness, e.g. frogs, with counters on top), "with counters on them", creature-type variations, and the simple conditions on the card itself (during your turn, untapped, Lieutenant, counter thresholds). NOT done on purpose (manual): artifact counts, life totals, creature counts, equipped, attacking. Built in `js/grants.js` (new `pt`, `base`, `when`, `self` scope) and `effPT` in `js/app.js`; plain anthems added when Chris asked about "All elves get +1/+1". Added after Chris's testing: "loses flying" / "loses all abilities" hide icons (Colossus Hammer), "as long as equipped creature is legendary" (Champion's Helm), and fixed "enters with N counters" are added on entry (57 pre-con cards; X counters stay manual). Next idea from Chris: creature-type changes ("is a Frog", "all creatures are Spiders", changelings as an "All types" tag) — not built; "until end of turn" one-shot effects stay with the Temporary effects tool.
 
+### 93. Power/toughness counted from the card's own text — Built, awaiting Chris's test (v0.86.0)
+
+Chris (2026-11-19): Bronze Guardian-style cards ("power is equal to the number of artifacts you control") should work out their number automatically, as the BASE power/toughness (Equipment still adds), including graveyard, hand, opponents' and whole-board counts. Built in `js/cda.js`; the owner publishes the parsed spec as `cda` on the card definition. 53 of the 70 pre-con cards with such a line (mana value, colours, devotion, exile, the party and chosen-player counts stay manual). Order of precedence for the base: set by hand, then an Aura's base, then the count, then the printed number. Next: creature types (v0.87.0).
+
 ### Shipped recently (details in CHANGELOG.md)
+
+- #92 Automatic power/toughness, more granted abilities, loses-abilities and enters-with counters — v0.85.0.
 
 - #91 Lands that enter tapped are tapped automatically — v0.84.0.
 

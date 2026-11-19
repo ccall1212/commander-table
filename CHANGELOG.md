@@ -6,6 +6,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.86.0] - 2026-11-19
+
+### Added
+- **Power/toughness counted from the card's own text.** A card whose power and/or toughness is "equal to the number of …" now works it out for you and keeps it up to date as the game changes, for every player. Examples: **Bronze Guardian** (artifacts you control), **Master of Etherium**, **Avalanche of Sector 7** (artifacts your opponents control), land and creature counters (Rubblehulk, Wayfaring Temple, Adeline), **graveyard counters** (Mortivore, Splinterfright, Lord of Extinction, Consuming Aberration, Spellheart Chimera), the **Goyfs** ("number of card types among cards in all graveyards", toughness one more), cards in your hand (Psychosis Crawler), your life total (Serra Avatar), "twice the number of creatures", Elves plus Elf cards in your graveyard, differently named lands and more: 53 of the 70 pre-con cards that define their own power or toughness this way. The rest (mana value, colours, devotion, the party, a chosen player, exile, "noted" numbers) stay manual.
+- **The count is the base.** Counters, Equipment, Auras and manual changes still add on top, and a base power/toughness set by an Aura (a frog) or by hand replaces the count. Hover the badge: it says the number was counted from the card's own text.
+- Counts the game cannot see stay manual: mana value, colours ("green permanents"), the party, a chosen player, noted numbers.
+
 ## [0.85.0] - 2026-11-19
 
 ### Added
@@ -483,7 +490,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.85.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.86.0...HEAD
+[0.86.0]: https://github.com/ccall1212/commander-table/compare/v0.85.0...v0.86.0
 [0.85.0]: https://github.com/ccall1212/commander-table/compare/v0.84.0...v0.85.0
 [0.84.0]: https://github.com/ccall1212/commander-table/compare/v0.83.0...v0.84.0
 [0.83.0]: https://github.com/ccall1212/commander-table/compare/v0.82.0...v0.83.0
