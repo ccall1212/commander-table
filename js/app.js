@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.88.1';
+const APP_VERSION = '0.89.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -383,37 +383,91 @@ function regionKey(c, d) {
   if (/Land/.test(t)) return 'lands';
   return 'permanents'; // artifacts, enchantments and anything else
 }
+// What a land taps for, as a short key ("GU" for Tangled Islet and Temple of Mystery), so lands that make the same mana stack together. Empty for a land
+// that adds no mana. Basic lands without rules text use their land type (Forest = G).
+function landManaKey(d) {
+  if (!d) return '';
+  const text = d.oracle || '', colours = new Set();
+  for (const clause of text.match(/\bAdd\b[^.\n]*/g) || []) {
+    for (const m of clause.matchAll(/\{([WUBRGC])\}/g)) colours.add(m[1]);
+    if (/any (color|type)/i.test(clause)) colours.add('*');
+  }
+  if (!colours.size) {
+    const basic = { Plains: 'W', Island: 'U', Swamp: 'B', Mountain: 'R', Forest: 'G', Wastes: 'C' };
+    for (const [word, letter] of Object.entries(basic)) if (new RegExp('\\b' + word + '\\b').test(d.type || '') && /Basic/.test(d.type || '')) colours.add(letter);
+  }
+  return [...colours].sort().join('');
+}
+// Cards that pile up in one spot: identical tokens, and lands that tap for the same mana. '' = does not stack.
+function stackKey(c, d, key) {
+  if (!d) return '';
+  if (c.tok) return 'tok:' + c.id;
+  if (key === 'lands') { const mana = landManaKey(d); return !mana ? '' : (/Basic/.test(d.type || '') ? 'basic:' : 'mana:') + mana; } // basic lands stack with basic lands first
+  return '';
+}
+const STACK_STEP = 18; // piles go top to bottom, like real lands: each card sticks out this far below the one above, so its title strip stays visible and clickable
 function centerIn(o, r) {
   const cx = o.x + CW / 2, cy = o.y + CH / 2;
   return cx >= r.x && cx <= r.x + r.w && cy >= r.y && cy <= r.y + r.h;
 }
-// Put a card into the first free slot of its zone (basic lands & identical tokens pile up).
-function autoPlace(card, zone, m = S.me) {
+// Put a card into the first free slot of its zone (basic lands & identical tokens pile up). `limit` is the lowest edge a card may reach (the top of the hand
+// strip, in board units; see boardVisibleBottom): a card is never put where the hand covers it. When the visible part of the zone is full, the next cards are packed
+// closer together (overlapping, but each keeps an edge you can still click and drag) instead of being thrown into the middle of the board.
+function autoPlace(card, zone, m = S.me, limit = Infinity) {
   const d = m.defs[card.id];
   const key = regionKey(card, d);
   const bh = m.bh || BH;
   const r = m.layout.find(x => x.k === key) || m.layout[0] || { x: 0, y: 0, w: BW, h: bh };
   const others = m.zones.battlefield.filter(o => o !== card && o.x != null && !o.att);
-  if (zone === 'battlefield' && d && (/Basic/.test(d.type || '') || card.tok)) {
-    const same = others.filter(o => o.id === card.id && !!o.tok === !!card.tok && !o.t && centerIn(o, r));
-    if (same.length % 6) { const last = same[same.length - 1]; card.x = clamp(last.x + 12, 0, BW - CW); card.y = last.y; return; }
-  }
-  for (let y = r.y + 34; y + CH <= r.y + r.h + 2; y += CH + 8) {
-    for (let x = r.x + 6; x + CW <= r.x + r.w + 2; x += CW + 8) {
-      if (!others.some(o => Math.abs(o.x - x) < CW * 0.75 && Math.abs(o.y - y) < CH * 0.6)) { card.x = x; card.y = y; return; }
+  const group = zone === 'battlefield' ? stackKey(card, d, key) : '';
+  const bottom = Math.min(r.y + r.h + 2, limit);
+  if (group) {
+    // Piles go top to bottom: the next card sits a little lower than the last card of the pile (about six to a pile, and never lower than you can see).
+    const same = others.filter(o => (!o.t || key === 'lands') && stackKey(o, m.defs[o.id], regionKey(o, m.defs[o.id])) === group && centerIn(o, r));
+    if (same.length % 6) {
+      const last = same[same.length - 1];
+      if (last.y + STACK_STEP + CH <= bottom) { card.x = last.x; card.y = last.y + STACK_STEP; return true; }
     }
   }
-  // zone is full: cascade so cards stay visible
+  const slot = (xs, ys, dx, dy) => {
+    for (let y = r.y + 34; y + CH <= bottom; y += ys) {
+      for (let x = r.x + 6; x + CW <= r.x + r.w + 2; x += xs) {
+        if (!others.some(o => Math.abs(o.x - x) < dx && Math.abs(o.y - y) < dy)) { card.x = x; card.y = y; return true; }
+      }
+    }
+    return false;
+  };
+  if (slot(CW + 8, CH + 8, CW * 0.75, CH * 0.6)) return true; // the next open space in the zone
+  // The visible part is full: pack the next cards in a "brick" pattern (half a slot across, half a row down), so every card still shows its top-left area.
+  for (let y = r.y + 34, row = 0; y + CH <= bottom; y += (CH + 8) / 2, row++) {
+    for (let x = r.x + 6 + (row % 2 ? (CW + 8) / 2 : 0); x + CW <= r.x + r.w + 2; x += CW + 8) {
+      if (!others.some(o => Math.abs(o.x - x) < CW && y < o.y + STACK_STEP && y + CH > o.y)) { card.x = x; card.y = y; return true; } // never over another card's top strip
+    }
+  }
+  // No open space is left: snap onto a land that is already there (not attached, just piled on it), the most alike first (a basic on a basic, then the same mana,
+  // then any land), so the card stays in the Lands area and keeps a strip you can point at.
+  if (key === 'lands' && limit !== Infinity) {
+    const mine = landManaKey(d), basic = /Basic/.test((d && d.type) || '');
+    const lands = others.filter(o => regionKey(o, m.defs[o.id]) === 'lands' && centerIn(o, r));
+    const rank = o => { const od = m.defs[o.id], om = landManaKey(od); return [...mine].filter(ch => om.includes(ch)).length * 2 + (basic && /Basic/.test((od && od.type) || '') ? 3 : 0); };
+    const stackEnd = o => { let t = o, next; while ((next = lands.find(q => q.x === t.x && q.y > t.y && q.y <= t.y + STACK_STEP + 1))) t = next; return t; }; // follow the pile down to its last card
+    const targets = lands.map(o => ({ o, score: rank(o), tail: stackEnd(o) })).filter(t => t.tail.y + STACK_STEP + CH <= bottom && !lands.some(q => q !== t.tail && Math.abs(q.x - t.tail.x) < CW && q.y > t.tail.y && q.y < t.tail.y + STACK_STEP + CH)) // never over another pile's strip.sort((a, b) => b.score - a.score);
+    if (targets.length) { const t = targets[0].tail; card.x = t.x; card.y = t.y + STACK_STEP; return true; }
+  }
+  // Everything visible is taken. With a limit (a real screen) say so, and the caller puts the card in a free spot on the board (never over other cards, never under the hand).
+  if (limit !== Infinity) return false;
   const n = others.filter(o => centerIn(o, r)).length;
-  const span = Math.max(22, r.w - CW - 6);
+  const span = Math.max(22, r.w - CW - 6), room = Math.max(18, Math.min(r.h, bottom - r.y) - CH - 18);
   card.x = clamp(r.x + 6 + (n * 22) % span, 0, BW - CW);
-  card.y = clamp(r.y + 34 + (Math.floor((n * 22) / span) * 18) % Math.max(18, r.h - CH - 18), 0, bh - CH);
+  card.y = clamp(r.y + 34 + (Math.floor((n * 22) / span) * 18) % room, 0, Math.max(0, Math.min(bh, bottom) - CH));
+  return true;
 }
 function tidyBoard() {
   const m = S.me;
   const all = m.zones.battlefield.filter(c => !c.att);
   all.forEach(c => { delete c.x; delete c.y; });
-  all.forEach(c => autoPlace(c, 'battlefield'));
+  const limit = boardVisibleBottom();
+  all.forEach(c => { if (!autoPlace(c, 'battlefield', m, limit)) centerSpot(c); });
 }
 
 // --- the action pipeline: snapshot for undo -> mutate -> log -> publish/save/render
@@ -1952,7 +2006,7 @@ function insertCard(card, to, opts = {}) {
   if (to === 'library') { S.me.revealTopOnce = null; if (opts.pos === 'bottom') z.push(card); else z.unshift(card); } else z.push(card);
   if (to === 'battlefield') {
     if (opts.x != null) { card.x = clamp(Math.round(opts.x), 0, BW - CW); card.y = clamp(Math.round(opts.y), 0, myBH() - CH); }
-    else if (card.x == null) { autoPlace(card, to); if (card.y != null && card.y + CH > boardVisibleBottom()) centerSpot(card); } // never leave it under the hand strip
+    else if (card.x == null) { if (!autoPlace(card, to, S.me, boardVisibleBottom())) centerSpot(card); if (card.y != null && card.y + CH > boardVisibleBottom()) centerSpot(card); } // never leave it under the hand strip
   }
   if (to === 'battlefield' && !opts.noAuto) { autoMarkPrintedAbilities(card); autoFirstLoreCounter(card); autoEnterTapped(card, opts); autoEnterCounters(card, opts); }
   if (to === 'battlefield') offerDayNight(card);
@@ -2211,7 +2265,7 @@ function attachTo(iid, hostPid, hostIid) {
 }
 function unattach(iid) {
   const f = findCard(iid); if (!f || !f.card.att) return;
-  act(() => { f.card.att = null; delete f.card.x; autoPlace(f.card, 'battlefield'); return ['unattached {0}', [defOf(f.card)]]; });
+  act(() => { f.card.att = null; delete f.card.x; if (!autoPlace(f.card, 'battlefield', S.me, boardVisibleBottom())) centerSpot(f.card); return ['unattached {0}', [defOf(f.card)]]; });
 }
 function startAttach(iid) {
   const f = findCard(iid); if (!f) return;
@@ -2924,9 +2978,12 @@ function createToken(def, n = 1) {
 function boardVisibleBottom() {
   const full = myBH();
   const wrap = document.querySelector('#myBf .boardwrap'), board = wrap && wrap.firstElementChild, row = document.querySelector('#myRow');
-  if (!board || !row || !row.offsetParent || !(+board.dataset.s > 0)) return full;
-  const top = row.getBoundingClientRect().top - board.getBoundingClientRect().top;
-  return Math.min(full, Math.max(CH, top / +board.dataset.s));
+  if (!board || !row || !row.offsetParent) return full;
+  // How many board units are above the top of the hand strip: measured from the board's real size on screen (its height is the whole board, whatever zoom the layout uses).
+  const bb = board.getBoundingClientRect();
+  if (!(bb.height > 0)) return full;
+  const top = (row.getBoundingClientRect().top - bb.top) * (full / bb.height);
+  return Math.min(full, Math.max(CH, top));
 }
 // A free spot in the middle of the visible board, so a card that arrives from somewhere else (graveyard, exile, a copy) is
 // always easy to find and reach instead of landing under the hand strip.
@@ -2938,8 +2995,17 @@ function centerSpot(card) {
     const x = cx + dx * (CW + 8), y = cy + dy * (CH + 8);
     if (x >= 0 && x <= BW - CW && y >= 0 && y + CH <= limit && !taken(x, y)) { card.x = x; card.y = y; return; }
   }
-  const n = S.me.zones.battlefield.length;
-  card.x = clamp(cx + (n * 22) % 120, 0, BW - CW); card.y = clamp(cy + (n * 14) % 80, 0, Math.max(0, limit - CH));
+  // No clear spot is left in the visible board: use the spot that covers the least of the cards already there (so none is ever completely hidden).
+  const others = S.me.zones.battlefield.filter(o => o !== card && o.x != null && !o.att);
+  // Covering the top strip of a card (the part of a stacked card you can still point at) counts much more than covering its middle.
+  const strip = (x, y) => others.reduce((sum, o) => sum + Math.max(0, Math.min(x + CW, o.x + CW) - Math.max(x, o.x)) * Math.max(0, Math.min(y + CH, o.y + STACK_STEP) - Math.max(y, o.y)), 0);
+  const covered = (x, y) => others.reduce((sum, o) => sum + Math.max(0, CW - Math.abs(o.x - x)) * Math.max(0, CH - Math.abs(o.y - y)), 0) + 8 * strip(x, y);
+  let best = null;
+  for (let y = 0; y + CH <= limit; y += 14) for (let x = 0; x <= BW - CW; x += 14) {
+    const score = covered(x, y);
+    if (!best || score < best.score) best = { x, y, score };
+  }
+  card.x = best ? best.x : cx; card.y = best ? best.y : cy;
 }
 // Put a new copy right beside the card it copies (right, then left, below, above), or in a free spot you can reach.
 function placeCopy(card, src) {
