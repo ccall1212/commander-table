@@ -6,6 +6,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.86.1] - 2026-11-19
+
+### Fixed
+- **"Gets +1/+1 for each …" cards.** Moon-Vigil Adherents (a 0/0 that "gets +1/+1 for each creature you control and each creature card in your graveyard") did not change at all. Cards that pump themselves per counted thing now work out the bonus for you and keep it current, on top of whatever the base is: Moon-Vigil Adherents, Multani, Jarad, Wight of the Reliquary, Borderland Behemoth ("+4/+4 for each other Giant"), Akiri and Storm-Kiln Artist (artifacts), Aura Gnarlid, Yavimaya Enchantress, Rolling Hamsphere and "gets +X/+X, where X is the number of …". **Auras and Equipment** that do this count too: Crown of Skemfar (Elves), Ethereal Armor and Tempest Technique (enchantments), Cranial Plating and Adaptive Omnitool (artifacts), Lashwrithe (Swamps), Blackblade Reforged (lands), Empyrial Plate (cards in your hand), Kemba's Banner and Crown of Gondor (creatures), Nettlecyst and All That Glitters, Bonehoard (creature cards in all graveyards).
+- **More things it can count:** the counters on the card itself (Mace of the Valiant, Lion Sash, Gavel of the Righteous, Rose Tyler), the Auras and Equipment attached to it (Kor Spiritdancer, Gunner Conscript, Strong Back), the number of opponents you have (Blazing Sunsteel), and creatures with a counter on them (High Sentinels of Arashin). Names that the card text shortens to the first word ("Tuvasa the Sunlit" is "Tuvasa") now match.
+- This covers 36 of the 66 such pre-con cards; the rest need things the game cannot see (colours, experience or poison counters, mana value, "greatest power", exiled cards) and stay manual.
+
 ## [0.86.0] - 2026-11-19
 
 ### Added
@@ -490,7 +497,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.86.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.86.1...HEAD
+[0.86.1]: https://github.com/ccall1212/commander-table/compare/v0.86.0...v0.86.1
 [0.86.0]: https://github.com/ccall1212/commander-table/compare/v0.85.0...v0.86.0
 [0.85.0]: https://github.com/ccall1212/commander-table/compare/v0.84.0...v0.85.0
 [0.84.0]: https://github.com/ccall1212/commander-table/compare/v0.83.0...v0.84.0

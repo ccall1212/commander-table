@@ -161,6 +161,18 @@ assert.equal(m.pt.get('A|x').dp, 1, 'a "not other" lord gives to the "Other" lor
 assert.equal(G.parse('All other creatures get -1/-1.')[0].other, true, '"All other creatures" excludes the card itself');
 m = G.forBoards([board('A', [e('x', { id: 'ao', face: 'Smog', type: 'Enchantment', oracle: 'All other creatures get -1/-1.' }), e('b1', bear)]), board('B', [e('b2', bear)])], {});
 assert.equal(m.pt.get('A|b1').dp, -1); assert.equal(m.pt.get('B|b2').dp, -1, '"All other" reaches everyone\'s creatures');
+// "for each …" on an Aura / Equipment: the wording is kept; the page counts it
+assert.deepEqual(plain(G.parse('Enchanted creature gets +1/+1 for each Elf you control and has reach.')[0].each), { a: 1, b: 1, text: 'Elf you control' }, 'Crown of Skemfar');
+assert.deepEqual(plain(G.parse('Enchanted creature gets +1/+1 for each enchantment you control and has first strike.')[0].each), { a: 1, b: 1, text: 'enchantment you control' }, 'Ethereal Armor');
+assert.equal(desc('Enchanted creature gets +1/+1 for each Elf you control and has reach.'), 'attached reach', 'ability still read');
+assert.equal(G.parse('Equipped creature gets +1/+1 for each charge counter on this Equipment and has vigilance.')[0].each.text, 'charge counter on this Equipment', 'Mace of the Valiant: kept for the page to count');
+assert.deepEqual(plain(G.parse('Equipped creature gets +X/+X, where X is the number of creature cards in all graveyards.')[0].each), { a: 1, b: 1, text: 'the number of creature cards in all graveyards' }, 'Bonehoard');
+const crown = { id: 'cw', face: 'Crown of Skemfar', type: 'Enchantment \u2014 Aura', oracle: 'Enchanted creature gets +1/+1 for each Elf you control and has reach.' };
+m = G.forBoards([board('A', [e('cw', crown, { att: { p: 'A', i: 'b1' } }), e('b1', bear)])], { each: (each, pid) => ({ dp: each.a * 3, dt: each.b * 3 }) });
+assert.equal(m.pt.get('A|b1').dp, 3, 'the page\'s count is added'); assert.equal(m.get('A|b1')[0].id, 'reach');
+m = G.forBoards([board('A', [e('cw', crown, { att: { p: 'A', i: 'b1' } }), e('b1', bear)])], {}); assert.equal(m.pt.get('A|b1'), undefined, 'without a counter nothing is added');
+assert.equal(plain(G.clean([{ scope: 'attached', filters: {}, abilities: ['reach'], each: { a: 1, b: 1, text: 'Elf you control' } }])[0].each.text), 'Elf you control');
+assert.equal(plain(G.clean([{ scope: 'attached', filters: {}, abilities: ['reach'], each: { a: 99, b: 1, text: 'x' } }])[0].each), null, 'an absurd pump is dropped');
 // Losing abilities, and the legendary condition, applied to boards.
 const hammer = { id: 'hm', face: 'Colossus Hammer', type: 'Artifact \u2014 Equipment', oracle: 'Equipped creature gets +10/+10 and loses flying.' };
 const helm = { id: 'hl', face: 'Champion\'s Helm', type: 'Artifact \u2014 Equipment', oracle: 'Equipped creature gets +2/+2.\nAs long as equipped creature is legendary, it has hexproof.' };

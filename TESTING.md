@@ -1,17 +1,16 @@
-# Power/toughness counted from the card's own text — v0.86.0 test copy
+# "Gets +N/+N for each …" cards — v0.86.1 test copy
 
-To check this copy, extract the ZIP and double-click **index.html**. Start a game (practice is fine) and put cards on the battlefield from a deck; a second player in a private window shows what others see.
+To check this copy, extract the ZIP and double-click **index.html**. Start a game (practice is fine) and put cards on the battlefield from a deck.
 
-1. **Bronze Guardian** (or Master of Etherium, Darksteel Juggernaut, Filigree Attendant): its power is the number of **artifacts you control** (it counts itself). Put another artifact onto the battlefield: the power goes up by one. Remove it: back down.
-2. **Equipment and counters add on top.** Attach an Equipment that says +2/+2 (it is an artifact too, so it also raises the count) and add a +1/+1 counter: the number is the count plus those. Hover the badge: it says the number was counted from the card's own text.
-3. **Opponents:** Avalanche of Sector 7 counts the artifacts your **opponents** control. Have the other player put an artifact out: it changes on both screens.
-4. **Graveyards:** Mortivore / Splinterfright / Lord of Extinction / Consuming Aberration / Spellheart Chimera: put creature cards (yours and the other player's) into graveyards and watch the number. A **Goyf** (Barrowgoyf, Polygoyf, Lhurgoyf, Necrogoyf) counts card types or creature cards in all graveyards (toughness one more).
-5. **Hand size and life:** Psychosis Crawler / Body of Knowledge follow the number of cards in your hand; Serra Avatar follows your life total.
-6. **A base set by hand wins:** right-click → Set power/toughness → the count is replaced by what you set (bonuses still add).
-7. Other counts are **not** read and stay manual: mana value (Dodgy Jalopy), colours (Drove of Elves), your party, a chosen player. Tell me if one of those matters to you.
-8. Tell me if any number is wrong for a card you know.
+1. **Moon-Vigil Adherents** (0/0): put it on the battlefield: it should be **1/1** (it counts itself). Put another creature out: **2/2**. Put a creature card into your graveyard: it counts too. The other player's creatures do **not** count ("you control"). A +1/+1 counter adds on top. Hover the number: it says the bonus was counted from the card's own text.
+2. **Other cards of this kind:** Multani (lands you control and land cards in your graveyard), Jarad, Wight of the Reliquary (creature cards in your graveyard), Akiri / Storm-Kiln Artist (+1/+0 per artifact), Borderland Behemoth (+4/+4 per other Giant), Yavimaya Enchantress (enchantments).
+3. **Auras and Equipment:** **Crown of Skemfar** on a creature: +1/+1 for each Elf you control (and reach); **Ethereal Armor** (enchantments), **Cranial Plating** (artifacts), **Empyrial Plate** (cards in your hand), **Kemba's Banner** / **Crown of Gondor** (creatures), **Bonehoard** (creature cards in all graveyards). The number follows the count live, for both players.
+4. **Counters on the card itself:** **Mace of the Valiant** / **Lion Sash** / **Gavel of the Righteous** (+1/+1 for each counter on the Equipment): put counters on the Equipment and watch the equipped creature. **Auras and Equipment attached to it:** Kor Spiritdancer, Gunner Conscript, Strong Back (attach some).
+5. Cards that need colours, experience / poison counters, mana value or "greatest power" are **not** read and stay manual. Tell me if one of those matters.
+6. Everything from v0.86.0 (Bronze Guardian, Goyfs…) still works.
 
 ## Assistant verification
-- 34 automatic unit tests pass, including new `test_cda`: 30+ real card wordings from the pre-con decks read correctly, the ones that cannot be read are refused, and counting on a two-player board (artifacts, lands, creatures incl. face-down, graveyards, hands, life, tribes, card types, differently named lands, "other").
-- New two-player Chromium test `test_cda_browser`: Bronze Guardian with artifacts, Equipment and a counter on top, the opponent's artifacts (Avalanche) live, graveyards of both players (Mortivore), hand size (Body of Knowledge), a base set by hand wins, and nothing is stored on the cards.
-- **Not tested:** touch, the Grid layout, more than two players, real card pictures; exile counts (Crackling Drake) are not read.
+- 34 automatic unit tests pass, including new checks from real wordings (Moon-Vigil Adherents, Crown of Skemfar, Ethereal Armor, Bonehoard, Mace of the Valiant, Kor Spiritdancer, Blazing Sunsteel, High Sentinels of Arashin, "Tuvasa the Sunlit") and counting on boards.
+- New two-player Chromium test `test_cda_each_browser`: Moon-Vigil Adherents with creatures, a creature card in the graveyard, the other player's creature (not counted), a counter on top, and Crown of Skemfar counting Elves with reach, on both screens.
+- I checked 66 pre-con cards with this wording: 36 are read; the rest need things the game cannot see.
+- **Not tested:** touch, the Grid layout, more than two players, real card pictures.
