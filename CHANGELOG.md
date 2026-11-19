@@ -6,6 +6,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.85.0] - 2026-11-19
+
+### Added
+- **Automatic power/toughness from other cards.** Auras and Equipment now change the number on the creature they are attached to: "Enchanted creature gets +2/+2, has flying, and can't attack you" (the Vows, Angelic Destiny, Assault Suit…), and **base power and toughness** effects such as an Aura that makes a creature a 0/1 or 1/1 Frog (Darksteel Mutation, Almost Perfect, Hulkbuster Armor). The new base replaces the printed one and **+1/+1 / −1/−1 counters still count on top**, as do other Auras and your own manual changes. Hover the power/toughness badge to see which cards it comes from. Other players see the same.
+- **Plain anthems** ("Elves you control get +1/+1", "All Elves get +1/+1", "Other creatures you control get +1/+1", "Creatures your opponents control get −1/−1") and group lines with both a bonus and an ability.
+- **More wordings for given abilities:** "…with counters on them" (any counter, like Sphere Grid's cousins Tesak and Nev), long ability names, two creature types in one line ("Orcs and Goblins"), "Zombie tokens you control", "outlaws", "modified creatures"; Auras and Equipment with extra clauses after the ability ("…, and can't attack you"); and simple conditions on the card itself: "During your turn…", "…as long as it's untapped", "as long as you control your commander" (Lieutenant) and "as long as this creature has N or more counters".
+- Things that depend on other game state (artifact count, life total, number of creatures, being equipped, attacking) stay manual on purpose.
+
 ## [0.84.0] - 2026-11-19
 
 ### Added
@@ -472,7 +480,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.84.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.85.0...HEAD
+[0.85.0]: https://github.com/ccall1212/commander-table/compare/v0.84.0...v0.85.0
 [0.84.0]: https://github.com/ccall1212/commander-table/compare/v0.83.0...v0.84.0
 [0.83.0]: https://github.com/ccall1212/commander-table/compare/v0.82.0...v0.83.0
 [0.82.0]: https://github.com/ccall1212/commander-table/compare/v0.81.0...v0.82.0

@@ -68,7 +68,13 @@ Chris (2026-11-19): split cards (his friend played Wear // Tear) are "technicall
 
 Chris (2026-11-19): lands that only say "This land enters tapped" should tap themselves, and the "…unless you control…" ones too; leave out the "you may reveal a card" ones. Built: `js/entertap.js` reads the land face's rules text; hooks into `insertCard` (not for Give/Return control). Handles always-tapped, slow/fast/battle/check lands, "N or more other <type>s", opponents count, opponents' land count, and Lair of the Hydra's backwards form; 296 pre-con land faces. Reveal, pay-life, "you may have it enter tapped" and Adventure lands (Zanarkand) are left alone. Ideas not built: the same for non-land permanents that enter tapped; an MDFC land played on its back face is judged by whichever face shows when it enters.
 
+### 92. Automatic power/toughness and more granted abilities — Built, awaiting Chris's test (v0.85.0)
+
+Chris (2026-11-19): look through the pre-cons for effects like Sphere Grid. Chosen: Auras/Equipment with extra clauses (and their +N/+N and base power/toughness, e.g. frogs, with counters on top), "with counters on them", creature-type variations, and the simple conditions on the card itself (during your turn, untapped, Lieutenant, counter thresholds). NOT done on purpose (manual): artifact counts, life totals, creature counts, equipped, attacking. Built in `js/grants.js` (new `pt`, `base`, `when`, `self` scope) and `effPT` in `js/app.js`; plain anthems added when Chris asked about "All elves get +1/+1". Next idea from Chris: creature-type changes ("is a Frog", "all creatures are Spiders", changelings as an "All types" tag) — not built; "until end of turn" one-shot effects stay with the Temporary effects tool.
+
 ### Shipped recently (details in CHANGELOG.md)
+
+- #91 Lands that enter tapped are tapped automatically — v0.84.0.
 
 - #90 Sideways cards shown upright — v0.83.0.
 

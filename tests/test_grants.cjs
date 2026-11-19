@@ -55,7 +55,8 @@ assert.equal(sc('Equipped creature gets +2/+2 and has trample.'), 'attached:tram
 assert.equal(sc('Enchanted creature has flying and lifelink.'), 'attached:flying+lifelink@enchanted', 'an Aura');
 assert.equal(sc('Equipped creature gets +1/+1 and has vigilance.\nEquip {2}'), 'attached:vigilance@equipped');
 assert.equal(sc('Equipped creature has haste and shroud.\nEquip {0}'), 'attached:haste+shroud@equipped', 'Lightning Greaves');
-assert.equal(sc('Enchanted creature gets +1/+1.'), '', 'a bare power/toughness bonus is not a grant');
+assert.equal(sc('Enchanted creature gets +1/+1.'), 'attached:@enchanted', 'a bare power/toughness bonus is a grant of power/toughness only (v0.85.0)');
+assert.deepEqual(JSON.parse(JSON.stringify(G.parse('Enchanted creature gets +1/+1.')[0].pt)), { dp: 1, dt: 1 });
 assert.equal(sc('Equipped creature has ward {1}.'), '', 'an ability without an icon is left alone');
 assert.equal(sc('Equipped creature has "Whenever this creature attacks, draw a card."'), '', 'a quoted ability is left alone');
 assert.equal(sc('All creatures have haste.'), 'all:haste');
@@ -114,7 +115,7 @@ assert.equal(sc('Commander creatures you control get +2/+2 and have haste.'), 'y
 assert.equal(G.parse('Commander creatures you control get +2/+2 and have haste.')[0].filters.commander, true);
 assert.equal(G.parse('Commander creatures you control get +2/+2 and have haste.')[0].filters.tribe, undefined, '"Commander" is not a creature type');
 assert.equal(sc('Creatures you control get +1/+1 and have flying.'), 'you:flying', 'an anthem with a keyword');
-assert.equal(sc('Creatures you control get +1/+1.'), '', 'an anthem alone is still not a grant');
+assert.equal(sc('Creatures you control get +1/+1.'), 'you:', 'a plain anthem is now a power/toughness grant with no abilities (v0.85.0)');
 const brud = { id: 'br', face: 'Test Brudiclad', type: 'Creature — Phyrexian', oracle: 'Creature tokens you control have haste.' };
 const steward = { id: 'st', face: 'Test Steward', type: 'Creature — Human', oracle: 'Commander creatures you control get +2/+2 and have haste.' };
 const soldier = { id: 'so', face: 'Soldier', type: 'Token Creature — Soldier', oracle: '' };

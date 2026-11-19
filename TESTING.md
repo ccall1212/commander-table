@@ -1,18 +1,18 @@
-# Lands that enter tapped — v0.84.0 test copy
+# Automatic power/toughness and more granted abilities — v0.85.0 test copy
 
-To check this copy, extract the ZIP and double-click **index.html**. Start a game (practice is fine) with a deck that has some non-basic lands, or use the quick ways below. The battlefield opens once the game has started.
+To check this copy, extract the ZIP and double-click **index.html**. Start a game (practice is fine) and put cards on the battlefield from your deck, or use cards you have in a deck. Counters: left-click a creature's counter badge area or use the card menu → counters.
 
-1. Play a land that says **"This land enters tapped."** (for example Barren Moor, a Temple, a gain-land): it should arrive **tapped**. The log says "played … tapped".
-2. Play a plain land or a basic: it arrives **untapped** as before.
-3. **Check lands** ("enters tapped unless you control a Plains or an Island", e.g. Dragonskull Summit, Sulfur Falls): tapped when you don't have the right land types, untapped when you do. A dual land with the right type counts.
-4. **Fast lands** (Darkslick Shores: "unless you control two or fewer other lands"): untapped as one of your first three lands, tapped later. **Slow lands** (Deserted Beach: "two or more other lands") are the reverse: tapped early, untapped later.
-5. **Battle lands** ("unless you control two or more basic lands", Sunken Hollow) and "**three or more other Forests**" (Gingerbread Cabin) read your lands too.
-6. **Left alone on purpose:** lands that say "you may reveal a card" (Fortified Village, Gilt-Leaf Palace), "you may pay 3 life" (The Black Gate) and "you may have it enter tapped" are **not** tapped for you (you tap them yourself if needed). The same goes for a land with an **Adventure**, such as **Zanarkand, Ancient Metropolis**.
-7. With **Auto-untap** on, your tapped lands untap at the start of your turn as usual. "Untap All" still works.
-8. Tell me if a land is tapped that should not be, or untapped that should be tapped.
+1. **Aura with a bonus:** put a creature on the battlefield (for example a 2/2), then attach **Vow of Flight** (or any "Enchanted creature gets +2/+2, has flying…" Aura) with **A** / Attach to…. The creature's number becomes **4/4** and a **flying** icon appears (dotted green ring). Hover the number: it says where the bonus comes from. Detach the Aura: back to 2/2.
+2. **Frog Aura:** attach an Aura that sets base power and toughness (Darksteel Mutation 0/1, Almost Perfect 9/10, Hulkbuster Armor 9/9, or any "is a … Frog with base power and toughness 1/1" Aura). The number becomes the **new base**. Give the creature a **+1/+1 counter**: it counts **on top** (a 1/1 frog with one counter is 2/2). Stack a +2/+2 Aura too: it adds.
+3. **Plain anthem:** play a card like **Elves you control get +1/+1** (or any "Other creatures you control get +1/+1") and check the matching creatures change, and the others do not. Remove it: they go back. **"Other" wording:** a card that says "**Other** Elves you control get +1/+1" does not pump itself, but a second card with the same text pumps the first (each gets +1/+1 from the other).
+4. **Sphere Grid cousins:** a card like Tesak ("creatures you control with counters on them have haste") or Nev: put any counter on a creature; it gets the icon.
+5. **Creature types / tokens:** "Other Orcs and Goblins you control have trample", "Zombie tokens you control have flying", "Other modified creatures you control have vigilance" (modified = a counter, or your Equipment/Aura on it).
+6. **Conditions on the card:** Cait, Cage Brawler / Kefka ("During your turn, … has indestructible"): the icon is there on its controller's turn only. Paradise Druid / Walking Skyscraper: hexproof only while untapped. A Lieutenant (Angelic Field Marshal): the bonus and vigilance only while one of your commanders is on the battlefield. Voice of the Blessed / Hero of Bretagard: the icon appears at the counter threshold.
+7. **Still manual on purpose:** artifact counts, life totals, creature counts, "equipped", "attacking". Tell me if one of these should be automatic after all.
+8. Another player (private window) sees the same numbers and icons on your board.
+9. Tell me if a number is wrong on a card you know, or an icon shows when it should not.
 
 ## Assistant verification
-- 32 automatic unit tests pass, including new `test_entertap` checks for every wording (always tapped, slow, fast, battle, check lands, "other Forests", opponents, Lair of the Hydra, and the ones left alone).
-- I ran the rules over every land face in the 158 pre-con decks: 296 are decided automatically (225 always tapped, 71 conditional); 21 need a choice and are left alone; none of the "unless" wordings was misread.
-- New two-player Chromium test `test_entertap_browser`: always-tapped, check, fast, slow, reveal and opponent-count lands, the other player seeing the tapped land, and the log text.
-- **Not tested:** touch, the Grid layout, and more than two players; real lands from a live deck (the test uses made-up lands with the real rules text).
+- 33 automatic unit tests pass, including new `test_grants_pt` checks written from real card wordings (Vows, Assault Suit, Whispersilk Cloak, On Serra's Wings, Angelic Destiny, Eldrazi Conscription, Darksteel Mutation, Almost Perfect, Hulkbuster Armor, Tesak, Winged Hive Tyrant, Orcs and Goblins, Zombie tokens, outlaws, modified creatures, Cait, Cid, Paradise Druid, Hero of Bretagard, Voice of the Blessed, Primordial Hydra, Lieutenant cards, plain anthems), and the ones that must be left alone (Multiclass Baldric, Brass Knuckles, Shimmer Dragon, Serra Ascendant, Jetmir, Balan, Tromokratis).
+- New two-player Chromium test `test_grants_pt_browser`: Aura bonus + flying for both players, counters on top, a frog Aura with other Auras and a counter, plain anthems (including the source itself), "during your turn", the badge's explanation, and that nothing is saved on the cards.
+- **Not tested:** touch, the Grid layout, more than two players, and real card pictures.
