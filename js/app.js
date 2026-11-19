@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.84.0';
+const APP_VERSION = '0.85.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -109,9 +109,11 @@ function markEntries(c) {
   gr.sort((x, y) => CARD_MARKS.findIndex(m => m.id === x.id) - CARD_MARKS.findIndex(m => m.id === y.id)); // the same order on every screen
   // Summoning sickness only matters for an untapped creature without haste (printed or granted, permanent or temporary), so the tag is
   // hidden otherwise; the status itself stays on the card until your turn begins, so it comes back if the creature untaps or loses haste.
+  // Abilities this card has lost to another permanent (Colossus Hammer's "loses flying"): their icons are hidden, whether printed, ticked by hand or granted.
+  const lost = id => !!(c && c.ls && (c.ls.ids.includes(id) || (c.ls.all && !c.ls.keep.includes(id) && CARD_MARK_BY_ID[id] && CARD_MARK_BY_ID[id].kind === 'ability')));
   const hasty = perm.includes('haste') || temp.includes('haste') || (c && Array.isArray(c.gr) && c.gr.some(g => g && g.id === 'haste'));
   const shownPerm = (c && c.t) || hasty ? perm.filter(id => id !== 'sick') : perm;
-  return shownPerm.map(id => ({ id, temp: false })).concat(temp.map(id => ({ id, temp: true })), gr).slice(0, MAX_CARD_MARKS * 2);
+  return shownPerm.filter(id => !lost(id)).map(id => ({ id, temp: false })).concat(temp.filter(id => !lost(id)).map(id => ({ id, temp: true })), gr.filter(g => !lost(g.id))).slice(0, MAX_CARD_MARKS * 2);
 }
 // onCard = an icon that is drawn on the card (in the middle, where word tags sit) instead of hanging outside it: Summoning sick.
 const isWordMark = e => { const id = typeof e === 'string' ? e : e.id; return !CARD_MARK_BY_ID[id] || !CARD_MARK_BY_ID[id].p || !!CARD_MARK_BY_ID[id].onCard; };
@@ -134,7 +136,7 @@ function previewMarksHTML(card) {
 // Abilities another permanent gives this card ("creatures you control with a +1/+1 counter have reach and trample"), worked out
 // per player's board and remembered until the next redraw. Drawn as extra icons only; never saved on the card.
 let grantEpoch = 0;
-const grantCache = { map: null, epoch: -1 };
+const grantCache = { map: null, pt: null, lose: null, epoch: -1 };
 function grantsFor(pid, c) {
   if (typeof CTGrants === 'undefined' || !c || !S.me) return [];
   if (!grantCache.map || grantCache.epoch !== grantEpoch) {
@@ -143,11 +145,15 @@ function grantsFor(pid, c) {
       if (opid === S.pid || !p || !p.zones) continue;
       boards.push({ pid: opid, entries: (p.zones.battlefield || []).map(x => ({ c: x, def: x.id ? (p.defs || {})[x.id] : null })) });
     }
-    grantCache.map = CTGrants.forBoards(boards); grantCache.epoch = grantEpoch; // every board at once: an Aura can sit on an opponent's creature
+    grantCache.map = CTGrants.forBoards(boards, { active: S.table && S.table.active }); grantCache.pt = grantCache.map.pt; grantCache.lose = grantCache.map.lose; grantCache.epoch = grantEpoch; // every board at once: an Aura can sit on an opponent's creature; the turn matters for "during your turn"
   }
   return grantCache.map.get(pid + '|' + c.iid) || [];
 }
-const withGrants = (pid, c) => { const gr = grantsFor(pid, c).filter(g => !(c.sx || []).includes(g.id)); return gr.length ? Object.assign({}, c, { gr }) : c; }; // grants the owner switched off by hand (sx) are left out
+// Power/toughness other permanents give this card: { dp, dt, base, from: [...] } or null (see CTGrants.forBoards). Drawn on the badge, never saved.
+function ptGrantFor(pid, c) { grantsFor(pid, c); return (grantCache.pt && grantCache.pt.get(pid + '|' + c.iid)) || null; }
+// Abilities other permanents take away ("Equipped creature … loses flying", "loses all abilities"): { ids, all, keep } or null. Their icons are hidden, never un-saved.
+function loseFor(pid, c) { grantsFor(pid, c); return (grantCache.lose && grantCache.lose.get(pid + '|' + c.iid)) || null; }
+const withGrants = (pid, c) => { const gr = grantsFor(pid, c).filter(g => !(c.sx || []).includes(g.id)), ls = loseFor(pid, c); return gr.length || ls ? Object.assign({}, c, gr.length ? { gr } : {}, ls ? { ls } : {}) : c; }; // grants the owner switched off by hand (sx) are left out
 const PLAYER_COUNTERS = ['Energy', 'Experience', 'Rad', 'Tickets'];
 const IMG_OK = u => typeof u === 'string' && u.startsWith('https://cards.scryfall.io/');
 
@@ -492,7 +498,7 @@ function publicView() {
       if (trg.length) defs[p.id].trg = trg;
       const trk = typeof CTTracks === 'undefined' ? null : CTTracks.describe(m.defs[p.id]); // step tracker (Saga chapters, Class levels, Room doors) for other players' screens
       if (trk) defs[p.id].trk = trk;
-      const gr = typeof CTGrants === 'undefined' ? [] : CTGrants.parse(m.defs[p.id].oracle); // abilities this card gives to its controller's other permanents, for the other players' screens
+      const gr = typeof CTGrants === 'undefined' ? [] : CTGrants.parse(m.defs[p.id].oracle, m.defs[p.id].face || m.defs[p.id].name); // abilities and power/toughness this card gives to its controller's other permanents, for the other players' screens
       if (gr.length) defs[p.id].gr = gr;
     }
     return p;
@@ -1867,6 +1873,18 @@ function autoEnterTapped(card, opts) {
   const r = CTEnterTap.evaluate(f.oracle, { name: f.name, lands, opponents: foes.length, oppLands });
   if (r && r.tapped) { card.t = true; opts.autoTapped = true; }
 }
+// Counters a permanent enters with when the number is fixed ("This creature enters with a +1/+1 counter on it", Vivid lands' charge counters,
+// Graft N, Vanishing N). X counters and anything that depends on mana or the board are left for the player.
+function autoEnterCounters(card, opts) {
+  if (typeof CTEnterTap === 'undefined' || card.fd) return;
+  const f = faceInfo(card);
+  if (!f || !/\bcounters? on\b|^(?:Graft|Modular|Fading|Vanishing) \d+/im.test(f.oracle)) return;
+  const list = CTEnterTap.counters(f.oracle, f.name).filter(x => !(card.c && card.c[x.name] > 0));
+  if (!list.length) return;
+  card.c = card.c || {};
+  list.forEach(x => { card.c[x.name] = (card.c[x.name] || 0) + x.n; });
+  opts.autoCounters = list.map(x => `${x.n} ${x.name} counter${x.n > 1 ? 's' : ''}`).join(' and ');
+}
 function insertCard(card, to, opts = {}) {
   if (to === 'battlefield' && !canEnterBattlefield()) return false;
   const z = S.me.zones[to];
@@ -1875,7 +1893,7 @@ function insertCard(card, to, opts = {}) {
     if (opts.x != null) { card.x = clamp(Math.round(opts.x), 0, BW - CW); card.y = clamp(Math.round(opts.y), 0, myBH() - CH); }
     else if (card.x == null) { autoPlace(card, to); if (card.y != null && card.y + CH > boardVisibleBottom()) centerSpot(card); } // never leave it under the hand strip
   }
-  if (to === 'battlefield' && !opts.noAuto) { autoMarkPrintedAbilities(card); autoFirstLoreCounter(card); autoEnterTapped(card, opts); }
+  if (to === 'battlefield' && !opts.noAuto) { autoMarkPrintedAbilities(card); autoFirstLoreCounter(card); autoEnterTapped(card, opts); autoEnterCounters(card, opts); }
   if (to === 'battlefield') offerDayNight(card);
   if (to === 'battlefield') autoSummoningSick(card); // after the printed abilities (they are skipped on a card that already has a status); also when it arrives from another player
   if (to === 'battlefield') {
@@ -1975,7 +1993,7 @@ function moveText(r, to, opts) {
     const n = S.me.casts[card.iid] || 0;
     return `cast {0} from the command zone${n ? ` (commander tax +${2 * n})` : ''}`;
   }
-  if (to === 'battlefield') return from === 'hand' ? `played {0}${opts.tapped || opts.autoTapped ? ' tapped' : ''}` : `put {0} onto the battlefield${opts.autoTapped ? ' tapped' : ''} from ${ZL[from]}`;
+  if (to === 'battlefield') return (from === 'hand' ? `played {0}${opts.tapped || opts.autoTapped ? ' tapped' : ''}` : `put {0} onto the battlefield${opts.autoTapped ? ' tapped' : ''} from ${ZL[from]}`) + (opts.autoCounters ? ` with ${opts.autoCounters}` : '');
   if (to === 'graveyard') return from === 'hand' ? 'discarded {0}' : from === 'library' ? 'milled {0}' : 'put {0} into the graveyard';
   if (to === 'exile') return `exiled {0}${from !== 'battlefield' ? ` from ${ZL[from]}` : ''}`;
   if (to === 'hand') return `returned {0} to hand from ${ZL[from]}`;
@@ -2784,17 +2802,17 @@ async function customCounter(iid, targets) {
 }
 
 // --- power / toughness: optional base override (pb "3/3") + modifiers (dp, dt), plus +1/+1 / -1/-1 counters
-function effPT(c, def) {
+function effPT(c, def, gp) {
   if (c.fd) return { text: '2/2', modified: false };
-  const base = c.tb || c.pb || (def && def.pt) || ''; // tb: base power/toughness set until end of turn
+  const base = c.tb || c.pb || (gp && gp.base) || (def && def.pt) || ''; // a base set by hand wins over one an Aura gives, which wins over the printed one // tb: base power/toughness set until end of turn
   const parts = String(base).split('/').map(v => v.trim());
   // Symbolic printed stats use a manual baseline of zero; numeric sides keep their value.
   const stats = parts.length === 2 && parts.every(Boolean)
     ? parts.map(v => /^-?\d+$/.test(v) ? +v : 0) : null;
   const cnt = ((c.c && c.c['+1/+1']) || 0) - ((c.c && c.c['-1/-1']) || 0);
   const tp = c.tp || 0, tt = c.tt || 0, temp = !!(tp || tt || c.tb); // temporary changes that end when the turn passes
-  const dp = (c.dp || 0) + cnt + tp, dt = (c.dt || 0) + cnt + tt;
-  const modified = !!(c.tb || c.pb || dp || dt);
+  const dp = (c.dp || 0) + cnt + tp + (gp ? gp.dp : 0), dt = (c.dt || 0) + cnt + tt + (gp ? gp.dt : 0);
+  const modified = !!(c.tb || c.pb || dp || dt || (gp && gp.base));
   if (stats) return { text: `${stats[0] + dp}/${stats[1] + dt}`, modified, temp };
   if (!modified) return { text: base, modified, temp };
   const sg = v => (v >= 0 ? '+' + v : String(v));
@@ -4368,16 +4386,18 @@ function cardHTML(c, def, o) {
     ctrs += `<span class="ctr" data-ctr="${esc(k)}" title="${esc(k)} counters — left-click +1, right-click −1">${esc(lbl)}</span>`;
   }
   if (o.zone === 'battlefield' && !c.fd) {
-    const pt = effPT(c, def);
+    const gp = ptGrantFor(ctrl, c), pt = effPT(c, def, gp);
+    const sg = v => (v >= 0 ? '+' + v : '\u2212' + Math.abs(v));
+    const gpNote = gp ? ` Includes ${gp.from.map(f => (f.base ? 'base ' + f.base : '') + (f.dp || f.dt ? (f.base ? ' and ' : '') + sg(f.dp) + '/' + sg(f.dt) : '') + ' from ' + f.from).join(', ')}.` : '';
     const creature = def && /Creature/.test((c.fl && def.backType) || def.type || '');
     if (pt.text && (pt.modified || creature)) {
       const parts = String(pt.text).split('/');
       const power = parts[0] || '?', toughness = parts[1] || '?';
       const statTitle = 'Click power for +1 or right-click for −1; click toughness for +1 or right-click for −1';
       if (/^-?\d+$/.test(power) && /^-?\d+$/.test(toughness)) {
-        badges += `<span class="pt${pt.modified ? ' mod' : ''}${pt.temp ? ' temp' : ''}" title="${pt.temp ? 'Includes a temporary change that ends when the turn passes. ' : ''}${statTitle}${def && def.pt ? ' (printed ' + esc(def.pt) + ')' : ''}"><button type="button" class="pt-stat pt-stat-power" data-pt-stat="power" aria-label="Increase power" title="Power: click +1, right-click −1">${esc(power)}</button><button type="button" class="pt-stat pt-stat-toughness" data-pt-stat="toughness" aria-label="Increase toughness" title="Toughness: click +1, right-click −1">${esc(toughness)}</button></span>`;
+        badges += `<span class="pt${pt.modified ? ' mod' : ''}${pt.temp ? ' temp' : ''}" title="${pt.temp ? 'Includes a temporary change that ends when the turn passes. ' : ''}${esc(gpNote)}${gpNote ? ' ' : ''}${statTitle}${def && def.pt ? ' (printed ' + esc(def.pt) + ')' : ''}"><button type="button" class="pt-stat pt-stat-power" data-pt-stat="power" aria-label="Increase power" title="Power: click +1, right-click −1">${esc(power)}</button><button type="button" class="pt-stat pt-stat-toughness" data-pt-stat="toughness" aria-label="Increase toughness" title="Toughness: click +1, right-click −1">${esc(toughness)}</button></span>`;
       } else {
-        badges += `<span class="pt${pt.modified ? ' mod' : ''}${pt.temp ? ' temp' : ''}" title="${pt.temp ? 'Includes a temporary change that ends when the turn passes. ' : ''}Power / toughness${def && def.pt ? ' (printed ' + esc(def.pt) + ')' : ''}">${esc(pt.text)}</span>`;
+        badges += `<span class="pt${pt.modified ? ' mod' : ''}${pt.temp ? ' temp' : ''}" title="${pt.temp ? 'Includes a temporary change that ends when the turn passes. ' : ''}${esc(gpNote)}${gpNote ? ' ' : ''}Power / toughness${def && def.pt ? ' (printed ' + esc(def.pt) + ')' : ''}">${esc(pt.text)}</span>`;
       }
     }
   }

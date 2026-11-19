@@ -50,5 +50,24 @@
     if (def.lay === 'adventure') return true;
     return /\s\/\/\s/.test(String(def.name || '')) && /\bThen exile this card\. You may (?:cast|play)\b/i.test(String(def.oracle || ''));
   }
-  window.CTEnterTap = { evaluate, condition, hasAdventure };
+  // Counters a permanent enters with when the number is fixed: "This creature enters with a +1/+1 counter on it.", "enters tapped with two charge counters on
+  // it", and the keywords Graft N / Vanishing N / Fading N. Returns [{ name, n }]. NOT read (they depend on mana spent or on the board, and stay manual):
+  // X, "for each", "equal to", "additional", kicker, "if/unless", "you may", "choose", and counters given to OTHER creatures.
+  function counters(oracle, name) {
+    const out = [];
+    const add = (nm, n) => { if (n >= 1 && n <= 20) { const hit = out.find(x => x.name === nm); if (hit) hit.n += n; else out.push({ name: nm, n }); } };
+    const esc = x => String(x).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const names = name ? [String(name).trim(), String(name).split(',')[0].trim()].filter((x, i, all) => x && all.indexOf(x) === i).map(esc) : []; // Oracle text uses the full name of a legendary card ("Ghave, Guru of Spores enters…")
+    const line = new RegExp('^(?:This [a-z]+|It' + names.map(n => '|' + n).join('') + ') enters(?: the battlefield)?(?: tapped)? with (a|an|one|two|three|four|five|six|seven|eight|nine|ten|\\d+) (\\+1\\/\\+1|-1\\/-1|[a-z]{3,12}) counters? on (?:it|him|her)\\.?$', 'i');
+    String(oracle == null ? '' : oracle).split('\n').forEach(raw => {
+      const l = clean(raw);
+      if (/\b(?:additional|for each|twice|that many|equal to|if |unless|you may|X\b|choose|where|instead|kicked|spent)\b/i.test(l)) return;
+      let m = line.exec(l);
+      if (m) { const nm = m[2].toLowerCase(); add(/^[+-]/.test(nm) ? nm : nm[0].toUpperCase() + nm.slice(1), NUMBERS[m[1].toLowerCase()] || +m[1]); return; }
+      m = /^(Graft|Modular|Fading|Vanishing) (\d+)$/i.exec(l);
+      if (m) { const k = m[1].toLowerCase(); add(k === 'graft' || k === 'modular' ? '+1/+1' : k === 'fading' ? 'Fade' : 'Time', +m[2]); }
+    });
+    return out;
+  }
+  window.CTEnterTap = { evaluate, condition, hasAdventure, counters };
 }());

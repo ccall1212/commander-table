@@ -64,4 +64,21 @@ assert.equal(E.hasAdventure({ name: 'Zanarkand, Ancient Metropolis // Lasting Fa
 assert.equal(E.hasAdventure({ name: 'Barren Moor', oracle: 'This land enters tapped.' }), false);
 assert.equal(E.hasAdventure({ name: 'Wear // Tear', oracle: 'Destroy target artifact.\n—\nDestroy target enchantment.' }), false, 'a split card is not an Adventure');
 assert.equal(E.hasAdventure(null), false);
+// Counters a permanent enters with (v0.85.0): fixed numbers only.
+const cn = (o, n) => JSON.parse(JSON.stringify(E.counters(o, n)));
+assert.deepEqual(cn('This creature enters with a +1/+1 counter on it.'), [{ name: '+1/+1', n: 1 }], 'a hydra-style creature');
+assert.deepEqual(cn('Ghave, Guru of Spores enters with five +1/+1 counters on it.', 'Ghave, Guru of Spores'), [{ name: '+1/+1', n: 5 }], 'the full name of a legendary card');
+assert.deepEqual(cn('Ghave enters with five +1/+1 counters on it.', 'Ghave, Guru of Spores'), [{ name: '+1/+1', n: 5 }], 'or its short name');
+assert.deepEqual(cn('This land enters tapped with two charge counters on it.'), [{ name: 'Charge', n: 2 }], 'Vivid lands');
+assert.deepEqual(cn('This creature enters with a -1/-1 counter on it.'), [{ name: '-1/-1', n: 1 }]);
+assert.deepEqual(cn('This creature enters with two stun counters on it.'), [{ name: 'Stun', n: 2 }]);
+assert.deepEqual(cn('Graft 2 (This creature enters with two +1/+1 counters on it. Whenever another creature enters, you may move a +1/+1 counter from this creature onto it.)'), [{ name: '+1/+1', n: 2 }], 'Graft');
+assert.deepEqual(cn('Vanishing 3 (This permanent enters with three time counters on it.)'), [{ name: 'Time', n: 3 }], 'Vanishing');
+assert.deepEqual(cn('Fading 4'), [{ name: 'Fade', n: 4 }], 'Fading');
+for (const x of ['This creature enters with X +1/+1 counters on it.', 'This creature enters with a +1/+1 counter on it for each time it was kicked.', 'This creature enters with three +1/+1 counters on it if you didn\'t cast it from your hand.',
+  'This creature enters with a number of +1/+1 counters on it equal to the greatest power among other creatures you control.', 'Each other creature you control enters with an additional +1/+1 counter on it.',
+  'Converge \u2014 This creature enters with a +1/+1 counter on it for each color of mana spent to cast it.', 'You may have this creature enter with a +1/+1 counter on it.', 'Vanishing', 'Sunburst', 'Ravenous', 'Devour 2']) {
+  assert.equal(E.counters(x).length, 0, 'left to the player: ' + x);
+}
+assert.equal(E.counters(null).length, 0);
 console.log('PASS entertap: lands that always enter tapped, the conditional wordings the game can check, and the ones left alone');
