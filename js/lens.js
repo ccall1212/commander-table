@@ -95,7 +95,8 @@
         orig: src,
         large: upgrade(src),
         alt: img.getAttribute('alt') || '',
-        rot: img.classList.contains('rot')
+        rot: img.classList.contains('rot'),
+        side: el.classList.contains('sideways') // printed sideways: shown turned upright
       });
     }
     out.sort(function (a, b) { return a.d - b.d; });
@@ -139,6 +140,9 @@
     grid.style.gridTemplateColumns = 'repeat(' + best + ', ' + bestW + 'px)';
     grid.style.gridAutoRows = tileH + 'px';
     grid.style.gap = GAP + 'px';
+    // A sideways picture is turned a quarter turn, so its box is the tile turned on its side (then it fills the tile's width).
+    var sides = grid.querySelectorAll('img.side');
+    for (var s = 0; s < sides.length; s++) { sides[s].style.width = tileH + 'px'; sides[s].style.height = bestW + 'px'; }
   }
 
   function render() {
@@ -149,7 +153,7 @@
       circle.style.display = 'block';
       positionCircle();
       var tiles = collect();
-      var key = tiles.map(function (t) { return t.orig + (t.rot ? '|r' : ''); }).join('\n');
+      var key = tiles.map(function (t) { return t.orig + (t.rot ? '|r' : '') + (t.side ? '|s' : ''); }).join('\n');
       if (key !== lastKey) {
         lastKey = key;
         lastTiles = tiles;
@@ -163,7 +167,7 @@
             var im = document.createElement('img');
             im.alt = t.alt;
             im.draggable = false;
-            if (t.rot) im.className = 'rot';
+            im.className = (t.rot ? 'rot' : '') + (t.side ? ' side' : '');
             var fell = false;
             im.addEventListener('error', function () {
               if (fell) return;

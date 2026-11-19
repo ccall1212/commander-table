@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.82.0';
+const APP_VERSION = '0.83.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -487,6 +487,7 @@ function publicView() {
     const p = pubCard(c);
     if (p.id && m.defs[p.id]) {
       defs[p.id] = Deck.slimDef(m.defs[p.id]);
+      if (typeof CTOrient !== 'undefined') defs[p.id].hz = CTOrient.frontIsSideways(m.defs[p.id]) ? 1 : 0; // printed sideways? (other players cannot see the rules text that tells an Aftermath card apart)
       const trg = typeof CTReminders === 'undefined' ? [] : CTReminders.triggerLines(m.defs[p.id].oracle, false).slice(0, 4); // only the triggers that can affect other players (for their reminders list)
       if (trg.length) defs[p.id].trg = trg;
       const trk = typeof CTTracks === 'undefined' ? null : CTTracks.describe(m.defs[p.id]); // step tracker (Saga chapters, Class levels, Room doors) for other players' screens
@@ -4327,7 +4328,9 @@ function cardHTML(c, def, o) {
   const ctrl = o.ctrl || o.pid;
   const cls = ['card'];
   if (typeof drawPendingIids !== 'undefined' && drawPendingIids.has(c.iid)) cls.push('ct-draw-pending');
-  if (c.t) cls.push('tapped'); if (o.mine) cls.push('mine'); if (c.att) cls.push('att');
+  // A card whose picture is printed sideways (Wear // Tear, Rooms, a Battle's front) is turned upright like a tapped card, so tapping it shows the plain picture instead.
+  const side = o.zone === 'battlefield' && !c.fd && typeof CTOrient !== 'undefined' && CTOrient.sideways(def, c.fl);
+  if (side ? !c.t : c.t) cls.push('tapped'); if (side) cls.push('sideways'); if (o.mine) cls.push('mine'); if (c.att) cls.push('att');
   if (o.mine && o.zone === 'hand' && c.rvp && S.me && S.me.shareTo && !S.me.shareAll) cls.push('shared-priv'); // chosen to show one player
   if (o.zone === 'battlefield' && ctrl === S.pid && !c.att && S.selected.has(c.iid)) cls.push('selected');
   let inner;
@@ -5199,10 +5202,15 @@ function preview(def, hidden, tag, st) {
   const imgs = [def.img, def.imgBack].filter(IMG_OK);
   // The card image carries its own text; only show text when there's no image (or a COPY / attached tag).
   pv.innerHTML = (imgs.length
-    ? `<div class="pv-imgs ${imgs.length > 1 ? 'two' : ''}">${imgs.map(u => `<img src="${esc(u)}" alt="">`).join('')}</div>`
+    ? `<div class="pv-imgs ${imgs.length > 1 ? 'two' : ''}">${imgs.map(u => pvImgHTML(u, def, u === def.img)).join('')}</div>`
     : `<div class="pv-txt"><b>${esc(def.name || '')}</b>${def.mana ? ' ' + esc(def.mana) : ''}${def.type ? `<br><span class="muted">${esc(def.type)}</span>` : ''}${def.oracle ? `<br>${esc(def.oracle)}` : ''}${def.pt ? `<br><b>${esc(def.pt)}</b>` : ''}</div>`) +
     (tag ? `<div class="pv-tag"><span class="tag ${tag === 'Copy' ? 'cp' : ''}">${esc(tag.toUpperCase())}</span></div>` : '') + previewMarksHTML(st) +
     (S.touchMode && S.touchPreview ? `<button class="ct-touch-actions" type="button" data-touch-actions="${esc(S.touchPreview.iid)}">Actions</button>` : '');
+}
+// One picture in the hover preview. A sideways one (split card, Room, a Battle's front) is shown turned upright in a landscape frame.
+function pvImgHTML(u, def, isFront) {
+  const img = `<img src="${esc(u)}" alt="">`;
+  return isFront && typeof CTOrient !== 'undefined' && CTOrient.frontIsSideways(def) ? `<div class="pv-side">${img}</div>` : img;
 }
 const tagOf = c => (c.cp ? 'Copy' : c.tok && c.id !== 'ct-daynight' ? 'Token' : '');
 function previewFromEl(cardEl) {

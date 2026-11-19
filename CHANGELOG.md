@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.83.0] - 2026-11-19
+
+### Added
+- **Sideways cards are shown upright.** Split cards like Wear // Tear and Fire // Ice, Room cards like Dazzling Theater // Prop Room, and the front of Battles like Invasion of Zendikar are printed sideways in their pictures, so you had to tilt your head. They now lie upright on the battlefield (turned like a tapped card, so **tapping one shows the plain picture instead**), in the hover preview (a landscape frame, with a Battle's upright back face beside it), and in the V magnifier. Other players see the same. Aftermath cards (Commit // Memory), Adventures, Pathways and other double-faced cards are left as they were, since their pictures are not sideways. Cards in your hand and piles keep the plain picture; hover them to read them upright.
+
 ## [0.82.0] - 2026-11-18
 
 ### Added
@@ -462,7 +467,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.82.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.83.0...HEAD
+[0.83.0]: https://github.com/ccall1212/commander-table/compare/v0.82.0...v0.83.0
 [0.82.0]: https://github.com/ccall1212/commander-table/compare/v0.81.0...v0.82.0
 [0.81.0]: https://github.com/ccall1212/commander-table/compare/v0.80.0...v0.81.0
 [0.80.0]: https://github.com/ccall1212/commander-table/compare/v0.79.0...v0.80.0

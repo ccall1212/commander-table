@@ -1,17 +1,16 @@
-# Day / Night marker — v0.82.0 test copy
+# Sideways cards shown upright — v0.83.0 test copy
 
-To check this copy, extract the ZIP and double-click **index.html**. A practice game works for the basics; a second player (private window) shows what others see. The battlefield opens once the game has started.
+To check this copy, extract the ZIP and double-click **index.html**. A practice game works (start it, then put cards on the battlefield). You need the cards' pictures, so use a real deck or import one that contains the cards below (or search tokens/cards in your deck editor).
 
-1. Click the **☰ menu → Start Day / Night marker**. The real **Day // Night** card (Day side, sunrise art) appears on your battlefield with a ☀ and a ☾ button at the bottom, and a **☀ Day** chip appears next to "Round N" at the top. Everyone else sees the chip too.
-2. Click the **☾** on the card: the card **flips to its Night side** (moon art), the chip changes to **☾ Night** for everyone and the log says you changed it to night. Click the **☀**: it flips back to Day. The flip key (F) does the same. Right-click the token → **Change to night / day** does the same.
-3. As the **other** player: the chip shows, the token on the keeper's board shows the sun and moon but clicking does nothing, and the ☰ menu says "Day / Night: <name> keeps it (day)" and is greyed out (you can't start a second one).
-4. As the keeper: **☰ menu → Day / Night marker → Remove the marker**. The chip disappears for everyone. Now the other player can start their own.
-5. Remove the marker, then put a **Daybound** card (e.g. Tovolar's Huntmaster or Arlinn, the Pack's Hope) onto the battlefield: a notice offers **Start Day / Night**. Clicking it creates the marker. (The offer comes once per game.)
-6. **Sound:** when the card flips to Night you should hear a **wolf howl**, and a **rooster** when it flips back to Day, on every player's computer. Starting the marker plays nothing. Tell me if either is too loud, too long or too quiet. ☰ menu → **Day / Night sounds** turns them off for you.
-7. Tell me: is the chip readable and in a good place? Is the token's size/place on the board OK? Should the board also get a faint warm/cool tint, or is this enough?
+1. Put **Wear // Tear** (or Fire // Ice, Rough // Tumble) on the battlefield. Instead of lying on its side with text running bottom-to-top, it should lie **upright and readable**, like a tapped card turned the other way.
+2. **Tap** it (T): it now shows the plain portrait picture (the old look). Untap: upright again.
+3. Hover it: the preview is a **landscape picture you can read**. Hold **V** over it: the magnifier shows it upright too.
+4. Put a **Room** (Dazzling Theater // Prop Room) and the **Battle Invasion of Zendikar** on the battlefield: both lie upright. **Flip** the Battle (F): you see its normal upright back face (Awakened Skyclave).
+5. Put **Commit // Memory** or **Struggle // Survive** (Aftermath), an Adventure (Bonecrusher Giant), a Pathway land, and a normal creature on the battlefield: all stay **as before** (no turning). Tell me if any card that is printed sideways is not turned, or one that is not sideways gets turned.
+6. With a second player (private window): they see the same turned cards on your board.
+7. Look at the cards in your hand and graveyard: they still show the plain picture. Is that OK, or should they be turned too?
 
 ## Assistant verification
-- Unit tests (30 files) pass, with new checks for the Day / Night tracker.
-- New two-player Chromium test `test_day_night_browser`: start from the menu, the chip for both players, the other player cannot change or start a second one, sun/moon clicks, right-click menu, log entry, removal, and the Daybound offer.
-- Both sound files load and decode in Chromium; the test checks which sound plays for each change, at 60% volume, and that nothing plays with the setting off. **I cannot hear them, so loudness is for you to judge.**
-- **Not tested:** touch, the Grid layout, the look on real card art, and more than two players.
+- 31 automatic unit tests pass, including new `test_orient` checks (split cards, Rooms, Battle front/back, Aftermath, Adventures, double-faced cards, the published flag).
+- New two-player Chromium test `test_sideways_browser`: which cards get turned for both players, tapping and flipping, and the landscape hover preview. Checked by eye with real card pictures too (Wear // Tear, Fire // Ice, Dazzling Theater, Commit // Memory, Invasion of Zendikar).
+- **Not tested:** touch, the Grid layout, and more than two players.
