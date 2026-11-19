@@ -251,3 +251,5 @@ Chris (2026-11-04): eventually bring commander damage back out of the life box's
 100. Chris (2026-11-19): lands should not jump in front of the pile when pointed at; flipped Exdeath should show Neo Exdeath's counted power (v0.90.1, test copy). v0.90.0 (connection log) is published.
 
 101. Chris (2026-11-19): Evolution Witness in the graveyard wrongly listed as playable from the graveyard (v0.90.2, test copy). v0.90.1 is published.
+
+102. Chris (2026-11-19): put the older Knight's Vigil background back (v0.90.3, test copy). v0.90.2 is published.

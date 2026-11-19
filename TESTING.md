@@ -1,11 +1,11 @@
-# Graveyard reminders — v0.90.2 test copy
+# Older Knight's Vigil background — v0.90.3 test copy
 
 To check this copy, extract the ZIP and double-click **index.html**.
 
-1. Put **Evolution Witness** in your graveyard. The Reminders panel should **not** list it under "Playable from graveyard / exile".
-2. A card that really can be used from the graveyard should still appear there: for example one with **Flashback**, **Escape**, **Retrace**, "You may cast this card from your graveyard", or a card like **Bloodghast** ("you may return Bloodghast from your graveyard to the battlefield").
-3. Tell me if any graveyard card shows up that should not, or one that should is missing.
+1. On the opening screen, open **Your look** and pick the **Knight's Vigil** play-area background. The thumbnail and the full picture should be the older image you prefer.
+2. Start a game and check the picture behind the table looks right and cards stay readable.
+3. The other nine backgrounds should look the same as in the last release.
 
 ## Assistant verification
-- `test_reminders` (unit) now checks Evolution Witness's wording (with its name and with "this creature") gives no graveyard line, and that Bloodghast, "Exile this card from your graveyard" and "You may cast this creature from your graveyard" still do. All other unit tests and the two reminders browser tests pass.
-- **Not tested:** every card with graveyard abilities, only the wordings above.
+- The two Knight's Vigil files (full picture and thumbnail) are the exact files from just before the v0.78.2 redraw; both open as real images (1672×941 and 320×180). No code changed.
+- **Not tested:** how it looks on your screen; please judge it by eye.
