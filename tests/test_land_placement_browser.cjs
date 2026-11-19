@@ -90,7 +90,7 @@ const PLAYERS = Number(process.env.CT_PLAYERS || 2); // 2, 3 or 4 real players a
         const el = [...document.querySelectorAll('.card[data-iid="' + c.iid + '"]')].find(e => { const b = e.getBoundingClientRect(); return b.width > 4 && b.height > 4 && b.right > 0 && b.bottom > 0 && b.left < innerWidth && b.top < innerHeight; });
         if (!el) return { id: c.id, missing: true };
         const r = el.getBoundingClientRect();
-        const pts = [[.5, .5], [.1, .5], [.2, .2], [.8, .2], [.2, .8], [.8, .8]].map(([fx, fy]) => { const hit = document.elementFromPoint(r.left + r.width * fx, r.top + r.height * fy); return !!hit && !!hit.closest('.card[data-iid="' + c.iid + '"]'); });
+        const pts = [[.5, .5], [.5, .04], [.2, .2], [.8, .2], [.2, .8], [.8, .8]].map(([fx, fy]) => { const hit = document.elementFromPoint(r.left + r.width * fx, r.top + r.height * fy); return !!hit && !!hit.closest('.card[data-iid="' + c.iid + '"]'); });
         return { id: c.id, x: Math.round(c.x), y: Math.round(c.y), aboveStrip: !strip || r.bottom <= strip.top + 2, reachable: pts.some(Boolean), inRegion: c.x >= reg.x - 1 && c.x + 80 <= reg.x + reg.w + 30 && c.y >= reg.y - 1 };
       });
     }, view);
@@ -105,8 +105,8 @@ const PLAYERS = Number(process.env.CT_PLAYERS || 2); // 2, 3 or 4 real players a
       ['tangled', 'temple', 'peak'].forEach(id => CT.doMove(CT.S.pid + '_s' + id, 'battlefield'));
     });
     const st = await dad.evaluate(() => Object.fromEntries(CT.S.me.zones.battlefield.map(c => [c.id, { x: c.x, y: c.y }])));
-    assert.ok(Math.abs(st.temple.x - st.tangled.x) <= 30 && st.temple.y === st.tangled.y, 'Temple of Mystery stacks on Tangled Islet: ' + JSON.stringify(st));
-    assert.ok(Math.abs(st.peak.x - st.tangled.x) > 60 || st.peak.y !== st.tangled.y, 'a red land does not join the G/U stack: ' + JSON.stringify(st));
+    assert.ok(st.temple.x === st.tangled.x && st.temple.y - st.tangled.y > 0 && st.temple.y - st.tangled.y <= 30, 'Temple of Mystery stacks on Tangled Islet: ' + JSON.stringify(st));
+    assert.ok(st.peak.x !== st.tangled.x, 'a red land does not join the G/U stack: ' + JSON.stringify(st));
     for (const [w, h] of [[1366, 768], [1920, 1080], [1366, 600], [1100, 560]]) {
       for (const view of ['side', 'grid']) {
         await dad.setViewportSize({ width: w, height: h });

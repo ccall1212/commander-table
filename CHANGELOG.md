@@ -9,7 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ## [0.89.0] - 2026-11-19
 
 ### Added
-- **Lands stack.** When you double-click a land it now piles onto lands that tap for the same mana (Tangled Islet and Temple of Mystery, both Green or Blue, stack together). **Basic lands stack with basic lands first.** Each card in a pile sticks out a little so you can still point at every one. About six lands make a pile, then a new pile starts. Tapped (enters-tapped) lands stack too.
+- **Lands stack.** When you double-click a land it now piles onto lands that tap for the same mana (Tangled Islet and Temple of Mystery, both Green or Blue, stack together). **Basic lands stack with basic lands first.** Piles go **top to bottom**, like real lands: each card sticks out a little below the one above, so you can see and point at every card's title strip. About six lands make a pile, then a new pile starts. Tapped (enters-tapped) lands stack too.
 - **Overflow snaps to other lands.** If the Lands area is full, the next land snaps onto the most alike land already there (a basic on a basic, then the same mana, then any land). It is only piled on it, not attached, so you can drag it away at any time.
 
 ### Fixed

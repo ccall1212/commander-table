@@ -405,7 +405,7 @@ function stackKey(c, d, key) {
   if (key === 'lands') { const mana = landManaKey(d); return !mana ? '' : (/Basic/.test(d.type || '') ? 'basic:' : 'mana:') + mana; } // basic lands stack with basic lands first
   return '';
 }
-const STACK_STEP = 18; // how far each card of a land stack sticks out, so every card keeps a strip you can point at
+const STACK_STEP = 18; // piles go top to bottom, like real lands: each card sticks out this far below the one above, so its title strip stays visible and clickable
 function centerIn(o, r) {
   const cx = o.x + CW / 2, cy = o.y + CH / 2;
   return cx >= r.x && cx <= r.x + r.w && cy >= r.y && cy <= r.y + r.h;
@@ -420,11 +420,15 @@ function autoPlace(card, zone, m = S.me, limit = Infinity) {
   const r = m.layout.find(x => x.k === key) || m.layout[0] || { x: 0, y: 0, w: BW, h: bh };
   const others = m.zones.battlefield.filter(o => o !== card && o.x != null && !o.att);
   const group = zone === 'battlefield' ? stackKey(card, d, key) : '';
-  if (group) {
-    const same = others.filter(o => (!o.t || key === 'lands') && stackKey(o, m.defs[o.id], regionKey(o, m.defs[o.id])) === group && centerIn(o, r));
-    if (same.length % 6) { const last = same[same.length - 1]; card.x = clamp(last.x + STACK_STEP, 0, BW - CW); card.y = last.y; return true; }
-  }
   const bottom = Math.min(r.y + r.h + 2, limit);
+  if (group) {
+    // Piles go top to bottom: the next card sits a little lower than the last card of the pile (about six to a pile, and never lower than you can see).
+    const same = others.filter(o => (!o.t || key === 'lands') && stackKey(o, m.defs[o.id], regionKey(o, m.defs[o.id])) === group && centerIn(o, r));
+    if (same.length % 6) {
+      const last = same[same.length - 1];
+      if (last.y + STACK_STEP + CH <= bottom) { card.x = last.x; card.y = last.y + STACK_STEP; return true; }
+    }
+  }
   const slot = (xs, ys, dx, dy) => {
     for (let y = r.y + 34; y + CH <= bottom; y += ys) {
       for (let x = r.x + 6; x + CW <= r.x + r.w + 2; x += xs) {
@@ -437,7 +441,7 @@ function autoPlace(card, zone, m = S.me, limit = Infinity) {
   // The visible part is full: pack the next cards in a "brick" pattern (half a slot across, half a row down), so every card still shows its top-left area.
   for (let y = r.y + 34, row = 0; y + CH <= bottom; y += (CH + 8) / 2, row++) {
     for (let x = r.x + 6 + (row % 2 ? (CW + 8) / 2 : 0); x + CW <= r.x + r.w + 2; x += CW + 8) {
-      if (!others.some(o => Math.abs(o.y - y) < CH && x < o.x + STACK_STEP && x + CW > o.x)) { card.x = x; card.y = y; return true; } // never over another card's left strip
+      if (!others.some(o => Math.abs(o.x - x) < CW && y < o.y + STACK_STEP && y + CH > o.y)) { card.x = x; card.y = y; return true; } // never over another card's top strip
     }
   }
   // No open space is left: snap onto a land that is already there (not attached, just piled on it), the most alike first (a basic on a basic, then the same mana,
@@ -446,9 +450,9 @@ function autoPlace(card, zone, m = S.me, limit = Infinity) {
     const mine = landManaKey(d), basic = /Basic/.test((d && d.type) || '');
     const lands = others.filter(o => regionKey(o, m.defs[o.id]) === 'lands' && centerIn(o, r));
     const rank = o => { const od = m.defs[o.id], om = landManaKey(od); return [...mine].filter(ch => om.includes(ch)).length * 2 + (basic && /Basic/.test((od && od.type) || '') ? 3 : 0); };
-    const stackEnd = o => { let t = o, next; while ((next = lands.find(q => q.y === t.y && q.x > t.x && q.x <= t.x + STACK_STEP + 1))) t = next; return t; }; // follow the pile to its last card
-    const targets = lands.map(o => ({ o, score: rank(o), tail: stackEnd(o) })).filter(t => t.tail.x + STACK_STEP <= Math.min(BW - CW, r.x + r.w - CW + 40) && !lands.some(q => q !== t.tail && Math.abs(q.y - t.tail.y) < CH && q.x > t.tail.x && q.x < t.tail.x + STACK_STEP + CW)) // never over another pile's strip.sort((a, b) => b.score - a.score);
-    if (targets.length) { const t = targets[0].tail; card.x = t.x + STACK_STEP; card.y = t.y; return true; }
+    const stackEnd = o => { let t = o, next; while ((next = lands.find(q => q.x === t.x && q.y > t.y && q.y <= t.y + STACK_STEP + 1))) t = next; return t; }; // follow the pile down to its last card
+    const targets = lands.map(o => ({ o, score: rank(o), tail: stackEnd(o) })).filter(t => t.tail.y + STACK_STEP + CH <= bottom && !lands.some(q => q !== t.tail && Math.abs(q.x - t.tail.x) < CW && q.y > t.tail.y && q.y < t.tail.y + STACK_STEP + CH)) // never over another pile's strip.sort((a, b) => b.score - a.score);
+    if (targets.length) { const t = targets[0].tail; card.x = t.x; card.y = t.y + STACK_STEP; return true; }
   }
   // Everything visible is taken. With a limit (a real screen) say so, and the caller puts the card in a free spot on the board (never over other cards, never under the hand).
   if (limit !== Infinity) return false;
@@ -2993,8 +2997,8 @@ function centerSpot(card) {
   }
   // No clear spot is left in the visible board: use the spot that covers the least of the cards already there (so none is ever completely hidden).
   const others = S.me.zones.battlefield.filter(o => o !== card && o.x != null && !o.att);
-  // Covering the left strip of a card (the part of a stacked card you can still point at) counts much more than covering its middle.
-  const strip = (x, y) => others.reduce((sum, o) => sum + Math.max(0, Math.min(x + CW, o.x + STACK_STEP) - Math.max(x, o.x)) * Math.max(0, Math.min(y + CH, o.y + CH) - Math.max(y, o.y)), 0);
+  // Covering the top strip of a card (the part of a stacked card you can still point at) counts much more than covering its middle.
+  const strip = (x, y) => others.reduce((sum, o) => sum + Math.max(0, Math.min(x + CW, o.x + CW) - Math.max(x, o.x)) * Math.max(0, Math.min(y + CH, o.y + STACK_STEP) - Math.max(y, o.y)), 0);
   const covered = (x, y) => others.reduce((sum, o) => sum + Math.max(0, CW - Math.abs(o.x - x)) * Math.max(0, CH - Math.abs(o.y - y)), 0) + 8 * strip(x, y);
   let best = null;
   for (let y = 0; y + CH <= limit; y += 14) for (let x = 0; x <= BW - CW; x += 14) {
