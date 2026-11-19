@@ -77,6 +77,8 @@ const mkDeck = who => ({
       vow: { id: 'vow', name: 'Vow of Flight', face: 'Vow of Flight', type: 'Enchantment — Aura', oracle: 'Enchant creature\nEnchanted creature gets +2/+2, has flying, and can\'t attack you or planeswalkers you control.' },
       frog: { id: 'frog', name: 'Frogify', face: 'Frogify', type: 'Enchantment — Aura', oracle: 'Enchant creature\nEnchanted creature loses all abilities and is a blue Frog with base power and toughness 1/1.' },
       lord: { id: 'lord', name: 'Elf Lord', face: 'Elf Lord', type: 'Creature — Elf', oracle: 'Elves you control get +1/+1.', pt: '2/2' },
+      dion: { id: 'dion', name: 'Dion, Bahamut\'s Dominant', face: 'Dion, Bahamut\'s Dominant', type: 'Legendary Creature — Human Noble Knight', oracle: 'Dragonfire Dive — During your turn, Dion and other Knights you control have flying.', pt: '3/3' },
+      knight: { id: 'knight', name: 'Knight Token', face: 'Knight Token', type: 'Creature — Knight', oracle: '', pt: '2/2' },
       cait: { id: 'cait', name: 'Cait, Cage Brawler', face: 'Cait, Cage Brawler', type: 'Legendary Creature — Human', oracle: 'During your turn, Cait has indestructible.', pt: '3/3' }
     };
     await dad.evaluate(d => { const m = CT.S.me; CT.act(() => { Object.values(d).forEach(def => { def.tokens = []; def.ci = []; m.defs[def.id] = def; m.zones.hand.push({ iid: CT.S.pid + '_g' + def.id, id: def.id, own: CT.S.pid, t: 0, fl: 0, fd: 0, c: {} }); }); }); ['bear', 'elf1', 'elf2', 'vow', 'frog'].forEach(id => CT.doMove(CT.S.pid + '_g' + id, 'battlefield')); CT.act(() => { CT.S.me.zones.battlefield.forEach(c => { c.st = (c.st || []).filter(x => x !== 'sick'); }); }); }, defs);
@@ -118,13 +120,16 @@ const mkDeck = who => ({
     await waitBadge('lord', '3/3', 'the lord itself is an Elf too (2/2 + 1) (it says "Elves you control", not "other")');
     assert.equal(await badge(dad, 'bear'), '3/3', 'a Bear is not an Elf');
     // ---- 6. "During your turn": Cait has indestructible only on her controller's turn. ----
-    await dad.evaluate(() => { CT.doMove(CT.S.pid + '_gcait', 'battlefield'); });
+    await dad.evaluate(() => { CT.doMove(CT.S.pid + '_gcait', 'battlefield'); CT.doMove(CT.S.pid + '_gdion', 'battlefield'); CT.doMove(CT.S.pid + '_gknight', 'battlefield'); });
     const active = () => dad.evaluate(() => CT.S.table.active === CT.S.pid);
     if (!(await active())) { await son.locator('button[data-a="pass"]').first().click(); await dad.waitForFunction(() => CT.S.table.active === CT.S.pid); }
     await dad.waitForFunction(i => { const el = [...document.querySelectorAll('.card')].find(c => c.dataset.iid === i); return !!el && [...el.querySelectorAll('.cmark')].some(m => ((m.getAttribute('title') || m.getAttribute('data-tip') || '')).startsWith('Indestructible')); }, await iid('cait'));
     { const t0 = Date.now(); while (!(await hasIcon(son, 'cait', 'Indestructible'))) { if (Date.now() - t0 > 15000) throw new Error('Son sees it on Dad\'s turn'); await son.waitForTimeout(100); } }
+    for (const id of ['dion', 'knight']) { const t0 = Date.now(); while (!(await hasIcon(son, id, 'Flying'))) { if (Date.now() - t0 > 15000) throw new Error(id + ' should have flying on Dad\'s turn (Son\'s screen)'); await son.waitForTimeout(100); } }
+    assert.equal(await hasIcon(dad, 'bear', 'Flying'), false, 'a Bear is not a Knight');
     await dad.locator('button[data-a="pass"]').first().click();
     await dad.waitForFunction(() => CT.S.table.active !== CT.S.pid);
+    for (const id of ['dion', 'knight']) { const t0 = Date.now(); while (await hasIcon(son, id, 'Flying')) { if (Date.now() - t0 > 15000) throw new Error(id + ' should lose flying on Son\'s turn'); await son.waitForTimeout(100); } }
     await dad.waitForFunction(i => { const el = [...document.querySelectorAll('.card')].find(c => c.dataset.iid === i); return !!el && ![...el.querySelectorAll('.cmark')].some(m => ((m.getAttribute('title') || m.getAttribute('data-tip') || '')).startsWith('Indestructible')); }, await iid('cait'));
     { const t0 = Date.now(); while (await hasIcon(son, 'cait', 'Indestructible')) { if (Date.now() - t0 > 15000) throw new Error('and not on Son\'s turn'); await son.waitForTimeout(100); } }
     // ---- 7. Nothing is saved on the cards: grants are drawn, not stored. ----
