@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.87.1';
+const APP_VERSION = '0.88.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -78,6 +78,14 @@ const CARD_MARKS = [
 ];
 const CARD_MARK_BY_ID = Object.fromEntries(CARD_MARKS.map(m => [m.id, m]));
 const MAX_CARD_MARKS = 12;
+// Types the player adds by hand (Statuses & abilities → Types): letters only, up to 8, "All types" is the one special entry.
+const typeName = raw => String(raw == null ? '' : raw).replace(/[^A-Za-z' \-]/g, '').replace(/\s+/g, ' ').trim().slice(0, 24).replace(/(^|[ \-])([a-z])/g, (m, a, b) => a + b.toUpperCase());
+function cleanTypes(raw) {
+  if (!Array.isArray(raw)) return undefined;
+  const out = [];
+  raw.forEach(x => { const t = x === 'All types' ? x : typeName(x); if (t.length >= 2 && !out.includes(t)) out.push(t); });
+  return out.length ? out.slice(0, 8) : undefined;
+}
 const customMarkText = raw => String(raw == null ? '' : raw).replace(/[\u0000-\u001f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 16);
 // Keep only known marker ids and well-formed custom ones, once each, in a steady order (known ones first, in list order).
 function cleanMarks(raw) {
@@ -531,7 +539,7 @@ function pubCard(c) {
   const pos = { x: c.x, y: c.y, att: c.att || null };
   if (c.fd) return Object.assign({ iid: c.iid, fd: 1, t: c.t ? 1 : 0, c: c.c, st: c.st || [], ts: c.ts || [], tp: c.tp || 0, tt: c.tt || 0, tb: c.tb || undefined, own: c.own, tok: c.tok ? 1 : 0, xp: c.xp ? 1 : undefined }, pos);
   return Object.assign({ iid: c.iid, id: c.id, t: c.t ? 1 : 0, fl: c.fl ? 1 : 0, c: c.c, st: c.st || [], ts: c.ts || [], tp: c.tp || 0, tt: c.tt || 0, tb: c.tb || undefined, own: c.own, tok: c.tok ? 1 : 0, cmd: c.cmd ? 1 : 0, cp: c.cp ? 1 : 0,
-    pb: c.pb || undefined, dp: c.dp || 0, dt: c.dt || 0, xp: c.xp ? 1 : undefined, tk: c.tk || undefined, sx: c.sx && c.sx.length ? c.sx : undefined }, pos);
+    pb: c.pb || undefined, dp: c.dp || 0, dt: c.dt || 0, xp: c.xp ? 1 : undefined, tk: c.tk || undefined, sx: c.sx && c.sx.length ? c.sx : undefined, tys: c.tys && c.tys.length ? c.tys : undefined }, pos);
 }
 function topIsRevealed(m) {
   const top = m && m.zones && m.zones.library && m.zones.library[0];
@@ -1073,7 +1081,7 @@ function cleanCards(a, n = 400) {
     y: Number.isFinite(+x.y) && x.y !== null ? clamp(Math.round(+x.y), 0, BH_MAX - CH) : undefined,
     att: isObj(x.att) && typeof x.att.p === 'string' && typeof x.att.i === 'string' ? { p: x.att.p.slice(0, 40), i: x.att.i.slice(0, 40) } : null,
     pb: typeof x.pb === 'string' && /^-?\d{1,6}\/-?\d{1,6}$/.test(x.pb) ? x.pb : undefined, xp: x.xp ? 1 : undefined, tk: clamp(num(x.tk), 0, 99) || undefined, tn: typeof x.tn === 'string' ? x.tn.slice(0, 90) : undefined, sx: (a => (a.length ? a : undefined))(cleanMarks(x.sx).filter(id => CARD_MARK_BY_ID[id] && CARD_MARK_BY_ID[id].kind === 'ability')),
-    dp: clamp(num(x.dp), -999999, 999999), dt: clamp(num(x.dt), -999999, 999999), st: cleanMarks(x.st), ts: cleanMarks(x.ts), tp: clamp(num(x.tp), -999999, 999999), tt: clamp(num(x.tt), -999999, 999999), tb: typeof x.tb === 'string' && /^-?\d{1,6}\/-?\d{1,6}$/.test(x.tb) ? x.tb : undefined
+    dp: clamp(num(x.dp), -999999, 999999), dt: clamp(num(x.dt), -999999, 999999), tys: cleanTypes(x.tys), st: cleanMarks(x.st), ts: cleanMarks(x.ts), tp: clamp(num(x.tp), -999999, 999999), tt: clamp(num(x.tt), -999999, 999999), tb: typeof x.tb === 'string' && /^-?\d{1,6}\/-?\d{1,6}$/.test(x.tb) ? x.tb : undefined
   })) : [];
 }
 const numMap = o => (isObj(o) ? Object.fromEntries(Object.entries(o).slice(0, 40).map(([k, v]) => [String(k).slice(0, 90), num(v)])) : {});
@@ -2012,7 +2020,7 @@ function moveCard(iid, to, opts = {}) {
   if (from === 'hand' && to !== 'hand') { delete card.rvh; delete card.rvp; }
   let orphans = [];
   if (from === 'battlefield' && to !== 'battlefield') {
-    card.t = false; card.c = {}; card.st = []; card.ts = []; card.tp = 0; card.tt = 0; card.tb = undefined; card.fl = false; card.pb = undefined; card.dp = 0; card.dt = 0; delete card.tk; delete card.sx; delete card.tn; // a card that leaves forgets everything
+    card.t = false; card.c = {}; card.st = []; card.ts = []; delete card.tys; card.tp = 0; card.tt = 0; card.tb = undefined; card.fl = false; card.pb = undefined; card.dp = 0; card.dt = 0; delete card.tk; delete card.sx; delete card.tn; // a card that leaves forgets everything
     orphans = detachFrom(S.pid, iid);
   }
   if (from === 'battlefield' || from === 'command') { delete card.x; delete card.y; card.att = null; }
@@ -3059,7 +3067,7 @@ function giveControl(iid, to, at) {
     const orphans = f.zone === 'battlefield' ? detachFrom(S.pid, iid) : [];
     if (orphans.length) setTimeout(() => orphanToast(orphans), 0);
     const card = Object.assign({}, f.card); delete card.x; delete card.y; card.att = null;
-    if (f.zone !== 'battlefield') { card.t = false; card.fd = false; card.fl = false; card.c = {}; card.st = []; card.ts = []; card.tp = 0; card.tt = 0; card.tb = undefined; }
+    if (f.zone !== 'battlefield') { card.t = false; card.fd = false; card.fl = false; card.c = {}; card.st = []; card.ts = []; delete card.tys; card.tp = 0; card.tt = 0; card.tb = undefined; }
     const req = { k: 'give', card, def: Deck.slimDef(d) };
     if (at) { req.x = at.x; req.y = at.y; }
     sendReq(to, req);
@@ -3703,6 +3711,19 @@ function clearTempOnTurnChange(t) {
   });
   if (changed) commit();
 }
+// Add or remove a type by hand on one or more cards ("All types" is the changeling-style entry). It is saved on the card, shown in the Types row, and counts like a
+// type another card gave: for "Elves you control" and for counting.
+function setCardTypes(iids, name, on) {
+  const cards = [...new Set(iids)].map(findCard).filter(f => f && f.zone === 'battlefield');
+  const t = name === 'All types' ? name : typeName(name);
+  if (!cards.length || boardTransferLock || t.length < 2) return;
+  act(() => {
+    cards.forEach(f => {
+      const list = (f.card.tys || []).filter(x => x !== t).concat(on ? [t] : []), clean = cleanTypes(list);
+      if (clean) f.card.tys = clean; else delete f.card.tys;
+    });
+  });
+}
 function setCardMarks(iids, id, on, temp) {
   const cards = [...new Set(iids)].map(findCard).filter(f => f && f.zone === 'battlefield');
   if (!cards.length || boardTransferLock) return;
@@ -3736,7 +3757,12 @@ function showMarksDialog(iid, targets, temp) {
     html: `<div class="marks-dialog"><p class="muted small">${temp ? 'These wear off when the turn passes to the next player.' : 'Icons that hang beside the card for everyone to see.'} They are separate from counters.${ids.length > 1 ? ' Ticking or unticking applies to every selected card.' : ''}</p>
       ${group('Statuses', 'status')}${group('Abilities', 'ability')}
       <fieldset class="mark-group"><legend>Your own</legend><div class="mark-custom-list"></div>
-        <div class="mark-add"><input type="text" class="mark-custom-input" maxlength="16" placeholder="Custom status, e.g. Cursed" aria-label="Custom status name"><button type="button" class="mark-custom-add">Add</button></div></fieldset></div>`
+        <div class="mark-add"><input type="text" class="mark-custom-input" maxlength="16" placeholder="Custom status, e.g. Cursed" aria-label="Custom status name"><button type="button" class="mark-custom-add">Add</button></div></fieldset>
+      ${temp ? '' : `<fieldset class="mark-group mark-types"><legend>Types</legend><p class="muted small">Add a type by hand (chosen types, copies…).</p>
+        <div class="type-auto muted small"></div><div class="type-manual-list"></div>
+        <label class="mark-row"><input type="checkbox" data-alltypes><span>All types (like a Changeling)</span></label>
+        <div class="mark-add"><input type="text" class="type-input" maxlength="24" placeholder="Add a type, e.g. Frog" aria-label="Type to add"><button type="button" class="type-add">Add</button></div></fieldset>`}
+    </div>`
   });
   const sync = () => {
     const f = findCard(iid);
@@ -3757,11 +3783,31 @@ function showMarksDialog(iid, targets, temp) {
       const rm = document.createElement('button'); rm.type = 'button'; rm.textContent = 'Remove'; rm.dataset.removeMark = x;
       row.append(name, rm); list.appendChild(row);
     });
+    const tl = dlg.el.querySelector('.type-manual-list');
+    if (tl && f) { // Types: the ones added by hand (removable) and the ones other cards give (read-only)
+      const man = f.card.tys || [];
+      tl.replaceChildren();
+      man.filter(x => x !== 'All types').forEach(x => {
+        const row = document.createElement('div'); row.className = 'mark-row';
+        const nm = document.createElement('span'); nm.textContent = x;
+        const rm = document.createElement('button'); rm.type = 'button'; rm.textContent = 'Remove'; rm.dataset.removeType = x;
+        row.append(nm, rm); tl.appendChild(row);
+      });
+      dlg.el.querySelector('[data-alltypes]').checked = man.includes('All types');
+      const fx = typeFxFor(S.pid, f.card), given = fx ? fx.tags.filter(t => t.from !== 'your own choice') : [];
+      dlg.el.querySelector('.type-auto').textContent = given.length ? 'Given by other cards: ' + given.map(t => `${t.label} (${t.from})`).join(', ') : '';
+    }
   };
-  dlg.el.addEventListener('change', e => { if (e.target.dataset.mark) { setCardMarks(ids, e.target.dataset.mark, e.target.checked, temp); sync(); } });
+  dlg.el.addEventListener('change', e => {
+    if (e.target.dataset.mark) { setCardMarks(ids, e.target.dataset.mark, e.target.checked, temp); sync(); }
+    if (e.target.hasAttribute('data-alltypes')) { setCardTypes(ids, 'All types', e.target.checked); sync(); }
+  });
   dlg.el.addEventListener('click', e => {
     const rm = e.target.closest('[data-remove-mark]');
     if (rm) { setCardMarks(ids, rm.dataset.removeMark, false, temp); sync(); return; }
+    const rt = e.target.closest('[data-remove-type]');
+    if (rt) { setCardTypes(ids, rt.dataset.removeType, false); sync(); return; }
+    if (e.target.closest('.type-add')) { addType(); return; }
     if (e.target.closest('.mark-custom-add')) addCustom();
   });
   const input = dlg.el.querySelector('.mark-custom-input');
@@ -3771,6 +3817,9 @@ function showMarksDialog(iid, targets, temp) {
     setCardMarks(ids, 'x:' + t, true, temp); input.value = ''; sync();
   };
   input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addCustom(); } });
+  const typeInput = dlg.el.querySelector('.type-input');
+  const addType = () => { const t = typeName(typeInput.value); if (t.length < 2) { typeInput.value = ''; return; } setCardTypes(ids, t, true); typeInput.value = ''; sync(); };
+  if (typeInput) typeInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addType(); } });
   sync();
 }
 // ---- Day / Night marker ---------------------------------------------------------------------------------------------------
@@ -6148,7 +6197,7 @@ function giveControlGroup(group, to, at, anchorIid) {
       }
       const card = Object.assign({}, f.card);
       delete card.x; delete card.y; card.att = null;
-      if (f.zone !== 'battlefield') { card.t = false; card.fd = false; card.fl = false; card.c = {}; card.st = []; card.ts = []; card.tp = 0; card.tt = 0; card.tb = undefined; }
+      if (f.zone !== 'battlefield') { card.t = false; card.fd = false; card.fl = false; card.c = {}; card.st = []; card.ts = []; delete card.tys; card.tp = 0; card.tt = 0; card.tb = undefined; }
       const req = { k: 'give', card, def: Deck.slimDef(def) };
       req.x = clamp(Math.round(at.x + p.x - lead.x), 0, BW - CW);
       req.y = clamp(Math.round(at.y + p.y - lead.y), 0, myBH() - CH);

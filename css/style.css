@@ -1663,3 +1663,8 @@ body.me-out #myBf .board { filter: grayscale(.9) brightness(.45); }
 .card .ctypes .cmark { pointer-events: auto; flex: 0 1 auto; min-width: 0; max-width: 100%; height: auto; min-height: 0; padding: .1em .45em; box-sizing: border-box; overflow: hidden; border-radius: 3px;
   font-size: calc(var(--cw, 80px) * .085 * var(--tsc, 1)); line-height: 1.15; background: rgba(240, 232, 210, .96); color: #222; border: 1px solid #6b5a2e; }
 .card .ctypes .cmark .mark-word { font-size: inherit; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* The Types section of the Statuses & abilities window: everything on its own full-width line. */
+.mark-group.mark-types { display: block; }
+.mark-group.mark-types .type-manual-list .mark-row { display: flex; align-items: center; gap: 8px; margin: 2px 0; }
+.mark-group.mark-types .mark-add { margin-top: 6px; }

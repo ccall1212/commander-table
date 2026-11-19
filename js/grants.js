@@ -343,7 +343,8 @@
       if (gr.length) sources.push({ pid: b.pid, e, gr, board: b });
     }));
     const out = new Map(); out.pt = new Map(); out.lose = new Map(); out.types = new Map();
-    if (!sources.length) return out;
+    const anyManual = boards.some(b => b.entries.some(e => e && e.c && !e.c.fd && Array.isArray(e.c.tys) && e.c.tys.length));
+    if (!sources.length && !anyManual) return out;
     // "Modified": has a counter, or an Equipment / Aura its controller controls attached to it.
     const attachedBy = new Map();
     boards.forEach(b => b.entries.forEach(a => { if (a && a.c && a.c.att && a.def && /\b(?:Equipment|Aura)\b/.test(a.def.type || '')) { const key = a.c.att.p + '|' + a.c.att.i; (attachedBy.get(key) || attachedBy.set(key, []).get(key)).push(b.pid); } }));
@@ -359,27 +360,41 @@
     };
     // Pass 1: card types and creature types (they come first: "Elves you control" must see a Frog's new type, a Changeling's every type).
     const MAIN_ORDER = ['Artifact', 'Enchantment', 'Land', 'Creature', 'Planeswalker'];
+    const ensureFx = (b, t) => {
+      const key = b.pid + '|' + t.c.iid;
+      let fx = out.types.get(key);
+      if (!fx) {
+        const line = String((t.c.fl && t.def.backType) || t.def.type || ''), parts = line.split('\u2014'), words = parts[0].split(/\s+/).filter(Boolean);
+        const isMain = w => Object.values(MAIN_WORDS).includes(w) || /^(?:Instant|Sorcery|Battle|Kindred|Tribal)$/.test(w);
+        fx = { supers: words.filter(w => !isMain(w)), main: words.filter(isMain), subs: String(parts[1] || '').split(/\s+/).filter(Boolean), all: false, tags: [], line };
+        out.types.set(key, fx);
+      }
+      return fx;
+    };
+    const applyTypes = (fx, types, from) => {
+      const tag = label => { if (!fx.tags.some(x => x.label === label)) fx.tags.push({ label, from }); };
+      if (types.all) { fx.all = true; tag('All types'); }
+      else {
+        if (types.mode === 'set') { if (types.M.length) fx.main = types.M.slice(); fx.subs = types.S.slice(); }
+        else { types.M.forEach(x => { if (!fx.main.includes(x)) fx.main.push(x); }); types.S.forEach(x => { if (!fx.subs.includes(x)) fx.subs.push(x); }); }
+        (types.S.length ? types.S : types.M).forEach(tag);
+      }
+      fx.main.sort((x, y) => MAIN_ORDER.indexOf(x) - MAIN_ORDER.indexOf(y));
+      fx.line = fx.supers.concat(fx.main).join(' ') + (fx.subs.length ? ' \u2014 ' + fx.subs.join(' ') : '');
+    };
     boards.forEach(b => b.entries.forEach(t => {
       if (!t || !t.c || !t.def || t.c.fd) return;
       sources.forEach(s => s.gr.forEach(g => {
         if (!g.types || !reaches(g, s, b, t, t.def)) return;
-        const key = b.pid + '|' + t.c.iid, from = String(s.e.def.face || s.e.def.name || '').slice(0, 60);
-        let fx = out.types.get(key);
-        if (!fx) {
-          const line = String((t.c.fl && t.def.backType) || t.def.type || ''), parts = line.split('—'), words = parts[0].split(/\s+/).filter(Boolean);
-          fx = { supers: words.filter(w => !Object.values(MAIN_WORDS).includes(w) && !/^(?:Instant|Sorcery|Battle|Kindred|Tribal)$/.test(w)), main: words.filter(w => Object.values(MAIN_WORDS).includes(w) || /^(?:Instant|Sorcery|Battle|Kindred|Tribal)$/.test(w)), subs: String(parts[1] || '').split(/\s+/).filter(Boolean), all: false, tags: [], line };
-          out.types.set(key, fx);
-        }
-        const tag = label => { if (!fx.tags.some(x => x.label === label)) fx.tags.push({ label, from }); };
-        if (g.types.all) { fx.all = true; tag('All types'); }
-        else {
-          if (g.types.mode === 'set') { if (g.types.M.length) fx.main = g.types.M.slice(); fx.subs = g.types.S.slice(); }
-          else { g.types.M.forEach(x => { if (!fx.main.includes(x)) fx.main.push(x); }); g.types.S.forEach(x => { if (!fx.subs.includes(x)) fx.subs.push(x); }); }
-          (g.types.S.length ? g.types.S : g.types.M).forEach(tag);
-        }
-        fx.main.sort((x, y) => MAIN_ORDER.indexOf(x) - MAIN_ORDER.indexOf(y));
-        fx.line = fx.supers.concat(fx.main).join(' ') + (fx.subs.length ? ' \u2014 ' + fx.subs.join(' ') : '');
+        applyTypes(ensureFx(b, t), g.types, String(s.e.def.face || s.e.def.name || '').slice(0, 60));
       }));
+      // Types the player added by hand (Statuses & abilities → Types): "All types" or creature types in addition to the card's own.
+      const man = Array.isArray(t.c.tys) ? t.c.tys.filter(x => typeof x === 'string' && /^(?:All types|[A-Za-z' \-]{2,24})$/.test(x)).slice(0, 8) : [];
+      if (man.length) {
+        const fx = ensureFx(b, t), subs = man.filter(x => x !== 'All types');
+        if (man.includes('All types')) applyTypes(fx, { all: true }, 'your own choice');
+        if (subs.length) applyTypes(fx, { mode: 'add', M: [], S: subs }, 'your own choice');
+      }
     }));
     if (ctx && typeof ctx.onTypes === 'function') ctx.onTypes(out.types); // lets the page count with the new types before the rest is worked out
     // Pass 2: everything else, seen through the new types.

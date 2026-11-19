@@ -12,3 +12,11 @@ To check this copy, extract the ZIP and double-click **index.html**. Start a gam
 ## Assistant verification
 - 34 automatic unit tests pass; the two-player Chromium test `test_types_browser` now also checks that four tags stay inside the card on both screens and are smaller than a single tag; looked at real card pictures with one, two and four tags (two lines for three or four).
 - **Not tested:** touch, the Grid layout, more than two players.
+
+## Also in this copy (v0.88.0): add types by hand
+1. Right-click a creature → **Statuses & abilities**. At the bottom there is a **Types** section. Type a type, for example **Elf**, and press **Add** (or press Enter): it appears in the Types row on the card (for the other player too), and the card now gets "Elves you control" bonuses and counts as an Elf in "the number of Elves you control".
+2. **Remove** it from the same window. Tick **All types (like a Changeling)** to give the card every type.
+3. Select several cards (drag a box around them), right-click one → Statuses & abilities → add a type: it goes on all of them.
+4. The same section lists the types **other cards** give this card (for example "Given by other cards: Artifact (Biotransference)").
+5. Move the card to your hand and back: the hand-made types are gone (like counters and statuses).
+6. Good uses: a "chosen type" card (Obelisk of Urd, a Banner), a copy that says "except it's a Wall", a Shapeshifter whose text you want counted.
