@@ -1,11 +1,11 @@
-# Older Knight's Vigil background — v0.90.3 test copy
+# Older Knight's Vigil background, cache fix — v0.90.4 test copy
 
 To check this copy, extract the ZIP and double-click **index.html**.
 
-1. On the opening screen, open **Your look** and pick the **Knight's Vigil** play-area background. The thumbnail and the full picture should be the older image you prefer.
-2. Start a game and check the picture behind the table looks right and cards stay readable.
-3. The other nine backgrounds should look the same as in the last release.
+1. Open **Your look** and pick **Knight's Vigil**: it should be the older picture (two knights in helmets, a dark reflective floor, an orange sunset behind a castle), not the redraw with the bare-headed knights.
+2. Start a game: the same older picture is behind the table.
+3. If you still see the redrawn one, tell me which page you opened (the live site or this ZIP) and press Ctrl+F5 once.
 
 ## Assistant verification
-- The two Knight's Vigil files (full picture and thumbnail) are the exact files from just before the v0.78.2 redraw; both open as real images (1672×941 and 320×180). No code changed.
-- **Not tested:** how it looks on your screen; please judge it by eye.
+- The live site's file is the older picture (identical bytes to the restored file). The app now requests it as `knights-vigil.webp?r=2` (and the thumbnail the same way), so a browser's saved copy of the old address can no longer be reused.
+- The card-back browser test (which loads the appearance list) passes. **Not tested:** how it looks in your browser.

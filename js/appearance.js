@@ -17,7 +17,7 @@
   ];
   const BACKGROUNDS = [
     {id:'dragons-lair',name:"Dragon's Lair",src:'assets/backgrounds/dragons-lair.webp',thumb:'assets/backgrounds/thumb-dragons-lair.webp'},
-    {id:'knights-vigil',name:"Knight's Vigil",src:'assets/backgrounds/knights-vigil.webp',thumb:'assets/backgrounds/thumb-knights-vigil.webp'},
+    {id:'knights-vigil',name:"Knight's Vigil",src:'assets/backgrounds/knights-vigil.webp?r=2',thumb:'assets/backgrounds/thumb-knights-vigil.webp?r=2'},
     {id:'into-nature',name:'Into Nature',src:'assets/backgrounds/into-nature.webp',thumb:'assets/backgrounds/thumb-into-nature.webp'},
     {id:'arcane-study',name:'Arcane Study',src:'assets/backgrounds/arcane-study.webp',thumb:'assets/backgrounds/thumb-arcane-study.webp'},
     {id:'mage-duel',name:'Mage Duel',src:'assets/backgrounds/mage-duel.webp',thumb:'assets/backgrounds/thumb-mage-duel.webp'},

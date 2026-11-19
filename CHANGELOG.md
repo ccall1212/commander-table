@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.90.4] - 2026-11-19
+
+### Fixed
+- **The older Knight's Vigil background now shows right away.** v0.90.3 put the older picture back, but a browser that had already loaded the redrawn one kept showing it from its own saved copy (the file name was the same). The game now asks for the Knight's Vigil picture and its small preview under a new address, so every browser fetches the older one.
+
 ## [0.90.3] - 2026-11-19
 
 ### Changed
@@ -552,7 +557,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.90.3...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.90.4...HEAD
+[0.90.4]: https://github.com/ccall1212/commander-table/compare/v0.90.3...v0.90.4
 [0.90.3]: https://github.com/ccall1212/commander-table/compare/v0.90.2...v0.90.3
 [0.90.2]: https://github.com/ccall1212/commander-table/compare/v0.90.1...v0.90.2
 [0.90.1]: https://github.com/ccall1212/commander-table/compare/v0.90.0...v0.90.1
