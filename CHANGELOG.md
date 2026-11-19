@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.90.2] - 2026-11-19
+
+### Fixed
+- **A card in your graveyard no longer shows up as "playable from graveyard" just because its text moves another card out of the graveyard.** Evolution Witness ("…return target permanent card from your graveyard to your hand") appeared under **Playable from graveyard / exile** with a Play button. The list now only includes a card whose own text lets you cast, play, return or exile **that card** from the graveyard (Flashback, Escape, "You may cast this card from your graveyard", "Return Bloodghast from your graveyard…").
+
 ## [0.90.1] - 2026-11-19
 
 ### Fixed
@@ -542,7 +547,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.90.1...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.90.2...HEAD
+[0.90.2]: https://github.com/ccall1212/commander-table/compare/v0.90.1...v0.90.2
 [0.90.1]: https://github.com/ccall1212/commander-table/compare/v0.90.0...v0.90.1
 [0.90.0]: https://github.com/ccall1212/commander-table/compare/v0.89.0...v0.90.0
 [0.89.0]: https://github.com/ccall1212/commander-table/compare/v0.88.1...v0.89.0

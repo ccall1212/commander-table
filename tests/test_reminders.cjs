@@ -47,6 +47,13 @@ assert.deepEqual(plain(R.zoneLines('Flying\nTrample', 'graveyard')), [], 'nothin
 assert.deepEqual(plain(R.zoneLines('Foretell {1}{U}\nDraw a card.', 'exile')), ['Foretell {1}{U}'], 'Foretell in exile');
 assert.deepEqual(plain(R.zoneLines('You may cast this card from exile.', 'exile')).length, 1);
 assert.deepEqual(plain(R.zoneLines(quilled, 'library')), []);
+// A card in the graveyard whose rules move OTHER cards out of the graveyard (Evolution Witness) has nothing to do from there
+assert.deepEqual(plain(R.zoneLines('{1}{G}: Adapt 2.\nWhenever one or more +1/+1 counters are put on Evolution Witness, return target permanent card from your graveyard to your hand.', 'graveyard', 'Evolution Witness')), [], 'returning another card is not a graveyard ability of this card');
+assert.deepEqual(plain(R.zoneLines('Whenever one or more +1/+1 counters are put on this creature, return target permanent card from your graveyard to your hand.', 'graveyard', 'Evolution Witness')), [], 'also with "this creature"');
+assert.equal(R.zoneLines('Landfall — Whenever a land enters under your control, you may return Bloodghast from your graveyard to the battlefield.', 'graveyard', 'Bloodghast').length, 1, 'a card that returns itself by name');
+assert.equal(R.zoneLines('{2}{B}, Exile this card from your graveyard: Create a Treasure token.', 'graveyard', 'Some Card').length, 1, 'exile this card from your graveyard');
+assert.equal(R.zoneLines('You may cast this creature from your graveyard.', 'graveyard', 'X').length, 1);
+
 assert.deepEqual(plain(R.triggerLines(null, true)), [], 'no rules text');
 assert.deepEqual(plain(R.triggerLines('Flying\nWhenever this creature attacks, draw a card.\n—\nWhenever another creature dies, scry 1.', true)).length, 2, 'two-faced text with a separator');
 assert.ok(R.triggerLines('Whenever ' + 'x'.repeat(900), true)[0].length <= 400, 'long lines are shortened');

@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.90.1';
+const APP_VERSION = '0.90.2';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -1673,7 +1673,7 @@ function tableTriggers() {
   ['graveyard', 'exile'].forEach(zone => (S.me.zones[zone] || []).forEach(c => {
     const def = defOf(c); if (!def || (c.fd && !c.xp)) return; // my own face-down card given to me to play is fine to name for me
     const name = def.face || def.name || '', label = name + ' (in ' + zone + ')';
-    const lines = CTReminders.zoneLines(def.oracle, zone);
+    const lines = CTReminders.zoneLines(def.oracle, zone, def.face || def.name);
     if (zone === 'exile' && c.xp) lines.unshift('You may play this card from exile' + (c.own && c.own !== S.pid ? ' (owned by ' + pname(c.own) + ')' : '') + '.');
     lines.forEach(line => {
       const key = 'me|' + zone + '|' + name + '|' + line;
