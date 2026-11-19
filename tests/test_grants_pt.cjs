@@ -93,6 +93,15 @@ assert.equal(desc('As long as you have 30 or more life, this creature gets +5/+5
 assert.equal(desc('Balan has double strike as long as two or more Equipment are attached to it.', 'Balan, Wandering Knight'), '', 'equipment count');
 assert.equal(desc('As long as this creature is equipped, it has first strike and lifelink.'), '', 'equipped');
 
+// ---- "During your turn" for groups, and "<Name> and other … you control …" (Dion, Bahamut's Dominant; K'Vort-Class Raider; Prava of the Steel Legion) ----
+assert.equal(desc("Dragonfire Dive \u2014 During your turn, Dion and other Knights you control have flying. (Reminder.)", "Dion, Bahamut's Dominant"), 'you flying | self flying', 'Dion: the group, and Dion itself');
+assert.equal(G.parse("During your turn, Dion and other Knights you control have flying.", "Dion, Bahamut's Dominant")[0].other, true, '"other" Knights');
+assert.deepEqual(plain(G.parse("During your turn, Dion and other Knights you control have flying.", "Dion, Bahamut's Dominant")[0].filters.tribe), 'Knights');
+assert.equal(plain(G.parse("During your turn, Dion and other Knights you control have flying.", "Dion, Bahamut's Dominant")[1].when).turn, true);
+assert.equal(desc("During your turn, this Spacecraft and creatures you control have hexproof.", "K'Vort-Class Raider"), 'you hexproof | self hexproof');
+assert.equal(desc("During your turn, creature tokens you control get +1/+4.", 'Prava of the Steel Legion'), 'you - +1/+4', 'a power/toughness bonus on your turn');
+assert.equal(desc("During your turn, your opponents can't cast spells or activate abilities.", 'Grand Abolisher'), '', 'not an ability grant');
+assert.equal(desc("Elf Lord and other Elves you control get +1/+1.", 'Elf Lord'), 'you - +1/+1 | self - +1/+1', 'without the turn condition');
 // ---- Plain anthems: "All Elves get +1/+1" (static), but not one-shot or conditional ones ----
 assert.equal(desc('Elves you control get +1/+1.'), 'you - +1/+1');
 assert.equal(plain(G.parse('Elves you control get +1/+1.')[0].filters).tribe, 'Elf' === 'Elf' ? 'Elves' : '', 'the creature type is kept as written');
@@ -221,6 +230,11 @@ m = G.forBoards([board('A', [e('b1', bear, { tys: ['<script>', 'x', 5, 'Frog'] }
 assert.deepEqual(plain(G.clean([{ scope: 'attached', filters: {}, abilities: [], types: { mode: 'set', M: ['Artifact', 'Evil'], S: ['Frog', 'x'] } }])[0].types), { mode: 'set', M: ['Artifact'], S: ['Frog'] });
 assert.equal(G.clean([{ scope: 'attached', filters: {}, abilities: ['flying'], types: { mode: 'bogus', S: ['Frog'] } }])[0].types, null, 'an unknown mode is dropped');
 assert.deepEqual(plain(G.clean([{ scope: 'self', filters: {}, abilities: [], types: { all: true } }])[0].types), { all: true });
+const dion = { id: 'dn', face: "Dion, Bahamut's Dominant", type: 'Legendary Creature \u2014 Human Noble Knight', oracle: 'Dragonfire Dive \u2014 During your turn, Dion and other Knights you control have flying.', pt: '3/3' };
+const knight = { id: 'kn', face: 'Knight Token', type: 'Creature \u2014 Knight', oracle: '', pt: '2/2' };
+m = G.forBoards([board('A', [e('dn', dion), e('k1', knight), e('b1', bear)]), board('B', [e('k2', knight)])], { active: 'A' });
+assert.equal(m.get('A|dn')[0].id, 'flying', 'Dion on its controller\'s turn'); assert.equal(m.get('A|k1')[0].id, 'flying', 'and the Knight'); assert.equal(m.get('A|b1'), undefined, 'not a Bear'); assert.equal(m.get('B|k2'), undefined, 'not another player\'s Knight');
+m = G.forBoards([board('A', [e('dn', dion), e('k1', knight)]), board('B', [e('k2', knight)])], { active: 'B' }); assert.equal(m.size, 0, 'nothing on someone else\'s turn');
 // Published definitions carry the new fields and are validated.
 const pub = { id: 'p', face: 'Pub', type: 'Enchantment — Aura', gr: G.parse(vow.oracle) };
 m = G.forBoards([board('A', [e('p', pub, { att: { p: 'A', i: 'b1' } }), e('b1', bear)])], {}); assert.equal(m.pt.get('A|b1').dp, 2, 'a published definition carries its power/toughness');

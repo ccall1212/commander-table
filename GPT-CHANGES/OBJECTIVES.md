@@ -88,7 +88,13 @@ Chris (2026-11-19): when a card turns something into a Frog or says "all creatur
 
 Chris (2026-11-19): the type tags should be a separate small "Types" area, like option B (over the printed type line), but never going off the card; they must get smaller as more are added. Built: `.ctypes` row (`typesRowHTML` and `fitTypeRows` in `js/app.js`): a first size from the number of letters, then measured after every redraw and shrunk until every word fits (at most two lines); "+N" beyond four. Chris: the text must always be visible. Option A (top-left under the title) was not built. Also added in the same version (v0.88.0): a **Types** section in Statuses & abilities to add types by hand (`tys` on the card: shared with other players, forgotten when the card leaves), counted like automatic types.
 
+### 97. "During your turn, <card> and other Knights you control…" — Built, awaiting Chris's test (v0.88.1)
+
+Chris (2026-11-19): Dion, Bahamut's Dominant did not give Knights flying. Cause: only "During your turn, <card> has …" (the card alone) was read. Now a leading "During your turn," applies to any grant the line contains (groups, bonuses), and a line starting with the card's own name plus "and …" gives the grant to the card too.
+
 ### Shipped recently (details in CHANGELOG.md)
+
+- #96 Types row and add types by hand — v0.88.0.
 
 - #95 Card types and creature types change automatically — v0.87.0.
 

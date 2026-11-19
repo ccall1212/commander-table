@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.88.1] - 2026-11-19
+
+### Fixed
+- **"During your turn, <this card> and other Knights you control have flying" (Dion, Bahamut's Dominant)** did not give the Knights flying. The game now reads a line that names the card itself plus a group ("Dion and other Knights you control", "this Spacecraft and creatures you control"), on your turn or always, and gives it to both. "During your turn" also works for a whole group (K'Vort-Class Raider's hexproof) and for bonuses ("During your turn, creature tokens you control get +1/+4", Prava of the Steel Legion).
+
 ## [0.88.0] - 2026-11-19
 
 ### Added
@@ -514,7 +519,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.88.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.88.1...HEAD
+[0.88.1]: https://github.com/ccall1212/commander-table/compare/v0.88.0...v0.88.1
 [0.88.0]: https://github.com/ccall1212/commander-table/compare/v0.87.0...v0.88.0
 [0.87.0]: https://github.com/ccall1212/commander-table/compare/v0.86.1...v0.87.0
 [0.86.1]: https://github.com/ccall1212/commander-table/compare/v0.86.0...v0.86.1

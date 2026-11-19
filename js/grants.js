@@ -209,12 +209,36 @@
   const LOSE_RE = /^(Each |All |Other )?(.+?)(?: (you control|your opponents control|you don't control|an opponent controls|opponents control))?(?: with (.+?))? loses? (.+?)(?: and can't have or gain .+)?\.?$/i;
   const EVERY_RE = /^(Each |All |Other )?(.+?)(?: (you control|your opponents control|you don't control|an opponent controls|opponents control))?(?: with (.+?))? (?:is|are) every creature type\.?$/i;
   const ADD_RE = /^(Each |All |Other )?(.+?)(?: (you control|your opponents control|you don't control|an opponent controls|opponents control))?(?: with (.+?))? (?:is|are) (?:an? )?(.+?) in addition to (?:its|their) other (?:card |creature )?types\b.*$/i;
+  // The words a card uses for itself: "this creature", its name, the part of its name before a comma or "the" ("Dion, Bahamut's Dominant" is "Dion").
+  function selfPattern(name) {
+    const names = [];
+    if (name) { names.push(String(name).trim()); [String(name).split(',')[0].trim(), String(name).split(/,| the /)[0].trim()].forEach(short => { if (short && !names.includes(short)) names.push(short); }); }
+    return '(?:This [a-z]+|' + names.map(x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + (names.length ? '|' : '') + 'It)';
+  }
   // Every grant stated by one line of rules text (an empty list when it is not a simple grant we understand).
   function parseAll(raw, name) {
     const line = String(raw || '').replace(/\([^)]*\)/g, ' ').replace(/\s+/g, ' ').trim().replace(WORD_PREFIX_RE, '');
+    // "During your turn, creature tokens you control get +1/+4." / "During your turn, Dion and other Knights you control have flying." / "During your turn, this Spacecraft and
+    // creatures you control have hexproof.": the same grant, but only on its controller's turn (a card naming itself first also gives it to itself).
+    const dt = /^During your turn, (.+)$/i.exec(line);
+    if (dt) {
+      const comp = new RegExp('^' + selfPattern(name) + ' and (.+)$', 'i').exec(dt[1]);
+      const inner = parseAll(comp ? comp[1] : dt[1], name);
+      if (inner.length) {
+        const turn = inner.map(g => Object.assign({}, g, { when: Object.assign({}, g.when || {}, { turn: true }) }));
+        if (comp) inner.forEach(g => turn.push({ scope: 'self', other: false, filters: {}, cond: null, when: { turn: true }, abilities: g.abilities.slice(), pt: g.pt, base: null, lose: [], loseAll: false }));
+        return turn;
+      }
+    }
     if (/^(?:Equipped|Enchanted) (?:creature|permanent)\b/i.test(line) || /^As long as (?:equipped|enchanted) creature is legendary,/i.test(line)) return parseAttached(line);
     // Changeling: every creature type. (Its reminder text is already removed.)
     if (line.length < 70 && !/[:"]/.test(line) && line.split(/\s*,\s*/).some(k => /^changeling$/i.test(k))) return [{ scope: 'self', other: false, filters: {}, cond: null, when: null, abilities: [], pt: null, base: null, lose: [], loseAll: false, types: { all: true } }];
+    // "Dion and other Knights you control have flying.": the card names itself and a group; the card gets it too.
+    const nameFirst = name ? new RegExp('^' + selfPattern(name) + ' and (.+)$', 'i').exec(line) : null;
+    if (nameFirst) {
+      const inner = parseAll(nameFirst[1], name);
+      if (inner.length) { const withSelf = inner.slice(); inner.forEach(g => { if (g.scope !== 'self') withSelf.push({ scope: 'self', other: false, filters: {}, cond: null, when: g.when || null, abilities: g.abilities.slice(), pt: g.pt, base: null, lose: [], loseAll: false }); }); return withSelf; }
+    }
     const self = parseSelf(line, name);
     if (self.length) return self;
     let m = LINE_RE.exec(line);

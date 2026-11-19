@@ -87,6 +87,7 @@ const mkDeck = who => ({
     // The host passes his own turn, then passes the guest's turn for him (with the confirmation).
     await passBtn(host).click(); await waitActive(guestPid);
     await Promise.all([host, guest].map(pg => pg.waitForFunction(() => CT.S.targetArrows.length === 0)));
+    await guest.waitForFunction(() => { const b = document.querySelector('button[data-a="pass"]'); return !!b && !b.disabled; }, null, { timeout: 15000 }); // the guest's screen follows the host's a moment later
     assert.equal(await passBtn(guest).isDisabled(), false, 'on his own turn the guest can press it');
     await passBtn(host).click();
     await host.locator('.w-confirm-text', { hasText: /Pass it for them/ }).waitFor();
