@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.84.0] - 2026-11-19
+
+### Added
+- **Lands that enter tapped are tapped for you.** When you put a land onto the battlefield and its rules say it enters tapped, the game taps it: "This land enters tapped." (also with "choose a color" or charge counters after it), and the conditional versions it can check by itself: **slow lands** (unless you control two or more other lands), **fast lands** (two or fewer other lands), **battle lands** (two or more basic lands), **check lands** (unless you control a Plains or an Island, or a single type like a Castle's), "three or more other Forests" and the like, "unless you have two or more opponents", "unless your opponents control eight or more lands", and Lair of the Hydra's backwards wording. The activity log says "played … tapped". **Lands that need a choice are left alone**: "you may reveal a card", "you may pay 3 life", "you may have it enter tapped" (the "As … enters" notice still appears for those). **Lands with an Adventure** (Zanarkand, Ancient Metropolis) are left alone too. A land that changes hands (Give control / Return control) keeps its state. This covers 296 of the land faces in the pre-con decks.
+
 ## [0.83.0] - 2026-11-19
 
 ### Added
@@ -467,7 +472,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.83.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.84.0...HEAD
+[0.84.0]: https://github.com/ccall1212/commander-table/compare/v0.83.0...v0.84.0
 [0.83.0]: https://github.com/ccall1212/commander-table/compare/v0.82.0...v0.83.0
 [0.82.0]: https://github.com/ccall1212/commander-table/compare/v0.81.0...v0.82.0
 [0.81.0]: https://github.com/ccall1212/commander-table/compare/v0.80.0...v0.81.0

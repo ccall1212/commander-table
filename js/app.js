@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.83.0';
+const APP_VERSION = '0.84.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -1850,6 +1850,23 @@ function autoSummoningSick(card) {
   const type = card.fd ? 'Creature' : ((card.fl && d && d.backType) || (d && d.type) || '');
   if (SICK_TYPE_RE.test(type)) card.st = cleanMarks((card.st || []).concat('sick'));
 }
+// A land whose rules say it enters tapped (always, or unless a condition the game can check) is tapped for you when it enters the battlefield.
+// Lands that need a choice (reveal a card, pay life, "you may have it enter tapped") are left alone. It never untaps anything.
+function faceInfo(card) { // the face that is showing: name, type line and rules text (a double-faced card has its two faces joined by "—")
+  const d = defOf(card); if (!d) return null;
+  const parts = String(d.oracle || '').split(/\n—\n/), back = !!(card.fl && (d.imgBack || d.backName));
+  return { name: back ? (d.backName || '') : (d.face || d.name || ''), type: String((back ? d.backType : d.type) || ''), oracle: back ? (parts[1] || '') : parts[0] };
+}
+function autoEnterTapped(card, opts) {
+  if (typeof CTEnterTap === 'undefined' || card.fd || card.t) return;
+  const f = faceInfo(card);
+  if (!f || !/\bLand\b/.test(f.type) || !/\btapped\b/i.test(f.oracle) || CTEnterTap.hasAdventure(defOf(card))) return; // a land with an Adventure is left to the player
+  const lands = S.me.zones.battlefield.filter(c => c !== card && !c.fd).map(faceInfo).filter(x => x && /\bLand\b/.test(x.type)).map(x => x.type);
+  const foes = ((S.table && S.table.seats) || []).filter(pid => pid !== S.pid && !(S.table.out && S.table.out[pid]));
+  const oppLands = foes.reduce((n, pid) => { const p = S.players[pid]; return n + (p ? (p.zones.battlefield || []).filter(c => !c.fd && p.defs && p.defs[c.id] && /\bLand\b/.test(p.defs[c.id].type || '')).length : 0); }, 0);
+  const r = CTEnterTap.evaluate(f.oracle, { name: f.name, lands, opponents: foes.length, oppLands });
+  if (r && r.tapped) { card.t = true; opts.autoTapped = true; }
+}
 function insertCard(card, to, opts = {}) {
   if (to === 'battlefield' && !canEnterBattlefield()) return false;
   const z = S.me.zones[to];
@@ -1858,7 +1875,7 @@ function insertCard(card, to, opts = {}) {
     if (opts.x != null) { card.x = clamp(Math.round(opts.x), 0, BW - CW); card.y = clamp(Math.round(opts.y), 0, myBH() - CH); }
     else if (card.x == null) { autoPlace(card, to); if (card.y != null && card.y + CH > boardVisibleBottom()) centerSpot(card); } // never leave it under the hand strip
   }
-  if (to === 'battlefield' && !opts.noAuto) { autoMarkPrintedAbilities(card); autoFirstLoreCounter(card); }
+  if (to === 'battlefield' && !opts.noAuto) { autoMarkPrintedAbilities(card); autoFirstLoreCounter(card); autoEnterTapped(card, opts); }
   if (to === 'battlefield') offerDayNight(card);
   if (to === 'battlefield') autoSummoningSick(card); // after the printed abilities (they are skipped on a card that already has a status); also when it arrives from another player
   if (to === 'battlefield') {
@@ -1958,7 +1975,7 @@ function moveText(r, to, opts) {
     const n = S.me.casts[card.iid] || 0;
     return `cast {0} from the command zone${n ? ` (commander tax +${2 * n})` : ''}`;
   }
-  if (to === 'battlefield') return from === 'hand' ? `played {0}${opts.tapped ? ' tapped' : ''}` : `put {0} onto the battlefield from ${ZL[from]}`;
+  if (to === 'battlefield') return from === 'hand' ? `played {0}${opts.tapped || opts.autoTapped ? ' tapped' : ''}` : `put {0} onto the battlefield${opts.autoTapped ? ' tapped' : ''} from ${ZL[from]}`;
   if (to === 'graveyard') return from === 'hand' ? 'discarded {0}' : from === 'library' ? 'milled {0}' : 'put {0} into the graveyard';
   if (to === 'exile') return `exiled {0}${from !== 'battlefield' ? ` from ${ZL[from]}` : ''}`;
   if (to === 'hand') return `returned {0} to hand from ${ZL[from]}`;

@@ -1,16 +1,18 @@
-# Sideways cards shown upright — v0.83.0 test copy
+# Lands that enter tapped — v0.84.0 test copy
 
-To check this copy, extract the ZIP and double-click **index.html**. A practice game works (start it, then put cards on the battlefield). You need the cards' pictures, so use a real deck or import one that contains the cards below (or search tokens/cards in your deck editor).
+To check this copy, extract the ZIP and double-click **index.html**. Start a game (practice is fine) with a deck that has some non-basic lands, or use the quick ways below. The battlefield opens once the game has started.
 
-1. Put **Wear // Tear** (or Fire // Ice, Rough // Tumble) on the battlefield. Instead of lying on its side with text running bottom-to-top, it should lie **upright and readable**, like a tapped card turned the other way.
-2. **Tap** it (T): it now shows the plain portrait picture (the old look). Untap: upright again.
-3. Hover it: the preview is a **landscape picture you can read**. Hold **V** over it: the magnifier shows it upright too.
-4. Put a **Room** (Dazzling Theater // Prop Room) and the **Battle Invasion of Zendikar** on the battlefield: both lie upright. **Flip** the Battle (F): you see its normal upright back face (Awakened Skyclave).
-5. Put **Commit // Memory** or **Struggle // Survive** (Aftermath), an Adventure (Bonecrusher Giant), a Pathway land, and a normal creature on the battlefield: all stay **as before** (no turning). Tell me if any card that is printed sideways is not turned, or one that is not sideways gets turned.
-6. With a second player (private window): they see the same turned cards on your board.
-7. Look at the cards in your hand and graveyard: they still show the plain picture. Is that OK, or should they be turned too?
+1. Play a land that says **"This land enters tapped."** (for example Barren Moor, a Temple, a gain-land): it should arrive **tapped**. The log says "played … tapped".
+2. Play a plain land or a basic: it arrives **untapped** as before.
+3. **Check lands** ("enters tapped unless you control a Plains or an Island", e.g. Dragonskull Summit, Sulfur Falls): tapped when you don't have the right land types, untapped when you do. A dual land with the right type counts.
+4. **Fast lands** (Darkslick Shores: "unless you control two or fewer other lands"): untapped as one of your first three lands, tapped later. **Slow lands** (Deserted Beach: "two or more other lands") are the reverse: tapped early, untapped later.
+5. **Battle lands** ("unless you control two or more basic lands", Sunken Hollow) and "**three or more other Forests**" (Gingerbread Cabin) read your lands too.
+6. **Left alone on purpose:** lands that say "you may reveal a card" (Fortified Village, Gilt-Leaf Palace), "you may pay 3 life" (The Black Gate) and "you may have it enter tapped" are **not** tapped for you (you tap them yourself if needed). The same goes for a land with an **Adventure**, such as **Zanarkand, Ancient Metropolis**.
+7. With **Auto-untap** on, your tapped lands untap at the start of your turn as usual. "Untap All" still works.
+8. Tell me if a land is tapped that should not be, or untapped that should be tapped.
 
 ## Assistant verification
-- 31 automatic unit tests pass, including new `test_orient` checks (split cards, Rooms, Battle front/back, Aftermath, Adventures, double-faced cards, the published flag).
-- New two-player Chromium test `test_sideways_browser`: which cards get turned for both players, tapping and flipping, and the landscape hover preview. Checked by eye with real card pictures too (Wear // Tear, Fire // Ice, Dazzling Theater, Commit // Memory, Invasion of Zendikar).
-- **Not tested:** touch, the Grid layout, and more than two players.
+- 32 automatic unit tests pass, including new `test_entertap` checks for every wording (always tapped, slow, fast, battle, check lands, "other Forests", opponents, Lair of the Hydra, and the ones left alone).
+- I ran the rules over every land face in the 158 pre-con decks: 296 are decided automatically (225 always tapped, 71 conditional); 21 need a choice and are left alone; none of the "unless" wordings was misread.
+- New two-player Chromium test `test_entertap_browser`: always-tapped, check, fast, slow, reveal and opponent-count lands, the other player seeing the tapped land, and the log text.
+- **Not tested:** touch, the Grid layout, and more than two players; real lands from a live deck (the test uses made-up lands with the real rules text).

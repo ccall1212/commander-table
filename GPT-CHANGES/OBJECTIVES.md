@@ -64,7 +64,13 @@ Chris (2026-11-18): werewolf decks need day and night. Decision: the player who 
 
 Chris (2026-11-19): split cards (his friend played Wear // Tear) are "technically horizontal", so show them horizontal. Built: `js/orient.js` decides which pictures are printed sideways (Scryfall layout `split` except Aftermath, Rooms, a Battle's front; saved cards without a layout use a safe guess; the owner publishes an `hz` flag so other players agree). On the board they get the tapped turn the other way (tapping shows the plain picture), plus a landscape hover preview and magnifier. Not done: hand and pile thumbnails stay plain; Aftermath cards (half sideways) are left alone.
 
+### 91. Lands that enter tapped are tapped automatically — Built, awaiting Chris's test (v0.84.0)
+
+Chris (2026-11-19): lands that only say "This land enters tapped" should tap themselves, and the "…unless you control…" ones too; leave out the "you may reveal a card" ones. Built: `js/entertap.js` reads the land face's rules text; hooks into `insertCard` (not for Give/Return control). Handles always-tapped, slow/fast/battle/check lands, "N or more other <type>s", opponents count, opponents' land count, and Lair of the Hydra's backwards form; 296 pre-con land faces. Reveal, pay-life, "you may have it enter tapped" and Adventure lands (Zanarkand) are left alone. Ideas not built: the same for non-land permanents that enter tapped; an MDFC land played on its back face is judged by whichever face shows when it enters.
+
 ### Shipped recently (details in CHANGELOG.md)
+
+- #90 Sideways cards shown upright — v0.83.0.
 
 - #89 Day / Night marker with sounds — v0.82.0.
 
