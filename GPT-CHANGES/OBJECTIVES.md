@@ -247,3 +247,5 @@ Chris (2026-11-04): eventually bring commander damage back out of the life box's
 98. Chris (2026-11-19): double-clicked lands go to the next open space in the Lands area, never hidden behind the hand (v0.89.0, test copy). Chris also asked: lands that tap for the same mana stack (basics with basics first), overflow snaps onto alike lands without attaching. Still open: a better hover preview for stacked cards.
 
 99. Chris (2026-11-19): small log of reconnects, and fewer false disconnects from background tabs (v0.90.0, test copy). v0.89.0 (land stacking, top to bottom) is published.
+
+100. Chris (2026-11-19): lands should not jump in front of the pile when pointed at; flipped Exdeath should show Neo Exdeath's counted power (v0.90.1, test copy). v0.90.0 (connection log) is published.

@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.90.1] - 2026-11-19
+
+### Fixed
+- **Pointing at a land no longer brings it in front of its pile.** Lands pile top to bottom, and pointing at the one above used to cover the ones below it, so you had to move the mouse away and back to reach them. Now a land stays in place while you point at it; pressing it (a click or a grab) brings it to the front. The preview that appears for a land is also smaller, so it covers less of the pile.
+- **A transformed card shows its own power/toughness and its own counted power.** Flipping Exdeath, Void Warlock did nothing: the game kept the front's 3/3 and never read Neo Exdeath's "power is equal to the number of permanent cards in your graveyard". It now shows the face that is up. **Permanent cards** in a graveyard are counted correctly (instants and sorceries do not count). Decks saved before this ask Scryfall once for the other face's power/toughness the first time a card is flipped; new imports keep it from the start.
+
 ## [0.90.0] - 2026-11-19
 
 ### Added
@@ -536,7 +542,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.90.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.90.1...HEAD
+[0.90.1]: https://github.com/ccall1212/commander-table/compare/v0.90.0...v0.90.1
 [0.90.0]: https://github.com/ccall1212/commander-table/compare/v0.89.0...v0.90.0
 [0.89.0]: https://github.com/ccall1212/commander-table/compare/v0.88.1...v0.89.0
 [0.88.1]: https://github.com/ccall1212/commander-table/compare/v0.88.0...v0.88.1

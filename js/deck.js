@@ -154,6 +154,7 @@
       backName: hasBack ? (f1.name || null) : null,
       type: type,
       backType: backType,
+      backPt: hasBack && f1.power != null && f1.toughness != null ? (f1.power + '/' + f1.toughness) : (hasBack ? '' : null), // the other face's power/toughness (Neo Exdeath is */3)
       oracle: oracle,
       mana: (f0 && f0.mana_cost) || c.mana_cost || '',
       cmc: typeof c.cmc === 'number' ? c.cmc : 0,
@@ -195,7 +196,7 @@
   function slimDef(d) {
     const slim = {
       id: d.id, name: d.name, face: d.face, backName: d.backName,
-      type: d.type, backType: d.backType, cmc: d.cmc, pt: d.pt,
+      type: d.type, backType: d.backType, cmc: d.cmc, pt: d.pt, backPt: d.backPt,
       img: d.img, imgBack: d.imgBack, set: d.set, setName: d.setName
     };
     if (d.lay) slim.lay = d.lay;

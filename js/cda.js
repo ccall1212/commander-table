@@ -7,6 +7,7 @@
 (function () {
   'use strict';
   const NUMBERS = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 };
+  const PERMANENT_TYPES = ['artifact', 'creature', 'enchantment', 'land', 'planeswalker', 'battle'];
   const CARD_TYPES = ['artifact', 'creature', 'enchantment', 'instant', 'land', 'planeswalker', 'sorcery', 'battle', 'kindred', 'tribal', 'dungeon'];
   const TYPE_WORDS = { artifact: 'artifact', artifacts: 'artifact', creature: 'creature', creatures: 'creature', land: 'land', lands: 'land', enchantment: 'enchantment', enchantments: 'enchantment', planeswalker: 'planeswalker', planeswalkers: 'planeswalker', instant: 'instant', sorcery: 'sorcery' };
   const WORD_PREFIX_RE = /^(?:• )?[A-Z][\w'’.!,\- ]{1,40} — /;
@@ -49,7 +50,7 @@
       const w = words[i], lw = w.toLowerCase();
       if (lw === 'cards' || lw === 'card') continue;
       if (lw === 'nonbasic') { out.nonbasic = true; continue; }
-      if (lw === 'permanents' || lw === 'permanent') continue;
+      if (lw === 'permanents' || lw === 'permanent') { out.perm = true; continue; } // "permanent cards in your graveyard": a card that could be a permanent (no instants or sorceries)
       if (TYPE_WORDS[lw]) { types.push(TYPE_WORDS[lw]); continue; }
       if (/^[A-Z][a-z]+s?$/.test(w) && w.length <= 24) { tribes.push(w); continue; } // a creature type: "Elves", "Zombie", "Forests"
       return null; // something we do not understand (a colour, "noncreature"…): leave it alone
@@ -109,7 +110,7 @@
     if (typeof c.withCounter === 'string' && /^(?:\+1\/\+1|-1\/-1|[a-z]{3,12})$/.test(c.withCounter)) out.withCounter = c.withCounter;
     if (Array.isArray(c.types)) { const t = c.types.filter(x => CARD_TYPES.includes(x)).slice(0, 4); if (t.length) out.types = t; }
     if (Array.isArray(c.tribes)) { const t = c.tribes.filter(x => typeof x === 'string' && /^[A-Za-z]{2,24}$/.test(x)).slice(0, 6); if (t.length) out.tribes = t; }
-    ['nonbasic', 'faceDown', 'other', 'distinctTypes', 'distinctNames'].forEach(k => { if (c[k] === true) out[k] = true; });
+    ['nonbasic', 'faceDown', 'other', 'distinctTypes', 'distinctNames', 'perm'].forEach(k => { if (c[k] === true) out[k] = true; });
     return out;
   }
   function cleanAmount(a) {
@@ -145,6 +146,7 @@
     if (count.withCounter && !(c.c && Object.entries(c.c).some(([k, v]) => v > 0 && k.toLowerCase() === count.withCounter))) return false;
     if (!def) return false;
     const line = typeLine(c, def), mains = mainTypes(line);
+    if (count.perm && !mains.some(t => PERMANENT_TYPES.includes(t))) return false;
     if (count.types && !count.types.some(t => mains.includes(t))) return false;
     if (count.nonbasic && (!/\bLand\b/.test(line) || /\bBasic\b/.test(line))) return false;
     if (count.tribes && def.allTypes !== true) { // a Changeling is every creature type, so it counts for any tribe

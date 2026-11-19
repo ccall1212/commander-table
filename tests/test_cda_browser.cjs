@@ -82,6 +82,9 @@ const mkDeck = who => ({
       { id: 'mort', name: 'Mortivore', face: 'Mortivore', type: 'Creature — Lhurgoyf', oracle: 'Mortivore\'s power and toughness are each equal to the number of creature cards in all graveyards.', pt: '*/*' },
       { id: 'hand', name: 'Body of Knowledge', face: 'Body of Knowledge', type: 'Creature — Avatar', oracle: 'Body of Knowledge\'s power and toughness are each equal to the number of cards in your hand.', pt: '*/*' },
       { id: 'bear', name: 'Test Bear', face: 'Test Bear', type: 'Creature — Bear', oracle: '', pt: '2/2' },
+      { id: 'exdeath', name: "Exdeath, Void Warlock // Neo Exdeath, Dimension's End", face: 'Exdeath, Void Warlock', backName: "Neo Exdeath, Dimension's End", type: 'Legendary Creature — Spirit Warlock', backType: 'Legendary Creature — Spirit Avatar', pt: '3/3', backPt: '*/3',
+        oracle: 'When Exdeath enters, you gain 3 life.\nAt the beginning of your end step, if there are six or more permanent cards in your graveyard, transform Exdeath.\n—\nTrample\nNeo Exdeath\'s power is equal to the number of permanent cards in your graveyard.' },
+      { id: 'gland1', name: 'Grave Land One', face: 'Grave Land One', type: 'Land', oracle: '' }, { id: 'gland2', name: 'Grave Land Two', face: 'Grave Land Two', type: 'Land', oracle: '' },
       { id: 'filler1', name: 'Filler One', face: 'Filler One', type: 'Instant', oracle: '' }, { id: 'filler2', name: 'Filler Two', face: 'Filler Two', type: 'Instant', oracle: '' }
     ]);
     await mk(son, [
@@ -129,6 +132,25 @@ const mkDeck = who => ({
     await waitStat('guard', '12/12', 'a base 9/9 set by hand, +2/+2 Sword, +1/+1 counter');
     const title = await dad.evaluate(i => [...document.querySelectorAll('.card')].find(c => c.dataset.iid === i).querySelector('.badges .pt').getAttribute('title'), await iid('mort'));
     assert.match(title, /counted from the card's own text/, 'the badge explains where the number comes from: ' + title);
+    // ---- 6b. A double-faced card counts for the face that shows: Exdeath is 3/3; flipped (Neo Exdeath) its power is the permanent cards in your graveyard, toughness 3. ----
+    await play(dad, ['exdeath']);
+    await waitStat('exdeath', '3/3', 'Exdeath shows its front 3/3');
+    await dad.evaluate(() => { ['gland1', 'gland2', 'filler2'].forEach(id => CT.doMove(CT.S.pid + '_g' + id, 'graveyard')); });
+    await waitStat('exdeath', '3/3', 'the front face does not count anything');
+    await dad.evaluate(() => { const c = CT.S.me.zones.battlefield.find(x => x.iid === CT.S.pid + '_gexdeath'); CT.act(() => { c.fl = true; }); });
+    await waitStat('exdeath', '3/3', 'Neo Exdeath: Bear + two lands are permanent cards (the instant is not), so power 3 (graveyard has Bear, 2 lands, 1 instant)');
+    await dad.evaluate(() => { CT.doMove(CT.S.pid + '_grock1', 'graveyard'); });
+    await waitStat('exdeath', '4/3', 'a fourth permanent card (an artifact) raises the power live, for both players');
+    await dad.evaluate(() => { const c = CT.S.me.zones.battlefield.find(x => x.iid === CT.S.pid + '_gexdeath'); CT.act(() => { c.fl = false; }); });
+    await waitStat('exdeath', '3/3', 'back to the front face: 3/3 again');
+    // ---- 6c. A deck saved before the back face's power/toughness was kept: the game asks Scryfall once (pretend Scryfall here), then shows it. ----
+    await dad.route('https://api.scryfall.com/cards/**', r => r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ card_faces: [{ power: '3', toughness: '3' }, { power: '*', toughness: '3' }] }) }));
+    await mk(dad, [{ id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee', name: 'Old Exdeath', face: 'Old Exdeath', backName: 'Neo Exdeath, Old', type: 'Legendary Creature — Spirit Warlock', backType: 'Legendary Creature — Spirit Avatar', pt: '3/3',
+      oracle: 'Front text.\n—\nNeo Exdeath\'s power is equal to the number of permanent cards in your graveyard.' }]);
+    await dad.evaluate(() => { CT.doMove(CT.S.pid + '_gaaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee', 'battlefield'); const c = CT.S.me.zones.battlefield.find(x => x.id === 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'); CT.act(() => { c.fl = true; }); });
+    { const old = await dad.evaluate(() => CT.S.me.zones.battlefield.find(x => x.id === 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee').iid);
+      const t0 = Date.now(); let got;
+      while ((got = await stat(dad, old)) !== '4/3') { if (Date.now() - t0 > 15000) throw new Error('an old deck card flipped should get its back power/toughness from Scryfall: got ' + got); await dad.waitForTimeout(100); } }
     // ---- 7. Nothing is saved on the cards: the count is drawn, not stored. ----
     const stored = await dad.evaluate(() => JSON.stringify(CT.S.me.zones.battlefield.filter(c => /_gaval|_gmort|_ghand/.test(c.iid)).map(c => [c.dp || 0, c.dt || 0, c.pb || ''])));
     assert.equal(stored, JSON.stringify([[0, 0, ''], [0, 0, ''], [0, 0, '']]), 'no number was stored on the counting cards: ' + stored);
