@@ -147,7 +147,7 @@
     const line = typeLine(c, def), mains = mainTypes(line);
     if (count.types && !count.types.some(t => mains.includes(t))) return false;
     if (count.nonbasic && (!/\bLand\b/.test(line) || /\bBasic\b/.test(line))) return false;
-    if (count.tribes) {
+    if (count.tribes && def.allTypes !== true) { // a Changeling is every creature type, so it counts for any tribe
       const subs = String(line.split('—')[1] || '').toLowerCase().split(/\s+/).filter(Boolean);
       if (!count.tribes.some(tr => singular(tr).some(s => subs.includes(s)))) return false;
     }

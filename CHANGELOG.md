@@ -6,6 +6,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.87.0] - 2026-11-19
+
+### Added
+- **Card types and creature types change automatically.** When a card changes what another card is, the card shows a **type tag** (like Suspected, on the card) and is treated as that type everywhere: tribal effects such as "Elves you control get +1/+1", and counts such as "the number of Elves you control" or "artifacts you control", follow the new types for every player.
+  - **Auras and Equipment that set a type:** a blue Frog (Frogify-style), Kenrith's Transformation (Elk), Lignify (Treefolk), Darksteel Mutation (Insect artifact creature), and permanent-changers such as Imprisoned in the Moon (a land), Minimus Containment (a Treasure), In Too Deep (a Clue) and Swift Reconfiguration (a Vehicle). A creature turned into a Frog loses its old creature types (an Elf turned Frog stops being an Elf) but keeps its supertypes and card type, and a permanent turned into a land is no longer a creature.
+  - **"…in addition to its other types":** Angelic Destiny (Angel), Stormtide Leviathan (all lands are Islands), Dune Chanter (Deserts), Biotransference and The Flesh Is Weak (artifacts), Secret Arcade (enchantments), Arterial Alchemy (Blood tokens are Equipment), Hero of Bretagard (a God at ten counters).
+  - **Changeling** (26 pre-con cards) and Omo's everything counter: an **"All types"** tag; such a card counts as every creature type, so it gets "Elves you control" bonuses and is counted as an Elf, a Goblin, a Wizard and so on.
+- 49 pre-con cards are read. Left manual: the "chosen type" cards (they need a choice), copies ("enters as a copy… except it's a Wall"), one-shot effects ("returns… as a 1/1 Spirit"), "until end of turn" animation (manlands), and effects that depend on mana value or a count (Bello, Starfield of Nyx).
+
 ## [0.86.1] - 2026-11-19
 
 ### Fixed
@@ -497,7 +506,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.86.1...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.87.0...HEAD
+[0.87.0]: https://github.com/ccall1212/commander-table/compare/v0.86.1...v0.87.0
 [0.86.1]: https://github.com/ccall1212/commander-table/compare/v0.86.0...v0.86.1
 [0.86.0]: https://github.com/ccall1212/commander-table/compare/v0.85.0...v0.86.0
 [0.85.0]: https://github.com/ccall1212/commander-table/compare/v0.84.0...v0.85.0

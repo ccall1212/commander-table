@@ -80,7 +80,13 @@ Chris (2026-11-19): Bronze Guardian-style cards ("power is equal to the number o
 
 Chris (2026-11-19): Moon-Vigil Adherents did nothing. Cause: only "equal to the number of …" was read in v0.86.0; "gets +1/+1 for each …" is a pump per count on top of the base. Added for the card itself and for Auras/Equipment (the page counts from the giver's side), plus new counts: counters on the card, Auras/Equipment attached to it, opponents you have, creatures with a counter. 36 of the 66 pre-con cards with such a line.
 
+### 95. Card types and creature types change automatically — Built, awaiting Chris's test (v0.87.0)
+
+Chris (2026-11-19): when a card turns something into a Frog or says "all creatures are also Spiders", show a type/status and use it; Changelings and shapeshifters need an "All types" tag, not every name. Built in `js/grants.js` (a first pass computes types before everything else, so "Elves you control", counts and P/T all see the new types; `types` on grants, `allTypes` on the working definition) and shown as `t:` word tags in `js/app.js`. 49 pre-con cards (26 Changelings). Manual: chosen type, copies, one-shot returns, until-end-of-turn animation, mana-value-dependent effects. Not built: types from effects that depend on other types (chains), "loses all creature types" for enchanted PLAYERS (Curse of Conformity).
+
 ### Shipped recently (details in CHANGELOG.md)
+
+- #94 "Gets +N/+N for each …" cards — v0.86.1.
 
 - #93 Power/toughness counted from the card's own text — v0.86.0.
 
