@@ -54,19 +54,43 @@
   }
   const ptOf = (a, b) => (a !== undefined && b !== undefined ? { dp: signed(a), dt: signed(b) } : null);
 
+  // "…loses flying", "…loses all abilities", "…and it loses all other abilities": the abilities a card takes away (their icons are hidden).
+  function losses(sentence) {
+    const out = { ids: [], all: false };
+    const re = /\bloses? (all(?: other)? abilities|((?:deathtouch|defender|double strike|first strike|flying|haste|hexproof|indestructible|lifelink|menace|reach|shroud|trample|vigilance)(?:(?:,? and |, and |, )(?:deathtouch|defender|double strike|first strike|flying|haste|hexproof|indestructible|lifelink|menace|reach|shroud|trample|vigilance))*))/gi;
+    let m;
+    while ((m = re.exec(sentence))) { if (/^all/i.test(m[1])) out.all = true; else abilityList(m[2]).forEach(id => { if (!out.ids.includes(id)) out.ids.push(id); }); }
+    return out;
+  }
   // "Enchanted creature gets +2/+2, has vigilance, and can't attack you." / "…has base power and toughness 0/1." — one or more sentences.
   function parseAttached(line) {
     const out = [];
+    let lastHead = null;
     line.split(/(?<=\.)\s+/).forEach(raw => {
+      // "As long as equipped creature is legendary, it has hexproof." (Champion's Helm) / "As long as it's legendary, it gets an additional +2/+2." (Tenza):
+      // a condition on the creature's own card type, which the game can see.
+      const cl = /^As long as (?:(Equipped|Enchanted) creature|it)(?: is|'s) legendary, (?:it )?(.+?)\.?$/i.exec(raw);
+      if (cl) {
+        const who = (cl[1] || lastHead || '').toLowerCase();
+        if (!who) return;
+        const body = cl[2].replace(/"[^"]*"/g, ' ');
+        if (/\b(?:as long as|if |unless|until|during)\b/i.test(body)) return;
+        const bpt = /\bgets? (?:an additional )?([+\-\u2212]\d+)\/([+\-\u2212]\d+)\b(?!\s+(?:for each|where|plus))/i.exec(body);
+        const babilities = /^(?:has|have|gets?)\b/i.test(body) ? leadingAbilities(body) : [];
+        if (!babilities.length && !bpt) return;
+        out.push({ scope: 'attached', attach: who, other: false, filters: { creature: true, legendary: true }, cond: null, when: null, abilities: babilities, pt: bpt ? ptOf(bpt[1], bpt[2]) : null, base: null, lose: [], loseAll: false });
+        return;
+      }
       const head = /^(Equipped|Enchanted) creature\b/i.exec(raw);
       if (!head) return;
+      lastHead = head[1];
       const s = raw.replace(/"[^"]*"/g, ' ').replace(/\s+/g, ' ').trim(); // quoted abilities (a trigger it gains) are read as reminders instead
       if (/\b(?:as long as|if |unless|until|during)\b/i.test(s)) return; // conditional: left to the player
       const pt = new RegExp('\\bgets? ([+\\-\\u2212]\\d+)\\/([+\\-\\u2212]\\d+)\\b(?!\\s+(?:for each|where|plus))', 'i').exec(s);
       const base = /\bbase power and toughness (\d{1,2})\/(\d{1,2})\b/i.exec(s);
-      const abilities = leadingAbilities(s);
-      if (!abilities.length && !pt && !base) return;
-      out.push({ scope: 'attached', attach: head[1].toLowerCase(), other: false, filters: { creature: true }, cond: null, when: null, abilities, pt: pt ? ptOf(pt[1], pt[2]) : null, base: base ? base[1] + '/' + base[2] : null });
+      const abilities = leadingAbilities(s), lost = losses(s);
+      if (!abilities.length && !pt && !base && !lost.ids.length && !lost.all) return;
+      out.push({ scope: 'attached', attach: head[1].toLowerCase(), other: false, filters: { creature: true }, cond: null, when: null, abilities, pt: pt ? ptOf(pt[1], pt[2]) : null, base: base ? base[1] + '/' + base[2] : null, lose: lost.ids, loseAll: lost.all });
     });
     return out;
   }
@@ -79,7 +103,7 @@
     const SELF = '(?:this (?:creature|permanent|artifact|vehicle|spacecraft|land|enchantment)|it' + names.map(n => '|' + esc(n)).join('') + ')';
     const l = line.replace(/[.]+$/, '');
     let m;
-    const grant = (when, abilities, pt) => ({ scope: 'self', other: false, filters: {}, cond: null, when, abilities, pt: pt || null, base: null });
+    const grant = (when, abilities, pt) => ({ scope: 'self', other: false, filters: {}, cond: null, when, abilities, pt: pt || null, base: null, lose: [], loseAll: false });
     if ((m = new RegExp('^During your turn, ' + SELF + ' has (.+)$', 'i').exec(l))) { const a = abilityList(m[1]); return a ? [grant({ turn: true }, a)] : []; }
     if ((m = new RegExp('^' + SELF + ' has (.+?) as long as it\'?s untapped$', 'i').exec(l))) { const a = abilityList(m[1]); return a ? [grant({ untapped: true }, a)] : []; }
     const counters = (n, type) => ({ selfCounters: { name: type ? type.toLowerCase() : 'any', min: num(n) } });
@@ -92,7 +116,7 @@
     if ((m = new RegExp('^As long as you control your commander, ' + SELF + ' gets ([+\\-\\u2212]\\d+)\\/([+\\-\\u2212]\\d+) and (other )?creatures you control (?:get ([+\\-\\u2212]\\d+)\\/([+\\-\\u2212]\\d+) and )?have (.+)$', 'i').exec(l))) {
       const a = abilityList(m[6]); if (!a) return [];
       return [grant({ commander: true }, [], ptOf(m[1], m[2])),
-        { scope: 'you', other: !!m[3], filters: { creature: true }, cond: null, when: { commander: true }, abilities: a, pt: ptOf(m[4], m[5]), base: null }];
+        { scope: 'you', other: !!m[3], filters: { creature: true }, cond: null, when: { commander: true }, abilities: a, pt: ptOf(m[4], m[5]), base: null, lose: [], loseAll: false }];
     }
     return [];
   }
@@ -105,7 +129,7 @@
     let other = /^other /i.test(prefix || '');
     if (scope === 'all' && !prefix) return null; // "Creatures have…" with no Each/All/Other is not a card's static ability we want to guess at
     let subject = String(subjectText).trim();
-    const g = { scope, other: false, filters: {}, cond: null, when: null, abilities: [], pt, base: null };
+    const g = { scope, other: false, filters: {}, cond: null, when: null, abilities: [], pt, base: null, lose: [], loseAll: false };
     if (/^other /i.test(subject)) { other = true; subject = subject.replace(/^other /i, ''); }
     g.other = other;
     // Two creature types in one line ("Orcs and Goblins", "Beasts and Birds") or the outlaw types.
@@ -151,22 +175,24 @@
   // after the numbers: "until end of turn", "for each …" and "as long as …" are not static anthems and are left alone.
   const ANTHEM_RE = /^(Each |All |Other )?(.+?)(?: (you control|your opponents control|you don't control|an opponent controls|opponents control))?(?: with (.+?))? gets? ([+\-\u2212]\d+)\/([+\-\u2212]\d+)\.?$/i;
 
+  // "Creatures your opponents control lose flying." (optionally "and can't have or gain flying"): a group that loses abilities.
+  const LOSE_RE = /^(Each |All |Other )?(.+?)(?: (you control|your opponents control|you don't control|an opponent controls|opponents control))?(?: with (.+?))? loses? (.+?)(?: and can't have or gain .+)?\.?$/i;
   // Every grant stated by one line of rules text (an empty list when it is not a simple grant we understand).
   function parseAll(raw, name) {
     const line = String(raw || '').replace(/\([^)]*\)/g, ' ').replace(/\s+/g, ' ').trim().replace(WORD_PREFIX_RE, '');
-    if (/^(?:Equipped|Enchanted) creature\b/i.test(line)) return parseAttached(line);
+    if (/^(?:Equipped|Enchanted) creature\b/i.test(line) || /^As long as (?:equipped|enchanted) creature is legendary,/i.test(line)) return parseAttached(line);
     const self = parseSelf(line, name);
     if (self.length) return self;
     let m = LINE_RE.exec(line);
     if (m) {
       const g = subjectGrant(m[1], m[2], m[3], m[4], ptOf(m[5], m[6]));
       const abilities = g && abilityList(m[7]);
-      if (!abilities) return [];
-      g.abilities = abilities;
-      return [g];
+      if (abilities) { g.abilities = abilities; return [g]; } // otherwise try the other shapes below ("…lose flying and can't have or gain flying" also contains "have")
     }
     m = ANTHEM_RE.exec(line);
     if (m) { const g = subjectGrant(m[1], m[2], m[3], m[4], ptOf(m[5], m[6])); return g ? [g] : []; }
+    m = LOSE_RE.exec(line);
+    if (m) { const lost = abilityList(m[5]); const g = lost && subjectGrant(m[1], m[2], m[3], m[4], null); if (g) { g.lose = lost; return [g]; } }
     return [];
   }
   const parseLine = (raw, name) => parseAll(raw, name)[0] || null;
@@ -188,7 +214,7 @@
     return list.slice(0, MAX_GRANTS).map(g => {
       if (!g || typeof g !== 'object') return null;
       const f = g.filters && typeof g.filters === 'object' ? g.filters : {};
-      const out = { scope: SCOPES.includes(g.scope) ? g.scope : 'you', other: !!g.other, filters: {}, cond: null, when: null, abilities: [], pt: null, base: null };
+      const out = { scope: SCOPES.includes(g.scope) ? g.scope : 'you', other: !!g.other, filters: {}, cond: null, when: null, abilities: [], pt: null, base: null, lose: [], loseAll: false };
       if (out.scope === 'attached') out.attach = g.attach === 'enchanted' ? 'enchanted' : 'equipped';
       if (f.creature) out.filters.creature = true;
       if (typeof f.type === 'string' && TYPES.includes(f.type.toLowerCase())) out.filters.type = f.type[0].toUpperCase() + f.type.slice(1).toLowerCase();
@@ -211,7 +237,9 @@
       out.abilities = (Array.isArray(g.abilities) ? g.abilities : []).filter(a => ABILITIES.includes(a)).slice(0, 6);
       if (g.pt && typeof g.pt === 'object' && intOrNull(g.pt.dp) !== null && intOrNull(g.pt.dt) !== null) out.pt = { dp: g.pt.dp, dt: g.pt.dt };
       if (typeof g.base === 'string' && /^\d{1,2}\/\d{1,2}$/.test(g.base)) out.base = g.base;
-      return out.abilities.length || out.pt || out.base ? out : null;
+      out.lose = (Array.isArray(g.lose) ? g.lose : []).filter(a => ABILITIES.includes(a)).slice(0, 6);
+      out.loseAll = g.loseAll === true;
+      return out.abilities.length || out.pt || out.base || out.lose.length || out.loseAll ? out : null;
     }).filter(Boolean);
   }
   // Does grant g (from the card `src`) apply to the card `c` whose definition is `def`? mods = { modified } facts about c that need the whole board.
@@ -265,7 +293,7 @@
       const gr = Array.isArray(e.def.gr) ? clean(e.def.gr) : parse(e.def.oracle, e.def.face || e.def.name);
       if (gr.length) sources.push({ pid: b.pid, e, gr, board: b });
     }));
-    const out = new Map(); out.pt = new Map();
+    const out = new Map(); out.pt = new Map(); out.lose = new Map();
     if (!sources.length) return out;
     // "Modified": has a counter, or an Equipment / Aura its controller controls attached to it.
     const attachedBy = new Map();
@@ -286,6 +314,13 @@
           g.abilities.forEach(id => { if (!list.some(x => x.id === id)) list.push({ id, from, by: String(s.e.c.own || s.pid).slice(0, 40) }); });
           out.set(key, list);
         }
+        if ((g.lose && g.lose.length) || g.loseAll) {
+          const cur = out.lose.get(key) || { ids: [], all: false, keep: [], from: [] };
+          (g.lose || []).forEach(id => { if (!cur.ids.includes(id)) cur.ids.push(id); });
+          if (g.loseAll) { cur.all = true; g.abilities.forEach(id => { if (!cur.keep.includes(id)) cur.keep.push(id); }); } // "has indestructible and loses all other abilities": the one it gains stays
+          cur.from.push(from);
+          out.lose.set(key, cur);
+        }
         if (g.pt || g.base) {
           const cur = out.pt.get(key) || { dp: 0, dt: 0, base: null, from: [] };
           if (g.pt) { cur.dp += g.pt.dp; cur.dt += g.pt.dt; }
@@ -298,6 +333,6 @@
     return out;
   }
   // One player's board on its own (everything is "yours").
-  const forBoard = (entries, ctx) => { const m = forBoards([{ pid: 'p', entries }], ctx), out = new Map(); m.forEach((v, k) => out.set(k.slice(2), v)); out.pt = new Map(); m.pt.forEach((v, k) => out.pt.set(k.slice(2), v)); return out; };
+  const forBoard = (entries, ctx) => { const m = forBoards([{ pid: 'p', entries }], ctx), out = new Map(); m.forEach((v, k) => out.set(k.slice(2), v)); out.pt = new Map(); m.pt.forEach((v, k) => out.pt.set(k.slice(2), v)); out.lose = new Map(); m.lose.forEach((v, k) => out.lose.set(k.slice(2), v)); return out; };
   window.CTGrants = { parse, parseLine, clean, applies, forBoard, forBoards, ABILITIES };
 }());

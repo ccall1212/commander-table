@@ -8,9 +8,11 @@ To check this copy, extract the ZIP and double-click **index.html**. Start a gam
 4. **Sphere Grid cousins:** a card like Tesak ("creatures you control with counters on them have haste") or Nev: put any counter on a creature; it gets the icon.
 5. **Creature types / tokens:** "Other Orcs and Goblins you control have trample", "Zombie tokens you control have flying", "Other modified creatures you control have vigilance" (modified = a counter, or your Equipment/Aura on it).
 6. **Conditions on the card:** Cait, Cage Brawler / Kefka ("During your turn, … has indestructible"): the icon is there on its controller's turn only. Paradise Druid / Walking Skyscraper: hexproof only while untapped. A Lieutenant (Angelic Field Marshal): the bonus and vigilance only while one of your commanders is on the battlefield. Voice of the Blessed / Hero of Bretagard: the icon appears at the counter threshold.
-7. **Still manual on purpose:** artifact counts, life totals, creature counts, "equipped", "attacking". Tell me if one of these should be automatic after all.
-8. Another player (private window) sees the same numbers and icons on your board.
-9. Tell me if a number is wrong on a card you know, or an icon shows when it should not.
+7. **Loses / legendary:** attach **Colossus Hammer** to a creature that has flying: it gets +10/+10 and the **flying icon disappears** (it comes back when you detach the Hammer). A frog Aura hides **all** ability icons. **Champion's Helm** on a legendary creature: +2/+2 and hexproof; on a normal creature: +2/+2 only.
+8. **Counters on entering:** play a card that says "This creature enters with a +1/+1 counter on it" (Hexavus, Kalonian Hydra, Fertilid, Ghave) or a **Vivid land**: the counters are already there (the land is also tapped), and the log says "played … with 2 +1/+1 counters". A hydra that says "enters with **X** counters" gets none: add them yourself.
+9. **Still manual on purpose:** artifact counts, life totals, creature counts, "equipped", "attacking". Tell me if one of these should be automatic after all.
+10. Another player (private window) sees the same numbers, icons and counters on your board.
+11. Tell me if a number is wrong on a card you know, or an icon shows when it should not.
 
 ## Assistant verification
 - 33 automatic unit tests pass, including new `test_grants_pt` checks written from real card wordings (Vows, Assault Suit, Whispersilk Cloak, On Serra's Wings, Angelic Destiny, Eldrazi Conscription, Darksteel Mutation, Almost Perfect, Hulkbuster Armor, Tesak, Winged Hive Tyrant, Orcs and Goblins, Zombie tokens, outlaws, modified creatures, Cait, Cid, Paradise Druid, Hero of Bretagard, Voice of the Blessed, Primordial Hydra, Lieutenant cards, plain anthems), and the ones that must be left alone (Multiclass Baldric, Brass Knuckles, Shimmer Dragon, Serra Ascendant, Jetmir, Balan, Tromokratis).

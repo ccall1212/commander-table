@@ -109,9 +109,11 @@ function markEntries(c) {
   gr.sort((x, y) => CARD_MARKS.findIndex(m => m.id === x.id) - CARD_MARKS.findIndex(m => m.id === y.id)); // the same order on every screen
   // Summoning sickness only matters for an untapped creature without haste (printed or granted, permanent or temporary), so the tag is
   // hidden otherwise; the status itself stays on the card until your turn begins, so it comes back if the creature untaps or loses haste.
+  // Abilities this card has lost to another permanent (Colossus Hammer's "loses flying"): their icons are hidden, whether printed, ticked by hand or granted.
+  const lost = id => !!(c && c.ls && (c.ls.ids.includes(id) || (c.ls.all && !c.ls.keep.includes(id) && CARD_MARK_BY_ID[id] && CARD_MARK_BY_ID[id].kind === 'ability')));
   const hasty = perm.includes('haste') || temp.includes('haste') || (c && Array.isArray(c.gr) && c.gr.some(g => g && g.id === 'haste'));
   const shownPerm = (c && c.t) || hasty ? perm.filter(id => id !== 'sick') : perm;
-  return shownPerm.map(id => ({ id, temp: false })).concat(temp.map(id => ({ id, temp: true })), gr).slice(0, MAX_CARD_MARKS * 2);
+  return shownPerm.filter(id => !lost(id)).map(id => ({ id, temp: false })).concat(temp.filter(id => !lost(id)).map(id => ({ id, temp: true })), gr.filter(g => !lost(g.id))).slice(0, MAX_CARD_MARKS * 2);
 }
 // onCard = an icon that is drawn on the card (in the middle, where word tags sit) instead of hanging outside it: Summoning sick.
 const isWordMark = e => { const id = typeof e === 'string' ? e : e.id; return !CARD_MARK_BY_ID[id] || !CARD_MARK_BY_ID[id].p || !!CARD_MARK_BY_ID[id].onCard; };
@@ -134,7 +136,7 @@ function previewMarksHTML(card) {
 // Abilities another permanent gives this card ("creatures you control with a +1/+1 counter have reach and trample"), worked out
 // per player's board and remembered until the next redraw. Drawn as extra icons only; never saved on the card.
 let grantEpoch = 0;
-const grantCache = { map: null, pt: null, epoch: -1 };
+const grantCache = { map: null, pt: null, lose: null, epoch: -1 };
 function grantsFor(pid, c) {
   if (typeof CTGrants === 'undefined' || !c || !S.me) return [];
   if (!grantCache.map || grantCache.epoch !== grantEpoch) {
@@ -143,13 +145,15 @@ function grantsFor(pid, c) {
       if (opid === S.pid || !p || !p.zones) continue;
       boards.push({ pid: opid, entries: (p.zones.battlefield || []).map(x => ({ c: x, def: x.id ? (p.defs || {})[x.id] : null })) });
     }
-    grantCache.map = CTGrants.forBoards(boards, { active: S.table && S.table.active }); grantCache.pt = grantCache.map.pt; grantCache.epoch = grantEpoch; // every board at once: an Aura can sit on an opponent's creature; the turn matters for "during your turn"
+    grantCache.map = CTGrants.forBoards(boards, { active: S.table && S.table.active }); grantCache.pt = grantCache.map.pt; grantCache.lose = grantCache.map.lose; grantCache.epoch = grantEpoch; // every board at once: an Aura can sit on an opponent's creature; the turn matters for "during your turn"
   }
   return grantCache.map.get(pid + '|' + c.iid) || [];
 }
 // Power/toughness other permanents give this card: { dp, dt, base, from: [...] } or null (see CTGrants.forBoards). Drawn on the badge, never saved.
 function ptGrantFor(pid, c) { grantsFor(pid, c); return (grantCache.pt && grantCache.pt.get(pid + '|' + c.iid)) || null; }
-const withGrants = (pid, c) => { const gr = grantsFor(pid, c).filter(g => !(c.sx || []).includes(g.id)); return gr.length ? Object.assign({}, c, { gr }) : c; }; // grants the owner switched off by hand (sx) are left out
+// Abilities other permanents take away ("Equipped creature … loses flying", "loses all abilities"): { ids, all, keep } or null. Their icons are hidden, never un-saved.
+function loseFor(pid, c) { grantsFor(pid, c); return (grantCache.lose && grantCache.lose.get(pid + '|' + c.iid)) || null; }
+const withGrants = (pid, c) => { const gr = grantsFor(pid, c).filter(g => !(c.sx || []).includes(g.id)), ls = loseFor(pid, c); return gr.length || ls ? Object.assign({}, c, gr.length ? { gr } : {}, ls ? { ls } : {}) : c; }; // grants the owner switched off by hand (sx) are left out
 const PLAYER_COUNTERS = ['Energy', 'Experience', 'Rad', 'Tickets'];
 const IMG_OK = u => typeof u === 'string' && u.startsWith('https://cards.scryfall.io/');
 
@@ -1869,6 +1873,18 @@ function autoEnterTapped(card, opts) {
   const r = CTEnterTap.evaluate(f.oracle, { name: f.name, lands, opponents: foes.length, oppLands });
   if (r && r.tapped) { card.t = true; opts.autoTapped = true; }
 }
+// Counters a permanent enters with when the number is fixed ("This creature enters with a +1/+1 counter on it", Vivid lands' charge counters,
+// Graft N, Vanishing N). X counters and anything that depends on mana or the board are left for the player.
+function autoEnterCounters(card, opts) {
+  if (typeof CTEnterTap === 'undefined' || card.fd) return;
+  const f = faceInfo(card);
+  if (!f || !/\bcounters? on\b|^(?:Graft|Modular|Fading|Vanishing) \d+/im.test(f.oracle)) return;
+  const list = CTEnterTap.counters(f.oracle, f.name).filter(x => !(card.c && card.c[x.name] > 0));
+  if (!list.length) return;
+  card.c = card.c || {};
+  list.forEach(x => { card.c[x.name] = (card.c[x.name] || 0) + x.n; });
+  opts.autoCounters = list.map(x => `${x.n} ${x.name} counter${x.n > 1 ? 's' : ''}`).join(' and ');
+}
 function insertCard(card, to, opts = {}) {
   if (to === 'battlefield' && !canEnterBattlefield()) return false;
   const z = S.me.zones[to];
@@ -1877,7 +1893,7 @@ function insertCard(card, to, opts = {}) {
     if (opts.x != null) { card.x = clamp(Math.round(opts.x), 0, BW - CW); card.y = clamp(Math.round(opts.y), 0, myBH() - CH); }
     else if (card.x == null) { autoPlace(card, to); if (card.y != null && card.y + CH > boardVisibleBottom()) centerSpot(card); } // never leave it under the hand strip
   }
-  if (to === 'battlefield' && !opts.noAuto) { autoMarkPrintedAbilities(card); autoFirstLoreCounter(card); autoEnterTapped(card, opts); }
+  if (to === 'battlefield' && !opts.noAuto) { autoMarkPrintedAbilities(card); autoFirstLoreCounter(card); autoEnterTapped(card, opts); autoEnterCounters(card, opts); }
   if (to === 'battlefield') offerDayNight(card);
   if (to === 'battlefield') autoSummoningSick(card); // after the printed abilities (they are skipped on a card that already has a status); also when it arrives from another player
   if (to === 'battlefield') {
@@ -1977,7 +1993,7 @@ function moveText(r, to, opts) {
     const n = S.me.casts[card.iid] || 0;
     return `cast {0} from the command zone${n ? ` (commander tax +${2 * n})` : ''}`;
   }
-  if (to === 'battlefield') return from === 'hand' ? `played {0}${opts.tapped || opts.autoTapped ? ' tapped' : ''}` : `put {0} onto the battlefield${opts.autoTapped ? ' tapped' : ''} from ${ZL[from]}`;
+  if (to === 'battlefield') return (from === 'hand' ? `played {0}${opts.tapped || opts.autoTapped ? ' tapped' : ''}` : `put {0} onto the battlefield${opts.autoTapped ? ' tapped' : ''} from ${ZL[from]}`) + (opts.autoCounters ? ` with ${opts.autoCounters}` : '');
   if (to === 'graveyard') return from === 'hand' ? 'discarded {0}' : from === 'library' ? 'milled {0}' : 'put {0} into the graveyard';
   if (to === 'exile') return `exiled {0}${from !== 'battlefield' ? ` from ${ZL[from]}` : ''}`;
   if (to === 'hand') return `returned {0} to hand from ${ZL[from]}`;

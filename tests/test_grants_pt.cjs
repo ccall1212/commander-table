@@ -33,7 +33,22 @@ assert.equal(desc('Equipped creature gets +1/+1 for each charge counter on this 
 assert.equal(desc('Equipped creature gets +X/+0 where X is the exiled card\'s power and has menace.'), 'attached menace', 'a +X bonus is not read');
 assert.equal(desc('Equipped creature has lifelink if you control a Cleric, deathtouch if you control a Rogue, and haste if you control a Warrior.'), '', 'Multiclass Baldric: conditional per ability, left alone');
 assert.equal(desc('Equipped creature has double strike as long as two or more Equipment are attached to it.'), '', 'Brass Knuckles: left alone');
-assert.equal(desc('Equipped creature gets +1/+1. As long as it\'s legendary, it gets an additional +2/+2. As long as it\'s red, it has trample.'), 'attached - +1/+1', 'Tenza: only the unconditional sentence');
+assert.equal(desc('Equipped creature gets +1/+1. As long as it\'s legendary, it gets an additional +2/+2. As long as it\'s red, it has trample.'), 'attached - +1/+1 | attached - +2/+2', 'Tenza: the unconditional bonus, and the legendary one (the colour condition is left alone)');
+assert.equal(plain(G.parse('Equipped creature gets +1/+1. As long as it\'s legendary, it gets an additional +2/+2.')[1].filters).legendary, true);
+// "loses": abilities taken away (Colossus Hammer), all abilities (Aura frogs)
+assert.equal(desc('Equipped creature gets +10/+10 and loses flying.'), 'attached - +10/+10', 'Colossus Hammer');
+assert.deepEqual(plain(G.parse('Equipped creature gets +10/+10 and loses flying.')[0].lose), ['flying']);
+assert.deepEqual(plain(G.parse('Enchanted creature loses flying and first strike.')[0].lose), ['flying', 'first strike']);
+assert.equal(G.parse('Enchanted creature loses all abilities and is a blue Frog with base power and toughness 1/1.')[0].loseAll, true);
+assert.equal(G.parse('Enchanted creature is an Insect artifact creature with base power and toughness 0/1 and has indestructible, and it loses all other abilities, card types, and creature types.')[0].loseAll, true, 'Darksteel Mutation');
+assert.deepEqual(plain(G.parse('Creatures your opponents control lose flying and can\'t have or gain flying.')[0].lose), ['flying'], 'Archetype of Imagination');
+assert.equal(G.parse('Creatures your opponents control lose flying and can\'t have or gain flying.')[0].scope, 'opp');
+// "As long as equipped creature is legendary" (Champion's Helm, Hero's Heirloom)
+assert.equal(desc('Equipped creature gets +2/+2.\nAs long as equipped creature is legendary, it has hexproof.'), 'attached - +2/+2 | attached hexproof', 'Champion\'s Helm');
+assert.equal(desc('As long as equipped creature is legendary, it has trample and haste.'), 'attached trample+haste', 'Hero\'s Heirloom');
+assert.equal(plain(G.parse('As long as equipped creature is legendary, it has hexproof.')[0].filters).legendary, true);
+assert.equal(desc('As long as equipped creature is attacking, it has first strike.'), '', 'attacking is not read');
+assert.equal(desc('As long as equipped creature is legendary, it has lifelink if you control a Cleric.'), '', 'a second condition is left alone');
 assert.equal(desc('Enchanted creature gets +1/+1 and has lifelink and "Whenever this creature deals combat damage to a player, draw a card."'), 'attached lifelink +1/+1', 'a quoted trigger is not read here (the reminders list it)');
 assert.equal(desc('Enchanted creature gets +3/+3 until end of turn.'), '', 'temporary: left alone');
 
@@ -146,6 +161,16 @@ assert.equal(m.pt.get('A|x').dp, 1, 'a "not other" lord gives to the "Other" lor
 assert.equal(G.parse('All other creatures get -1/-1.')[0].other, true, '"All other creatures" excludes the card itself');
 m = G.forBoards([board('A', [e('x', { id: 'ao', face: 'Smog', type: 'Enchantment', oracle: 'All other creatures get -1/-1.' }), e('b1', bear)]), board('B', [e('b2', bear)])], {});
 assert.equal(m.pt.get('A|b1').dp, -1); assert.equal(m.pt.get('B|b2').dp, -1, '"All other" reaches everyone\'s creatures');
+// Losing abilities, and the legendary condition, applied to boards.
+const hammer = { id: 'hm', face: 'Colossus Hammer', type: 'Artifact \u2014 Equipment', oracle: 'Equipped creature gets +10/+10 and loses flying.' };
+const helm = { id: 'hl', face: 'Champion\'s Helm', type: 'Artifact \u2014 Equipment', oracle: 'Equipped creature gets +2/+2.\nAs long as equipped creature is legendary, it has hexproof.' };
+const legend = { id: 'lg', face: 'Legend', type: 'Legendary Creature \u2014 Human', oracle: '', pt: '2/2' };
+m = G.forBoards([board('A', [e('hm', hammer, { att: { p: 'A', i: 'b1' } }), e('b1', bear)])], {});
+assert.deepEqual(plain(m.lose.get('A|b1').ids), ['flying']); assert.equal(m.pt.get('A|b1').dp, 10); assert.equal(m.lose.get('A|b1').from[0], 'Colossus Hammer');
+assert.equal(m.lose.get('A|b2'), undefined);
+m = G.forBoards([board('A', [e('hl', helm, { att: { p: 'A', i: 'g1' } }), e('g1', legend), e('hl2', helm, { att: { p: 'A', i: 'b1' } }), e('b1', bear)])], {});
+assert.equal(m.get('A|g1')[0].id, 'hexproof', 'a legendary creature gets hexproof'); assert.equal(m.get('A|b1'), undefined, 'an ordinary creature does not'); assert.equal(m.pt.get('A|b1').dp, 2, 'but both get the +2/+2');
+m = G.forBoards([board('A', [e('f', frog, { att: { p: 'A', i: 'b1' } }), e('b1', bear)])], {}); assert.equal(m.lose.get('A|b1').all, true, 'a frog Aura: loses all abilities');
 // Published definitions carry the new fields and are validated.
 const pub = { id: 'p', face: 'Pub', type: 'Enchantment — Aura', gr: G.parse(vow.oracle) };
 m = G.forBoards([board('A', [e('p', pub, { att: { p: 'A', i: 'b1' } }), e('b1', bear)])], {}); assert.equal(m.pt.get('A|b1').dp, 2, 'a published definition carries its power/toughness');
