@@ -8,8 +8,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [0.90.4] - 2026-11-19
 
+### Changed
+- **Knight's Vigil uses the sharper helmeted-knights picture you chose** (the kneeling knight in blue and the red knight with a sword, in front of a castle at sunset). The small preview is made from the same picture.
+
 ### Fixed
-- **The older Knight's Vigil background now shows right away.** v0.90.3 put the older picture back, but a browser that had already loaded the redrawn one kept showing it from its own saved copy (the file name was the same). The game now asks for the Knight's Vigil picture and its small preview under a new address, so every browser fetches the older one.
+- **The new Knight's Vigil picture shows right away.** A browser that had already loaded the redrawn one kept showing it from its own saved copy (the file name was the same). The game now asks for the Knight's Vigil picture and its small preview under a new address, so every browser fetches the new one.
 
 ## [0.90.3] - 2026-11-19
 

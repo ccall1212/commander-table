@@ -255,3 +255,5 @@ Chris (2026-11-04): eventually bring commander damage back out of the life box's
 102. Chris (2026-11-19): put the older Knight's Vigil background back (v0.90.3, test copy). v0.90.2 is published.
 
 103. Chris (2026-11-19): after v0.90.3 the browser still showed the redrawn Knight's Vigil (cached same-name file); v0.90.4 loads it under a new address (test copy).
+
+104. Chris (2026-11-19): use the sharper helmeted-knights picture he supplied for Knight's Vigil (v0.90.4, test copy).
