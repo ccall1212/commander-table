@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.88.2] - 2026-11-19
+
+### Fixed
+- **Lands you double-click now go to the next open space in the Lands area and are never hidden behind your hand.** The game only counts the part of the board you can actually see (above the hand strip). Lands fill that area row by row, then pack closer together, and if even that is full the card goes to a free spot on the board that covers as little as possible, so every land can still be clicked and dragged. This also applies to Tidy and to a card that is un-attached.
+
 ## [0.88.1] - 2026-11-19
 
 ### Fixed
@@ -519,7 +524,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.88.1...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.88.2...HEAD
+[0.88.2]: https://github.com/ccall1212/commander-table/compare/v0.88.1...v0.88.2
 [0.88.1]: https://github.com/ccall1212/commander-table/compare/v0.88.0...v0.88.1
 [0.88.0]: https://github.com/ccall1212/commander-table/compare/v0.87.0...v0.88.0
 [0.87.0]: https://github.com/ccall1212/commander-table/compare/v0.86.1...v0.87.0
