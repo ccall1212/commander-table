@@ -99,7 +99,7 @@ const mkDeck = who => ({
     await waitIcons('bear', 'Flying,Vigilance', 'flying comes back when the Hammer comes off'); await waitStat('bear', '2/2', 'and the number');
     // ---- 2. A frog Aura hides every ability icon, and sets 1/1. ----
     await attach('frog', 'bear');
-    await waitIcons('bear', '', 'a frog loses all abilities'); await waitStat('bear', '1/1', 'a 1/1 frog');
+    await waitIcons('bear', 'Frog', 'a frog loses all abilities (only its Frog type tag is left)'); await waitStat('bear', '1/1', 'a 1/1 frog');
     await attach('frog', null);
     await waitIcons('bear', 'Flying,Vigilance', 'abilities come back');
     // ---- 3. Champion's Helm: +2/+2 for everyone, hexproof only for a legendary creature. ----

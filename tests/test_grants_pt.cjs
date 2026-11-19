@@ -148,6 +148,7 @@ const gob = { id: 'g', face: 'Goblin', type: 'Creature — Goblin', oracle: '' }
 m = G.forBoards([board('A', [e('o', orc), e('g1', gob), e('b1', bear), e('o2', Object.assign({}, orc, { oracle: '' }))])], {});
 assert.deepEqual(Array.from(m.keys()).sort(), ['A|g1', 'A|o2']);
 // "Other": a card never gives it to itself, but a second card with the same text does (each one gets +1/+1 from the other, not from itself).
+const legendBear = { id: 'lb', face: 'Legend Bear', type: 'Legendary Creature \u2014 Bear', oracle: '', pt: '2/2' };
 const elf = { id: 'el', face: 'Plain Elf', type: 'Creature \u2014 Elf', oracle: '', pt: '1/1' };
 const otherLord = { id: 'ol', face: 'Other Lord', type: 'Creature \u2014 Elf', oracle: 'Other Elves you control get +1/+1.', pt: '2/2' };
 m = G.forBoards([board('A', [e('x', otherLord)])], {}); assert.equal(m.pt.size, 0, 'a lone "Other Elves" lord gives nothing to itself');
@@ -183,6 +184,35 @@ assert.equal(m.lose.get('A|b2'), undefined);
 m = G.forBoards([board('A', [e('hl', helm, { att: { p: 'A', i: 'g1' } }), e('g1', legend), e('hl2', helm, { att: { p: 'A', i: 'b1' } }), e('b1', bear)])], {});
 assert.equal(m.get('A|g1')[0].id, 'hexproof', 'a legendary creature gets hexproof'); assert.equal(m.get('A|b1'), undefined, 'an ordinary creature does not'); assert.equal(m.pt.get('A|b1').dp, 2, 'but both get the +2/+2');
 m = G.forBoards([board('A', [e('f', frog, { att: { p: 'A', i: 'b1' } }), e('b1', bear)])], {}); assert.equal(m.lose.get('A|b1').all, true, 'a frog Aura: loses all abilities');
+// ---- Types (v0.87.0): Auras that change types, "also a type", Changeling, Omo ----
+const frogT = { id: 'ft', face: 'Frogify', type: 'Enchantment \u2014 Aura', oracle: 'Enchanted creature loses all abilities and is a blue Frog with base power and toughness 1/1.' };
+const tideT = { id: 'ti', face: 'Stormtide Leviathan', type: 'Creature \u2014 Leviathan', oracle: 'All lands are Islands in addition to their other types.', pt: '8/8' };
+const bioT = { id: 'bi', face: 'Biotransference', type: 'Enchantment', oracle: 'Creatures you control are artifacts in addition to their other types. The same is true for creature spells you control and creature cards you own that aren\'t on the battlefield.' };
+const ling = { id: 'cl', face: 'Changeling Outcast', type: 'Creature \u2014 Shapeshifter', oracle: 'Changeling (This card is every creature type.)\nChangeling Outcast can\'t block or be blocked by non-Shapeshifter creatures.', pt: '1/1' };
+const elfLord = { id: 'el', face: 'Elf Lord', type: 'Creature \u2014 Elf', oracle: 'Elves you control get +1/+1.', pt: '2/2' };
+const land = { id: 'ld', face: 'Plains', type: 'Basic Land \u2014 Plains', oracle: '' };
+m = G.forBoards([board('A', [e('ft', frogT, { att: { p: 'A', i: 'b1' } }), e('b1', { id: 'bb', face: 'Bear', type: 'Legendary Creature \u2014 Bear Warrior', oracle: '', pt: '2/2' })])], {});
+assert.equal(m.types.get('A|b1').line, 'Legendary Creature \u2014 Frog', 'a frog Aura replaces the creature types, keeps the supertype and the card type'); assert.deepEqual(plain(m.types.get('A|b1').tags.map(t => t.label)), ['Frog']);
+m = G.forBoards([board('A', [e('ft', frogT, { att: { p: 'A', i: 'b1' } }), e('b1', bear), e('lord', elfLord), e('e1', elf)])], {});
+assert.equal(m.pt.get('A|e1').dp, 1, 'the Elf still gets the lord bonus'); assert.equal(m.pt.get('A|b1').dp, 0, 'the Frog gets no Elf bonus (a Bear turned into a Frog was never an Elf)'); assert.equal(m.pt.get('A|b1').base, '1/1', 'only the Aura\'s base 1/1');
+m = G.forBoards([board('A', [e('ft', frogT, { att: { p: 'A', i: 'e1' } }), e('lord', elfLord), e('e1', elf)])], {});
+assert.equal(m.pt.get('A|e1').dp, 0, 'an Elf turned into a Frog no longer gets the Elf bonus (only the Aura\'s base remains)');
+m = G.forBoards([board('A', [e('ti', tideT), e('l1', land), e('l2', Object.assign({}, land, { type: 'Land' }))]), board('B', [e('l3', land)])], {});
+assert.equal(m.types.get('A|l1').line, 'Basic Land \u2014 Plains Island', 'a Plains is also an Island'); assert.equal(m.types.get('A|l2').line, 'Land \u2014 Island'); assert.ok(m.types.get('B|l3'), 'everyone\'s lands');
+assert.equal(m.types.get('A|ti'), undefined, 'the Leviathan is not a land');
+m = G.forBoards([board('A', [e('bi', bioT), e('b1', bear)])], {}); assert.equal(m.types.get('A|b1').line, 'Artifact Creature \u2014 Bear', 'also an artifact; the type order is stable');
+m = G.forBoards([board('A', [e('cl', ling), e('lord', elfLord)])], {}); assert.equal(m.types.get('A|cl').all, true, 'Changeling'); assert.equal(plain(m.types.get('A|cl').tags[0].label), 'All types');
+assert.equal(m.pt.get('A|cl').dp, 1, 'a Changeling counts as an Elf for "Elves you control"');
+const omo = { id: 'om', face: 'Omo, Queen of Vesuva', type: 'Legendary Creature \u2014 Insect', oracle: 'Each nonland creature with an everything counter on it is every creature type.', pt: '4/4' };
+m = G.forBoards([board('A', [e('om', omo), e('b1', bear, { c: { everything: 1 } }), e('b2', bear), e('lord', elfLord)])], {});
+assert.equal(m.types.get('A|b1').all, true, 'a creature with an everything counter is every type'); assert.equal(m.types.get('A|b2'), undefined);
+assert.equal(m.pt.get('A|b1').dp, 1, 'and so gets the Elf bonus');
+const imp = { id: 'ip', face: 'Imprisoned in the Moon', type: 'Enchantment \u2014 Aura', oracle: 'Enchanted permanent is a colorless land with "{T}: Add {C}" and loses all other card types and abilities.' };
+m = G.forBoards([board('A', [e('ip', imp, { att: { p: 'A', i: 'b1' } }), e('b1', legendBear)])], {}); assert.equal(m.types.get('A|b1').line, 'Legendary Land', 'a permanent becomes a land (and no longer a creature)');
+// Validation of published types.
+assert.deepEqual(plain(G.clean([{ scope: 'attached', filters: {}, abilities: [], types: { mode: 'set', M: ['Artifact', 'Evil'], S: ['Frog', 'x'] } }])[0].types), { mode: 'set', M: ['Artifact'], S: ['Frog'] });
+assert.equal(G.clean([{ scope: 'attached', filters: {}, abilities: ['flying'], types: { mode: 'bogus', S: ['Frog'] } }])[0].types, null, 'an unknown mode is dropped');
+assert.deepEqual(plain(G.clean([{ scope: 'self', filters: {}, abilities: [], types: { all: true } }])[0].types), { all: true });
 // Published definitions carry the new fields and are validated.
 const pub = { id: 'p', face: 'Pub', type: 'Enchantment — Aura', gr: G.parse(vow.oracle) };
 m = G.forBoards([board('A', [e('p', pub, { att: { p: 'A', i: 'b1' } }), e('b1', bear)])], {}); assert.equal(m.pt.get('A|b1').dp, 2, 'a published definition carries its power/toughness');

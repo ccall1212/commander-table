@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.86.1';
+const APP_VERSION = '0.87.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -98,7 +98,7 @@ function markHTML(entry) {
   const id = typeof entry === 'string' ? entry : entry.id, temp = typeof entry === 'string' ? false : !!entry.temp;
   const granted = typeof entry === 'string' ? '' : (entry.from ? String(entry.from) : (entry.granted ? 'another permanent' : '')), by = typeof entry === 'string' ? '' : String(entry.by || '');
   const m = CARD_MARK_BY_ID[id];
-  const label = m ? m.label : id.slice(2), tip = (m ? `${m.label} — ${m.tip}` : `${id.slice(2)} (a marker added by the card's controller)`) + (temp ? ' · Temporary: ends when the turn passes' : '') + (granted && !by ? ` · Granted by ${granted}` : '');
+  const label = m ? m.label : id.slice(2), tip = (m ? `${m.label} — ${m.tip}` : (id.startsWith('t:') ? `${id.slice(2)} \u2014 a card type or creature type another card gives this one` : `${id.slice(2)} (a marker added by the card's controller)`)) + (temp ? ' · Temporary: ends when the turn passes' : '') + (granted && !by ? ` · Granted by ${granted}` : '');
   const word = !m || !m.p;
   return `<span class="cmark ${m ? m.kind : 'status'}${word ? ' word' : ''}${m ? '' : ' custom'}${temp ? ' temp' : ''}${granted ? ' granted' : ''}"${granted && by ? ` data-tip="${esc(tip)}" data-from="${esc(granted)}" data-by="${esc(by)}"` : ` title="${esc(tip)}"`} role="img" aria-label="${esc(label + (temp ? ' (temporary)' : '') + (granted ? ' (granted by ' + granted + ')' : ''))}">${m ? markSvg(m) : `<span class="mark-word">${esc(label)}</span>`}</span>`;
 }
@@ -113,7 +113,8 @@ function markEntries(c) {
   const lost = id => !!(c && c.ls && (c.ls.ids.includes(id) || (c.ls.all && !c.ls.keep.includes(id) && CARD_MARK_BY_ID[id] && CARD_MARK_BY_ID[id].kind === 'ability')));
   const hasty = perm.includes('haste') || temp.includes('haste') || (c && Array.isArray(c.gr) && c.gr.some(g => g && g.id === 'haste'));
   const shownPerm = (c && c.t) || hasty ? perm.filter(id => id !== 'sick') : perm;
-  return shownPerm.filter(id => !lost(id)).map(id => ({ id, temp: false })).concat(temp.filter(id => !lost(id)).map(id => ({ id, temp: true })), gr.filter(g => !lost(g.id))).slice(0, MAX_CARD_MARKS * 2);
+  const ty = (c && Array.isArray(c.ty) ? c.ty : []).map(t => ({ id: 't:' + t.label, temp: false, granted: true, from: t.from })); // type tags other cards give ("Frog", "All types")
+  return shownPerm.filter(id => !lost(id)).map(id => ({ id, temp: false })).concat(temp.filter(id => !lost(id)).map(id => ({ id, temp: true })), gr.filter(g => !lost(g.id)), ty).slice(0, MAX_CARD_MARKS * 2);
 }
 // onCard = an icon that is drawn on the card (in the middle, where word tags sit) instead of hanging outside it: Summoning sick.
 const isWordMark = e => { const id = typeof e === 'string' ? e : e.id; return !CARD_MARK_BY_ID[id] || !CARD_MARK_BY_ID[id].p || !!CARD_MARK_BY_ID[id].onCard; };
@@ -136,7 +137,7 @@ function previewMarksHTML(card) {
 // Abilities another permanent gives this card ("creatures you control with a +1/+1 counter have reach and trample"), worked out
 // per player's board and remembered until the next redraw. Drawn as extra icons only; never saved on the card.
 let grantEpoch = 0;
-const grantCache = { map: null, pt: null, lose: null, epoch: -1 };
+const grantCache = { map: null, pt: null, lose: null, types: null, epoch: -1 };
 function grantsFor(pid, c) {
   if (typeof CTGrants === 'undefined' || !c || !S.me) return [];
   if (!grantCache.map || grantCache.epoch !== grantEpoch) {
@@ -145,7 +146,7 @@ function grantsFor(pid, c) {
       if (opid === S.pid || !p || !p.zones) continue;
       boards.push({ pid: opid, entries: (p.zones.battlefield || []).map(x => ({ c: x, def: x.id ? (p.defs || {})[x.id] : null })) });
     }
-    grantCache.map = CTGrants.forBoards(boards, { active: S.table && S.table.active, each: (each, pid, iid) => { const spec = typeof CTCda === 'undefined' ? null : CTCda.parseEach(each.text); if (!spec) return null; const n = CTCda.evaluate(spec, { boards: countBoards(), pid, iid }); return { dp: each.a * n, dt: each.b * n }; } }); grantCache.pt = grantCache.map.pt; grantCache.lose = grantCache.map.lose; grantCache.epoch = grantEpoch; // every board at once: an Aura can sit on an opponent's creature; the turn matters for "during your turn"
+    grantCache.map = CTGrants.forBoards(boards, { active: S.table && S.table.active, onTypes: m => { grantCache.types = m; }, each: (each, pid, iid) => { const spec = typeof CTCda === 'undefined' ? null : CTCda.parseEach(each.text); if (!spec) return null; const n = CTCda.evaluate(spec, { boards: countBoards(), pid, iid }); return { dp: each.a * n, dt: each.b * n }; } }); grantCache.pt = grantCache.map.pt; grantCache.lose = grantCache.map.lose; grantCache.types = grantCache.map.types; grantCache.epoch = grantEpoch; // every board at once: an Aura can sit on an opponent's creature; the turn matters for "during your turn"
   }
   return grantCache.map.get(pid + '|' + c.iid) || [];
 }
@@ -156,7 +157,8 @@ const cdaCache = { boards: null, epoch: -1 };
 // Every player's battlefield, graveyard, hand size and life, for counting (rebuilt once per redraw).
 function countBoards() {
   if (!cdaCache.boards || cdaCache.epoch !== grantEpoch) {
-    const view = (p, id, hand) => ({ pid: id, hand, life: p.life, battlefield: (p.zones.battlefield || []).map(x => ({ c: x, def: x.id ? (id === S.pid ? S.me.defs : (p.defs || {}))[x.id] : null })), graveyard: (p.zones.graveyard || []).map(x => ({ c: x, def: x.id ? (id === S.pid ? S.me.defs : (p.defs || {}))[x.id] : null })) });
+    const eff = (id, x, def) => { const fx = def && grantCache.types && grantCache.types.get(id + '|' + x.iid); return fx ? Object.assign({}, def, { type: fx.line, backType: fx.line, allTypes: fx.all }) : def; }; // the card as it is now: new card types and creature types
+    const view = (p, id, hand) => ({ pid: id, hand, life: p.life, battlefield: (p.zones.battlefield || []).map(x => ({ c: x, def: eff(id, x, x.id ? (id === S.pid ? S.me.defs : (p.defs || {}))[x.id] : null) })), graveyard: (p.zones.graveyard || []).map(x => ({ c: x, def: x.id ? (id === S.pid ? S.me.defs : (p.defs || {}))[x.id] : null })) });
     const boards = [view(S.me, S.pid, S.me.zones.hand.length)];
     for (const [opid, p] of Object.entries(S.players)) { if (opid !== S.pid && p && p.zones) boards.push(view(p, opid, p.hand || 0)); }
     cdaCache.boards = boards; cdaCache.epoch = grantEpoch;
@@ -165,6 +167,7 @@ function countBoards() {
 }
 function cdaFor(pid, c, def) {
   if (typeof CTCda === 'undefined' || !def || c.fd || !S.me) return null;
+  grantsFor(pid, c); // makes sure the new card types are known before anything is counted
   const spec = def.cda ? CTCda.clean(def.cda) : (/ equal to | for each |where X is/.test(def.oracle || '') ? CTCda.parse(def.oracle, def.face || def.name) : null);
   if (!spec) return null;
   const ctx = { boards: countBoards(), pid, iid: c.iid }, bonus = spec.bonus ? CTCda.evaluateBonus(spec.bonus, ctx) : null;
@@ -173,7 +176,9 @@ function cdaFor(pid, c, def) {
 function ptGrantFor(pid, c) { grantsFor(pid, c); return (grantCache.pt && grantCache.pt.get(pid + '|' + c.iid)) || null; }
 // Abilities other permanents take away ("Equipped creature … loses flying", "loses all abilities"): { ids, all, keep } or null. Their icons are hidden, never un-saved.
 function loseFor(pid, c) { grantsFor(pid, c); return (grantCache.lose && grantCache.lose.get(pid + '|' + c.iid)) || null; }
-const withGrants = (pid, c) => { const gr = grantsFor(pid, c).filter(g => !(c.sx || []).includes(g.id)), ls = loseFor(pid, c); return gr.length || ls ? Object.assign({}, c, gr.length ? { gr } : {}, ls ? { ls } : {}) : c; }; // grants the owner switched off by hand (sx) are left out
+// Card types and creature types other permanents give or change ("is a Frog", "All lands are Islands", Changeling): { line, all, tags: [{ label, from }] } or null. Shown as tags on the card and used when counting and for "Elves you control".
+function typeFxFor(pid, c) { grantsFor(pid, c); return (grantCache.types && grantCache.types.get(pid + '|' + c.iid)) || null; }
+const withGrants = (pid, c) => { const gr = grantsFor(pid, c).filter(g => !(c.sx || []).includes(g.id)), ls = loseFor(pid, c), fx = typeFxFor(pid, c), ty = fx && fx.tags.length ? fx.tags : null; return gr.length || ls || ty ? Object.assign({}, c, gr.length ? { gr } : {}, ls ? { ls } : {}, ty ? { ty } : {}) : c; }; // grants the owner switched off by hand (sx) are left out
 const PLAYER_COUNTERS = ['Energy', 'Experience', 'Rad', 'Tickets'];
 const IMG_OK = u => typeof u === 'string' && u.startsWith('https://cards.scryfall.io/');
 
