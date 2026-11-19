@@ -79,7 +79,8 @@ const mkDeck = who => ({
       slow: ['Slow Land', 'Land', 'This land enters tapped unless you control two or more other lands.\n{T}: Add {G} or {W}.'],
       reveal: ['Reveal Land', 'Land', 'As this land enters, you may reveal an Elf card from your hand. If you don\'t, this land enters tapped.\n{T}: Add {G}.'],
       opps: ['Training Center', 'Land', 'This land enters tapped unless you have two or more opponents.\n{T}: Add {U} or {R}.'],
-      plain: ['Plain Land', 'Land', '{T}: Add {C}.']
+      plain: ['Plain Land', 'Land', '{T}: Add {C}.'],
+      zan: ['Zanarkand, Ancient Metropolis // Lasting Fayth', 'Land — Town', 'This land enters tapped.\n{T}: Add {G}.\n—\nCreate a 1/1 colorless Hero creature token. (Then exile this card. You may play the land later from exile.)']
     };
     await dad.evaluate(d => { const m = CT.S.me; CT.act(() => { Object.entries(d).forEach(([id, [name, type, oracle]]) => { m.defs[id] = { id, name, face: name, type, oracle, img: '', tokens: [], ci: [] }; m.zones.hand.push({ iid: CT.S.pid + '_l' + id, id, own: CT.S.pid, t: 0, fl: 0, fd: 0, c: {} }); }); }); }, landDefs);
     const play = id => dad.evaluate(i => { CT.doMove(CT.S.pid + '_l' + i, 'battlefield'); const c = CT.S.me.zones.battlefield.find(x => x.iid === CT.S.pid + '_l' + i); return !!c.t; }, id);
@@ -101,6 +102,7 @@ const mkDeck = who => ({
     // ---- 4. Lands that need a choice are left alone; the opponent count is checked. ----
     assert.equal(await play('reveal'), false, 'a reveal land is left alone (untapped)');
     assert.equal(await play('opps'), true, 'one opponent: "unless you have two or more opponents" enters tapped');
+    assert.equal(await play('zan'), false, 'a land with an Adventure (Zanarkand) is left alone');
     // ---- 5. The log says it entered tapped; a card that is already tapped stays tapped; untapping works as usual. ----
     const log = await dad.evaluate(() => JSON.stringify(CT.S.table.log || CT.S.log || []));
     assert.match(log, /"text":"played \{0\} tapped","cards":\[\{"id":"moor"/, 'the log says it was played tapped');

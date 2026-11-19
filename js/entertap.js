@@ -4,7 +4,7 @@
  * lands" (fast land), "…two or more basic lands" (battle land), "…unless you control a Plains or an Island" (check land), "…three or more
  * other Forests", "…unless you have two or more opponents", "…unless your opponents control eight or more lands" and the backwards
  * "If you control two or more other lands, this land enters tapped". NOT handled, because they need a choice: "As this land enters, you may
- * reveal…", "you may pay 3 life", "You may have this land enter tapped". Those lands are left as they are (the "As … enters" notice still shows). */
+ * reveal…", "you may pay 3 life", "You may have this land enter tapped". Those lands are left as they are (the "As … enters" notice still shows). Lands with an Adventure are left alone too. */
 (function () {
   'use strict';
   const NUMBERS = { a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 };
@@ -43,5 +43,12 @@
     });
     return decided ? { tapped } : null;
   }
-  window.CTEnterTap = { evaluate, condition };
+  // A land with an Adventure (Zanarkand, Ancient Metropolis // Lasting Fayth) is left alone: it can be cast as the Adventure and played from exile later,
+  // so the player taps it themselves. Recognised by the layout when known, otherwise by the Adventure's own reminder text.
+  function hasAdventure(def) {
+    if (!def) return false;
+    if (def.lay === 'adventure') return true;
+    return /\s\/\/\s/.test(String(def.name || '')) && /\bThen exile this card\. You may (?:cast|play)\b/i.test(String(def.oracle || ''));
+  }
+  window.CTEnterTap = { evaluate, condition, hasAdventure };
 }());

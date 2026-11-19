@@ -1860,7 +1860,7 @@ function faceInfo(card) { // the face that is showing: name, type line and rules
 function autoEnterTapped(card, opts) {
   if (typeof CTEnterTap === 'undefined' || card.fd || card.t) return;
   const f = faceInfo(card);
-  if (!f || !/\bLand\b/.test(f.type) || !/\btapped\b/i.test(f.oracle)) return;
+  if (!f || !/\bLand\b/.test(f.type) || !/\btapped\b/i.test(f.oracle) || CTEnterTap.hasAdventure(defOf(card))) return; // a land with an Adventure is left to the player
   const lands = S.me.zones.battlefield.filter(c => c !== card && !c.fd).map(faceInfo).filter(x => x && /\bLand\b/.test(x.type)).map(x => x.type);
   const foes = ((S.table && S.table.seats) || []).filter(pid => pid !== S.pid && !(S.table.out && S.table.out[pid]));
   const oppLands = foes.reduce((n, pid) => { const p = S.players[pid]; return n + (p ? (p.zones.battlefield || []).filter(c => !c.fd && p.defs && p.defs[c.id] && /\bLand\b/.test(p.defs[c.id].type || '')).length : 0); }, 0);

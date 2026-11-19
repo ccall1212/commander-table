@@ -66,7 +66,7 @@ Chris (2026-11-19): split cards (his friend played Wear // Tear) are "technicall
 
 ### 91. Lands that enter tapped are tapped automatically — Built, awaiting Chris's test (v0.84.0)
 
-Chris (2026-11-19): lands that only say "This land enters tapped" should tap themselves, and the "…unless you control…" ones too; leave out the "you may reveal a card" ones. Built: `js/entertap.js` reads the land face's rules text; hooks into `insertCard` (not for Give/Return control). Handles always-tapped, slow/fast/battle/check lands, "N or more other <type>s", opponents count, opponents' land count, and Lair of the Hydra's backwards form; 296 pre-con land faces. Reveal, pay-life and "you may have it enter tapped" lands are left alone. Ideas not built: the same for non-land permanents that enter tapped; an MDFC land played on its back face is judged by whichever face shows when it enters.
+Chris (2026-11-19): lands that only say "This land enters tapped" should tap themselves, and the "…unless you control…" ones too; leave out the "you may reveal a card" ones. Built: `js/entertap.js` reads the land face's rules text; hooks into `insertCard` (not for Give/Return control). Handles always-tapped, slow/fast/battle/check lands, "N or more other <type>s", opponents count, opponents' land count, and Lair of the Hydra's backwards form; 296 pre-con land faces. Reveal, pay-life, "you may have it enter tapped" and Adventure lands (Zanarkand) are left alone. Ideas not built: the same for non-land permanents that enter tapped; an MDFC land played on its back face is judged by whichever face shows when it enters.
 
 ### Shipped recently (details in CHANGELOG.md)
 

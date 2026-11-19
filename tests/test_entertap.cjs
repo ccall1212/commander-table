@@ -58,4 +58,10 @@ assert.equal(tapped(lair, { lands: [basic('Forest')] }), false);
 // A wording this file does not understand is left alone (no guessing).
 assert.equal(tapped('This land enters tapped unless you control a legendary creature with a wombat.', { lands: [] }), null);
 assert.equal(tapped('As this land enters, you may reveal a Dragon card from your hand. This land enters tapped unless you revealed a Dragon card this way or you control a Dragon.', {}), null);
+// A land with an Adventure is recognised so it can be left alone.
+assert.equal(E.hasAdventure({ name: 'Zanarkand, Ancient Metropolis // Lasting Fayth', lay: 'adventure' }), true, 'by layout');
+assert.equal(E.hasAdventure({ name: 'Zanarkand, Ancient Metropolis // Lasting Fayth', oracle: 'This land enters tapped.\n{T}: Add {G}.\n—\nCreate a 1/1 Hero. (Then exile this card. You may play the land later from exile.)' }), true, 'by the Adventure reminder text (older saved cards)');
+assert.equal(E.hasAdventure({ name: 'Barren Moor', oracle: 'This land enters tapped.' }), false);
+assert.equal(E.hasAdventure({ name: 'Wear // Tear', oracle: 'Destroy target artifact.\n—\nDestroy target enchantment.' }), false, 'a split card is not an Adventure');
+assert.equal(E.hasAdventure(null), false);
 console.log('PASS entertap: lands that always enter tapped, the conditional wordings the game can check, and the ones left alone');

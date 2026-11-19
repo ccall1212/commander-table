@@ -7,7 +7,7 @@ To check this copy, extract the ZIP and double-click **index.html**. Start a gam
 3. **Check lands** ("enters tapped unless you control a Plains or an Island", e.g. Dragonskull Summit, Sulfur Falls): tapped when you don't have the right land types, untapped when you do. A dual land with the right type counts.
 4. **Fast lands** (Darkslick Shores: "unless you control two or fewer other lands"): untapped as one of your first three lands, tapped later. **Slow lands** (Deserted Beach: "two or more other lands") are the reverse: tapped early, untapped later.
 5. **Battle lands** ("unless you control two or more basic lands", Sunken Hollow) and "**three or more other Forests**" (Gingerbread Cabin) read your lands too.
-6. **Left alone on purpose:** lands that say "you may reveal a card" (Fortified Village, Gilt-Leaf Palace), "you may pay 3 life" (The Black Gate) and "you may have it enter tapped" are **not** tapped for you (you tap them yourself if needed).
+6. **Left alone on purpose:** lands that say "you may reveal a card" (Fortified Village, Gilt-Leaf Palace), "you may pay 3 life" (The Black Gate) and "you may have it enter tapped" are **not** tapped for you (you tap them yourself if needed). The same goes for a land with an **Adventure**, such as **Zanarkand, Ancient Metropolis**.
 7. With **Auto-untap** on, your tapped lands untap at the start of your turn as usual. "Untap All" still works.
 8. Tell me if a land is tapped that should not be, or untapped that should be tapped.
 
