@@ -125,4 +125,8 @@ const pub = plain(C.parse("Bronze Guardian's power is equal to the number of art
 assert.deepEqual(plain(C.clean(pub)).power.terms[0].types, ['artifact']);
 assert.equal(C.clean('nonsense'), null); assert.equal(C.clean({ power: { terms: [{ zone: 'nope', types: ['evil'] }], mult: 99, plus: -3 } }).power.mult, 1, 'absurd multiplier dropped');
 assert.deepEqual(plain(C.clean({ power: { terms: [{ zone: 'graveyard', who: 'all', types: ['evil', 'creature'] }], mult: 1, plus: 0 } }).power.terms[0].types), ['creature']);
+// Neo Exdeath (the back of Exdeath, Void Warlock): "permanent cards" in your graveyard are everything but instants and sorceries; its name is not the front's
+assert.equal(val("Trample\nNeo Exdeath's power is equal to the number of permanent cards in your graveyard.", "Neo Exdeath, Dimension's End", 'A', 'x').p, 2, 'Dead Elf and Dead Land count; Bolt and Wrath do not');
+assert.equal(val("Trample\nNeo Exdeath's power is equal to the number of permanent cards in your graveyard.", "Neo Exdeath, Dimension's End", 'B', 'x').p, 2, "the other player's Golem and Enchantment");
+assert.equal(C.clean(C.parse("Neo Exdeath's power is equal to the number of permanent cards in your graveyard.", 'Neo Exdeath')).power.terms[0].perm, true, 'another player gets the same count');
 console.log('PASS cda: counted power/toughness is read from real card wordings and counted on boards; things the game cannot see are left alone');

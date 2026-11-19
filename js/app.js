@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.90.0';
+const APP_VERSION = '0.90.1';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -202,7 +202,9 @@ function countBoards() {
 function cdaFor(pid, c, def) {
   if (typeof CTCda === 'undefined' || !def || c.fd || !S.me) return null;
   grantsFor(pid, c); // makes sure the new card types are known before anything is counted
-  const spec = def.cda ? CTCda.clean(def.cda) : (/ equal to | for each |where X is/.test(def.oracle || '') ? CTCda.parse(def.oracle, def.face || def.name) : null);
+  const back = !!(c.fl && (def.imgBack || def.backName)), faces = String(def.oracle || '').split(/\n—\n/), text = back ? (faces[1] || '') : faces[0];
+  const given = back ? def.cdaBack : def.cda; // worked out by the card's owner (other players only get that, not the rules text)
+  const spec = given ? CTCda.clean(given) : (/ equal to | for each |where X is/.test(text) ? CTCda.parse(text, back ? (def.backName || '') : (def.face || def.name)) : null);
   if (!spec) return null;
   const ctx = { boards: countBoards(), pid, iid: c.iid }, bonus = spec.bonus ? CTCda.evaluateBonus(spec.bonus, ctx) : null;
   return { p: spec.power ? CTCda.evaluate(spec.power, ctx) : null, t: spec.toughness ? CTCda.evaluate(spec.toughness, ctx) : null, dp: bonus ? bonus.dp : 0, dt: bonus ? bonus.dt : 0 };
@@ -613,8 +615,11 @@ function publicView() {
       if (trk) defs[p.id].trk = trk;
       const gr = typeof CTGrants === 'undefined' ? [] : CTGrants.parse(m.defs[p.id].oracle, m.defs[p.id].face || m.defs[p.id].name); // abilities and power/toughness this card gives to its controller's other permanents, for the other players' screens
       if (gr.length) defs[p.id].gr = gr;
-      const cda = typeof CTCda === 'undefined' ? null : CTCda.parse(m.defs[p.id].oracle, m.defs[p.id].face || m.defs[p.id].name); // power/toughness this card works out from a count (Bronze Guardian), for the other players' screens
+      const faces = String(m.defs[p.id].oracle || '').split(/\n—\n/); // a double-faced card counts for the face that is showing: front text for the front, back text for the back
+      const cda = typeof CTCda === 'undefined' ? null : CTCda.parse(faces[0], m.defs[p.id].face || m.defs[p.id].name); // power/toughness this card works out from a count (Bronze Guardian), for the other players' screens
       if (cda) defs[p.id].cda = cda;
+      const cdaBack = typeof CTCda === 'undefined' || !m.defs[p.id].backName ? null : CTCda.parse(faces[1] || '', m.defs[p.id].backName);
+      if (cdaBack) defs[p.id].cdaBack = cdaBack;
     }
     return p;
   });
@@ -2917,10 +2922,24 @@ async function customCounter(iid, targets) {
 }
 
 // --- power / toughness: optional base override (pb "3/3") + modifiers (dp, dt), plus +1/+1 / -1/-1 counters
+// Decks saved before the back face's power/toughness was kept: ask Scryfall once for it (only for my own cards), then redraw and tell the other players.
+const backStatsAsked = new Set();
+function fetchBackStats(def) {
+  if (!S.me || S.me.defs[def.id] !== def || backStatsAsked.has(def.id) || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(def.id)) return;
+  backStatsAsked.add(def.id);
+  fetch('https://api.scryfall.com/cards/' + def.id).then(r => (r.ok ? r.json() : null)).then(card => {
+    const f1 = card && Array.isArray(card.card_faces) ? card.card_faces[1] : null;
+    if (!f1 || S.me.defs[def.id] !== def) return;
+    def.backPt = f1.power != null && f1.toughness != null ? f1.power + '/' + f1.toughness : '';
+    grantEpoch++; render(); doPublish();
+  }).catch(() => { backStatsAsked.delete(def.id); });
+}
 function effPT(c, def, gp, cda) {
   if (c.fd) return { text: '2/2', modified: false };
   const manualBase = c.tb || c.pb || (gp && gp.base); // a base set by hand (tb: until end of turn) wins over one an Aura gives, which wins over the card's own count, which wins over the printed one
-  const base = manualBase || (def && def.pt) || '';
+  const showing = def && c.fl && def.backName && def.backPt != null ? def.backPt : (def && def.pt); // the face that is showing (a transformed card has its own power/toughness)
+  if (def && c.fl && def.backName && def.backPt === undefined) fetchBackStats(def);
+  const base = manualBase || showing || '';
   const parts = String(base).split('/').map(v => v.trim());
   // Symbolic printed stats (the * in */*) use a manual baseline of zero; numeric sides keep their value.
   let stats = parts.length === 2 && parts.every(Boolean)
@@ -4552,6 +4571,7 @@ function cardHTML(c, def, o) {
   // A card whose picture is printed sideways (Wear // Tear, Rooms, a Battle's front) is turned upright like a tapped card, so tapping it shows the plain picture instead.
   const side = o.zone === 'battlefield' && !c.fd && typeof CTOrient !== 'undefined' && CTOrient.sideways(def, c.fl);
   if (side ? !c.t : c.t) cls.push('tapped'); if (side) cls.push('sideways'); if (o.mine) cls.push('mine'); if (c.att) cls.push('att');
+  if (o.zone === 'battlefield' && !c.fd && def && /\bLand\b/.test((c.fl && def.backType) || def.type || '')) cls.push('land'); // lands pile up, so pointing at one must not bring it in front of the pile
   if (o.mine && o.zone === 'hand' && c.rvp && S.me && S.me.shareTo && !S.me.shareAll) cls.push('shared-priv'); // chosen to show one player
   if (o.zone === 'battlefield' && ctrl === S.pid && !c.att && S.selected.has(c.iid)) cls.push('selected');
   let inner;
@@ -4658,7 +4678,7 @@ function boardHTML(pid, idx, mode) {
   let html = layout.map(r => `<div class="region" data-region="${esc(r.k)}" style="left:${Math.round(num(r.x) * rx)}px;top:${Math.round(num(r.y) * ry)}px;width:${Math.round(num(r.w) * rx)}px;height:${Math.round(num(r.h) * ry)}px">
     <span class="rlabel">${esc(r.label)}</span>${editing ? ['nw', 'ne', 'sw', 'se'].map(c => `<span class="grip ${c}" data-c="${c}" title="Drag to resize"></span>`).join('') : ''}</div>`).join('');
   let z = 10;
-  const place = (e, zone, x, y, zi) => cardHTML(e.c, e.def, { mine: e.ctrl === S.pid, pid, ctrl: e.ctrl, zone, style: `left:${Math.round(x * cx)}px;top:${Math.round(y * cy)}px;z-index:${zi}` });
+  const place = (e, zone, x, y, zi) => cardHTML(e.c, e.def, { mine: e.ctrl === S.pid, pid, ctrl: e.ctrl, zone, style: `left:${Math.round(x * cx)}px;top:${Math.round(y * cy)}px;z-index:${zi};--zi:${zi}` });
   for (const e of idx.entries) {
     if (e.ctrl !== pid || (e.c.att && !e.orphan)) continue;
     const x = num(e.c.x, 10), y = num(e.c.y, 20);
@@ -5451,6 +5471,7 @@ function previewFromEl(cardEl) {
   S.hover = { pid, iid };
   S.touchPreview = S.touchMode ? { pid, iid } : null;
   S.pvFix = pid === S.pid && cardEl.dataset.zone === 'hand' ? (cardEl.closest('#myHand, .thand') || null) : null;
+  const pvBox = $('#pv'); if (pvBox) pvBox.classList.toggle('compact', cardEl.classList.contains('land')); // a smaller preview for lands, so a pile stays visible beside it
   if (pid === S.pid) {
     const f = findCard(iid);
     if (f) {

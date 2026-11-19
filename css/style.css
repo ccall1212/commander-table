@@ -321,6 +321,9 @@ body.side-open #side { display: grid; }
   border: 1px solid var(--accent); background: rgba(212,167,44,.14); box-shadow: 0 0 0 1px rgba(0,0,0,.35); }
 .board .card.tapped { margin: 0; }
 .board .card:hover { z-index: 900 !important; }
+/* Lands pile up (top to bottom): pointing at one keeps it in its place so the cards below it stay visible; pressing it (click or grab) brings it to the front. */
+.board .card.land:hover { z-index: var(--zi, 900) !important; }
+.board .card.land:active { z-index: 900 !important; }
 .board .card.att { filter: brightness(.92); }
 .card.dragging { opacity: .25; }
 .card.ghost { position: fixed; pointer-events: none; z-index: 3000; opacity: .92; margin: 0; transition: none;
@@ -432,6 +435,8 @@ body.touch-mode .card:hover { transform: none; }
 #pv.floatpv { position: fixed; left: 0; top: 0; z-index: 3000; pointer-events: none; width: 300px; padding: 6px;
   background: var(--panel); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.6); }
 #pv.hidden { display: none; }
+#pv.floatpv.compact { width: 220px; }
+#pv.floatpv.compact:has(.pv-imgs.two) { width: 420px; }
 body.lens-on #pv { display: none; }
 #pv.floatpv .pv-imgs img { width: 100%; display: block; min-width: 0; border-radius: 4.5% / 3.2%; }
 #pv.floatpv .pv-imgs .w-cardback { width: 100%; aspect-ratio: 63 / 88; border-radius: 4.5% / 3.2%; }

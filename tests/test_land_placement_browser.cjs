@@ -61,6 +61,7 @@ const PLAYERS = Number(process.env.CT_PLAYERS || 2); // 2, 3 or 4 real players a
   try {
     const dad = await hostGame('Dad', 'gold');
     const room = await dad.evaluate(() => CT.S.room);
+    const dadPid0 = await dad.evaluate(() => CT.S.pid);
     const others = [];
     for (const [nm, col] of [['Son', 'red'], ['Mom', 'blue'], ['Kid', 'green']].slice(0, PLAYERS - 1)) others.push(await joinGame(nm, room, col));
     const son = others[0];
@@ -107,6 +108,28 @@ const PLAYERS = Number(process.env.CT_PLAYERS || 2); // 2, 3 or 4 real players a
     const st = await dad.evaluate(() => Object.fromEntries(CT.S.me.zones.battlefield.map(c => [c.id, { x: c.x, y: c.y }])));
     assert.ok(st.temple.x === st.tangled.x && st.temple.y - st.tangled.y > 0 && st.temple.y - st.tangled.y <= 30, 'Temple of Mystery stacks on Tangled Islet: ' + JSON.stringify(st));
     assert.ok(st.peak.x !== st.tangled.x, 'a red land does not join the G/U stack: ' + JSON.stringify(st));
+    // Pointing at a land in a pile keeps it in place (the cards below it stay visible); a creature still comes to the front.
+    await dad.evaluate(() => {
+      const m = CT.S.me; m.defs.bear = { id: 'bear', name: 'Bear', face: 'Bear', type: 'Creature — Bear', oracle: '', tokens: [], ci: [] };
+      CT.act(() => { m.zones.hand.push({ iid: CT.S.pid + '_sbear', id: 'bear', own: CT.S.pid, t: 0, fl: 0, fd: 0, c: {} }); });
+      CT.doMove(CT.S.pid + '_sbear', 'battlefield');
+    });
+    await dad.waitForTimeout(300);
+    const rect = iid => dad.evaluate(i => { const e = [...document.querySelectorAll('.card[data-iid="' + i + '"]')].find(x => x.getBoundingClientRect().width > 4); const r = e.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height, z: getComputedStyle(e).zIndex, land: e.classList.contains('land') }; }, iid);
+    const top = await rect(dadPid0 + '_stangled'), under = await rect(dadPid0 + '_stemple');
+    assert.ok(top.land && under.land, 'lands on the battlefield are marked as lands');
+    await dad.mouse.move(top.x + top.w / 2, top.y + 3);                  // point at the top strip of the first card
+    await dad.waitForTimeout(150);
+    const hovered = await rect(dadPid0 + '_stangled');
+    assert.ok(Number(hovered.z) < 900, 'pointing at a land does not bring it to the front (z-index ' + hovered.z + ')');
+    const hit = await dad.evaluate(([x, y]) => { const el = document.elementFromPoint(x, y); const c = el && el.closest('.card'); return c && c.dataset.iid; }, [top.x + top.w / 2, top.y + top.h - 6]);
+    assert.equal(hit, dadPid0 + '_stemple', 'the card below stays on top of it while pointing at the one above: ' + hit);
+    await dad.mouse.down(); const pressed = await rect(dadPid0 + '_stangled'); await dad.mouse.up();
+    assert.equal(pressed.z, '900', 'pressing it (click or grab) brings it to the front');
+    await dad.mouse.move(5, 5);
+    const bear = await rect(dadPid0 + '_sbear'); await dad.mouse.move(bear.x + bear.w / 2, bear.y + bear.h / 2); await dad.waitForTimeout(150);
+    assert.equal((await rect(dadPid0 + '_sbear')).z, '900', 'a creature still comes to the front when pointed at');
+    await dad.mouse.move(5, 5);
     for (const [w, h] of [[1366, 768], [1920, 1080], [1366, 600], [1100, 560]]) {
       for (const view of ['side', 'grid']) {
         await dad.setViewportSize({ width: w, height: h });
