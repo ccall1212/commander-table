@@ -6,6 +6,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.88.0] - 2026-11-19
+
+### Added
+- **Add types by hand.** **Statuses & abilities** has a new **Types** section. Type a creature type (for example Frog, Wizard, Time Lord) and press Add, or tick **All types (like a Changeling)**. The type shows in the Types row for everyone and counts for "Elves you control", "the number of Elves you control" and the like, exactly like a type another card gave. It works on a whole selection at once, can be removed again, is kept while the card stays on the battlefield and forgotten when it leaves. The same section lists the types other cards give to this card. Use it for the cases the game cannot read: "chosen type" cards, copy effects ("enters as a copy, except it's a Wall"), one-shot effects, and anything unusual.
+
+### Changed
+- **A "Types" row for card types and creature types.** The type tags that other cards give (Frog, Island, Angel, All types…) no longer sit in the middle of the card with the statuses. They now form one small row **over the card's printed type line**, so the middle stays free for Suspected, Prepared and the other statuses. The row **never goes past the card and never cuts a word off**: the more tags (and letters) it holds, the smaller the text gets (the page measures the row after every redraw and keeps shrinking until every word fits), several tags wrap onto a second line, and beyond four it shows "+N" (hover for the full list).
+
 ## [0.87.0] - 2026-11-19
 
 ### Added
@@ -506,7 +514,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.87.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.88.0...HEAD
+[0.88.0]: https://github.com/ccall1212/commander-table/compare/v0.87.0...v0.88.0
 [0.87.0]: https://github.com/ccall1212/commander-table/compare/v0.86.1...v0.87.0
 [0.86.1]: https://github.com/ccall1212/commander-table/compare/v0.86.0...v0.86.1
 [0.86.0]: https://github.com/ccall1212/commander-table/compare/v0.85.0...v0.86.0

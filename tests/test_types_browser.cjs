@@ -90,7 +90,7 @@ const mkDeck = who => ({
     await mk(son, [{ id: 'splains', name: 'Son Plains', face: 'Son Plains', type: 'Basic Land — Plains', oracle: '' }]);
     const iid = id => dad.evaluate(i => CT.S.pid + '_g' + i, id), siid = id => son.evaluate(i => CT.S.pid + '_g' + i, id);
     const stat = (pg, i) => pg.evaluate(x => { const el = [...document.querySelectorAll('.card')].find(c => c.dataset.iid === x); const pt = el && el.querySelector('.badges .pt'); return pt ? (pt.querySelectorAll('.pt-stat').length === 2 ? [...pt.querySelectorAll('.pt-stat')].map(b => b.textContent.trim()).join('/') : pt.textContent.replace(/\s+/g, '')) : ''; }, i);
-    const tags = (pg, i) => pg.evaluate(x => { const el = [...document.querySelectorAll('.card')].find(c => c.dataset.iid === x); return el ? [...el.querySelectorAll('.cwords .cmark')].map(m => m.textContent.trim()).filter(Boolean).sort().join(',') : null; }, i);
+    const tags = (pg, i) => pg.evaluate(x => { const el = [...document.querySelectorAll('.card')].find(c => c.dataset.iid === x); return el ? [...el.querySelectorAll('.ctypes .cmark')].map(m => m.textContent.trim()).filter(Boolean).sort().join(',') : null; }, i);
     const waitFor = async (get, want, why) => { for (const pg of [dad, son]) { const t0 = Date.now(); while ((await get(pg)) !== want) { if (Date.now() - t0 > 15000) throw new Error(why + ' (' + pg.playerName + ') expected [' + want + '] got [' + (await get(pg)) + ']'); await pg.waitForTimeout(100); } } };
     const waitStat = async (id, text, why) => { const i = await iid(id); await waitFor(pg => stat(pg, i), text, why); };
     const waitTags = async (id, text, why) => { const i = await iid(id); await waitFor(pg => tags(pg, i), text, why); };
@@ -119,6 +119,29 @@ const mkDeck = who => ({
     await waitTags('plains', 'Island', 'Dad\'s Plains is also an Island');
     const sp = await siid('splains');
     await waitFor(pg => tags(pg, sp), 'Island', 'and so is Son\'s');
+    // ---- 4b. Many types: the row stays inside the card and the tags get smaller as more are added. ----
+    await mk(dad, [
+      { id: 'bio', name: 'Biotransference', face: 'Biotransference', type: 'Enchantment', oracle: 'Creatures you control are artifacts in addition to their other types.' },
+      { id: 'arcade', name: 'Secret Arcade', face: 'Secret Arcade', type: 'Enchantment', oracle: 'Nonland permanents you control and permanent spells you control are enchantments in addition to their other types.' },
+      { id: 'wings', name: 'Angelic Destiny', face: 'Angelic Destiny', type: 'Enchantment — Aura', oracle: 'Enchant creature\nEnchanted creature gets +4/+4, has flying and first strike, and is an Angel in addition to its other types.' }
+    ]);
+    const rowInfo = (pg, i) => pg.evaluate(x => { const el = [...document.querySelectorAll('.card')].find(c => c.dataset.iid === x); const row = el && el.querySelector('.ctypes'); if (!row) return null; const cr = el.getBoundingClientRect(), tg = [...row.querySelectorAll('.cmark')]; const rr = tg.map(t => t.getBoundingClientRect()); return { n: tg.length, inside: rr.every(r => r.left >= cr.left - 0.5 && r.right <= cr.right + 0.5), font: parseFloat(getComputedStyle(tg[0]).fontSize), cut: tg.some(t => { const w = t.querySelector('.mark-word'); return w && (w.scrollWidth > w.clientWidth + 0.5 || t.scrollWidth > t.clientWidth + 0.5); }), lines: new Set(tg.map(t => Math.round(t.offsetTop))).size }; }, i);
+    await waitTags('ling', 'All types', 'still one tag');
+    const one = await rowInfo(dad, await iid('ling'));
+    assert.equal(one.cut, false, 'a single tag is fully visible');
+    await play(dad, ['bio', 'arcade', 'wings']);
+    await attach('wings', 'ling');
+    await waitTags('ling', 'All types,Angel,Artifact,Enchantment', 'four tags');
+    for (const pg of [dad, son]) {
+      const four = await rowInfo(pg, await iid('ling'));
+      assert.equal(four.n, 4); assert.equal(four.inside, true, 'all four tags stay inside the card (' + pg.playerName + ')');
+      assert.equal(four.cut, false, 'and every word is fully visible, not cut off (' + pg.playerName + ')'); assert.ok(four.lines <= 2, 'in at most two lines: ' + four.lines);
+      assert.ok(four.font < one.font, 'the tags are smaller with four of them than with one: ' + four.font + ' vs ' + one.font);
+    }
+    await attach('wings', null);
+    await waitTags('ling', 'All types,Artifact,Enchantment', 'three tags after the Aura is gone');
+    await dad.evaluate(() => { ['bio', 'arcade'].forEach(id => CT.doMove(CT.S.pid + '_g' + id, 'graveyard')); });
+    await waitTags('ling', 'All types', 'back to one tag once those cards are gone');
     // ---- 5. A type-setting Aura on a permanent: Imprisoned in the Moon turns a creature into a land. ----
     await play(dad, ['moon']);
     await attach('moon', 'bear');

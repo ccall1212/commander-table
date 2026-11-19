@@ -209,6 +209,14 @@ assert.equal(m.types.get('A|b1').all, true, 'a creature with an everything count
 assert.equal(m.pt.get('A|b1').dp, 1, 'and so gets the Elf bonus');
 const imp = { id: 'ip', face: 'Imprisoned in the Moon', type: 'Enchantment \u2014 Aura', oracle: 'Enchanted permanent is a colorless land with "{T}: Add {C}" and loses all other card types and abilities.' };
 m = G.forBoards([board('A', [e('ip', imp, { att: { p: 'A', i: 'b1' } }), e('b1', legendBear)])], {}); assert.equal(m.types.get('A|b1').line, 'Legendary Land', 'a permanent becomes a land (and no longer a creature)');
+// Types added by hand (card.tys): in addition to the card's own, "All types" counts as every type, even with no other card on the board.
+m = G.forBoards([board('A', [e('b1', bear, { tys: ['Frog'] }), e('b2', bear, { tys: ['All types'] }), e('b3', bear, { tys: ['Time Lord', 'Frog'] }), e('b4', bear)])], {});
+assert.equal(m.types.get('A|b1').line, 'Creature \u2014 Bear Frog', 'a manual type is added to the card\'s own'); assert.deepEqual(plain(m.types.get('A|b1').tags), [{ label: 'Frog', from: 'your own choice' }]);
+assert.equal(m.types.get('A|b2').all, true); assert.equal(m.types.get('A|b4'), undefined, 'cards without manual types are untouched');
+assert.equal(m.types.get('A|b3').line, 'Creature \u2014 Bear Time Lord Frog');
+m = G.forBoards([board('A', [e('lord', elfLord), e('b1', bear, { tys: ['Elf'] }), e('b2', bear, { tys: ['All types'] }), e('b3', bear)])], {});
+assert.equal(m.pt.get('A|b1').dp, 1, 'a Bear marked as an Elf gets the Elf bonus'); assert.equal(m.pt.get('A|b2').dp, 1, 'so does one marked All types'); assert.equal(m.pt.get('A|b3'), undefined);
+m = G.forBoards([board('A', [e('b1', bear, { tys: ['<script>', 'x', 5, 'Frog'] })])], {}); assert.deepEqual(plain(m.types.get('A|b1').tags.map(t => t.label)), ['Frog'], 'bad entries are ignored');
 // Validation of published types.
 assert.deepEqual(plain(G.clean([{ scope: 'attached', filters: {}, abilities: [], types: { mode: 'set', M: ['Artifact', 'Evil'], S: ['Frog', 'x'] } }])[0].types), { mode: 'set', M: ['Artifact'], S: ['Frog'] });
 assert.equal(G.clean([{ scope: 'attached', filters: {}, abilities: ['flying'], types: { mode: 'bogus', S: ['Frog'] } }])[0].types, null, 'an unknown mode is dropped');
