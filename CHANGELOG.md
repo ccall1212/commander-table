@@ -6,10 +6,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
-## [0.88.2] - 2026-11-19
+## [0.89.0] - 2026-11-19
+
+### Added
+- **Lands stack.** When you double-click a land it now piles onto lands that tap for the same mana (Tangled Islet and Temple of Mystery, both Green or Blue, stack together). **Basic lands stack with basic lands first.** Each card in a pile sticks out a little so you can still point at every one. About six lands make a pile, then a new pile starts. Tapped (enters-tapped) lands stack too.
+- **Overflow snaps to other lands.** If the Lands area is full, the next land snaps onto the most alike land already there (a basic on a basic, then the same mana, then any land). It is only piled on it, not attached, so you can drag it away at any time.
 
 ### Fixed
-- **Lands you double-click now go to the next open space in the Lands area and are never hidden behind your hand.** The game only counts the part of the board you can actually see (above the hand strip). Lands fill that area row by row, then pack closer together, and if even that is full the card goes to a free spot on the board that covers as little as possible, so every land can still be clicked and dragged. This also applies to Tidy and to a card that is un-attached.
+- **Lands never go behind your hand or into the Artifacts / Enchantments area.** Placement only counts the part of the board you can see, and a last-resort spot covers as little as possible, so every land stays clickable. This also applies to Tidy and to a card that is un-attached.
 
 ## [0.88.1] - 2026-11-19
 
@@ -524,8 +528,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.88.2...HEAD
-[0.88.2]: https://github.com/ccall1212/commander-table/compare/v0.88.1...v0.88.2
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.89.0...HEAD
+[0.89.0]: https://github.com/ccall1212/commander-table/compare/v0.88.1...v0.89.0
 [0.88.1]: https://github.com/ccall1212/commander-table/compare/v0.88.0...v0.88.1
 [0.88.0]: https://github.com/ccall1212/commander-table/compare/v0.87.0...v0.88.0
 [0.87.0]: https://github.com/ccall1212/commander-table/compare/v0.86.1...v0.87.0

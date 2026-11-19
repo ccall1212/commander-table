@@ -244,4 +244,4 @@ Chris (2026-11-04): eventually bring commander damage back out of the life box's
 
 (The earlier idea #66, life points at the top middle of the board, was dropped: the name-bar life total from v0.58.1 solved the problem it was meant to fix.)
 
-98. Chris (2026-11-19): double-clicked lands go to the next open space in the Lands area, never hidden behind the hand (v0.88.2, test copy). Open idea: auto-stack same-name lands on double-click and a better hover preview for stacked cards (needs Chris's go-ahead on the design).
+98. Chris (2026-11-19): double-clicked lands go to the next open space in the Lands area, never hidden behind the hand (v0.89.0, test copy). Chris also asked: lands that tap for the same mana stack (basics with basics first), overflow snaps onto alike lands without attaching. Still open: a better hover preview for stacked cards.

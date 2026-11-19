@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.88.2';
+const APP_VERSION = '0.89.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -383,6 +383,29 @@ function regionKey(c, d) {
   if (/Land/.test(t)) return 'lands';
   return 'permanents'; // artifacts, enchantments and anything else
 }
+// What a land taps for, as a short key ("GU" for Tangled Islet and Temple of Mystery), so lands that make the same mana stack together. Empty for a land
+// that adds no mana. Basic lands without rules text use their land type (Forest = G).
+function landManaKey(d) {
+  if (!d) return '';
+  const text = d.oracle || '', colours = new Set();
+  for (const clause of text.match(/\bAdd\b[^.\n]*/g) || []) {
+    for (const m of clause.matchAll(/\{([WUBRGC])\}/g)) colours.add(m[1]);
+    if (/any (color|type)/i.test(clause)) colours.add('*');
+  }
+  if (!colours.size) {
+    const basic = { Plains: 'W', Island: 'U', Swamp: 'B', Mountain: 'R', Forest: 'G', Wastes: 'C' };
+    for (const [word, letter] of Object.entries(basic)) if (new RegExp('\\b' + word + '\\b').test(d.type || '') && /Basic/.test(d.type || '')) colours.add(letter);
+  }
+  return [...colours].sort().join('');
+}
+// Cards that pile up in one spot: identical tokens, and lands that tap for the same mana. '' = does not stack.
+function stackKey(c, d, key) {
+  if (!d) return '';
+  if (c.tok) return 'tok:' + c.id;
+  if (key === 'lands') { const mana = landManaKey(d); return !mana ? '' : (/Basic/.test(d.type || '') ? 'basic:' : 'mana:') + mana; } // basic lands stack with basic lands first
+  return '';
+}
+const STACK_STEP = 18; // how far each card of a land stack sticks out, so every card keeps a strip you can point at
 function centerIn(o, r) {
   const cx = o.x + CW / 2, cy = o.y + CH / 2;
   return cx >= r.x && cx <= r.x + r.w && cy >= r.y && cy <= r.y + r.h;
@@ -396,9 +419,10 @@ function autoPlace(card, zone, m = S.me, limit = Infinity) {
   const bh = m.bh || BH;
   const r = m.layout.find(x => x.k === key) || m.layout[0] || { x: 0, y: 0, w: BW, h: bh };
   const others = m.zones.battlefield.filter(o => o !== card && o.x != null && !o.att);
-  if (zone === 'battlefield' && d && (/Basic/.test(d.type || '') || card.tok)) {
-    const same = others.filter(o => o.id === card.id && !!o.tok === !!card.tok && !o.t && centerIn(o, r));
-    if (same.length % 6) { const last = same[same.length - 1]; card.x = clamp(last.x + 12, 0, BW - CW); card.y = last.y; return true; }
+  const group = zone === 'battlefield' ? stackKey(card, d, key) : '';
+  if (group) {
+    const same = others.filter(o => (!o.t || key === 'lands') && stackKey(o, m.defs[o.id], regionKey(o, m.defs[o.id])) === group && centerIn(o, r));
+    if (same.length % 6) { const last = same[same.length - 1]; card.x = clamp(last.x + STACK_STEP, 0, BW - CW); card.y = last.y; return true; }
   }
   const bottom = Math.min(r.y + r.h + 2, limit);
   const slot = (xs, ys, dx, dy) => {
@@ -413,8 +437,18 @@ function autoPlace(card, zone, m = S.me, limit = Infinity) {
   // The visible part is full: pack the next cards in a "brick" pattern (half a slot across, half a row down), so every card still shows its top-left area.
   for (let y = r.y + 34, row = 0; y + CH <= bottom; y += (CH + 8) / 2, row++) {
     for (let x = r.x + 6 + (row % 2 ? (CW + 8) / 2 : 0); x + CW <= r.x + r.w + 2; x += CW + 8) {
-      if (!others.some(o => Math.abs(o.x - x) < 8 && Math.abs(o.y - y) < 8)) { card.x = x; card.y = y; return true; }
+      if (!others.some(o => Math.abs(o.y - y) < CH && x < o.x + STACK_STEP && x + CW > o.x)) { card.x = x; card.y = y; return true; } // never over another card's left strip
     }
+  }
+  // No open space is left: snap onto a land that is already there (not attached, just piled on it), the most alike first (a basic on a basic, then the same mana,
+  // then any land), so the card stays in the Lands area and keeps a strip you can point at.
+  if (key === 'lands' && limit !== Infinity) {
+    const mine = landManaKey(d), basic = /Basic/.test((d && d.type) || '');
+    const lands = others.filter(o => regionKey(o, m.defs[o.id]) === 'lands' && centerIn(o, r));
+    const rank = o => { const od = m.defs[o.id], om = landManaKey(od); return [...mine].filter(ch => om.includes(ch)).length * 2 + (basic && /Basic/.test((od && od.type) || '') ? 3 : 0); };
+    const stackEnd = o => { let t = o, next; while ((next = lands.find(q => q.y === t.y && q.x > t.x && q.x <= t.x + STACK_STEP + 1))) t = next; return t; }; // follow the pile to its last card
+    const targets = lands.map(o => ({ o, score: rank(o), tail: stackEnd(o) })).filter(t => t.tail.x + STACK_STEP <= Math.min(BW - CW, r.x + r.w - CW + 40) && !lands.some(q => q !== t.tail && Math.abs(q.y - t.tail.y) < CH && q.x > t.tail.x && q.x < t.tail.x + STACK_STEP + CW)) // never over another pile's strip.sort((a, b) => b.score - a.score);
+    if (targets.length) { const t = targets[0].tail; card.x = t.x + STACK_STEP; card.y = t.y; return true; }
   }
   // Everything visible is taken. With a limit (a real screen) say so, and the caller puts the card in a free spot on the board (never over other cards, never under the hand).
   if (limit !== Infinity) return false;
@@ -2959,7 +2993,9 @@ function centerSpot(card) {
   }
   // No clear spot is left in the visible board: use the spot that covers the least of the cards already there (so none is ever completely hidden).
   const others = S.me.zones.battlefield.filter(o => o !== card && o.x != null && !o.att);
-  const covered = (x, y) => others.reduce((sum, o) => sum + Math.max(0, CW - Math.abs(o.x - x)) * Math.max(0, CH - Math.abs(o.y - y)), 0);
+  // Covering the left strip of a card (the part of a stacked card you can still point at) counts much more than covering its middle.
+  const strip = (x, y) => others.reduce((sum, o) => sum + Math.max(0, Math.min(x + CW, o.x + STACK_STEP) - Math.max(x, o.x)) * Math.max(0, Math.min(y + CH, o.y + CH) - Math.max(y, o.y)), 0);
+  const covered = (x, y) => others.reduce((sum, o) => sum + Math.max(0, CW - Math.abs(o.x - x)) * Math.max(0, CH - Math.abs(o.y - y)), 0) + 8 * strip(x, y);
   let best = null;
   for (let y = 0; y + CH <= limit; y += 14) for (let x = 0; x <= BW - CW; x += 14) {
     const score = covered(x, y);
