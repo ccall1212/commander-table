@@ -88,9 +88,14 @@
       if (/\b(?:as long as|if |unless|until|during)\b/i.test(s)) return; // conditional: left to the player
       const pt = new RegExp('\\bgets? ([+\\-\\u2212]\\d+)\\/([+\\-\\u2212]\\d+)\\b(?!\\s+(?:for each|where|plus))', 'i').exec(s);
       const base = /\bbase power and toughness (\d{1,2})\/(\d{1,2})\b/i.exec(s);
+      // "gets +1/+1 for each Elf you control" (Crown of Skemfar): a pump per counted thing. The page counts it (it knows the boards); here only the wording is kept.
+      const eachM = new RegExp('\\bgets? ([+\\-\\u2212]\\d+)\\/([+\\-\\u2212]\\d+) for each (.+?)(?:,? and (?:has|have)\\b.*)?\\.?$', 'i').exec(s);
+      const whereM = new RegExp('\\bgets? ([+\\-\\u2212])X\\/([+\\-\\u2212])(X|0),? where X is (the number of .+?)(?:,? and (?:has|have)\\b.*)?\\.?$', 'i').exec(s);
+      const each = eachM && /^[\w' ,+\-\/]{1,140}$/.test(eachM[3]) ? { a: signed(eachM[1]), b: signed(eachM[2]), text: eachM[3] }
+        : whereM && /^[\w' ,+\-\/]{1,140}$/.test(whereM[4]) ? { a: whereM[1] === '+' ? 1 : -1, b: whereM[3] === '0' ? 0 : (whereM[2] === '+' ? 1 : -1), text: whereM[4] } : null; // "+X/+X, where X is the number of …" (Bonehoard)
       const abilities = leadingAbilities(s), lost = losses(s);
-      if (!abilities.length && !pt && !base && !lost.ids.length && !lost.all) return;
-      out.push({ scope: 'attached', attach: head[1].toLowerCase(), other: false, filters: { creature: true }, cond: null, when: null, abilities, pt: pt ? ptOf(pt[1], pt[2]) : null, base: base ? base[1] + '/' + base[2] : null, lose: lost.ids, loseAll: lost.all });
+      if (!abilities.length && !pt && !base && !each && !lost.ids.length && !lost.all) return;
+      out.push({ scope: 'attached', attach: head[1].toLowerCase(), other: false, filters: { creature: true }, cond: null, when: null, abilities, pt: pt ? ptOf(pt[1], pt[2]) : null, base: base ? base[1] + '/' + base[2] : null, each, lose: lost.ids, loseAll: lost.all });
     });
     return out;
   }
@@ -98,7 +103,7 @@
   // Lines about the card itself, and the "Lieutenant" pair (this creature and the rest of your creatures), with a condition on the card.
   function parseSelf(line, name) {
     const names = [];
-    if (name) { names.push(name); const short = String(name).split(',')[0].trim(); if (short && short !== name) names.push(short); }
+    if (name) { names.push(name); [String(name).split(',')[0].trim(), String(name).split(/,| the /)[0].trim()].forEach(short => { if (short && !names.includes(short)) names.push(short); }); } // "Tuvasa the Sunlit" is "Tuvasa" in its own text
     const esc = x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const SELF = '(?:this (?:creature|permanent|artifact|vehicle|spacecraft|land|enchantment)|it' + names.map(n => '|' + esc(n)).join('') + ')';
     const l = line.replace(/[.]+$/, '');
@@ -239,7 +244,8 @@
       if (typeof g.base === 'string' && /^\d{1,2}\/\d{1,2}$/.test(g.base)) out.base = g.base;
       out.lose = (Array.isArray(g.lose) ? g.lose : []).filter(a => ABILITIES.includes(a)).slice(0, 6);
       out.loseAll = g.loseAll === true;
-      return out.abilities.length || out.pt || out.base || out.lose.length || out.loseAll ? out : null;
+      out.each = g.each && Number.isInteger(g.each.a) && Number.isInteger(g.each.b) && Math.abs(g.each.a) <= 9 && Math.abs(g.each.b) <= 9 && typeof g.each.text === 'string' && /^[\w' ,+\-\/]{1,140}$/.test(g.each.text) ? { a: g.each.a, b: g.each.b, text: g.each.text } : null;
+      return out.abilities.length || out.pt || out.base || out.each || out.lose.length || out.loseAll ? out : null;
     }).filter(Boolean);
   }
   // Does grant g (from the card `src`) apply to the card `c` whose definition is `def`? mods = { modified } facts about c that need the whole board.
@@ -321,11 +327,13 @@
           cur.from.push(from);
           out.lose.set(key, cur);
         }
-        if (g.pt || g.base) {
+        const counted = g.each && ctx && typeof ctx.each === 'function' ? ctx.each(g.each, s.pid, s.e.c.iid) : null; // a pump per counted thing, counted from the giver's side
+        if (g.pt || g.base || counted) {
           const cur = out.pt.get(key) || { dp: 0, dt: 0, base: null, from: [] };
           if (g.pt) { cur.dp += g.pt.dp; cur.dt += g.pt.dt; }
+          if (counted) { cur.dp += counted.dp; cur.dt += counted.dt; }
           if (g.base) cur.base = g.base;
-          cur.from.push({ from, dp: g.pt ? g.pt.dp : 0, dt: g.pt ? g.pt.dt : 0, base: g.base || null });
+          cur.from.push({ from, dp: (g.pt ? g.pt.dp : 0) + (counted ? counted.dp : 0), dt: (g.pt ? g.pt.dt : 0) + (counted ? counted.dt : 0), base: g.base || null });
           out.pt.set(key, cur);
         }
       }));

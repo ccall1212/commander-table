@@ -17,8 +17,14 @@
   function parseCount(text) {
     let t = String(text || '').trim().replace(/[.]+$/, '').replace(/^the (?:total )?number of /i, '');
     if (/^your life total$/i.test(t)) return { zone: 'life', who: 'you' };
-    if (/^cards in your hand$/i.test(t)) return { zone: 'hand', who: 'you' };
-    let m = /^(.+?) (?:among|in) (.+)$/i.exec(t);
+    if (/^cards? in your hand$/i.test(t)) return { zone: 'hand', who: 'you' };
+    let m;
+    // counters on the card itself ("charge counter on this Equipment", "+1/+1 counters on it"), Auras and Equipment attached to it, opponents you have
+    if ((m = /^(?:(\+1\/\+1|-1\/-1|[a-z]{3,12}) )?counters? on (?:this [A-Za-z]+|it)$/i.exec(t))) return { zone: 'self', who: 'you', counter: m[1] ? m[1].toLowerCase() : 'any' };
+    if ((m = /^((?:Aura|Equipment)s?(?: and (?:Aura|Equipment)s?)*) attached to (?:it|this [A-Za-z]+)$/i.exec(t))) return { zone: 'attached', who: 'all', tribes: m[1].split(/ and /i).map(x => x.replace(/s$/i, '')) };
+    if (/^opponents? you have$/i.test(t)) return { zone: 'opponents', who: 'opp' };
+    let withCounter = null;
+    t = t.replace(/ with (?:an? |one or more )?(\+1\/\+1|-1\/-1|[a-z]{3,12}) counters? on (?:it|them)$/i, (all, nm) => { withCounter = nm.toLowerCase(); return ''; });
     let zone = 'battlefield', who = 'all';
     let noun = t;
     const gy = /^(?:(.*?) )?(?:in )?(your graveyard|all graveyards|your opponents'? graveyards)$/i.exec(t);
@@ -32,6 +38,7 @@
       noun = m[1];
     }
     const out = { zone, who };
+    if (withCounter) out.withCounter = withCounter;
     if (zone === 'graveyard' && /^card types among cards$/i.test(noun)) { out.distinctTypes = true; return out; }
     if (/^differently named lands$/i.test(noun)) { out.types = ['land']; out.distinctNames = true; return out; }
     if (/^face-down creatures$/i.test(noun)) { out.faceDown = true; return out; }
@@ -63,31 +70,43 @@
     return { terms, mult, plus };
   }
 
-  // { power: amount|null, toughness: amount|null } for a card's rules text (front face only), or null.
+  // "…for each creature you control and each creature card in your graveyard": the text after "for each", as one amount.
+  function parseEach(text) {
+    const t = String(text || '').trim().replace(/[.]+$/, '').replace(/^each /i, '').replace(/ and each /gi, ' plus the number of ');
+    return /^[\w' ,+\-\/]{1,140}$/.test(t) ? parseAmount(t) : null;
+  }
   function parse(oracle, name) {
     const names = [];
-    if (name) { names.push(String(name).trim()); const short = String(name).split(',')[0].trim(); if (short && short !== names[0]) names.push(short); }
+    if (name) { names.push(String(name).trim()); [String(name).split(',')[0].trim(), String(name).split(/,| the /)[0].trim()].forEach(short => { if (short && !names.includes(short)) names.push(short); }); } // "Tuvasa the Sunlit" is "Tuvasa" in its own text
     const SUBJ = '(?:This [a-z]+|' + names.map(esc).join('|') + (names.length ? '|' : '') + 'It)(?:\'s|’s)';
     const reBoth = new RegExp('^' + SUBJ + ' power and toughness are each equal to (.+)$', 'i');
     const rePower = new RegExp('^' + SUBJ + ' power is equal to (.+)$', 'i');
     const reTough = new RegExp('^' + SUBJ + ' toughness is equal to (.+)$', 'i');
     const reGoyf = new RegExp('^' + SUBJ + ' power is equal to (.+?) and its toughness is equal to that number plus (\\d+)$', 'i');
-    let power = null, toughness = null;
+    const SUBJ_PLAIN = '(?:This [a-z]+|' + names.map(esc).join('|') + (names.length ? '|' : '') + 'It)';
+    const reBonus = new RegExp('^' + SUBJ_PLAIN + ' gets ([+\\-\\u2212]\\d+)\\/([+\\-\\u2212]\\d+) for each (.+)$', 'i');
+    const reWhere = new RegExp('^' + SUBJ_PLAIN + ' gets ([+\\-\\u2212])X\\/([+\\-\\u2212])(X|0),? where X is (the number of .+|your life total)$', 'i');
+    let power = null, toughness = null, bonus = null;
     String(oracle == null ? '' : oracle).split(/\n—\n/)[0].split('\n').forEach(raw => {
       const line = raw.replace(/\([^)]*\)/g, ' ').replace(/\s+/g, ' ').trim().replace(WORD_PREFIX_RE, '').replace(/[.]+$/, '');
       let m;
+      if ((m = reBonus.exec(line))) { const amount = parseEach(m[3]); if (amount) bonus = { a: signed(m[1]), b: signed(m[2]), amount }; return; }
+      if ((m = reWhere.exec(line))) { const amount = parseEach(m[4]); if (amount) bonus = { a: m[1] === '+' ? 1 : -1, b: m[3] === '0' ? 0 : (m[2] === '+' ? 1 : -1), amount }; return; }
       if ((m = reGoyf.exec(line))) { const a = parseAmount(m[1]); if (a) { power = a; toughness = Object.assign({}, a, { plus: a.plus + +m[2] }); } return; }
       if ((m = reBoth.exec(line))) { const a = parseAmount(m[1]); if (a) { power = a; toughness = a; } return; }
       if ((m = rePower.exec(line))) { const a = parseAmount(m[1]); if (a) power = a; return; }
       if ((m = reTough.exec(line))) { const a = parseAmount(m[1]); if (a) toughness = a; }
     });
-    return power || toughness ? { power, toughness } : null;
+    return power || toughness || bonus ? { power, toughness, bonus } : null;
   }
 
+  const signed = v => +String(v).replace('\u2212', '-');
   // Validate a definition published by another player.
   function cleanCount(c) {
     if (!c || typeof c !== 'object') return null;
-    const out = { zone: ['battlefield', 'graveyard', 'hand', 'life'].includes(c.zone) ? c.zone : 'battlefield', who: ['you', 'opp', 'all'].includes(c.who) ? c.who : 'you' };
+    const out = { zone: ['battlefield', 'graveyard', 'hand', 'life', 'self', 'attached', 'opponents'].includes(c.zone) ? c.zone : 'battlefield', who: ['you', 'opp', 'all'].includes(c.who) ? c.who : 'you' };
+    if (typeof c.counter === 'string' && /^(?:any|\+1\/\+1|-1\/-1|[a-z]{3,12})$/.test(c.counter)) out.counter = c.counter;
+    if (typeof c.withCounter === 'string' && /^(?:\+1\/\+1|-1\/-1|[a-z]{3,12})$/.test(c.withCounter)) out.withCounter = c.withCounter;
     if (Array.isArray(c.types)) { const t = c.types.filter(x => CARD_TYPES.includes(x)).slice(0, 4); if (t.length) out.types = t; }
     if (Array.isArray(c.tribes)) { const t = c.tribes.filter(x => typeof x === 'string' && /^[A-Za-z]{2,24}$/.test(x)).slice(0, 6); if (t.length) out.tribes = t; }
     ['nonbasic', 'faceDown', 'other', 'distinctTypes', 'distinctNames'].forEach(k => { if (c[k] === true) out[k] = true; });
@@ -103,7 +122,12 @@
   function clean(cda) {
     if (!cda || typeof cda !== 'object') return null;
     const power = cleanAmount(cda.power), toughness = cleanAmount(cda.toughness);
-    return power || toughness ? { power, toughness } : null;
+    let bonus = null;
+    if (cda.bonus && typeof cda.bonus === 'object' && Number.isInteger(cda.bonus.a) && Number.isInteger(cda.bonus.b) && Math.abs(cda.bonus.a) <= 9 && Math.abs(cda.bonus.b) <= 9) {
+      const amount = cleanAmount(cda.bonus.amount);
+      if (amount) bonus = { a: cda.bonus.a, b: cda.bonus.b, amount };
+    }
+    return power || toughness || bonus ? { power, toughness, bonus } : null;
   }
 
   // ctx = { boards: [{ pid, battlefield: [{ c, def }], graveyard: [{ c, def }], hand: number, life: number }], pid: whose card it is, iid: the card itself }
@@ -112,11 +136,13 @@
   function matches(count, e) {
     const c = e.c, def = e.def;
     if (count.other && c.iid === e.selfIid) return false;
+    if (c.fd && count.withCounter && !(c.c && Object.entries(c.c).some(([k, v]) => v > 0 && k.toLowerCase() === count.withCounter))) return false;
     if (c.fd) { // a face-down permanent is a plain creature: it counts as a creature (and a permanent), nothing more specific
       if (count.faceDown) return true;
       return !count.tribes && !count.nonbasic && !count.distinctNames && !count.distinctTypes && (!count.types || count.types.includes('creature'));
     }
     if (count.faceDown) return false;
+    if (count.withCounter && !(c.c && Object.entries(c.c).some(([k, v]) => v > 0 && k.toLowerCase() === count.withCounter))) return false;
     if (!def) return false;
     const line = typeLine(c, def), mains = mainTypes(line);
     if (count.types && !count.types.some(t => mains.includes(t))) return false;
@@ -131,6 +157,20 @@
     const boards = ctx.boards.filter(b => count.who === 'all' || (count.who === 'you') === (b.pid === ctx.pid));
     if (count.zone === 'life') return boards.reduce((n, b) => n + (Number.isFinite(b.life) ? b.life : 0), 0);
     if (count.zone === 'hand') return boards.reduce((n, b) => n + (b.hand || 0), 0);
+    if (count.zone === 'opponents') return Math.max(0, ctx.boards.filter(b => b.pid !== ctx.pid).length);
+    if (count.zone === 'self') { // counters on the card itself
+      for (const b of ctx.boards) for (const e of (b.battlefield || [])) {
+        if (e && e.c && e.c.iid === ctx.iid) return Object.entries(e.c.c || {}).reduce((a, [k, v]) => a + (v > 0 && (count.counter === 'any' || k.toLowerCase() === count.counter) ? v : 0), 0);
+      }
+      return 0;
+    }
+    if (count.zone === 'attached') { // Auras / Equipment attached to the card
+      let k = 0;
+      for (const b of ctx.boards) for (const e of (b.battlefield || [])) {
+        if (e && e.c && e.c.att && e.c.att.i === ctx.iid && e.def && count.tribes.some(tr => new RegExp('\\b' + tr + '\\b', 'i').test(typeLine(e.c, e.def)))) k++;
+      }
+      return k;
+    }
     const names = new Set(), types = new Set();
     let n = 0;
     boards.forEach(b => (b[count.zone] || []).forEach(e => {
@@ -145,5 +185,11 @@
     if (!amount) return null;
     return Math.max(0, amount.terms.reduce((n, t) => n + evalCount(t, ctx), 0) * amount.mult + amount.plus);
   }
-  window.CTCda = { parse, clean, evaluate, parseCount, parseAmount };
+  // The pump a bonus gives right now: { dp, dt } (the amount counted times +a/+b).
+  function evaluateBonus(bonus, ctx) {
+    if (!bonus) return null;
+    const n = evaluate(bonus.amount, ctx);
+    return { dp: bonus.a * n, dt: bonus.b * n };
+  }
+  window.CTCda = { parse, clean, evaluate, evaluateBonus, parseEach, parseCount, parseAmount };
 }());

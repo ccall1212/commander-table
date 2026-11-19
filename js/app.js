@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.86.0';
+const APP_VERSION = '0.86.1';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -145,26 +145,30 @@ function grantsFor(pid, c) {
       if (opid === S.pid || !p || !p.zones) continue;
       boards.push({ pid: opid, entries: (p.zones.battlefield || []).map(x => ({ c: x, def: x.id ? (p.defs || {})[x.id] : null })) });
     }
-    grantCache.map = CTGrants.forBoards(boards, { active: S.table && S.table.active }); grantCache.pt = grantCache.map.pt; grantCache.lose = grantCache.map.lose; grantCache.epoch = grantEpoch; // every board at once: an Aura can sit on an opponent's creature; the turn matters for "during your turn"
+    grantCache.map = CTGrants.forBoards(boards, { active: S.table && S.table.active, each: (each, pid, iid) => { const spec = typeof CTCda === 'undefined' ? null : CTCda.parseEach(each.text); if (!spec) return null; const n = CTCda.evaluate(spec, { boards: countBoards(), pid, iid }); return { dp: each.a * n, dt: each.b * n }; } }); grantCache.pt = grantCache.map.pt; grantCache.lose = grantCache.map.lose; grantCache.epoch = grantEpoch; // every board at once: an Aura can sit on an opponent's creature; the turn matters for "during your turn"
   }
   return grantCache.map.get(pid + '|' + c.iid) || [];
 }
 // Power/toughness other permanents give this card: { dp, dt, base, from: [...] } or null (see CTGrants.forBoards). Drawn on the badge, never saved.
 // Power/toughness a card defines from a count ("equal to the number of artifacts you control", cards in graveyards, cards in hand, life total): { p, t } (a side is
 // null when the card does not define it) or null. It is the card's BASE power/toughness; counters, Equipment and other bonuses still add on top (see effPT).
-const cdaCache = { ctx: null, epoch: -1 };
-function cdaFor(pid, c, def) {
-  if (typeof CTCda === 'undefined' || !def || c.fd || !S.me) return null;
-  const spec = def.cda ? CTCda.clean(def.cda) : (/ equal to /.test(def.oracle || '') ? CTCda.parse(def.oracle, def.face || def.name) : null);
-  if (!spec) return null;
-  if (!cdaCache.ctx || cdaCache.epoch !== grantEpoch) {
+const cdaCache = { boards: null, epoch: -1 };
+// Every player's battlefield, graveyard, hand size and life, for counting (rebuilt once per redraw).
+function countBoards() {
+  if (!cdaCache.boards || cdaCache.epoch !== grantEpoch) {
     const view = (p, id, hand) => ({ pid: id, hand, life: p.life, battlefield: (p.zones.battlefield || []).map(x => ({ c: x, def: x.id ? (id === S.pid ? S.me.defs : (p.defs || {}))[x.id] : null })), graveyard: (p.zones.graveyard || []).map(x => ({ c: x, def: x.id ? (id === S.pid ? S.me.defs : (p.defs || {}))[x.id] : null })) });
     const boards = [view(S.me, S.pid, S.me.zones.hand.length)];
     for (const [opid, p] of Object.entries(S.players)) { if (opid !== S.pid && p && p.zones) boards.push(view(p, opid, p.hand || 0)); }
-    cdaCache.ctx = { boards }; cdaCache.epoch = grantEpoch;
+    cdaCache.boards = boards; cdaCache.epoch = grantEpoch;
   }
-  const ctx = { boards: cdaCache.ctx.boards, pid, iid: c.iid };
-  return { p: spec.power ? CTCda.evaluate(spec.power, ctx) : null, t: spec.toughness ? CTCda.evaluate(spec.toughness, ctx) : null };
+  return cdaCache.boards;
+}
+function cdaFor(pid, c, def) {
+  if (typeof CTCda === 'undefined' || !def || c.fd || !S.me) return null;
+  const spec = def.cda ? CTCda.clean(def.cda) : (/ equal to | for each |where X is/.test(def.oracle || '') ? CTCda.parse(def.oracle, def.face || def.name) : null);
+  if (!spec) return null;
+  const ctx = { boards: countBoards(), pid, iid: c.iid }, bonus = spec.bonus ? CTCda.evaluateBonus(spec.bonus, ctx) : null;
+  return { p: spec.power ? CTCda.evaluate(spec.power, ctx) : null, t: spec.toughness ? CTCda.evaluate(spec.toughness, ctx) : null, dp: bonus ? bonus.dp : 0, dt: bonus ? bonus.dt : 0 };
 }
 function ptGrantFor(pid, c) { grantsFor(pid, c); return (grantCache.pt && grantCache.pt.get(pid + '|' + c.iid)) || null; }
 // Abilities other permanents take away ("Equipped creature … loses flying", "loses all abilities"): { ids, all, keep } or null. Their icons are hidden, never un-saved.
@@ -2835,7 +2839,7 @@ function effPT(c, def, gp, cda) {
   }
   const cnt = ((c.c && c.c['+1/+1']) || 0) - ((c.c && c.c['-1/-1']) || 0);
   const tp = c.tp || 0, tt = c.tt || 0, temp = !!(tp || tt || c.tb); // temporary changes that end when the turn passes
-  const dp = (c.dp || 0) + cnt + tp + (gp ? gp.dp : 0), dt = (c.dt || 0) + cnt + tt + (gp ? gp.dt : 0);
+  const dp = (c.dp || 0) + cnt + tp + (gp ? gp.dp : 0) + (cda ? cda.dp : 0), dt = (c.dt || 0) + cnt + tt + (gp ? gp.dt : 0) + (cda ? cda.dt : 0);
   const modified = !!(c.tb || c.pb || dp || dt || (gp && gp.base));
   if (stats) return { text: `${stats[0] + dp}/${stats[1] + dt}`, modified, temp };
   if (!modified) return { text: base, modified, temp };
@@ -4412,7 +4416,7 @@ function cardHTML(c, def, o) {
   if (o.zone === 'battlefield' && !c.fd) {
     const gp = ptGrantFor(ctrl, c), cda = cdaFor(ctrl, c, def), pt = effPT(c, def, gp, cda);
     const sg = v => (v >= 0 ? '+' + v : '\u2212' + Math.abs(v));
-    const cdaNote = cda && !(c.tb || c.pb || (gp && gp.base)) ? ` Base ${[cda.p !== null ? 'power ' + cda.p : '', cda.t !== null ? 'toughness ' + cda.t : ''].filter(Boolean).join(' and ')} counted from the card's own text.` : '';
+    const cdaNote = cda ? ((cda.p !== null || cda.t !== null) && !(c.tb || c.pb || (gp && gp.base)) ? ` Base ${[cda.p !== null ? 'power ' + cda.p : '', cda.t !== null ? 'toughness ' + cda.t : ''].filter(Boolean).join(' and ')} counted from the card's own text.` : '') + (cda.dp || cda.dt ? ` Includes ${sg(cda.dp)}/${sg(cda.dt)} counted from the card's own text.` : '') : '';
     const gpNote = cdaNote + (gp ? ` Includes ${gp.from.map(f => (f.base ? 'base ' + f.base : '') + (f.dp || f.dt ? (f.base ? ' and ' : '') + sg(f.dp) + '/' + sg(f.dt) : '') + ' from ' + f.from).join(', ')}.` : '');
     const creature = def && /Creature/.test((c.fl && def.backType) || def.type || '');
     if (pt.text && (pt.modified || creature)) {

@@ -47,6 +47,31 @@ for (const x of ["Drove of Elves's power and toughness are each equal to the num
   "Sewer Nemesis's power and toughness are each equal to the number of cards in the chosen player's graveyard.", "Living Lore's power and toughness are each equal to the exiled card's mana value.", "Bell Borca's power is equal to the greatest number noted for it this turn.",
   "Crackling Drake's power is equal to the total number of instant and sorcery cards you own in exile and in your graveyard.", 'When this creature enters, it gets +1/+1 until end of turn.', '']) assert.equal(C.parse(x, x.split("'")[0]), null, 'left alone: ' + x);
 
+// ---- A pump per counted thing ("gets +1/+1 for each …") ----
+let b = p("Trample\nThis creature gets +1/+1 for each creature you control and each creature card in your graveyard.", 'Moon-Vigil Adherents').bonus;
+assert.deepEqual([b.a, b.b, b.amount.terms.length], [1, 1, 2], 'Moon-Vigil Adherents: creatures you control plus creature cards in your graveyard');
+assert.equal(b.amount.terms[1].zone, 'graveyard');
+b = p("Foo gets +2/+0 for each artifact you control.", 'Foo').bonus; assert.deepEqual([b.a, b.b], [2, 0], 'a power-only pump per artifact');
+b = p("This creature gets -1/-1 for each card in your hand.", 'Bar').bonus; assert.deepEqual([b.a, b.b], [-1, -1], 'a shrink');
+b = p("This creature gets +X/+X, where X is the number of Elves you control.", 'Baz').bonus; assert.deepEqual([b.a, b.b], [1, 1], '+X/+X where X is the number of …');
+b = p("This creature gets +X/+0, where X is your life total.", 'Baz').bonus; assert.deepEqual([b.a, b.b], [1, 0], '+X/+0 where X is your life total');
+assert.equal(C.parse("This creature gets +1/+1 for each other creature you control that shares a creature type with it.", 'Q'), null, 'a wording we cannot count is left alone');
+assert.equal(C.parse("This creature gets +1/+1 until end of turn for each creature you control.", 'Q'), null, 'temporary: left alone');
+assert.equal(plain(C.parse("This creature gets +1/+1 for each creature you control.", 'Q')).power, null, 'a pump is not a base');
+assert.equal(plain(C.clean(plain(C.parse("This creature gets +1/+1 for each creature you control.", 'Q')))).bonus.a, 1, 'published definitions keep it');
+assert.equal(C.clean({ bonus: { a: 99, b: 1, amount: { terms: [{ zone: 'battlefield', who: 'you' }] } } }), null, 'an absurd pump is dropped');
+assert.deepEqual(plain(C.parseEach('creature you control and each creature card in your graveyard').terms.map(t => t.zone)), ['battlefield', 'graveyard']);
+assert.deepEqual(plain(C.parseEach('charge counter on this Equipment').terms[0]), { zone: 'self', who: 'you', counter: 'charge' }, 'counters on the card itself');
+assert.deepEqual(plain(C.parseEach('counter on this Equipment').terms[0]), { zone: 'self', who: 'you', counter: 'any' });
+assert.deepEqual(plain(C.parseEach('+1/+1 counter on this Equipment').terms[0]), { zone: 'self', who: 'you', counter: '+1/+1' });
+assert.deepEqual(plain(C.parseEach('Aura and Equipment attached to it').terms[0]), { zone: 'attached', who: 'all', tribes: ['Aura', 'Equipment'] }, 'Kor Spiritdancer / Strong Back');
+assert.deepEqual(plain(C.parseEach('Aura attached to it').terms[0].tribes), ['Aura']);
+assert.deepEqual(plain(C.parseEach('opponent you have').terms[0]), { zone: 'opponents', who: 'opp' }, 'Blazing Sunsteel');
+assert.equal(plain(C.parseEach('other creature you control with a +1/+1 counter on it').terms[0]).withCounter, '+1/+1', 'High Sentinels of Arashin');
+assert.equal(C.parseEach('color among permanents you control'), null, 'colours are not known');
+assert.equal(C.parse('Tuvasa gets +1/+1 for each enchantment you control.', 'Tuvasa the Sunlit').bonus.a, 1, 'a name that Oracle text shortens to its first word');
+assert.equal(C.parse('Bonehoard gets +1/+1 for each enchantment you control.', 'Bonehoard, Thing').bonus.a, 1);
+
 // ---- Counting on boards ----
 const card = (iid, extra) => Object.assign({ iid }, extra);
 const e = (iid, type, name, extra) => ({ c: card(iid, extra), def: { name: name || iid, type } });
@@ -79,6 +104,22 @@ assert.equal(val("X's power and toughness are each equal to the number of differ
 assert.equal(val("X's power and toughness are each equal to the number of face-down creatures on the battlefield.", 'X', 'A', 'x').p, 1);
 assert.equal(val("X's power and toughness are each equal to the number of Forests you control.", 'X', 'A', 'x').p, 1, 'a land type');
 assert.equal(val("X's power and toughness are each equal to the number of other creatures you control.", 'X', 'A', 'c1').p, 3, '"other" leaves the card itself out');
+const bonusOf = (oracle, name, pid, iid) => C.evaluateBonus(C.parse(oracle, name).bonus, { boards, pid, iid });
+assert.deepEqual(plain(bonusOf("This creature gets +1/+1 for each creature you control and each creature card in your graveyard.", 'M', 'A', 'x')), { dp: 5, dt: 5 }, '4 creatures on the battlefield + 1 creature card in the graveyard');
+assert.deepEqual(plain(bonusOf("M gets +2/+0 for each artifact you control.", 'M', 'A', 'x')), { dp: 4, dt: 0 });
+assert.deepEqual(plain(bonusOf("M gets +1/+1 for each card in your hand.", 'M', 'B', 'x')), { dp: 5, dt: 5 });
+// Counters on the card itself, attachments, opponents.
+const pump = (txt, pid, iid, bs) => C.evaluateBonus(C.parse(txt, 'M').bonus, { boards: bs || boards, pid, iid });
+const sword = e('sw', 'Artifact \u2014 Equipment', 'Sword', { c: { Charge: 3, '+1/+1': 1 }, att: { p: 'A', i: 'c1' } });
+const aura = e('au', 'Enchantment \u2014 Aura', 'Aura', { att: { p: 'A', i: 'c1' } });
+const bs2 = [{ pid: 'A', hand: 0, life: 20, battlefield: [e('c1', 'Creature \u2014 Elf', 'Elf'), sword, aura, e('c2', 'Creature \u2014 Elf', 'Elf 2', { c: { '+1/+1': 1 } }), e('c3', 'Creature \u2014 Elf', 'Elf 3', { c: { '+1/+1': 2 } })], graveyard: [] }, { pid: 'B', hand: 0, life: 40, battlefield: [], graveyard: [] }, { pid: 'C', hand: 0, life: 40, battlefield: [], graveyard: [] }];
+assert.deepEqual(plain(pump('M gets +1/+1 for each charge counter on this Equipment.', 'A', 'sw', bs2)), { dp: 3, dt: 3 }, 'three charge counters on the Equipment');
+assert.deepEqual(plain(pump('M gets +1/+1 for each counter on this Equipment.', 'A', 'sw', bs2)), { dp: 4, dt: 4 }, 'any counter');
+assert.deepEqual(plain(pump('M gets +2/+2 for each Aura and Equipment attached to it.', 'A', 'c1', bs2)), { dp: 4, dt: 4 }, 'one Aura and one Equipment are attached to the first Elf');
+assert.deepEqual(plain(pump('M gets +2/+2 for each Aura and Equipment attached to it.', 'A', 'c2', bs2)), { dp: 0, dt: 0 }, 'nothing attached to another creature');
+assert.deepEqual(plain(pump('M gets +1/+1 for each opponent you have.', 'A', 'c1', bs2)), { dp: 2, dt: 2 }, 'two opponents');
+assert.deepEqual(plain(pump('M gets +1/+1 for each other creature you control with a +1/+1 counter on it.', 'A', 'c1', bs2)), { dp: 2, dt: 2 }, 'two other creatures have a +1/+1 counter');
+assert.deepEqual(plain(pump('M gets +1/+1 for each creature you control with a +1/+1 counter on it.', 'A', 'c2', bs2)), { dp: 2, dt: 2 }, 'including itself when it is not "other"');
 // Published definitions are validated.
 const pub = plain(C.parse("Bronze Guardian's power is equal to the number of artifacts you control.", 'Bronze Guardian'));
 assert.deepEqual(plain(C.clean(pub)).power.terms[0].types, ['artifact']);

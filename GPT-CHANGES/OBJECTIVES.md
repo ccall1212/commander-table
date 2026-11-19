@@ -76,7 +76,13 @@ Chris (2026-11-19): look through the pre-cons for effects like Sphere Grid. Chos
 
 Chris (2026-11-19): Bronze Guardian-style cards ("power is equal to the number of artifacts you control") should work out their number automatically, as the BASE power/toughness (Equipment still adds), including graveyard, hand, opponents' and whole-board counts. Built in `js/cda.js`; the owner publishes the parsed spec as `cda` on the card definition. 53 of the 70 pre-con cards with such a line (mana value, colours, devotion, exile, the party and chosen-player counts stay manual). Order of precedence for the base: set by hand, then an Aura's base, then the count, then the printed number. Next: creature types (v0.87.0).
 
+### 94. "Gets +N/+N for each …" cards — Built, awaiting Chris's test (v0.86.1)
+
+Chris (2026-11-19): Moon-Vigil Adherents did nothing. Cause: only "equal to the number of …" was read in v0.86.0; "gets +1/+1 for each …" is a pump per count on top of the base. Added for the card itself and for Auras/Equipment (the page counts from the giver's side), plus new counts: counters on the card, Auras/Equipment attached to it, opponents you have, creatures with a counter. 36 of the 66 pre-con cards with such a line.
+
 ### Shipped recently (details in CHANGELOG.md)
+
+- #93 Power/toughness counted from the card's own text — v0.86.0.
 
 - #92 Automatic power/toughness, more granted abilities, loses-abilities and enters-with counters — v0.85.0.
 
