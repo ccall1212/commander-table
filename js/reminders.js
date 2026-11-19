@@ -30,7 +30,16 @@
   // Lines that only matter while the card sits in a pile: "You may cast this card from your graveyard…", "If this card is in your
   // graveyard…", Flashback, Escape, "from exile"…  Cards in play do not list these.
   const IN_PILE = /\byour graveyard\b|\bfrom exile\b/;
-  const GRAVE_RE = /\bfrom your graveyard\b|\b(?:this card|it) is in your graveyard\b|\bis in your graveyard\b/i;
+  // A line is about the card itself when it moves THIS card (or "it", or its name) from the graveyard: "You may cast this card from your graveyard", "Return Bloodghast from your
+  // graveyard to the battlefield". A line that moves some other card ("return target permanent card from your graveyard to your hand") is not.
+  const SELF_WORD = '(?:this (?:card|creature|land|permanent|artifact|enchantment|spell|Aura|Equipment|Vehicle|Saga|Class)|it|them)';
+  const graveRe = name => {
+    const names = [];
+    const full = String(name || '').trim(), short = full.split(',')[0].trim();
+    [full, short].forEach(n => { if (n && !names.includes(n)) names.push(n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')); });
+    const self = '(?:' + SELF_WORD + (names.length ? '|' + names.join('|') : '') + ')';
+    return new RegExp('\\b(?:cast|play|return|exile|put|sacrifice|activate|pay)\\s+' + self + '\\b[^.;:]*\\bfrom your graveyard\\b|\\b(?:this card|it) is in your graveyard\\b|\\bis in your graveyard\\b|\\b(?:this card|it) from your graveyard\\b', 'i');
+  };
   const GRAVE_KW_RE = /^(?:Mayhem|Flashback|Escape|Unearth|Embalm|Eternalize|Disturb|Jump-start|Retrace|Aftermath|Dredge|Scavenge|Encore|Harmonize)\b/;
   const EXILE_RE = /\b(?:cast|play)\b[^.]*\bfrom exile\b|\bfrom exile\b/i;
   const EXILE_KW_RE = /^(?:Foretell|Suspend|Plot)\b/;
@@ -105,8 +114,8 @@
     return String(oracle == null ? '' : oracle).split(/\n+/).map(l => l.trim()).filter(l => AS_ENTERS_RE.test(l)).map(l => clip(l, 400));
   }
   // Lines of a card that is in my graveyard or exile (mine only) which tell me what I can do with it from there.
-  function zoneLines(oracle, zone) {
-    const re = zone === 'graveyard' ? GRAVE_RE : zone === 'exile' ? EXILE_RE : null, kw = zone === 'graveyard' ? GRAVE_KW_RE : EXILE_KW_RE;
+  function zoneLines(oracle, zone, name) {
+    const re = zone === 'graveyard' ? graveRe(name) : zone === 'exile' ? EXILE_RE : null, kw = zone === 'graveyard' ? GRAVE_KW_RE : EXILE_KW_RE;
     if (!re) return [];
     return String(oracle == null ? '' : oracle).split(/\n+/).map(l => l.trim()).filter(l => l && (re.test(l) || kw.test(l))).map(l => clip(l, 400));
   }
