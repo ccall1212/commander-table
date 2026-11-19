@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.89.0';
+const APP_VERSION = '0.90.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -4342,6 +4342,7 @@ function mainMenu(x, y) {
       { label: 'Tidy up my cards', onClick: () => act(() => { tidyBoard(); return ['tidied up their battlefield']; }) },
       { label: `Touch mode (Beta): ${S.touchMode ? 'On' : 'Off'}`, checked: S.touchMode, onClick: () => setTouchMode(!S.touchMode) },
       { label: 'Hotkeys', onClick: showHotkeyList },
+      ...(window.RelayPeer && RelayPeer.getLog ? [{ label: 'Connection log…', onClick: showConnectionLog }] : []),
       { label: 'Choose / recover a board…', onClick: () => showBoardRecovery() }
     ] },
     { label: 'On my turn', sub: [
@@ -4380,6 +4381,16 @@ function passBtn() {
   return `<div class="ztool"><button data-a="pass" class="${mine ? 'primary' : ''}"${started && !blocked ? '' : ' disabled'} title="${blocked ? "Only the host can pass another player's turn" : 'Pass the turn to the next player'}">Pass turn ▶</button>${started ? `<button data-a="passmenu" class="pass-more" aria-label="More turn options" title="More turn options (take an extra turn)"${blocked ? ' disabled' : ''}>▾</button>` : ''}</div>`; // only once the game has started, so the pre-game top bar stays as narrow as before
 }
 function toggleFocus(pid) { S.focus = S.focus === pid ? null : pid; render(); }
+// A short list of this browser's connection events (kept only in this browser) so a disconnect can be explained: wifi dropped, the tab slept, or the server closed it.
+function showConnectionLog() {
+  const rows = RelayPeer.getLog();
+  const text = rows.map(r => `${r.t.replace('T', ' ').replace(/\.\d+Z$/, 'Z')}  ${r.event}${r.detail ? ' - ' + r.detail : ''}  [tab ${r.visible || '?'}, ${r.online === false ? 'offline' : 'online'}]`).join('\n');
+  const dlg = UI.modal({ title: 'Connection log', className: 'w-connection-log', html: `<p class="muted small">Connection events seen by this browser (never sent to anyone). If the game disconnects, copy this and send it to Chris: it shows whether the wifi dropped, the tab was asleep, or the server closed the connection.</p>
+    <textarea class="connection-log-text" readonly rows="14" style="width:100%;font-family:monospace;font-size:12px">${esc(text || 'Nothing logged yet.')}</textarea>
+    <div class="modal-actions"><button type="button" data-a="copylog">Copy</button> <button type="button" data-a="clearlog">Clear</button></div>` });
+  dlg.el.querySelector('[data-a="copylog"]').onclick = () => { navigator.clipboard.writeText(text).then(() => UI.toast('Connection log copied.'), () => { dlg.el.querySelector('textarea').select(); UI.toast('Press Ctrl+C to copy.'); }); };
+  dlg.el.querySelector('[data-a="clearlog"]').onclick = () => { RelayPeer.clearLog(); dlg.close(); UI.toast('Connection log cleared.'); };
+}
 function showHotkeyList() {
   const groups = ['Hovered card', 'Library hovered', 'General'];
   let recording = null;

@@ -1,15 +1,14 @@
-# Land placement and stacking — v0.89.0 test copy
+# Connection log and fewer false disconnects — v0.90.0 test copy
 
-To check this copy, extract the ZIP and double-click **index.html**. Start a game (a second private window shows what others see).
+To check this copy, extract the ZIP and double-click **index.html**. Start or join a game.
 
-1. Put a few lands in your hand (or use a deck with many lands) and **double-click** them one by one. Each goes to the next open space in the **Lands** area, in neat rows.
-2. Keep going to 20+ lands, also with a small browser window: none may end up behind your hand and every one can be clicked and dragged.
-3. Try both **Sidebar** and **Grid** layouts, and with 3 or 4 players.
-4. **Stacking:** Tangled Islet and Temple of Mystery (both G/U) should pile together; basics pile with basics; about six per pile. Piles go top to bottom, each card showing its top strip.
-5. With a full Lands area, the next land snaps onto the most alike land (not attached; drag it away freely). Nothing should land in the Enchantments area.
-6. Tell me how hovering stacked lands feels; a better hover preview is not built yet.
+1. Open **Menu → Display & layout → Connection log…**. You should see a "connecting" and "connected" line with the time. **Copy** copies the text; **Clear** empties it.
+2. Turn your wifi off for a few seconds and on again: the log should show "browser offline" / "closed" / "reconnecting" lines.
+3. Switch to another browser tab for a minute or two and come back: the log shows "tab hidden" / "tab visible", and (if the tab was slowed) "timer ran late". The game should **not** drop and reconnect just because the tab was in the background.
+4. Next time the game disconnects while you play, open the log, press Copy and send it to me; it will tell us whether it was wifi, a sleeping tab or the server.
 
 ## Assistant verification
-- New two/three/four-player Chromium test `test_land_placement_browser` also checks the G/U stack and that a red land stays out of it; it passes at 1366×768, 1920×1080, 1366×600 and 1100×560 in Sidebar and Grid: 20 lands fit the Lands area (tall windows), all 26 are above the hand and clickable.
-- Unit tests pass. `test_card_placement_browser` and `test_room_vault` fail the same way on unchanged main in this environment.
-- **Not tested:** touch, real mouse hover, sound.
+- New unit test `test_connection_log` (fake socket and fake clock): real silence is declared dead and logged; a late timer (background tab or sleep) is not; closes are logged with their code.
+- New real-browser test `test_connection_log_browser`: menu item opens the window, shows the connection, notes going offline, Clear works, no page errors.
+- Other unit tests, pass-turn and share-hand browser tests pass.
+- **Not tested:** a real hidden tab or sleeping laptop over a long time, or a real wifi drop.

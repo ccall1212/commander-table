@@ -16,6 +16,23 @@
   var PING_EVERY_MS = 15000;     // app-level keepalive
   var DEAD_AFTER_MS = 40000;     // nothing received from the server for this long => socket is dead
 
+  // ---- connection log ---------------------------------------------------------
+  // A short list of the connection events (opened, closed, declared dead, reconnecting, browser went offline / hidden) with the facts that tell a wifi drop from a
+  // browser that was asleep or in the background. It is kept in this browser only (never sent to anyone) so a player can read or copy it after a disconnect.
+  var LOG_KEY = 'ct.netlog.v1', LOG_MAX = 60, netLog = [];
+  try { netLog = JSON.parse(localStorage.getItem(LOG_KEY) || '[]'); if (!Array.isArray(netLog)) netLog = []; } catch (e) { netLog = []; }
+  function logNet(event, detail) {
+    var entry = { t: new Date().toISOString(), event: event, detail: detail || '', visible: (typeof document !== 'undefined' && document.visibilityState) || '', online: typeof navigator !== 'undefined' ? navigator.onLine : null };
+    netLog.push(entry);
+    if (netLog.length > LOG_MAX) netLog.splice(0, netLog.length - LOG_MAX);
+    try { localStorage.setItem(LOG_KEY, JSON.stringify(netLog)); } catch (e) { /* storage can be unavailable */ }
+  }
+  if (typeof window !== 'undefined' && window.addEventListener) {
+    window.addEventListener('online', function () { logNet('browser online'); });
+    window.addEventListener('offline', function () { logNet('browser offline', 'the browser reports no network'); });
+    document.addEventListener('visibilitychange', function () { logNet('tab ' + document.visibilityState, document.visibilityState === 'hidden' ? 'timers may slow down while the tab is hidden' : ''); });
+  }
+
   // ---- tiny event emitter ---------------------------------------------------
   function emitterOn(ev, fn) {
     if (!this._ev) this._ev = {};
@@ -176,11 +193,14 @@
     ws._done = false;
     ws._reconnect = !!isReconnect;
     ws._lastRx = Date.now();
+    ws._startedAt = Date.now();
     ws._ka = null;
     this._ws = ws;
 
+    logNet(isReconnect ? 'reconnecting' : 'connecting', self._label || '');
     ws.onopen = function () {
       if (self._ws !== ws) return;
+      logNet('connected', 'up after ' + Math.round((Date.now() - ws._startedAt) / 100) / 10 + 's');
       ws._lastRx = Date.now();
       try { ws.send(JSON.stringify({ op: 'reg', id: regId, key: self._key })); }
       catch (e) { console.error('[' + self._label + '] reg send failed', e); }
@@ -194,18 +214,32 @@
       if (!m || typeof m !== 'object') return;
       try { self._onMessage(ws, m); } catch (e) { console.error('[' + self._label + '] message handler threw', e); }
     };
-    ws.onclose = function () { self._wsGone(ws); };
-    ws.onerror = function () { self._wsGone(ws); };
+    ws.onclose = function (ev) {
+      if (!ws._done) logNet('closed', 'code ' + (ev && ev.code) + (ev && ev.reason ? ' "' + ev.reason + '"' : '') + ', ' + Math.round((Date.now() - ws._lastRx) / 1000) + 's since the last data');
+      self._wsGone(ws);
+    };
+    ws.onerror = function () { if (!ws._done) logNet('socket error', Math.round((Date.now() - ws._lastRx) / 1000) + 's since the last data'); self._wsGone(ws); };
   };
 
   // App-level keepalive: ping every 15s; if nothing at all arrives for 40s the socket is dead.
   RelayPeer.prototype._startKeepalive = function (ws) {
     var self = this;
     this._stopKeepalive(ws);
+    var lastTick = Date.now();
     ws._ka = setInterval(function () {
       if (self._ws !== ws || ws._done) { self._stopKeepalive(ws); return; }
       if (ws.readyState !== 1) return;
+      // A background tab or a sleeping laptop runs this timer late. The silence is then partly our own: ask again and give the server one more round to answer
+      // instead of calling a healthy connection dead.
+      var late = Date.now() - lastTick > PING_EVERY_MS * 2;
+      lastTick = Date.now();
+      if (late) {
+        logNet('timer ran late', 'the browser delayed this page by about ' + Math.round((Date.now() - ws._lastRx) / 1000) + 's (background tab or sleep); connection kept, checking again');
+        try { ws.send('{"op":"ping"}'); } catch (e) { /* the close handler will deal with it */ }
+        return;
+      }
       if (Date.now() - ws._lastRx > DEAD_AFTER_MS) {
+        logNet('no data', 'nothing from the server for ' + Math.round((Date.now() - ws._lastRx) / 1000) + 's; treated as dead');
         console.warn('[' + self._label + '] no data from the server for ' + (DEAD_AFTER_MS / 1000) + 's; treating the socket as dead');
         self._wsGone(ws);
         return;
@@ -435,5 +469,7 @@
     return conn;
   };
 
+  RelayPeer.getLog = function () { return netLog.slice(); };
+  RelayPeer.clearLog = function () { netLog = []; try { localStorage.removeItem(LOG_KEY); } catch (e) { /* ignore */ } };
   window.RelayPeer = RelayPeer;
 })();

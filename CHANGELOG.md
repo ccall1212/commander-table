@@ -6,6 +6,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.90.0] - 2026-11-19
+
+### Added
+- **Connection log.** **Menu → Display & layout → Connection log…** lists what this browser saw of its connection to the game server (connected, closed with a code, no data from the server, the browser going offline, the tab being hidden). It is kept only in your browser and never sent to anyone. If the game disconnects, press **Copy** and send it to Chris: it shows whether the wifi dropped, the tab was asleep, or the server closed the connection.
+
+### Fixed
+- **Fewer false disconnects.** A background tab or a sleeping laptop slows the page's timers, and the game used to read that silence as "the server is gone" and reconnect even though the connection was fine. When the timer runs late, the game now asks the server again and keeps the connection if it answers.
+
 ## [0.89.0] - 2026-11-19
 
 ### Added
@@ -528,7 +536,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.89.0...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.90.0...HEAD
+[0.90.0]: https://github.com/ccall1212/commander-table/compare/v0.89.0...v0.90.0
 [0.89.0]: https://github.com/ccall1212/commander-table/compare/v0.88.1...v0.89.0
 [0.88.1]: https://github.com/ccall1212/commander-table/compare/v0.88.0...v0.88.1
 [0.88.0]: https://github.com/ccall1212/commander-table/compare/v0.87.0...v0.88.0
