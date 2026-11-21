@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.91.0] - 2026-11-20
+
+### Added
+- **AI players through MCP.** An agent can join as a regular seat, inspect its own hand and the public table, explain its plans and talk with you in room chat, and take basic card and turn actions. The local MCP server and setup steps are included. It does not enforce Magic rules or mana costs, and it never exposes opponents' hidden hands or libraries.
+
 ## [0.90.4] - 2026-11-19
 
 ### Changed
@@ -560,7 +565,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.90.4...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.91.0...HEAD
+[0.91.0]: https://github.com/ccall1212/commander-table/compare/v0.90.4...v0.91.0
 [0.90.4]: https://github.com/ccall1212/commander-table/compare/v0.90.3...v0.90.4
 [0.90.3]: https://github.com/ccall1212/commander-table/compare/v0.90.2...v0.90.3
 [0.90.2]: https://github.com/ccall1212/commander-table/compare/v0.90.1...v0.90.2

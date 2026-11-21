@@ -291,6 +291,12 @@ For a hovered card, **+ / =** adds a +1/+1 counter and **− / _** adds a −1/�
 - **Sound off** is the default. Use the button in the chat header to turn the quiet two-note message chime on or off; the choice is saved on that browser. Sounds play only for other players' messages, with rapid messages throttled to avoid repeated chimes.
 - At the start of each turn, a short banner appears over that player's battlefield. The active player sees **YOUR TURN**; everyone else sees **NAME'S TURN** over the same player's board. It is visual only and never blocks card movement or clicks. With reduced motion enabled, the banner appears briefly without animation.
 
+## AI players
+
+An AI agent can join as a regular player through the local **Commander Table MCP agent**. It can see its own hand and the public table, send and read room chat, draw, move or tap its cards, untap, and pass its turn. To set it up, configure an MCP client and open the local game tab as described in [`tools/agent-mcp/README.md`](../tools/agent-mcp/README.md). Keep that tab open while the agent plays.
+
+The table does not enforce Magic rules or mana costs. The agent must reason about legal plays, and you can discuss its plans with it in room chat. Opponents' hidden hands and libraries are not shared with the agent. The MCP server runs on your computer and accepts connections only from its local game page.
+
 ## Turn helpers
 
 - **Auto-untap and Auto-Draw** at the start of your turn are toggled with switches (green = on): Auto-untap is the switch next to **Untap All** in the top bar, and **Auto-Draw** is labeled clearly beside it. They're also still in the ☰ menu. Both start off in every game. At game start, Auto-Draw waits until the first-player dice/results overlay has fully closed. In 1v1, the first player skips the first draw.

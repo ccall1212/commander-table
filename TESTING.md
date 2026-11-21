@@ -1,11 +1,12 @@
-# Knight's Vigil background (your picture) — v0.90.4 test copy
+# Testing the MCP agent
 
-To check this copy, extract the ZIP and double-click **index.html**.
+This test copy needs an MCP client to start the local server. It cannot be tested by double-clicking `index.html` alone.
 
-1. Open **Your look** and pick **Knight's Vigil**: it should be the picture you sent (kneeling knight in blue, red knight with a sword, helmets on, castle and waterfall at sunset), not the redraw with the bare-headed knights.
-2. Start a game: the same picture is behind the table.
-3. If you still see the redrawn one, tell me which page you opened (the live site or this ZIP) and press Ctrl+F5 once.
+1. Configure the MCP server from `tools/agent-mcp/README.md` in an MCP client that has Node.js 18+ available, then restart that client.
+2. Open `http://127.0.0.1:8787/index.html?agent=1` in a browser. Host a game there, or join your existing room with a second player seat. Choose a deck and keep this tab open.
+3. In the MCP client, call `agent_status`, then `observe_game`. Confirm the agent's own hand appears and other players' hand/library identities do not.
+4. Use `send_chat` to send a plan; confirm it appears in room chat. Reply in the game's chat and call `observe_game` to read your response.
+5. Try `draw_cards`, `move_card` with one of the agent's card ids, and `tap_card` on one of its battlefield cards. Confirm the game updates normally for the other player. Use `pass_turn` on the agent's turn.
+6. Close the browser tab and call `agent_status` again. It should report that the game tab is disconnected.
 
-## Assistant verification
-- The background file is exactly the image you sent (1672×941); the small preview (320×180) is made from it. The app now requests it as `knights-vigil.webp?r=2` (and the thumbnail the same way), so a browser's saved copy of the old address can no longer be reused.
-- The card-back browser test (which loads the appearance list) passes. **Not tested:** how it looks in your browser.
+The action tools do not enforce Magic rules or mana costs. Do not use a game you care about for testing.
