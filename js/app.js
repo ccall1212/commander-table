@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.90.4';
+const APP_VERSION = '0.91.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -7900,6 +7900,90 @@ async function checkForNewVersion() {
     UI.toast(`Version ${m[1]} is out — reload to get it (your game carries on).`, { ms: 3600000, action: { label: 'Reload', onClick: () => { saveNow(); location.replace(freshUrl(m[1])); } } });
   } catch (e) { /* offline: try again later */ }
 }
+// The local MCP bridge calls this narrow interface. Keep private card identities scoped to
+// the connected seat; opponent views come only from the public state already sent to players.
+window.CTAgentAPI = {
+  status() {
+    const seated = !!(S.table && Array.isArray(S.table.seats) && S.table.seats.includes(S.pid));
+    return { ready: !!(S.me && S.role !== 'solo' && S.net.state === 'online' && seated), role: S.role,
+      connected: S.net.state === 'online', seated, name: S.me && S.me.name || '', room: S.room || '',
+      reason: !S.me ? 'Choose a deck and enter a game in this browser tab.' : S.role === 'solo' ? 'Join a shared game; MCP control is unavailable in Practice solo.' : !seated ? 'Waiting for this player to take a seat.' : S.net.state !== 'online' ? 'Waiting for the game connection.' : '' };
+  },
+  observe() {
+    const own = S.me;
+    if (!own || S.role === 'solo') return { status: this.status(), game: null };
+    const cardInfo = c => {
+      const d = own.defs[c.id] || {};
+      return { iid: c.iid, name: c.fd ? 'Face-down card' : (d.face || d.name || 'Unknown card'),
+        zone: c.zone, tapped: !!c.t, faceDown: !!c.fd, flipped: !!c.fl, counters: { ...(c.c || {}) },
+        type: c.fd ? '' : (d.type || ''), manaCost: c.fd ? '' : (d.mana || ''), rulesText: c.fd ? '' : (d.oracle || '') };
+    };
+    const ownCards = zone => own.zones[zone].map(c => cardInfo(Object.assign({ zone }, c)));
+    const players = (S.table && S.table.seats || []).map(pid => {
+      const p = pid === S.pid ? publicView() : S.players[pid];
+      if (!p) return { pid, name: pname(pid), connected: !!S.online[pid] };
+      const zones = p.zones || {};
+      return { pid, name: p.name || pname(pid), life: p.life, poison: p.poison, counters: { ...(p.ctr || {}) },
+        commanderDamage: { ...(p.cmdDmg || {}) }, handCount: pid === S.pid ? own.zones.hand.length : p.hand,
+        libraryCount: pid === S.pid ? own.zones.library.length : p.lib,
+        connected: pid === S.pid || !!S.online[pid], out: !!(S.table.out && S.table.out[pid]),
+        battlefield: (zones.battlefield || []).map(c => ({ iid: c.iid, name: c.fd ? 'Face-down card' : ((p.defs && p.defs[c.id] && (p.defs[c.id].face || p.defs[c.id].name)) || 'Unknown card'), tapped: !!c.t, faceDown: !!c.fd, counters: { ...(c.c || {}) } })),
+        graveyard: (zones.graveyard || []).map(c => ({ iid: c.iid, name: (p.defs && p.defs[c.id] && (p.defs[c.id].face || p.defs[c.id].name)) || 'Unknown card' })),
+        exile: (zones.exile || []).map(c => ({ iid: c.iid, name: c.fd ? 'Face-down card' : ((p.defs && p.defs[c.id] && (p.defs[c.id].face || p.defs[c.id].name)) || 'Unknown card'), faceDown: !!c.fd })),
+        command: (zones.command || []).map(c => ({ iid: c.iid, name: (p.defs && p.defs[c.id] && (p.defs[c.id].face || p.defs[c.id].name)) || 'Unknown card' })) };
+    });
+    const T = S.table || {};
+    return { status: this.status(), game: { started: !!T.started, activePid: T.active || null,
+      activeName: T.active ? pname(T.active) : '', turn: T.turn || 0, turnSeq: T.turnSeq || 0,
+      phase: typeof T.phase === 'number' ? (PHASES[T.phase] || '') : '', players,
+      yourHand: ownCards('hand'), yourBattlefield: ownCards('battlefield'), yourGraveyard: ownCards('graveyard'),
+      yourExile: ownCards('exile'), yourCommand: ownCards('command'), yourLibraryCount: own.zones.library.length,
+      yourRevealedLibraryTop: own.revealTop && own.zones.library[0] ? cardInfo(Object.assign({ zone: 'library' }, own.zones.library[0])) : null,
+      recentLog: S.log.slice(-30).map(e => ({ name: e.name || pname(e.pid), text: e.text, ts: e.ts })),
+      recentChat: S.chat.slice(-30).map(e => ({ name: e.name || pname(e.pid), text: e.text, ts: e.ts })) } };
+  },
+  chat(text) {
+    if (!this.status().ready) throw new Error('Join a shared game and wait until connected before using chat.');
+    if (!sendChat(text)) throw new Error('The chat message was not sent.');
+    return { sent: true };
+  },
+  draw(count) {
+    if (!this.status().ready) throw new Error('Join a shared game and wait until connected before drawing.');
+    const n = clamp(Math.floor(num(count, 1)), 1, 5); const before = S.me.zones.hand.length;
+    draw(n); return { drawn: S.me.zones.hand.length - before };
+  },
+  move(iid, zone) {
+    if (!this.status().ready) throw new Error('Join a shared game and wait until connected before moving cards.');
+    if (!['hand', 'battlefield', 'graveyard', 'exile', 'command'].includes(zone)) throw new Error('Destination must be hand, battlefield, graveyard, exile, or command.');
+    const f = findCard(iid);
+    if (!f) throw new Error('That card is not in one of your zones.');
+    if (!['hand', 'battlefield', 'graveyard', 'exile', 'command'].includes(f.zone)) throw new Error('Cards in the library cannot be moved by this tool.');
+    const from = f.zone;
+    if (from === zone) throw new Error('That card is already in that zone.');
+    doMove(iid, zone);
+    return { moved: true, from, to: zone };
+  },
+  tap(iid, tapped) {
+    if (!this.status().ready) throw new Error('Join a shared game and wait until connected before changing cards.');
+    const f = findCard(iid);
+    if (!f || f.zone !== 'battlefield') throw new Error('That card is not on your battlefield.');
+    if (typeof tapped !== 'boolean') throw new Error('tapped must be true or false.');
+    if (!!f.card.t !== tapped) toggleTap(iid);
+    return { tapped };
+  },
+  untapAll() {
+    if (!this.status().ready) throw new Error('Join a shared game and wait until connected before changing cards.');
+    untapAll(); return { untapped: true };
+  },
+  passTurn() {
+    if (!this.status().ready || !S.table.started) throw new Error('The game has not started or this seat is not connected.');
+    if (S.table.active !== S.pid) throw new Error('It is not your turn.');
+    const seq = Math.max(1, num(S.table.turnSeq, num(S.table.turn)));
+    toHost({ t: 'op', op: { k: 'pass', turn: seq, turnSeq: seq } });
+    return { passed: true, turnSeq: seq };
+  }
+};
+
 // tests/net-harness.html loads the page with ?nettest to drive Net directly, without the app.
 if (!new URLSearchParams(location.search).has('nettest') && !versionGuard()) {
   boot();
