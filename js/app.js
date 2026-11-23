@@ -15,7 +15,7 @@
 (function () {
 'use strict';
 
-const APP_VERSION = '0.90.4';
+const APP_VERSION = '0.91.0';
 
 // ---------- small helpers ----------
 const $ = (s, r = document) => r.querySelector(s);
@@ -1306,7 +1306,7 @@ function onBroadcast(msg) {
       }
       break;
     }
-    case 'arrows': S.targetArrows = CTTargeting.cleanList(msg.arrows, S.players, (S.table && S.table.seats) || []); refreshTargeting(); break;
+    case 'arrows': { const before = S.targetArrows; S.targetArrows = CTTargeting.cleanList(msg.arrows, S.players, (S.table && S.table.seats) || []); alertNewArrows(before, S.targetArrows); refreshTargeting(); break; }
     case 'drawfx': if (typeof msg.pid === 'string') animateDrawCard(msg.pid, clamp(Math.floor(num(msg.count, 1)), 1, 5)); break;
     case 'slamfx':
       if (typeof msg.pid === 'string' && typeof msg.iid === 'string') {
@@ -1472,6 +1472,7 @@ function showResponseNotice(msg) {
   if (!slot || !S.me || !T || !T.started || !T.seats.includes(msg.pid) || T.out[msg.pid]
     || msg.deal !== T.openingDeal || typeof msg.id !== 'string' || msg.id.length > 60 || seenResponses.has(msg.id)) return;
   seenResponses.add(msg.id);
+  if (msg.pid !== S.pid) tabAlert(`${String(msg.name || pname(msg.pid)).slice(0, 30)}: In response!`);
   if (seenResponses.size > 64) seenResponses.delete(seenResponses.values().next().value);
   const cue = document.createElement('div');
   cue.className = 'ct-turn-notice ct-response-notice';
@@ -1863,12 +1864,24 @@ function scheduleTurnNotice(pid, key) {
   };
   showWhenReady();
 }
+// Tab alert (js/tabalert.js): only for seated players in a real game, and only while the page is not in front.
+function tabAlert(text) {
+  if (typeof CTTabAlert === 'undefined' || !S.me || !S.table || !S.table.started || S.role === 'solo' || S.role === 'spectator') return;
+  CTTabAlert.alert(text);
+}
+// Arrows other players have just aimed at me (my player box or one of my cards).
+function alertNewArrows(before, after) {
+  const known = new Set((before || []).map(a => a.id));
+  const fresh = (after || []).filter(a => !known.has(a.id) && a.by !== S.pid && a.to && a.to.pid === S.pid);
+  if (fresh.length) tabAlert(`${pname(fresh[0].by)} aimed an arrow at ${fresh[0].to.kind === 'card' ? 'your card' : 'you'}`);
+}
 function handleTurnNoticeUpdate(t) {
   const nextKey = turnKey(t);
   if (!turnNoticeInitialized) { seedTurnNotice(t); return; }
   if (nextKey === lastTurnNoticeKey) return;
   lastTurnNoticeKey = nextKey;
   if (!nextKey) { cancelTurnNotice(); render(); return; }
+  if (t.active === S.pid) tabAlert("It's your turn!");
   scheduleTurnNotice(t.active, nextKey);
 }
 function turnNoticeHTML(pid) {
@@ -4361,6 +4374,7 @@ function mainMenu(x, y) {
       { label: 'Tidy up my cards', onClick: () => act(() => { tidyBoard(); return ['tidied up their battlefield']; }) },
       { label: `Touch mode (Beta): ${S.touchMode ? 'On' : 'Off'}`, checked: S.touchMode, onClick: () => setTouchMode(!S.touchMode) },
       { label: 'Hotkeys', onClick: showHotkeyList },
+      ...(typeof CTTabAlert !== 'undefined' ? [{ label: 'Tab alerts', sub: tabAlertItems() }] : []),
       ...(window.RelayPeer && RelayPeer.getLog ? [{ label: 'Connection log…', onClick: showConnectionLog }] : []),
       { label: 'Choose / recover a board…', onClick: () => showBoardRecovery() }
     ] },
@@ -4401,6 +4415,19 @@ function passBtn() {
 }
 function toggleFocus(pid) { S.focus = S.focus === pid ? null : pid; render(); }
 // A short list of this browser's connection events (kept only in this browser) so a disconnect can be explained: wifi dropped, the tab slept, or the server closed it.
+// Menu items for the tab alerts (flash the tab title and icon when it is your turn, someone says In response, or aims an arrow at you).
+function tabAlertItems() {
+  const s = CTTabAlert.settings();
+  return [
+    { label: 'Flash this tab when I am needed', checked: s.tab, onClick: () => CTTabAlert.set('tab', !s.tab) },
+    { label: 'Play a soft chime', checked: s.sound, onClick: () => CTTabAlert.set('sound', !s.sound) },
+    ...(CTTabAlert.popupSupported() ? [{ label: 'Show a desktop pop-up', checked: s.popup, onClick: () => {
+      if (s.popup) { CTTabAlert.set('popup', false); return; }
+      CTTabAlert.enablePopup().then(ok => { if (!ok) UI.toast('Your browser did not allow pop-ups. The tab will still flash.', { kind: 'warn' }); });
+    } }] : []),
+    { label: 'Alerts happen when it is your turn, someone says In response!, or someone aims an arrow at you, and only while this tab is not in front.', disabled: true }
+  ];
+}
 function showConnectionLog() {
   const rows = RelayPeer.getLog();
   const text = rows.map(r => `${r.t.replace('T', ' ').replace(/\.\d+Z$/, 'Z')}  ${r.event}${r.detail ? ' - ' + r.detail : ''}  [tab ${r.visible || '?'}, ${r.online === false ? 'offline' : 'online'}]`).join('\n');

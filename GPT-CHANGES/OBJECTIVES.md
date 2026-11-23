@@ -257,3 +257,5 @@ Chris (2026-11-04): eventually bring commander damage back out of the life box's
 103. Chris (2026-11-19): after v0.90.3 the browser still showed the redrawn Knight's Vigil (cached same-name file); v0.90.4 loads it under a new address (test copy).
 
 104. Chris (2026-11-19): use the sharper helmeted-knights picture he supplied for Knight's Vigil (v0.90.4, test copy).
+
+105. Chris (2026-11-23): tab notifications for people playing slowly in the background: your turn, In response!, an arrow aimed at you (v0.91.0, test copy). v0.90.4 is published. Ideas not built: alerts for chat messages, a title countdown.
