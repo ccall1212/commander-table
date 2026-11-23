@@ -6,6 +6,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.91.0] - 2026-11-23
+
+### Added
+- **Tab alerts.** If you are playing slowly in the background, the browser tab now tells you when you are needed. While the game page is hidden (another tab, or another window in front), the **tab title flashes** ("🔔 It's your turn!") and the **tab icon gets a red dot** when:
+  - it becomes **your turn**,
+  - another player presses **In response!** (the title shows who),
+  - another player aims an **arrow at you or one of your cards**.
+
+  Nothing happens while you are looking at the game, for your own actions, or in Practice or when watching. Everything goes away as soon as you come back to the tab. **Menu → Display & layout → Tab alerts** lets you turn the flashing off, add a **soft chime**, or show a **desktop pop-up** (your browser asks permission first). These settings stay in your own browser.
+
 ## [0.90.4] - 2026-11-19
 
 ### Changed
@@ -560,7 +570,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Treat symbolic power/toughness values as a starting value of 0 for the battlefield's adjustment controls. For example, `*/5` starts at `0/5` and `*/*` at `0/0`. Either stat can be raised or lowered normally; numeric stats, counters, manual base overrides and reset keep working. The printed card value remains available in the tooltip and card details.
 
-[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.90.4...HEAD
+[Unreleased]: https://github.com/ccall1212/commander-table/compare/v0.91.0...HEAD
+[0.91.0]: https://github.com/ccall1212/commander-table/compare/v0.90.4...v0.91.0
 [0.90.4]: https://github.com/ccall1212/commander-table/compare/v0.90.3...v0.90.4
 [0.90.3]: https://github.com/ccall1212/commander-table/compare/v0.90.2...v0.90.3
 [0.90.2]: https://github.com/ccall1212/commander-table/compare/v0.90.1...v0.90.2
